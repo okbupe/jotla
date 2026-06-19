@@ -1,0 +1,15 @@
+/* ============================================================
+   SEN Help — Design System root entry point.
+   --------------------------------------------------------------
+   Single stylesheet for consumers. Link THIS file (or @import it)
+   and you get the whole token system, brand fonts, and semantic
+   typography utilities with no other includes.
+
+       <link rel="stylesheet" href="styles.css" />
+
+   It re-exports colors_and_type.css, the source of truth for all
+   CSS custom properties (colours, type, radii, spacing, shadows,
+   motion) and the self-hosted @font-face declarations.
+   ============================================================ */
+
+@import url("colors_and_type.css");

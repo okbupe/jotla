@@ -1,0 +1,16 @@
+{
+  "name": "Jotla by SEN Help",
+  "short_name": "Jotla",
+  "description": "A calm, parent-owned day record for families of children with SEND.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F7F9FC",
+  "theme_color": "#F7F9FC",
+  "icons": [
+    { "src": "jotla-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "jotla-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "jotla-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

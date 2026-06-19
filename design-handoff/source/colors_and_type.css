@@ -1,0 +1,280 @@
+/* ============================================================
+   SEN Help, Colours & Typography
+   --------------------------------------------------------------
+   Source of truth: uploads/sen-help-theme/style.css,
+   uploads/sen-help-theme/front-page.php (and friends).
+
+   Brand fonts load from Google Fonts (locked brand rule). Outfit
+   replaced Fredoka as the body / standard font on 31 May 2026:
+     Cal Sans   display / headings   weight 500
+     Outfit     body / standard      200 baseline, 500 bold
+
+   Brand fonts are self-hosted — uploaded TTF files in fonts/ are the
+   canonical source; woff2 copies in assets/fonts/ are the optimised
+   delivery format. @import THIS file (or link it from <head>) and every
+   surface gets the fonts with no remote CDN dependency.
+   ============================================================ */
+
+@font-face {
+    font-family: 'Cal Sans';
+    font-style: normal;
+    font-weight: 400 500;
+    font-display: swap;
+    src: url('fonts/CalSans-Regular.ttf') format('truetype'),
+         url('assets/fonts/cal-sans-400.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Outfit';
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url('fonts/Outfit-VariableFont_wght.ttf') format('truetype'),
+         url('assets/fonts/outfit-variable.woff2') format('woff2');
+}
+
+:root {
+    /* -------- Brand colours (NEVER alter) ---------------------- */
+    --sen-blue:           #1A56A8;  /* Primary — main action */
+    --sen-blue-hover:     #0f3d7a;  /* Primary pressed/hover dark */
+    --sen-blue-bright:    #3A7BD4;  /* Secondary — links, alt CTA hover */
+    --sen-blue-deep:      #2760a8;  /* Link-hover dark */
+    --sen-green:          #27AE60;  /* Trust — verified, positive */
+    --sen-green-deep:     #059669;  /* Trust pressed; quiz "yes" fill */
+    --sen-green-ink:      #047857;  /* "Better than national" text */
+    --sen-amber:          #F39C12;  /* Mid score (results badge) */
+    --sen-amber-warn:     #b45309;  /* Inline warning icon */
+    --sen-red:            #E74C3C;  /* Alert — warning emphasis only */
+    --sen-red-deep:       #dc2626;  /* Quiz "no" fill, breach text */
+    --sen-red-ink:        #b91c1c;  /* "Worse than national" text */
+
+    /* -------- Brand tints (very light) ------------------------- */
+    --sen-tint-blue:      #ebf3ff;  /* "How it works" cards, CTA panels */
+    --sen-tint-blue-2:    #e0ecff;  /* Hover state for tint-blue */
+    --sen-tint-blue-3:    #e7f3ff;  /* Trust card 1 background */
+    --sen-tint-blue-4:    #f8fbff;  /* Section-pale gradient end */
+    --sen-tint-blue-5:    #EBF5FB;  /* Section: 2026 reforms */
+    --sen-tint-amber:     #fff7e6;  /* Trust card 2 background */
+    --sen-tint-red:       #fdecec;  /* Trust card 3 background */
+    --sen-tint-red-soft:  #fef2f2;  /* Breach card, "no" button bg */
+    --sen-tint-red-warn:  #fef5f4;  /* Worse-than-national panel */
+    --sen-tint-green:     #ecfdf5;  /* "Yes" button bg, no-breach card */
+    --sen-tint-green-2:   #f3fbf6;  /* Better-than-national panel */
+
+    /* -------- Neutrals (slate scale) --------------------------- */
+    --sen-ink:            #0f172a;  /* fg-1: headings, deep ink, footer bg */
+    --sen-body:           #334155;  /* fg-2: body text */
+    --sen-muted:          #475569;  /* fg-3: secondary body */
+    --sen-meta:           #64748b;  /* fg-4: metadata, captions */
+    --sen-faint:          #94a3b8;  /* fg-5: footer body, placeholders */
+    --sen-border:         #cbd5e1;  /* form borders */
+    --sen-border-soft:    #e2e8f0;  /* card borders, dividers */
+    --sen-line:           #eef2f7;  /* table row lines */
+    --sen-surface:        #f1f5f9;  /* tertiary button bg, dropdown hover */
+    --sen-surface-2:      #f8fafc;  /* page-section faint background */
+    --sen-white:          #ffffff;
+
+    /* -------- Semantic fg/bg aliases --------------------------- */
+    --sen-fg-1:           var(--sen-ink);
+    --sen-fg-2:           var(--sen-body);
+    --sen-fg-3:           var(--sen-muted);
+    --sen-fg-4:           var(--sen-meta);
+    --sen-fg-5:           var(--sen-faint);
+    --sen-bg:             var(--sen-white);
+    --sen-bg-pale:        var(--sen-surface-2);
+    --sen-bg-tint:        var(--sen-tint-blue);
+    --sen-bg-dark:        var(--sen-ink);
+    --sen-link:           var(--sen-blue-bright);
+    --sen-link-hover:     var(--sen-blue-deep);
+    --sen-cta:            var(--sen-blue);
+    --sen-cta-hover:      var(--sen-blue-hover);
+    --sen-verified:       var(--sen-green);
+    --sen-warning:        var(--sen-amber);
+    --sen-alert:          var(--sen-red);
+
+    /* -------- Typography --------------------------------------- */
+    --sen-font-display:   'Cal Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --sen-font-body:      'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+    /* Weight scale (Outfit 200/400/500; Cal Sans 500). Locked: bold is 500, never 700. */
+    --sen-weight-display: 500;       /* headings, Cal Sans */
+    --sen-weight-light:   200;       /* body baseline (Outfit Light) */
+    --sen-weight-regular: 400;       /* inputs, meta */
+    --sen-weight-medium:  500;       /* CTAs, emphasis, nav links */
+    --sen-weight-bold:    500;       /* all bold / strong text */
+
+    /* Display sizes (matches WordPress theme) */
+    --sen-size-hero:      5.5rem;    /* h1: page-title, intro hero */
+    --sen-size-hero-2:    4.75rem;   /* h1: front-page hero */
+    --sen-size-display:   4.5rem;    /* h1: report-card single */
+    --sen-size-display-2: 4rem;      /* h1: toolkit, alt hero */
+    --sen-size-h2:        3rem;      /* final CTA section */
+    --sen-size-h2-mid:    2.5rem;    /* section h2 */
+    --sen-size-h2-sm:     2rem;      /* in-article h2, quiz Q */
+    --sen-size-h3-lg:     1.8rem;    /* footer heading */
+    --sen-size-h3:        1.5rem;    /* card title large */
+    --sen-size-h3-sm:     1.4rem;    /* report-card metric title, step title */
+    --sen-size-h4:        1.3rem;    /* card title small */
+    --sen-size-lead:      1.2rem;    /* lead paragraph */
+    --sen-size-body-lg:   1.15rem;   /* nav link, sub copy */
+    --sen-size-body:      1.05rem;   /* dropdown menu, lists */
+    --sen-size-body-md:   1rem;      /* card body */
+    --sen-size-body-sm:   0.95rem;   /* secondary body, CTA button */
+    --sen-size-eyebrow:   1rem;      /* uppercase eyebrow */
+    --sen-size-meta:      0.85rem;   /* meta/source notes */
+    --sen-size-fine:      0.8rem;    /* fineprint */
+
+    /* Line-height (tight, app-density) */
+    --sen-lh-display:     1.1; /* @kind other */      /* headlines */
+    --sen-lh-tight:       1.25; /* @kind other */     /* quiz Q */
+    --sen-lh-body:        1.2; /* @kind other */      /* body (locked brand rule) */
+    --sen-lh-body-loose:  1.65; /* @kind other */     /* lead paragraphs */
+    --sen-lh-article:     1.2; /* @kind other */      /* 20/24 from article-content */
+
+    /* Letter-spacing */
+    --sen-tracking-tight: -0.01em;   /* applied to headlines */
+    --sen-tracking-body:  -0.01em;   /* body baseline letter-spacing */
+    --sen-tracking-eyebrow: 0.1em;   /* uppercase eyebrow */
+
+    /* -------- Radii -------------------------------------------- */
+    --sen-r-sm:           8px;       /* search input, dropdown links */
+    --sen-r-md:           10px;      /* report-card list cards, CTA buttons */
+    --sen-r-lg:           12px;      /* form input, article hero, hero panels */
+    --sen-r-xl:           16px;      /* large feature cards */
+    --sen-r-pill:         30px;      /* button & tag pills */
+    --sen-r-pill-lg:      40px;      /* big primary CTA pill */
+    --sen-r-circle:       50%;       /* numbered step circles, badges */
+
+    /* -------- Borders ------------------------------------------ */
+    --sen-stroke-1:       1px solid var(--sen-border-soft);
+    --sen-stroke-2:       2px solid var(--sen-border-soft);
+    --sen-stroke-input:   2px solid var(--sen-border-soft);
+
+    /* -------- Shadows ------------------------------------------ */
+    /* Subtle in-app: e.g. scrolled nav, article hero image */
+    --sen-shadow-xs:      0 4px 12px rgba(0, 0, 0, 0.05);
+    --sen-shadow-sm:      0 4px 18px -6px rgba(58, 123, 212, 0.25);
+    --sen-shadow-md:      0 8px 24px rgba(15, 23, 42, 0.10);
+    --sen-shadow-card:    0 14px 32px -12px rgba(26, 86, 168, 0.28);
+    --sen-shadow-cta:     0 8px 20px -6px rgba(26, 86, 168, 0.35);
+    --sen-shadow-nav:     0 12px 32px -8px rgba(15, 23, 42, 0.08),
+                          0 4px 12px -4px rgba(15, 23, 42, 0.04);
+    --sen-shadow-menu:    0 14px 40px rgba(15, 23, 42, 0.12),
+                          0 2px 6px rgba(15, 23, 42, 0.05);
+
+    /* -------- Easing & motion ---------------------------------- */
+    --sen-ease-out:       cubic-bezier(0.22, 1, 0.36, 1); /* @kind other */ /* mobile drawer */
+    --sen-tx-fast:        0.15s ease; /* @kind other */
+    --sen-tx-base:        0.2s ease; /* @kind other */
+    --sen-tx-slow:        0.35s ease; /* @kind other */
+    --sen-tx-bar:         0.8s ease-out; /* @kind other */                   /* report-card bar fills */
+
+    /* -------- Layout ------------------------------------------- */
+    --sen-container:      1200px;    /* nav + main container width */
+    --sen-prose:          800px;     /* article/single content */
+    --sen-narrow:         640px;     /* sub-title prose */
+    --sen-section-y:      5rem;      /* desktop section padding-y */
+    --sen-section-y-sm:   3.5rem;    /* mobile section padding-y */
+    --sen-gutter:         1.5rem;    /* desktop horizontal gutter */
+    --sen-gutter-sm:      1.25rem;   /* mobile horizontal gutter */
+}
+
+/* ============================================================
+   Semantic typography utilities
+   --------------------------------------------------------------
+   Drop these on real elements. They mirror the actual usage in
+   the WordPress theme (front-page.php and page templates), so
+   you can rebuild any screen by composing them.
+   ============================================================ */
+
+.sen-display-1, .sen-h1 {
+    font-family: var(--sen-font-display);
+    font-weight: var(--sen-weight-display);
+    font-size: var(--sen-size-hero);
+    line-height: var(--sen-lh-display);
+    letter-spacing: var(--sen-tracking-tight);
+    color: var(--sen-fg-1);
+    margin: 0 0 0.5rem;
+}
+.sen-display-2 {
+    font-family: var(--sen-font-display);
+    font-weight: var(--sen-weight-display);
+    font-size: var(--sen-size-display-2);
+    line-height: var(--sen-lh-display);
+    letter-spacing: var(--sen-tracking-tight);
+    color: var(--sen-fg-1);
+    margin: 0 0 1.25rem;
+}
+.sen-h2 {
+    font-family: var(--sen-font-display);
+    font-weight: var(--sen-weight-display);
+    font-size: var(--sen-size-h2-mid);
+    line-height: var(--sen-lh-display);
+    letter-spacing: var(--sen-tracking-tight);
+    color: var(--sen-fg-1);
+    margin: 0 0 1.25rem;
+}
+.sen-h3 {
+    font-family: var(--sen-font-display);
+    font-weight: var(--sen-weight-display);
+    font-size: var(--sen-size-h3-sm);
+    line-height: var(--sen-lh-display);
+    letter-spacing: var(--sen-tracking-tight);
+    color: var(--sen-fg-1);
+    margin: 0 0 0.5rem;
+}
+.sen-eyebrow {
+    display: inline-block;
+    font-family: var(--sen-font-display);
+    font-weight: var(--sen-weight-display);
+    font-size: var(--sen-size-eyebrow);
+    letter-spacing: var(--sen-tracking-eyebrow);
+    text-transform: uppercase;
+    color: var(--sen-blue);
+    margin-bottom: 1rem;
+}
+.sen-lead {
+    font-family: var(--sen-font-body);
+    font-weight: var(--sen-weight-light);
+    font-size: 20px;
+    line-height: 24px;
+    color: var(--sen-fg-2);
+    margin: 0 0 1rem;
+}
+.sen-body {
+    font-family: var(--sen-font-body);
+    font-weight: var(--sen-weight-light);
+    font-size: var(--sen-size-body);
+    line-height: var(--sen-lh-body);
+    color: var(--sen-fg-2);
+    letter-spacing: var(--sen-tracking-body);
+    margin: 0 0 1rem;
+}
+.sen-body strong, .sen-lead strong { font-weight: var(--sen-weight-medium); color: var(--sen-fg-1); }
+.sen-meta {
+    font-family: var(--sen-font-body);
+    font-size: var(--sen-size-meta);
+    color: var(--sen-fg-4);
+}
+.sen-fine {
+    font-family: var(--sen-font-body);
+    font-size: var(--sen-size-fine);
+    color: var(--sen-fg-4);
+    line-height: 1.5;
+}
+
+/* ============================================================
+   Base / reset (optional — opt-in via body.sen-saas-app)
+   ============================================================ */
+body.sen-saas-app {
+    margin: 0;
+    padding: 0;
+    background-color: var(--sen-white);
+    font-family: var(--sen-font-body);
+    font-weight: var(--sen-weight-light);
+    line-height: var(--sen-lh-body);
+    color: var(--sen-fg-2);
+    letter-spacing: var(--sen-tracking-body);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}

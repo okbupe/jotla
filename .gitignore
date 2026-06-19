@@ -1,0 +1,12 @@
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+desktop.ini
+*.tmp
+~$*
+
+# Local dependency / build output (for the future production app)
+node_modules/
+dist/
+build/
+.expo/
