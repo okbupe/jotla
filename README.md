@@ -44,4 +44,4 @@ _Feedback route to be added (a shared note, a form, or just a message back). For
 
 ## Status
 
-Design prototype complete. Production build (React Native / Expo) starts after the SEN Help quiz cutover. See the design spec in `design-handoff/README.md` for the full screen-by-screen reference.
+This is the design prototype. A production build will follow. See the design spec in `design-handoff/README.md` for the full screen-by-screen reference.
