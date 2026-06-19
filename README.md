@@ -17,7 +17,8 @@ Thank you for taking a look. A few things to know:
 
 ### How to open it
 
-- **Live link:** _to be added once hosting is set up._
+- **Live link:** https://okbupe.github.io/jotla/
+- **Install it like an app:** open the link, then on iPhone (Safari) tap Share and "Add to Home Screen"; on Android (Chrome) tap the menu and "Install app". It then opens full-screen with its own icon.
 - **From the files:** open `design-handoff/source/jotla/Jotla.html` in a browser.
 
 ### What we would love your first impressions on
@@ -31,7 +32,8 @@ Thank you for taking a look. A few things to know:
 
 ### How to send feedback
 
-_Feedback route to be added (a shared note, a form, or just a message back). For now, jot anything down and send it over._
+- In the app: **Settings → "Tell us what you think"** opens an email to `hello@sen.help` with a short template.
+- Or email **hello@sen.help** directly with the subject "Jotla prototype feedback".
 
 ## What is in here
 

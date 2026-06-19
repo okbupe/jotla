@@ -407,12 +407,12 @@ function HandoverScreen({ nav, today, profile }) {
           <div className="j-card" style={{ padding: 16, background: 'var(--tint-blue)', border: 'none' }}>
             <p className="j-eyebrow" style={{ marginBottom: 4 }}>Ask the teacher</p>
             <p className="j-sm" style={{ marginBottom: 12, color: 'var(--blue)' }}>Five gentle questions. Read them out, tap the answers below.</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {GATE_QUESTIONS(childName).map((q, i) => (
                 <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                   <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--card)', color: 'var(--blue)',
                     fontSize: 12, fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>{i + 1}</span>
-                  <span style={{ fontSize: 15.5, color: 'var(--ink)', fontWeight: 400, lineHeight: 1.35 }}>{q}</span>
+                  <p style={{ flex: 1, minWidth: 0, margin: 0, fontSize: 15.5, color: 'var(--ink)', fontWeight: 400, lineHeight: 1.4 }}>{q}</p>
                 </div>
               ))}
             </div>

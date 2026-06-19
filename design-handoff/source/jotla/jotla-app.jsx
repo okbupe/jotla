@@ -397,6 +397,24 @@ function App({ appMode }) {
     },
   };
 
+  // Keep the Android / browser Back gesture inside the app instead of closing it.
+  // The router is state-based, so we trap popstate and run an in-app "back" ourselves.
+  const backRef = useRefApp(null);
+  backRef.current = () => {
+    if (childOptOpen) { setChildOptOpen(false); return; }
+    if (profileOpen) { setProfileOpen(false); return; }
+    if (history.length) { nav.back(); return; }
+    if (!TAB_NAMES.includes(view.name)) { nav.home(); return; }
+    if (tab !== 'today') { nav.setTab('today'); return; }
+    // already at the Today root: stay in the app (use the system home gesture to leave)
+  };
+  useEffectApp(() => {
+    window.history.pushState({ jotla: true }, '');
+    const onPop = () => { if (backRef.current) backRef.current(); window.history.pushState({ jotla: true }, ''); };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
   const isTab = TAB_NAMES.includes(view.name);
   const isChild = view.name === 'child';
   const isFullscreen = isChild || view.name === 'addchild' || view.name === 'tour';

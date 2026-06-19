@@ -15,13 +15,20 @@ function TabTitle({ title, sub, right }) {
 
 function MonthScreen({ nav, entries }) {
   const J = window.JOTLA;
-  const todayNum = 12;
-  // build calendar cells for June 2026 (1 June is Monday)
+  const today = J.parseISO(J.TODAY_ISO);
+  const year = today.getFullYear();
+  const month = today.getMonth(); // 0-based
+  const todayNum = today.getDate();
+  const monthLabel = `${J.MONTH_NAMES[month]} ${year}`;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDow = (new Date(year, month, 1).getDay() + 6) % 7; // Monday-first offset
+  // build calendar cells for the real current month, with leading blanks for alignment
   const cells = [];
-  for (let d = 1; d <= 30; d++) {
-    const iso = `2026-06-${String(d).padStart(2, '0')}`;
+  for (let i = 0; i < firstDow; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) {
+    const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
     const dayEntries = entries.filter(e => e.date === iso);
-    cells.push({ d, iso, mood: J.dayMood(dayEntries), count: dayEntries.length, future: d > todayNum });
+    cells.push({ d, iso, mood: J.dayMood(dayEntries), count: dayEntries.length, future: d > todayNum, isToday: d === todayNum });
   }
   const dows = J.DOW_MON; // Mon Tue Wed Thu Fri Sat Sun
 
@@ -29,7 +36,7 @@ function MonthScreen({ nav, entries }) {
     <div className="j-screen">
       <div className="j-scroll j-fade">
         <div className="j-pad" style={{ paddingTop: 14, paddingBottom: 100 }}>
-          <TabTitle title="June 2026" sub="Tap any day to read it back." />
+          <TabTitle title={monthLabel} sub="Tap any day to read it back." />
 
           {/* plain trend */}
           <div className="j-card" style={{ padding: 14, display: 'flex', gap: 12, alignItems: 'center', marginBottom: 18,
@@ -47,17 +54,19 @@ function MonthScreen({ nav, entries }) {
               {dows.map((d, i) => <div key={i} style={{ textAlign: 'center', fontSize: 12, fontWeight: 500, color: 'var(--faint)' }}>{d}</div>)}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 }}>
-              {cells.map(c => {
+              {cells.map((c, idx) => {
+                if (!c) return <div key={'blank-' + idx} />;
                 const tint = c.mood ? window.moodTint(c.mood) : 'transparent';
                 const ink = c.mood ? window.MOOD_COLOURS[c.mood] : (c.future ? 'var(--line)' : 'var(--faint)');
                 const tappable = c.count > 0;
                 return (
                   <button key={c.d} onClick={() => tappable && nav.go('day', { date: c.iso })}
                     className={tappable ? 'j-press' : ''}
-                    style={{ aspectRatio: '1 / 1', borderRadius: 12, border: 'none', cursor: tappable ? 'pointer' : 'default',
+                    style={{ aspectRatio: '1 / 1', borderRadius: 12, cursor: tappable ? 'pointer' : 'default',
+                      border: 'none', boxShadow: c.isToday ? 'inset 0 0 0 2px var(--blue)' : 'none',
                       background: tint, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3,
                       opacity: c.future ? 0.55 : 1 }}>
-                    <span style={{ fontFamily: "'Outfit', system-ui", fontWeight: 500, fontSize: 15, color: ink }}>{c.d}</span>
+                    <span style={{ fontFamily: "'Outfit', system-ui", fontWeight: c.isToday ? 600 : 500, fontSize: 15, color: c.isToday ? 'var(--blue)' : ink }}>{c.d}</span>
                     {c.mood && <MoodDot mood={c.mood} size={6} />}
                   </button>
                 );

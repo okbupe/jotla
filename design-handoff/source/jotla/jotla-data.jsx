@@ -118,8 +118,14 @@ const AVATAR_COLOURS = [
   { key: 'pink',   figure: '#D6479B' },
 ];
 
-// "Today" in the prototype is Friday 12 June 2026.
-const TODAY_ISO = '2026-06-12';
+// "Today" is the device's real current date, so the calendar always knows the day.
+const _NOW = new Date(); _NOW.setHours(0, 0, 0, 0);
+const _pad2 = (n) => String(n).padStart(2, '0');
+const _isoOf = (d) => `${d.getFullYear()}-${_pad2(d.getMonth() + 1)}-${_pad2(d.getDate())}`;
+const TODAY_ISO = _isoOf(_NOW);
+// The sample record is anchored near today (shifted by whole weeks so weekdays stay put),
+// so the seed data always looks recent whenever the prototype is opened.
+const SEED_ANCHOR_ISO = '2026-06-12'; // the last seeded day in the original data
 
 const SETTINGS = ['School', 'Nursery', 'Home', 'Club'];
 const TIMES = ['Morning', 'Afternoon', 'Evening'];
@@ -182,9 +188,15 @@ function dayMood(entries) {
   return 'ok';
 }
 
+// Anchor the seed near the real today (whole-week shift preserves weekdays).
+function _isoShift(iso, days) { const d = parseISO(iso); d.setDate(d.getDate() + days); return _isoOf(d); }
+const _weekShift = Math.round((_NOW - parseISO(SEED_ANCHOR_ISO)) / 86400000 / 7) * 7;
+const SEED_ENTRIES_LIVE = _weekShift ? SEED_ENTRIES.map(e => ({ ...e, date: _isoShift(e.date, _weekShift) })) : SEED_ENTRIES;
+const SEED_DOCS_LIVE = _weekShift ? SEED_DOCS.map(d => ({ ...d, received: _isoShift(d.received, _weekShift) })) : SEED_DOCS;
+
 Object.assign(window, {
   JOTLA: {
-    PROFILES, CHILD, SEED_ENTRIES, SEED_DOCS, DOC_TYPES, DOC_SOURCES, AVATAR_COLOURS,
+    PROFILES, CHILD, SEED_ENTRIES: SEED_ENTRIES_LIVE, SEED_DOCS: SEED_DOCS_LIVE, DOC_TYPES, DOC_SOURCES, AVATAR_COLOURS,
     TODAY_ISO, SETTINGS, TIMES, CATEGORIES, BEHAVIOURS,
     MOODS, CHILD_SCENES, CHILD_EMOTIONS, FIND_THEMES, FIND_MOODS,
     MONTH_NAMES, DOW_SHORT, DOW_MON, DOW_LONG, parseISO, fmtLong, fmtShort, dayMood,

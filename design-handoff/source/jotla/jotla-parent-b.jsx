@@ -867,6 +867,8 @@ function Toggle({ on, onChange }) {
 function SettingsScreen({ nav, profile }) {
   const J = window.JOTLA;
   const childName = (profile && profile.name) || 'Sam';
+  const FEEDBACK_HREF = 'mailto:hello@sen.help?subject=' + encodeURIComponent('Jotla prototype feedback')
+    + '&body=' + encodeURIComponent('What I was trying to do:\n\nWhat I think, or what happened:\n\nWhich screen:\n\nMy phone / browser:\n');
   return (
     <div className="j-screen">
       <div className="j-scroll j-fade">
@@ -882,6 +884,21 @@ function SettingsScreen({ nav, profile }) {
               <span style={{ display: 'block', fontSize: 13.5, color: 'var(--faint)', marginTop: 1 }}>Edit name, school, colour and avatar</span>
             </span>
             <Icon name="chevronRight" size={18} color="var(--faint)" />
+          </button>
+
+          {/* feedback (this is an early test build) */}
+          <button className="j-press" onClick={() => { window.location.assign(FEEDBACK_HREF); }} style={{ width: '100%', textAlign: 'left',
+            border: 'none', cursor: 'pointer', background: 'var(--tint-green)', borderRadius: 18, padding: 18, marginBottom: 20,
+            display: 'flex', alignItems: 'center', gap: 14 }}>
+            <span style={{ width: 42, height: 42, borderRadius: 12, background: 'var(--card)', flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name="heart" size={22} color="var(--green)" />
+            </span>
+            <span style={{ flex: 1 }}>
+              <span style={{ display: 'block', fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 17, color: 'var(--green-ink)' }}>Tell us what you think</span>
+              <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 13, color: 'var(--muted)', marginTop: 2 }}>This is an early test, and your feedback shapes it. Opens your email.</span>
+            </span>
+            <Icon name="chevronRight" size={18} color="var(--green-ink)" />
           </button>
 
           <SectionLabel>Jotla Plus</SectionLabel>
