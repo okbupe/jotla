@@ -919,6 +919,19 @@ function SettingsScreen({ nav, profile }) {
               : <Icon name="chevronRight" size={18} color="rgba(255,255,255,0.8)" />}
           </button>
 
+          <SectionLabel>Appearance</SectionLabel>
+          <div className="j-card" style={{ marginBottom: 20, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px' }}>
+              <span style={{ width: 38, height: 38, borderRadius: 11, background: 'var(--tint-blue)', flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="moon" size={20} color="var(--blue)" /></span>
+              <span style={{ flex: 1 }}>
+                <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 16, fontWeight: 500, color: 'var(--ink)' }}>Dark mode</span>
+                <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 13, color: 'var(--faint)', marginTop: 1 }}>Easier on the eyes at night.</span>
+              </span>
+              <Toggle on={nav.dark} onChange={() => nav.toggleDark()} />
+            </div>
+          </div>
+
           <SectionLabel>Backup and export</SectionLabel>
           <div className="j-card" style={{ marginBottom: 20, overflow: 'hidden' }}>
             <SettingsRow icon={<Icon name="shield" size={20} color="var(--blue)" />} title="Automatic backup"

@@ -36,6 +36,7 @@ function Icon({ name, size = 24, color = 'currentColor', stroke = 2, fill = fals
     play: <path d="M8 5.5v13l11-6.5z" />,
     video: <><rect x="3" y="6.5" width="13" height="11" rx="2.5" /><path d="m16 10.5 5-3v9l-5-3z" /></>,
     attach: <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />,
+    moon: <><path d="M20 14.5A8 8 0 0 1 9.5 4 7 7 0 1 0 20 14.5Z" /></>,
   };
   return <svg {...common}>{paths[name] || null}</svg>;
 }
