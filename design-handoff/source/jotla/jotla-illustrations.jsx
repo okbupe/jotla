@@ -73,22 +73,32 @@ function JotlaLogo({ height = 28, color = '#1A56A8', style = {} }) {
 
 // Header lockup: the Jotla logo + the quiet "by SEN Help" sub-label.
 // Sized to keep the same footprint as the old text wordmark so the header does not shift.
-function Wordmark({ size = 30, color = '#1A56A8', sub = true, subColor, plus = false }) {
+function Wordmark({ size = 30, color = '#1A56A8', sub = true, subColor, plus = false, plusColor = '#6E54D6' }) {
   const logoH = Math.round(size * 0.8);
   const drop = Math.round(logoH * 0.167); // the J descender hangs below the lowercase baseline
+  const plusBase = logoH * 0.5;           // +PLUS cap height ≈ half the logo height
+  const gapLogo = Math.round(logoH * 0.18); // +PLUS rides close to the logo
+  const gapSub = Math.round(logoH * 0.37);  // original logo→sub distance, preserved
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 9 }}>
+    <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 0 }}>
       <JotlaLogo height={logoH} color={color} style={{ marginBottom: -drop }} />
-      {plus && <span style={{
-        fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: logoH * 0.86,
-        backgroundImage: 'linear-gradient(135deg, #2B1A66 0%, #6E54D6 100%)',
-        WebkitBackgroundClip: 'text', backgroundClip: 'text',
-        WebkitTextFillColor: 'transparent', color: 'transparent',
-        lineHeight: 1, letterSpacing: '0.01em',
-      }}>plus</span>}
+      {plus && (
+        <span style={{ marginLeft: gapLogo, marginRight: gapSub, alignSelf: 'flex-start', display: 'inline-flex', position: 'relative', top: 1 }}>
+          <span style={{
+            display: 'inline-flex', alignItems: 'baseline',
+            fontFamily: "'Cal Sans', system-ui", fontWeight: 900,
+            transform: 'skewX(-8deg)', transformOrigin: 'left bottom',
+            letterSpacing: '0.12em', textTransform: 'uppercase', color: plusColor, lineHeight: 1,
+          }}>
+            <span style={{ fontSize: Math.round(plusBase * 1.18), marginRight: '0.04em' }}>+</span>
+            <span style={{ fontSize: Math.round(plusBase) }}>PLUS</span>
+          </span>
+        </span>
+      )}
       {sub && <span style={{
         fontFamily: "'Outfit', system-ui", fontWeight: 400, fontSize: size * 0.42,
         color: subColor || 'rgba(15,23,42,0.45)', letterSpacing: '0.01em', whiteSpace: 'nowrap',
+        marginLeft: plus ? 0 : gapSub,
       }}>by SEN Help</span>}
     </span>
   );
