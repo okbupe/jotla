@@ -334,7 +334,7 @@ Screen horizontal padding 20px · section gap 22px (forms) · min tap target 44p
 
 ## Assets
 - **Fonts** (self-hosted, in `source/fonts/`): `CalSans-Regular.ttf`, `Outfit-VariableFont_wght.ttf`. These are the locked brand fonts — use the equivalents from your codebase's brand/font system if it has them.
-- **App icons:** `source/jotla/jotla-icon-180.png` (apple-touch-icon + favicon), `jotla-icon-192.png` and `jotla-icon-512.png` (PWA/home-screen icons in `jotla.webmanifest`). All three are the blue "J" logo.
+- **App icons:** `source/jotla/jotla-icon-180.png` (apple-touch-icon + favicon), `jotla-icon-192.png` and `jotla-icon-512.png` (PWA/home-screen icons in `jotla.webmanifest`). All three are the flat two-tone open-journal emblem on a #1A56A8 tile.
 - **UI icons & face illustrations** are inline SVG (`jotla-icons.jsx`, `jotla-illustrations.jsx`) — re-draw with your icon library or port the paths.
 - No photographic assets; media tiles are placeholders for user-supplied photos/videos.
 
