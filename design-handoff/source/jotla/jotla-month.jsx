@@ -36,7 +36,7 @@ function MonthMoodGraph({ entries, year, month }) {
     <div className="j-card" style={{ padding: 18, marginTop: 18 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <span className="j-h3">How {J.MONTH_NAMES[month]} looked</span>
-        <span className="j-pillbadge" style={{ background: 'var(--tint-amber)', color: 'var(--amber)' }}>Plus</span>
+        <span className="j-pillbadge" style={{ background: '#6E54D6', color: '#fff' }}>Plus</span>
       </div>
       <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', minHeight: 92 }}>
         {blocks.map(b => {

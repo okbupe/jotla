@@ -386,6 +386,10 @@ To run the reference: open `source/jotla/Jotla.html` in a browser.
 
 ---
 
+## Build 1.6.4 (6 July 2026): the month graph badge goes purple
+
+- The "Plus" badge on the "How [Month] looked" card is now solid purple with white text, matching the TIPS pill, so everything Plus wears the same colour.
+
 ## Build 1.6.3 (6 July 2026): the tab bar melts into the page
 
 - The main bottom menu bar now floats over the scrolling content with the same fade-out gradient as the Dysregulation Mode and Evidence action bars (content fades away beneath it instead of hitting a hard edge); solid background, blur and top border gone. The four tab screens gained bottom padding so nothing ever hides under it.
