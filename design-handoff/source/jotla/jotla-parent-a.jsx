@@ -394,15 +394,21 @@ function HandoverScreen({ nav, today, profile }) {
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
             <span className="j-pillbadge" style={{ background: 'var(--card)', border: '1px solid var(--line)', color: 'var(--muted)' }}><Icon name="clock" size={14} color="var(--muted)" /> {(() => { const n = new Date(); return (n.getHours() < 12 ? 'Morning' : n.getHours() < 17 ? 'Afternoon' : 'Evening') + ', ' + String(n.getHours()).padStart(2, '0') + ':' + String(n.getMinutes()).padStart(2, '0'); })()}</span>
             <span className="j-pillbadge" style={{ background: 'var(--card)', border: '1px solid var(--line)', color: 'var(--muted)' }}><Icon name="today" size={14} color="var(--muted)" /> {school}</span>
-            <button onClick={() => nav.go('tips')} className="j-pillbadge j-press" style={{ border: 'none', cursor: 'pointer',
-              background: 'var(--tint-amber)', color: 'var(--amber)', marginLeft: 'auto' }}>
-              <Icon name="sparkle" size={14} color="var(--amber)" /> TIPS</button>
           </div>
 
           {/* read-aloud question list */}
           <div className="j-card" style={{ padding: 16, background: 'var(--tint-blue)', border: 'none' }}>
-            <p className="j-eyebrow" style={{ marginBottom: 4 }}>Ask the teacher</p>
-            <p className="j-sm" style={{ marginBottom: 12, color: 'var(--blue)' }}>Five gentle questions. Read them out, tap the answers below.</p>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p className="j-eyebrow" style={{ marginBottom: 4 }}>Ask the teacher</p>
+                <p className="j-sm" style={{ margin: 0, color: 'var(--blue)' }}>Five gentle questions.<br />Read them out, tap the answers below.</p>
+              </div>
+              <button onClick={() => nav.go('tips')} className="j-press" style={{ border: 'none', cursor: 'pointer', flexShrink: 0,
+                display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 15px', borderRadius: 999, marginTop: 2,
+                background: '#6E54D6', color: '#fff', fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 14,
+                boxShadow: '0 8px 18px -8px rgba(110,84,214,0.7)' }}>
+                <Icon name="star" size={16} color="#fff" /> TIPS</button>
+            </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {GATE_QUESTIONS(childName).map((q, i) => (
                 <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
@@ -426,9 +432,10 @@ function HandoverScreen({ nav, today, profile }) {
             </div>
             {customOpen && (
               <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
-                <input className="j-input" style={{ flex: 1 }} value={customText} onChange={e => setCustomText(e.target.value)}
+                <input className="j-input" style={{ flex: 1, minWidth: 0 }} value={customText} onChange={e => setCustomText(e.target.value)}
                   placeholder="Your own word for what you saw" />
-                <button className="j-btn j-btn-soft" style={{ flex: '0 0 auto', minHeight: 48, padding: '0 18px' }} onClick={() => {
+                {/* .j-btn is full-width by default; this one must stay its own size */}
+                <button className="j-btn j-btn-soft" style={{ flex: '0 0 auto', width: 'auto', minHeight: 48, padding: '0 22px' }} onClick={() => {
                   const t = customText.trim(); if (!t) return;
                   if (!extras.includes(t) && !J.BEHAVIOURS.includes(t)) setExtras(x => [...x, t]);
                   setBehaviours(v => v.includes(t) ? v : [...v, t]);

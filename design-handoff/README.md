@@ -386,6 +386,14 @@ To run the reference: open `source/jotla/Jotla.html` in a browser.
 
 ---
 
+## Build 1.6.1 (6 July 2026): Dysregulation Mode polish
+
+Founder field report from the phone.
+
+- **"Add your own" was broken:** the Add button inherited the app-wide full-width button style inside its flex row, so it blew past the screen edge and crushed the input to a sliver. The button now keeps its own size (75px) and the input gets the room (verified by a measured layout check: nothing off-screen).
+- **The TIPS pill looked blended-in and unclickable.** It is now solid purple with a star, slightly bigger, and lives in the top-right of the "Ask the teacher" card; the card's intro line breaks in two ("Five gentle questions." / "Read them out, tap the answers below.") so the text never touches it.
+- Verified by the updated 15-check suite plus full regression (65 checks green).
+
 ## Build 1.6.0 (5 July 2026): the child journey becomes a little story
 
 Founder direction with creative freedom granted: stage each place, make the faces feel alive, make happy something a child wants to collect.
