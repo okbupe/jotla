@@ -386,6 +386,10 @@ To run the reference: open `source/jotla/Jotla.html` in a browser.
 
 ---
 
+## Build 1.6.2 (6 July 2026): edit-history label softened
+
+- The edited-note history label drops "(kept for honesty)" and reads simply "What it said before", in light blue italic, on notes and documents alike. The honesty stays; it just stops announcing itself.
+
 ## Build 1.6.1 (6 July 2026): Dysregulation Mode polish
 
 Founder field report from the phone.

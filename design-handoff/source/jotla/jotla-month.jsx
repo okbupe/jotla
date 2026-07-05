@@ -340,7 +340,7 @@ function EntryScreen({ nav, entries, id }) {
 
           {e.history && e.history.length > 0 && (
             <div className="j-card j-card-pad" style={{ background: 'var(--card-2)' }}>
-              <p className="j-sm" style={{ marginBottom: 8 }}>What it said before (kept for honesty)</p>
+              <p className="j-sm" style={{ marginBottom: 8, color: '#6C9BD9', fontStyle: 'italic' }}>What it said before</p>
               {e.history.map((h, i) => (
                 <div key={i} style={{ padding: '8px 0', borderTop: i ? '1px solid var(--line)' : 'none' }}>
                   <p className="j-meta" style={{ marginBottom: 3 }}>Until {J.fmtShort(h.on)} {h.on.slice(0, 4)}</p>
