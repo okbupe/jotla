@@ -386,6 +386,16 @@ To run the reference: open `source/jotla/Jotla.html` in a browser.
 
 ---
 
+## Build 1.6.0 (5 July 2026): the child journey becomes a little story
+
+Founder direction with creative freedom granted: stage each place, make the faces feel alive, make happy something a child wants to collect.
+
+- **The walk is staged now.** "Hi [name], how was your day?" with a Start pill. Each place gets its own introduction page (big scene illustration, its name, "Let's start with the classroom." / "Now on to the lunch hall." / "And finally, the playground.") with a Next pill.
+- **The faces are bare and big.** No white card borders: just five large faces with their word underneath, same style as the greeting face. Tapping one is the choice; no separate Continue.
+- **The chosen face takes centre stage and comes alive.** Happy bounces (with a brief, gentle, deterministic confetti fall and no sound, ever); ok sways; sad droops; worried trembles; angry shakes. "Ready for the next one?" / "Ready for the last one?" / "That's everything!" then a Next/Finish pill. All animation respects prefers-reduced-motion.
+- The three-dot walk progress stays, Skip stays quietly at the bottom, and the picks still save as one honest entry in the record.
+- Verified by the updated 20-check feature suite plus the full regression set (63 checks green in total).
+
 ## Build 1.5.0 (5 July 2026): speaking the parent's language, and Tips for the storm
 
 Founder direction: "dysregulation" is the word SEND parents hear constantly from school; the app must meet them in their own vocabulary, and Plus should teach parents how to BE in those moments, not just how to record them.

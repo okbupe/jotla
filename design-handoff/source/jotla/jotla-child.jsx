@@ -50,9 +50,10 @@ const CHILD_BG = '#FFF6EC';
 function ChildScreen({ nav, profile }) {
   const J = window.JOTLA;
   const childName = (profile && profile.name) || 'Sam';
-  // A fixed little journey through the day: classroom, lunch hall, playground, done.
+  // A fixed little journey through the day, staged like a story: meet each
+  // place, pick a face, the face comes alive in the middle, walk on.
   const scenes = J.CHILD_SCENES;
-  const [step, setStep] = useStateC('intro');   // intro | journey | done
+  const [step, setStep] = useStateC('intro');   // intro | scene | pick | confirm | done
   const [idx, setIdx] = useStateC(0);           // which scene of the journey
   const [sel, setSel] = useStateC(null);        // emotion picked on the current scene
   const [picks, setPicks] = useStateC([]);
@@ -82,14 +83,17 @@ function ChildScreen({ nav, profile }) {
     setStep('done');
   };
 
-  // one scene done: keep the pick and walk on to the next place (or finish)
-  const continueOn = () => {
-    if (!sel) return;
-    const next = [...picks, { scene: scenes[idx].key, emotion: sel }];
-    setPicks(next); setSel(null);
-    if (idx >= scenes.length - 1) finishDone(next);
-    else setIdx(idx + 1);
+  // pick a face -> it takes centre stage; Next walks on to the following place
+  const pickFace = (key) => {
+    setSel(key);
+    setPicks(ps => [...ps, { scene: scenes[idx].key, emotion: key }]);
+    setStep('confirm');
   };
+  const confirmNext = () => {
+    if (idx >= scenes.length - 1) { finishDone(); return; }
+    setIdx(idx + 1); setSel(null); setStep('scene');
+  };
+  const SCENE_LINES = ["Let's start with the classroom.", 'Now on to the lunch hall.', 'And finally, the playground.'];
 
   const sceneColours = {
     classroom: '#E7F1EC', lunch: '#EAF1FB', playground: '#FBEFE6',
@@ -99,6 +103,21 @@ function ChildScreen({ nav, profile }) {
   const Q = ({ children }) => (
     <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 32, color: '#5a4326',
       textAlign: 'center', margin: '0 0 28px', lineHeight: 1.1 }}>{children}</p>
+  );
+  // the one green pill button the whole journey runs on
+  const PillBtn = ({ children, onClick }) => (
+    <button onClick={onClick} className="j-press" style={{ minWidth: 220, minHeight: 62, borderRadius: 999, border: 'none',
+      cursor: 'pointer', background: '#27AE60', color: '#fff', fontFamily: "'Cal Sans', system-ui", fontWeight: 500,
+      fontSize: 22, boxShadow: '0 14px 28px -12px rgba(39,174,96,0.6)', padding: '0 36px' }}>{children}</button>
+  );
+  // where we are on the walk
+  const Dots = () => (
+    <div style={{ display: 'flex', justifyContent: 'center', gap: 7, marginBottom: 22 }}>
+      {scenes.map((x, i) => (
+        <span key={x.key} style={{ width: i === idx ? 20 : 8, height: 8, borderRadius: 99, transition: 'all .2s ease',
+          background: i < idx ? '#27AE60' : i === idx ? '#E5A93D' : '#EAD9B8' }} />
+      ))}
+    </div>
   );
 
   return (
@@ -117,57 +136,63 @@ function ChildScreen({ nav, profile }) {
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 22 }}>
                 <Face mood="happy" size={140} bg="#FFE6B8" />
               </div>
-              <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 36, color: '#5a4326', margin: '0 0 8px' }}>Your day</p>
-              <p style={{ fontSize: 18, color: '#8a6f4e', margin: '0 0 32px' }}>Hi {childName}. Want to show me?</p>
-              <button onClick={() => setStep('journey')} className="j-press" style={{ width: '100%', minHeight: 72, borderRadius: 22,
-                border: 'none', cursor: 'pointer', background: '#27AE60', color: '#fff', fontFamily: "'Cal Sans', system-ui",
-                fontWeight: 500, fontSize: 24, boxShadow: '0 14px 28px -12px rgba(39,174,96,0.6)' }}>Start</button>
+              <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 36, color: '#5a4326', margin: '0 0 8px' }}>Hi {childName}</p>
+              <p style={{ fontSize: 20, color: '#8a6f4e', margin: '0 0 34px' }}>How was your day?</p>
+              <PillBtn onClick={() => { setIdx(0); setStep('scene'); }}>Start</PillBtn>
             </div>
           )}
 
-          {step === 'journey' && (() => {
-            const s = scenes[idx];
-            return (
-              <div className="j-fade" key={s.key}>
-                {/* where we are on the walk */}
-                <div style={{ display: 'flex', justifyContent: 'center', gap: 7, marginBottom: 18 }}>
-                  {scenes.map((x, i) => (
-                    <span key={x.key} style={{ width: i === idx ? 20 : 8, height: 8, borderRadius: 99, transition: 'all .2s ease',
-                      background: i < idx ? '#27AE60' : i === idx ? '#E5A93D' : '#EAD9B8' }} />
-                  ))}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16, borderRadius: 24,
-                  background: sceneColours[s.key], padding: '14px 18px', marginBottom: 22 }}>
-                  <span style={{ width: 64, height: 64, borderRadius: 18, background: '#fff', flexShrink: 0,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center' }}><SceneIllo scene={s.key} size={50} /></span>
-                  <span style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 27, color: '#5a4326' }}>{s.label}</span>
-                </div>
-                <Q>How did you feel here?</Q>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-                  {J.CHILD_EMOTIONS.map(em => {
-                    const on = sel === em.key;
-                    return (
-                      <button key={em.key} onClick={() => setSel(em.key)} className="j-press"
-                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '18px 8px',
-                          minHeight: 124, borderRadius: 24, cursor: 'pointer', background: '#fff',
-                          border: on ? '3px solid #27AE60' : '3px solid transparent',
-                          boxShadow: on ? '0 10px 24px -12px rgba(39,174,96,0.55)' : '0 8px 20px -14px rgba(120,90,50,0.5)' }}>
-                        <Face mood={em.key} size={62} />
-                        <span style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 20, color: '#5a4326' }}>{em.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-                {/* the only way on is forward: Continue appears once a face is picked */}
-                <button onClick={continueOn} className="j-press" disabled={!sel}
-                  style={{ width: '100%', minHeight: 66, borderRadius: 22, border: 'none', marginTop: 20,
-                    cursor: sel ? 'pointer' : 'default', background: sel ? '#27AE60' : '#EDE0C8',
-                    color: sel ? '#fff' : '#C4AC85', fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 22,
-                    boxShadow: sel ? '0 14px 28px -12px rgba(39,174,96,0.6)' : 'none', transition: 'all .18s ease' }}>
-                  Continue</button>
+          {step === 'scene' && (
+            <div className="j-fade" key={'s' + idx} style={{ textAlign: 'center' }}>
+              <Dots />
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+                <span style={{ width: 132, height: 132, borderRadius: 36, background: sceneColours[scenes[idx].key],
+                  display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <SceneIllo scene={scenes[idx].key} size={94} />
+                </span>
               </div>
-            );
-          })()}
+              <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 34, color: '#5a4326', margin: '0 0 8px' }}>{scenes[idx].label}</p>
+              <p style={{ fontSize: 19, color: '#8a6f4e', margin: '0 0 32px' }}>{SCENE_LINES[idx]}</p>
+              <PillBtn onClick={() => setStep('pick')}>Next</PillBtn>
+            </div>
+          )}
+
+          {step === 'pick' && (
+            <div className="j-fade" key={'p' + idx} style={{ textAlign: 'center' }}>
+              <Dots />
+              <Q>How did you feel in the {scenes[idx].label.toLowerCase()}?</Q>
+              {/* bare faces, no card borders: just the face and its word */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '24px 26px' }}>
+                {J.CHILD_EMOTIONS.map(em => (
+                  <button key={em.key} onClick={() => pickFace(em.key)} className="j-press"
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 9, width: '28%', minWidth: 94 }}>
+                    <Face mood={em.key} size={88} />
+                    <span style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 19, color: '#5a4326' }}>{em.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {step === 'confirm' && sel && (
+            <div className="j-fade" key={'c' + idx} style={{ textAlign: 'center' }}>
+              <Dots />
+              <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
+                {sel === 'happy' && <ConfettiBurst />}
+                <span className={'j-anim-' + sel} style={{ display: 'inline-flex' }}>
+                  <Face mood={sel} size={150} bg="#FFE6B8" />
+                </span>
+              </div>
+              <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 32, color: '#5a4326', margin: '0 0 8px', lineHeight: 1.1 }}>
+                {idx >= scenes.length - 1 ? "That's everything!" : idx === scenes.length - 2 ? 'Ready for the last one?' : 'Ready for the next one?'}
+              </p>
+              <p style={{ fontSize: 18, color: '#8a6f4e', margin: '0 0 32px' }}>
+                {(J.CHILD_EMOTIONS.find(e => e.key === sel) || {}).label} in the {scenes[idx].label.toLowerCase()}.
+              </p>
+              <PillBtn onClick={confirmNext}>{idx >= scenes.length - 1 ? 'Finish' : 'Next'}</PillBtn>
+            </div>
+          )}
 
           {step === 'done' && (
             <div className="j-fade" style={{ textAlign: 'center' }}>
@@ -199,6 +224,27 @@ function ChildScreen({ nav, profile }) {
         )}
       </div>
     </div>
+  );
+}
+
+// A brief, gentle confetti burst for a happy pick: happiness is worth marking,
+// so the good days become the ones the child wants to collect. Deterministic
+// (no Math.random) and it falls once, then it is gone. No sound, ever.
+function ConfettiBurst() {
+  const COLORS = ['#F4C95D', '#27AE60', '#5B8DEF', '#E8749E', '#9B7BD8'];
+  return (
+    <span aria-hidden="true" style={{ position: 'absolute', left: '50%', top: 0, width: 240, height: 170,
+      transform: 'translateX(-50%)', pointerEvents: 'none', overflow: 'visible' }}>
+      {Array.from({ length: 14 }, (_, i) => (
+        <span key={i} className="j-confetti" style={{
+          position: 'absolute', left: ((i * 37) % 96) + '%', top: -8 - ((i * 23) % 26),
+          width: 7 + (i % 3) * 3, height: 10 + (i % 4) * 3, borderRadius: 3,
+          background: COLORS[i % COLORS.length],
+          animationDelay: ((i % 7) * 0.09) + 's',
+          animationDuration: (1.1 + (i % 5) * 0.16) + 's',
+        }} />
+      ))}
+    </span>
   );
 }
 
