@@ -387,13 +387,16 @@ function HandoverScreen({ nav, today, profile }) {
 
   return (
     <div className="j-screen" style={{ background: 'var(--bg)' }}>
-      <PushHeader title="Gate note" subtitle="One calm screen. Minimal typing." onBack={() => nav.back()} />
+      <PushHeader title="Gate note" subtitle="Dysregulation Mode. One calm screen, minimal typing." onBack={() => nav.back()} />
       <div className="j-scroll j-fade">
         <div className="j-pad" style={{ paddingBottom: 150, paddingTop: 2, display: 'flex', flexDirection: 'column', gap: 20 }}>
-          {/* auto-attached context */}
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {/* auto-attached context + the in-the-moment tips */}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
             <span className="j-pillbadge" style={{ background: 'var(--card)', border: '1px solid var(--line)', color: 'var(--muted)' }}><Icon name="clock" size={14} color="var(--muted)" /> {(() => { const n = new Date(); return (n.getHours() < 12 ? 'Morning' : n.getHours() < 17 ? 'Afternoon' : 'Evening') + ', ' + String(n.getHours()).padStart(2, '0') + ':' + String(n.getMinutes()).padStart(2, '0'); })()}</span>
             <span className="j-pillbadge" style={{ background: 'var(--card)', border: '1px solid var(--line)', color: 'var(--muted)' }}><Icon name="today" size={14} color="var(--muted)" /> {school}</span>
+            <button onClick={() => nav.go('tips')} className="j-pillbadge j-press" style={{ border: 'none', cursor: 'pointer',
+              background: 'var(--tint-amber)', color: 'var(--amber)', marginLeft: 'auto' }}>
+              <Icon name="sparkle" size={14} color="var(--amber)" /> TIPS</button>
           </div>
 
           {/* read-aloud question list */}
@@ -503,10 +506,12 @@ function HandoverScreen({ nav, today, profile }) {
 }
 
 // ---------------- "At the gate?" explainer (shown before capture when there is no Plus) ----------------
+// Deliberately uses the word "dysregulation": it is the word SEND parents hear
+// constantly from school, and meeting them in their own vocabulary is the point.
 function GateIntroScreen({ nav, profile }) {
   const childName = (profile && profile.name) || 'Sam';
   const reasons = [
-    ['In the moment', `You know what to ask, so you do not walk away with just "a hard afternoon" and nothing you can use.`],
+    ['In the moment', `You know exactly what to ask, so "dysregulated" never goes into the record as one bare word with nothing behind it.`],
     ['Over time', 'Because it records what came before and what helped, the patterns become easy to find.'],
     ['When it counts', 'It reads as a calm, factual note rather than a vent. The kind of note made on the day that helps at an EHCP assessment, an annual review, or a tribunal.'],
   ];
@@ -519,16 +524,19 @@ function GateIntroScreen({ nav, profile }) {
             <span style={{ width: 52, height: 52, borderRadius: 15, background: 'var(--tint-blue)',
               display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="note" size={26} color="var(--blue)" /></span>
           </div>
-          <h1 className="j-h1" style={{ marginBottom: 10 }}>A gate note, not just a log</h1>
+          <h1 className="j-h1" style={{ marginBottom: 10 }}>For the days you hear "dysregulated"</h1>
           <p className="j-body" style={{ color: 'var(--muted)', marginBottom: 14 }}>
-            A quick log captures that something happened, and how it felt. A line is plenty. A gate note captures what actually happened, while you are still standing there.
+            A quick log captures that something happened, and how it felt. A line is plenty.
+          </p>
+          <p className="j-body" style={{ color: 'var(--muted)', marginBottom: 14 }}>
+            A gate note is for the harder days. The teacher meets you at the gate, or the message home says {childName} was dysregulated, and you are left holding one word instead of a picture of what actually happened.
           </p>
           <p className="j-body" style={{ color: 'var(--muted)', marginBottom: 22 }}>
-            It gives you the five questions to ask the teacher, takes the answers as plain notes, and puts them in order: what led up to it, what happened, and what helped. The time and place add themselves.
+            Dysregulation Mode walks you through it while you are still standing there. It knows the right questions to ask, and the right order to ask them in, and it turns the answers into a calm, dated note: what led up to it, what happened, and what helped. The time and place add themselves.
           </p>
 
           <SectionLabel>Why it is worth it</SectionLabel>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 8 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 12 }}>
             {reasons.map(([h, b]) => (
               <div key={h} className="j-card" style={{ padding: 16, display: 'flex', gap: 14, alignItems: 'flex-start' }}>
                 <span style={{ width: 30, height: 30, borderRadius: 10, background: 'var(--tint-green)', flexShrink: 0,
@@ -539,6 +547,14 @@ function GateIntroScreen({ nav, profile }) {
                 </div>
               </div>
             ))}
+            <div className="j-card" style={{ padding: 16, display: 'flex', gap: 14, alignItems: 'flex-start', background: 'var(--tint-amber)', border: 'none' }}>
+              <span style={{ width: 30, height: 30, borderRadius: 10, background: 'var(--card)', flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 1 }}><Icon name="sparkle" size={17} color="var(--amber)" /></span>
+              <div>
+                <p className="j-h3" style={{ marginBottom: 4 }}>Tips come with it</p>
+                <p className="j-sm">Short, calm guidance for the moment itself: how to steady yourself and {childName}, and what tends to do more harm than good.</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -553,4 +569,75 @@ function GateIntroScreen({ nav, profile }) {
   );
 }
 
-Object.assign(window, { TodayScreen, QuickLogScreen, HandoverScreen, GateIntroScreen, ChipGroup, FieldLabel, PhotoPicker, MediaPicker, greeting });
+// ---------------- Tips (Plus): how to be, when your child is dysregulated ----------------
+// A calm, swipeable deck rather than a wall of text. Widely accepted co-regulation
+// practice in plain language; never medical advice, and it says so.
+const DYSREG_TIPS = [
+  { icon: 'heart', tint: 'var(--tint-green)', ink: 'var(--green)', title: 'Start with you',
+    body: 'Your calm is the tool. Take one slow breath before any words. A dysregulated child borrows their calm from the nearest steady adult; that is co-regulation, and you are the anchor.',
+    say: '"I\'m here. You\'re safe."' },
+  { icon: 'hand', tint: 'var(--tint-blue)', ink: 'var(--blue)', title: 'Fewer words, softer everything',
+    body: 'Keep it short and simple. Lower your voice, come down to their level, stand slightly side-on rather than face-on. No questions yet: in the storm the thinking part of the brain is offline, so reasoning cannot land.' },
+  { icon: 'close', tint: 'rgba(216,72,72,0.12)', ink: '#C0392B', title: 'What makes it worse',
+    body: 'Asking why. Threatening consequences. Crowding, holding or blocking the way unless safety truly demands it. Taking what is said in the storm personally. Dysregulation is not naughtiness, and mid-storm is never the teaching moment.' },
+  { icon: 'leaf', tint: 'var(--tint-amber)', ink: 'var(--amber)', title: 'Give it room to pass',
+    body: 'Less noise, less light, less audience, if you can manage it. One steady presence beats a crowd. A storm passes faster when nothing feeds it.' },
+  { icon: 'heart', tint: 'var(--tint-green)', ink: 'var(--green)', title: 'Afterwards, reconnect first',
+    body: 'Repair before review. Let them know the storm did not change anything between you. Save the talking-through for later, once everyone is truly calm, and keep it free of blame.',
+    say: '"That was hard. We\'re okay."' },
+  { icon: 'note', tint: 'var(--tint-blue)', ink: 'var(--blue)', title: 'Then write it down',
+    body: 'Once things are settled, open a gate note. It asks you the right questions in the right order while everything is still fresh. Hours later is fine; the record keeps its timing honest.', cta: true },
+];
+
+function DysregTipsScreen({ nav }) {
+  const [idx, setIdx] = useStateA(0);
+  const pagerRef = useRefA(null);
+  const onScroll = () => {
+    const el = pagerRef.current; if (!el || !el.clientWidth) return;
+    const i = Math.round(el.scrollLeft / el.clientWidth);
+    if (i !== idx) setIdx(i);
+  };
+  return (
+    <div className="j-screen">
+      <PushHeader title="Tips" subtitle="How to be, when it is happening" onClose={() => nav.back()} />
+      <div ref={pagerRef} onScroll={onScroll} className="j-pager j-fade" style={{ flex: 1, minHeight: 0, display: 'flex',
+        overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch' }}>
+        {DYSREG_TIPS.map((t, i) => (
+          <div key={i} style={{ flex: '0 0 100%', width: '100%', height: '100%', scrollSnapAlign: 'start', overflowY: 'auto' }}>
+            <div className="j-pad" style={{ paddingTop: 26, paddingBottom: 140, display: 'flex', flexDirection: 'column',
+              alignItems: 'center', textAlign: 'center' }}>
+              <span style={{ width: 76, height: 76, borderRadius: 24, background: t.tint, display: 'flex',
+                alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
+                <Icon name={t.icon} size={36} color={t.ink} />
+              </span>
+              <p className="j-eyebrow" style={{ marginBottom: 6 }}>{i + 1} of {DYSREG_TIPS.length}</p>
+              <h1 className="j-h1" style={{ marginBottom: 12 }}>{t.title}</h1>
+              <p className="j-body" style={{ color: 'var(--muted)', fontSize: 16.5, lineHeight: 1.55, maxWidth: 330 }}>{t.body}</p>
+              {t.say && (
+                <span style={{ marginTop: 18, padding: '10px 18px', borderRadius: 999, background: t.tint, color: t.ink,
+                  fontSize: 15.5, fontWeight: 500 }}>{t.say}</span>
+              )}
+              {t.cta && (
+                <button className="j-btn j-btn-primary" style={{ marginTop: 22 }} onClick={() => nav.go('handover')}>
+                  <Icon name="note" size={18} color="#fff" /> Open a gate note
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0,
+        padding: '10px 20px calc(14px + env(safe-area-inset-bottom))', background: 'var(--fade-grad)' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginBottom: 8 }}>
+          {DYSREG_TIPS.map((t, i) => (
+            <span key={i} style={{ width: idx === i ? 18 : 7, height: 7, borderRadius: 99, transition: 'all .2s ease',
+              background: idx === i ? 'var(--blue)' : 'var(--chip-border)' }} />
+          ))}
+        </div>
+        <p className="j-meta" style={{ textAlign: 'center' }}>Swipe for the next one. Good general practice, not medical advice; you know your child best.</p>
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { TodayScreen, QuickLogScreen, HandoverScreen, GateIntroScreen, DysregTipsScreen, ChipGroup, FieldLabel, PhotoPicker, MediaPicker, greeting });

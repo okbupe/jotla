@@ -386,6 +386,15 @@ To run the reference: open `source/jotla/Jotla.html` in a browser.
 
 ---
 
+## Build 1.5.0 (5 July 2026): speaking the parent's language, and Tips for the storm
+
+Founder direction: "dysregulation" is the word SEND parents hear constantly from school; the app must meet them in their own vocabulary, and Plus should teach parents how to BE in those moments, not just how to record them.
+
+- **The free "At the gate?" intro now speaks dysregulation.** "For the days you hear 'dysregulated'": the quick log vs gate note distinction is drawn around the word itself (the message home says your child was dysregulated, and you are left holding one word instead of a picture). Dysregulation Mode is named to parents and promises the right questions in the right order, without listing them.
+- **Plus: a TIPS pill inside Dysregulation Mode** opens a calm six-card swipeable deck: Start with you (co-regulation, "I'm here. You're safe."), Fewer words softer everything, What makes it worse (the don'ts that do damage), Give it room to pass, Afterwards reconnect first ("That was hard. We're okay."), Then write it down (straight into a gate note). Every card is short enough to read mid-crisis; the footer says plainly it is good general practice, not medical advice.
+- The free intro honestly teases the tips as part of Plus.
+- Verified by 13 new scripted checks plus the full 46-check regression suite.
+
 ## Build 1.4.1 (5 July 2026): the system Back gesture finally behaves
 
 Founder field report: the phone's back swipe was closing the whole app mid-navigation, and could close it from the dashboard by accident. Root cause: browser history entries created outside a real tap are marked "skippable" by Android Chrome, so the old re-armed sentinel got blown straight through by consecutive back swipes.

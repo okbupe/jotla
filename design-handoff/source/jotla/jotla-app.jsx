@@ -578,6 +578,7 @@ function App({ appMode }) {
     case 'quicklog': screen = <QuickLogScreen nav={nav} today={today} />; break;
     case 'gateintro': screen = <GateIntroScreen nav={nav} profile={profile} />; break;
     case 'handover': screen = <HandoverScreen nav={nav} today={today} profile={profile} />; break;
+    case 'tips': screen = <DysregTipsScreen nav={nav} />; break;
     case 'child': screen = <ChildScreen nav={nav} profile={profile} />; break;
     case 'addchild': screen = <AddChildScreen nav={nav} />; break;
     case 'tour': screen = <TourScreen nav={nav} profile={profile} />; break;

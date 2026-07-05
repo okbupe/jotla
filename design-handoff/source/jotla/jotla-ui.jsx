@@ -3,7 +3,7 @@ const { useState, useRef, useEffect } = React;
 
 // The single source of the visible build number. Bump this every release
 // (and keep sw.js VERSION in step) so the Settings footer can never lie.
-window.JOTLA_BUILD = '1.4.1';
+window.JOTLA_BUILD = '1.5.0';
 
 // A calm, honest locked card for Plus features in the free app: the feature is
 // visible and named, never hidden, and one tap shows what Plus is.
