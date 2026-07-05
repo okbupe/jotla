@@ -398,31 +398,56 @@ function App({ appMode }) {
   // calls remember() and go() in the same tap and state updates are batched.
   const viewRef = useRefApp(view);
   viewRef.current = view;
+
+  // The browser history is kept in lockstep with the in-app stack, so the
+  // system Back gesture walks back through Jotla one step at a time instead
+  // of closing the app. backNow/homeNow are the raw steps (no browser side
+  // effects); the nav wrappers below add the mirroring.
+  const depthRef = useRefApp(1);       // how many entries we sit above the base slot
+  const homeJumpRef = useRefApp(false);
+  const pushDepth = () => {
+    depthRef.current += 1;
+    try { window.history.pushState({ j: depthRef.current }, ''); } catch (e) {}
+  };
+  const backNow = () => setHistory(h => {
+    if (h.length) {
+      const prev = h[h.length - 1];
+      const pv = (prev && prev.view) ? prev.view : { name: 'today' };
+      viewRef.current = pv; setView(pv);
+      setTab((prev && prev.tab) ? prev.tab : 'today');
+      return h.slice(0, -1);
+    }
+    if (!TAB_NAMES.includes(view.name)) { const pv = { name: tab }; viewRef.current = pv; setView(pv); }
+    return h;
+  });
+  const homeNow = () => { setTab('today'); const nv = { name: 'today' }; viewRef.current = nv; setView(nv); setHistory([]); };
+
   const nav = {
     go: (name, params = {}) => {
       const cur = viewRef.current;
       setHistory(h => [...h.slice(-29), { view: cur, tab }]);
       const nv = { name, ...params }; viewRef.current = nv; setView(nv);
+      pushDepth();
     },
     remember: (patch) => { viewRef.current = { ...viewRef.current, ...patch }; setView(viewRef.current); },
-    back: () => setHistory(h => {
-      if (h.length) {
-        const prev = h[h.length - 1];
-        const pv = (prev && prev.view) ? prev.view : { name: 'today' };
-        viewRef.current = pv; setView(pv);
-        setTab((prev && prev.tab) ? prev.tab : 'today');
-        return h.slice(0, -1);
-      }
-      if (!TAB_NAMES.includes(view.name)) { const pv = { name: tab }; viewRef.current = pv; setView(pv); }
-      return h;
-    }),
+    // The in-app Back button goes through the browser too, so the two stacks
+    // never drift apart; the popstate handler performs the actual step.
+    back: () => { try { window.history.back(); } catch (e) { backNow(); } },
     setTab: (name) => {
       if (name === tab && view.name === name) return;
       const cur = viewRef.current;
       setHistory(h => [...h.slice(-29), { view: cur, tab }]);
       setTab(name); const nv = { name }; viewRef.current = nv; setView(nv);
+      pushDepth();
     },
-    home: () => { setTab('today'); const nv = { name: 'today' }; viewRef.current = nv; setView(nv); setHistory([]); },
+    home: () => {
+      const d = depthRef.current;
+      if (d > 1) {
+        homeJumpRef.current = true;
+        try { window.history.go(1 - d); return; } catch (e) { homeJumpRef.current = false; }
+      }
+      homeNow();
+    },
     addEntry: (entry) => setEntries(es => [{ ...entry, childId: profileId }, ...es]),
     addDoc: (doc) => setDocs(ds => [{ ...doc, childId: profileId }, ...ds]),
     deleteEntry: (id) => setEntries(es => es.filter(e => e.id !== id)),
@@ -484,20 +509,51 @@ function App({ appMode }) {
     },
   };
 
-  // Keep the Android / browser Back gesture inside the app instead of closing it.
-  // The router is state-based, so we trap popstate and run an in-app "back" ourselves.
-  const backRef = useRefApp(null);
-  backRef.current = () => {
+  // Keep the system Back gesture (Android back swipe, browser back) inside the
+  // app. Every in-app navigation adds a real browser entry during the tap:
+  // entries created OUTSIDE a user gesture are marked skippable by Android
+  // Chrome, which is why the old single re-armed sentinel blew through and
+  // closed the app mid-navigation. One back gesture now equals one in-app
+  // step, always ending on the Today dashboard. There, the first back shows a
+  // hint and only a second back within 2.2s really leaves. Child mode swallows
+  // Back completely: the press-and-hold is the only door out.
+  const [exitHint, setExitHint] = useStateApp(false);
+  const exitArmRef = useRefApp(0);
+  const exitHintTimer = useRefApp(null);
+  const stateRef = useRefApp({});
+  stateRef.current = { history, view, tab, profileOpen, childOptOpen };
+  const backStepRef = useRefApp(null);
+  backStepRef.current = () => {
     if (childOptOpen) { setChildOptOpen(false); return; }
     if (profileOpen) { setProfileOpen(false); return; }
-    if (history.length) { nav.back(); return; }
-    if (!TAB_NAMES.includes(view.name)) { nav.home(); return; }
-    if (tab !== 'today') { nav.setTab('today'); return; }
-    // already at the Today root: stay in the app (use the system home gesture to leave)
+    if (history.length) { backNow(); return; }
+    homeNow(); // nothing left to pop: settle on the dashboard
   };
+  const homeNowRef = useRefApp(null);
+  homeNowRef.current = homeNow;
   useEffectApp(() => {
-    window.history.pushState({ jotla: true }, '');
-    const onPop = () => { if (backRef.current) backRef.current(); window.history.pushState({ jotla: true }, ''); };
+    try {
+      window.history.replaceState({ j: 0 }, '');
+      window.history.pushState({ j: 1 }, '');
+    } catch (e) {}
+    depthRef.current = 1;
+    const rearm = (j) => { depthRef.current = j; try { window.history.pushState({ j }, ''); } catch (e) {} };
+    const onPop = (ev) => {
+      const j = (ev.state && typeof ev.state.j === 'number') ? ev.state.j : 0;
+      depthRef.current = Math.max(0, j);
+      if (homeJumpRef.current) { homeJumpRef.current = false; depthRef.current = Math.max(1, j); homeNowRef.current(); return; }
+      const s = stateRef.current;
+      if (s.view && s.view.name === 'child') { rearm(j + 1); return; } // the hold is the only exit
+      if (j > 0) { backStepRef.current(); return; }
+      const atRoot = !s.history.length && s.tab === 'today' && s.view && s.view.name === 'today' && !s.profileOpen && !s.childOptOpen;
+      if (!atRoot) { rearm(1); backStepRef.current(); return; }
+      if (Date.now() - exitArmRef.current < 2200) { try { window.history.back(); } catch (e) {} return; } // second back: really leave
+      exitArmRef.current = Date.now();
+      setExitHint(true);
+      clearTimeout(exitHintTimer.current);
+      exitHintTimer.current = setTimeout(() => setExitHint(false), 2200);
+      rearm(1);
+    };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
   }, []);
@@ -533,12 +589,21 @@ function App({ appMode }) {
   }
 
   return (
-    <div className={'jotla-root' + (dark ? ' j-dark' : '') + (appMode ? ' j-app' : '')} style={{ height: '100%', display: 'flex', flexDirection: 'column', paddingTop: appMode ? 'max(env(safe-area-inset-top), 12px)' : 50, background: isChild ? '#FFF6EC' : 'var(--bg)' }}>
+    <div className={'jotla-root' + (dark ? ' j-dark' : '') + (appMode ? ' j-app' : '')} style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative', paddingTop: appMode ? 'max(env(safe-area-inset-top), 12px)' : 50, background: isChild ? '#FFF6EC' : 'var(--bg)' }}>
       {!isFullscreen && <AppHeader profile={profile} plus={plus} onProfile={() => setProfileOpen(true)} onOptions={() => setChildOptOpen(true)} onEvidence={() => nav.go('evidence')} />}
       <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
         <div key={view.name + (view.id || view.date || '') + profileId} style={{ position: 'absolute', inset: 0 }}>{screen}</div>
       </div>
       {isTab && <TabBar active={tab} onTab={nav.setTab} onLog={() => nav.go('quicklog')} />}
+      {exitHint && (
+        <div style={{ position: 'absolute', left: 0, right: 0, bottom: 'calc(96px + env(safe-area-inset-bottom))',
+          display: 'flex', justifyContent: 'center', pointerEvents: 'none', zIndex: 80 }}>
+          <span className="j-fade" style={{ background: 'rgba(22,30,44,0.92)', color: '#fff', fontSize: 14, fontWeight: 500,
+            padding: '10px 18px', borderRadius: 999, boxShadow: '0 10px 24px -10px rgba(10,20,40,0.5)' }}>
+            Swipe back again to close Jotla
+          </span>
+        </div>
+      )}
       {profileOpen && <ProfileSheet profiles={profiles} activeId={profileId}
         onPick={(id) => { setProfileId(id); setProfileOpen(false); nav.home(); }}
         onAddChild={() => { setProfileOpen(false); nav.go('addchild'); }} onClose={() => setProfileOpen(false)} />}

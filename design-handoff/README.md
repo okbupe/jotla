@@ -386,6 +386,16 @@ To run the reference: open `source/jotla/Jotla.html` in a browser.
 
 ---
 
+## Build 1.4.1 (5 July 2026): the system Back gesture finally behaves
+
+Founder field report: the phone's back swipe was closing the whole app mid-navigation, and could close it from the dashboard by accident. Root cause: browser history entries created outside a real tap are marked "skippable" by Android Chrome, so the old re-armed sentinel got blown straight through by consecutive back swipes.
+
+- **Every in-app navigation now adds a real browser history entry during the tap itself** (which Android honours), so one back swipe = one step back through Jotla, always unwinding to the Today dashboard, never past it.
+- **Double-back to close.** On the dashboard, the first back shows a quiet pill ("Swipe back again to close Jotla") and only a second back within 2.2 seconds actually leaves.
+- **Child mode swallows the back gesture entirely.** The press-and-hold "grown-ups" control stays the only way out, so the system back can never become a child's escape hatch around the lock.
+- The in-app Back button now routes through the same browser stack, so the two can never drift apart.
+- Verified by 8 new scripted checks (unwind to dashboard, hint + real close on double-back, child-mode swallow, in-app Back) plus the full 38-check regression suite.
+
 ## Build 1.4.0 (5 July 2026): the calendar really swipes, the Plus graph, and the child journey
 
 Founder field-test round two, same evening. Verified by 38 scripted click-through checks (16 new, 22 regression), all passing.
