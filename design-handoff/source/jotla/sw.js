@@ -6,7 +6,7 @@
    - Heavy static assets (vendor runtime, fonts, icons): CACHE-FIRST, they are
      versioned by path or never change.
    Bump VERSION when the precache list changes. */
-const VERSION = 'jotla-v1.3.0';
+const VERSION = 'jotla-v1.4.0';
 const PRECACHE = [
   './',
   'index.html',

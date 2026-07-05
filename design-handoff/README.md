@@ -386,6 +386,16 @@ To run the reference: open `source/jotla/Jotla.html` in a browser.
 
 ---
 
+## Build 1.4.0 (5 July 2026): the calendar really swipes, the Plus graph, and the child journey
+
+Founder field-test round two, same evening. Verified by 38 scripted click-through checks (16 new, 22 regression), all passing.
+
+- **The calendar is now a true swipe pager.** The grid follows the finger and snaps between months (the same native scroll-snap mechanism as the tier selector), instead of a bare flick gesture. The arrows are gone; a quiet greyed "swipe left and right" hint sits under the grid.
+- **Plus: a month graph under the calendar.** The same Good / Mixed / Hard bar graph the Today page draws, but for whichever month is on screen, with the month's most common hard-moment theme named underneath. Free keeps its honest locked card.
+- **Child mode is a journey now.** Classroom, then the lunch hall, then the playground, then done; no branching choices. A face must be picked before the single Continue button lights up, Skip stays quietly at the bottom, and the walk's progress shows as three dots. The picks still land in the record as one honest entry.
+- **The hold buttons can no longer be derailed.** "Hold for grown-ups" and "Give the phone back" use pointer capture (a small finger drift no longer cancels the hold) and are unselectable, so a long press can never turn into a text highlight.
+- Future note for the AI tier: the graph card is where on-device analysis will land (plain-English findings, pattern notes, pointers to SEN Help resources).
+
 ## Build 1.3.0 (5 July 2026): the full-record demo, honest Free vs Plus, swipe, and honest editing
 
 Built from the founder's field-test list. Verified by 22 scripted click-through checks (17 feature, 5 regression), all passing.

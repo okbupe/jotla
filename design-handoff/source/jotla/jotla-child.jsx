@@ -19,7 +19,12 @@ function HoldButton({ label, sublabel, onComplete, tone = 'cream' }) {
     if (frac >= 1) { cancel(true); onComplete(); }
     else raf.current = requestAnimationFrame(tick);
   };
-  const begin = () => { start.current = 0; raf.current = requestAnimationFrame(tick); };
+  // Pointer capture keeps the hold alive if the finger drifts a little, and
+  // user-select none stops a long press turning into a text highlight.
+  const begin = (ev) => {
+    try { ev.currentTarget.setPointerCapture(ev.pointerId); } catch (e) {}
+    start.current = 0; raf.current = requestAnimationFrame(tick);
+  };
   const cancel = (done) => {
     if (raf.current) cancelAnimationFrame(raf.current);
     raf.current = null; start.current = 0; if (!done) setP(0);
@@ -27,9 +32,11 @@ function HoldButton({ label, sublabel, onComplete, tone = 'cream' }) {
   return (
     <button
       onPointerDown={begin} onPointerUp={() => cancel(false)} onPointerLeave={() => cancel(false)} onPointerCancel={() => cancel(false)}
+      onContextMenu={(ev) => ev.preventDefault()}
       style={{ position: 'relative', width: '100%', minHeight: 60, borderRadius: 18, border: 'none', cursor: 'pointer',
         background: palette.bg, overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center',
         justifyContent: 'center', gap: 2, touchAction: 'none', WebkitTapHighlightColor: 'transparent',
+        userSelect: 'none', WebkitUserSelect: 'none', WebkitTouchCallout: 'none',
         boxShadow: tone === 'cream' ? '0 6px 18px -12px rgba(120,90,50,0.5)' : 'none' }}>
       <span style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${p * 100}%`, background: palette.fill, transition: 'none' }} />
       <span style={{ position: 'relative', fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 17, color: palette.ink }}>{label}</span>
@@ -43,22 +50,24 @@ const CHILD_BG = '#FFF6EC';
 function ChildScreen({ nav, profile }) {
   const J = window.JOTLA;
   const childName = (profile && profile.name) || 'Sam';
-  const [step, setStep] = useStateC('intro');   // intro | scene | emotion | more | done
-  const [scene, setScene] = useStateC(null);
-  const [emotion, setEmotion] = useStateC(null);
-  const [rounds, setRounds] = useStateC(0);
+  // A fixed little journey through the day: classroom, lunch hall, playground, done.
+  const scenes = J.CHILD_SCENES;
+  const [step, setStep] = useStateC('intro');   // intro | journey | done
+  const [idx, setIdx] = useStateC(0);           // which scene of the journey
+  const [sel, setSel] = useStateC(null);        // emotion picked on the current scene
   const [picks, setPicks] = useStateC([]);
   const savedRef = useRefC(false);
 
   const exit = () => nav.home();
 
   // The child's picks become a real entry in the record (previously they were discarded).
-  const finishDone = () => {
-    if (!savedRef.current && picks.length) {
+  const finishDone = (finalPicks) => {
+    const picksNow = finalPicks || picks;
+    if (!savedRef.current && picksNow.length) {
       savedRef.current = true;
       const sceneLabel = k => { const s = J.CHILD_SCENES.find(x => x.key === k); return s ? s.label.toLowerCase() : 'school'; };
       const emoLabel = k => { const em = J.CHILD_EMOTIONS.find(x => x.key === k); return em ? em.label.toLowerCase() : k; };
-      const keys = picks.map(p => p.emotion);
+      const keys = picksNow.map(p => p.emotion);
       const mood = keys.some(k => ['sad', 'worried', 'angry'].includes(k)) ? 'hard' : keys.every(k => k === 'happy') ? 'good' : 'ok';
       const now = new Date();
       nav.addEntry({
@@ -67,10 +76,19 @@ function ChildScreen({ nav, profile }) {
         clock: String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0'),
         setting: 'School', category: 'Other', mood,
         kind: 'contemporaneous', type: 'quick', childMode: true,
-        summary: childName + ' shared their day in child mode: ' + picks.map(p => 'felt ' + emoLabel(p.emotion) + ' in the ' + sceneLabel(p.scene)).join('; ') + '.',
+        summary: childName + ' shared their day in child mode: ' + picksNow.map(p => 'felt ' + emoLabel(p.emotion) + ' in the ' + sceneLabel(p.scene)).join('; ') + '.',
       });
     }
     setStep('done');
+  };
+
+  // one scene done: keep the pick and walk on to the next place (or finish)
+  const continueOn = () => {
+    if (!sel) return;
+    const next = [...picks, { scene: scenes[idx].key, emotion: sel }];
+    setPicks(next); setSel(null);
+    if (idx >= scenes.length - 1) finishDone(next);
+    else setIdx(idx + 1);
   };
 
   const sceneColours = {
@@ -84,7 +102,7 @@ function ChildScreen({ nav, profile }) {
   );
 
   return (
-    <div className="j-screen" style={{ background: CHILD_BG }}>
+    <div className="j-screen" style={{ background: CHILD_BG, userSelect: 'none', WebkitUserSelect: 'none' }}>
       {/* quiet grown-up exit, always available */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '10px 14px 0' }}>
         <ChildExitPill onComplete={exit} />
@@ -101,62 +119,55 @@ function ChildScreen({ nav, profile }) {
               </div>
               <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 36, color: '#5a4326', margin: '0 0 8px' }}>Your day</p>
               <p style={{ fontSize: 18, color: '#8a6f4e', margin: '0 0 32px' }}>Hi {childName}. Want to show me?</p>
-              <button onClick={() => setStep('scene')} className="j-press" style={{ width: '100%', minHeight: 72, borderRadius: 22,
+              <button onClick={() => setStep('journey')} className="j-press" style={{ width: '100%', minHeight: 72, borderRadius: 22,
                 border: 'none', cursor: 'pointer', background: '#27AE60', color: '#fff', fontFamily: "'Cal Sans', system-ui",
                 fontWeight: 500, fontSize: 24, boxShadow: '0 14px 28px -12px rgba(39,174,96,0.6)' }}>Start</button>
             </div>
           )}
 
-          {step === 'scene' && (
-            <div className="j-fade">
-              <Q>Where?</Q>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                {J.CHILD_SCENES.map(s => (
-                  <button key={s.key} onClick={() => { setScene(s.key); setStep('emotion'); }} className="j-press"
-                    style={{ display: 'flex', alignItems: 'center', gap: 18, minHeight: 96, borderRadius: 24, border: 'none',
-                      cursor: 'pointer', background: sceneColours[s.key], padding: '0 20px', textAlign: 'left' }}>
-                    <span style={{ width: 72, height: 72, borderRadius: 20, background: '#fff', flexShrink: 0,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center' }}><SceneIllo scene={s.key} size={56} /></span>
-                    <span style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 26, color: '#5a4326' }}>{s.label}</span>
-                  </button>
-                ))}
+          {step === 'journey' && (() => {
+            const s = scenes[idx];
+            return (
+              <div className="j-fade" key={s.key}>
+                {/* where we are on the walk */}
+                <div style={{ display: 'flex', justifyContent: 'center', gap: 7, marginBottom: 18 }}>
+                  {scenes.map((x, i) => (
+                    <span key={x.key} style={{ width: i === idx ? 20 : 8, height: 8, borderRadius: 99, transition: 'all .2s ease',
+                      background: i < idx ? '#27AE60' : i === idx ? '#E5A93D' : '#EAD9B8' }} />
+                  ))}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16, borderRadius: 24,
+                  background: sceneColours[s.key], padding: '14px 18px', marginBottom: 22 }}>
+                  <span style={{ width: 64, height: 64, borderRadius: 18, background: '#fff', flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center' }}><SceneIllo scene={s.key} size={50} /></span>
+                  <span style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 27, color: '#5a4326' }}>{s.label}</span>
+                </div>
+                <Q>How did you feel here?</Q>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                  {J.CHILD_EMOTIONS.map(em => {
+                    const on = sel === em.key;
+                    return (
+                      <button key={em.key} onClick={() => setSel(em.key)} className="j-press"
+                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '18px 8px',
+                          minHeight: 124, borderRadius: 24, cursor: 'pointer', background: '#fff',
+                          border: on ? '3px solid #27AE60' : '3px solid transparent',
+                          boxShadow: on ? '0 10px 24px -12px rgba(39,174,96,0.55)' : '0 8px 20px -14px rgba(120,90,50,0.5)' }}>
+                        <Face mood={em.key} size={62} />
+                        <span style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 20, color: '#5a4326' }}>{em.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {/* the only way on is forward: Continue appears once a face is picked */}
+                <button onClick={continueOn} className="j-press" disabled={!sel}
+                  style={{ width: '100%', minHeight: 66, borderRadius: 22, border: 'none', marginTop: 20,
+                    cursor: sel ? 'pointer' : 'default', background: sel ? '#27AE60' : '#EDE0C8',
+                    color: sel ? '#fff' : '#C4AC85', fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 22,
+                    boxShadow: sel ? '0 14px 28px -12px rgba(39,174,96,0.6)' : 'none', transition: 'all .18s ease' }}>
+                  Continue</button>
               </div>
-            </div>
-          )}
-
-          {step === 'emotion' && (
-            <div className="j-fade">
-              <Q>How did you feel?</Q>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                {J.CHILD_EMOTIONS.map(em => (
-                  <button key={em.key} onClick={() => { setEmotion(em.key); setPicks(p => [...p, { scene, emotion: em.key }]); setStep('more'); }} className="j-press"
-                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '20px 8px',
-                      minHeight: 132, borderRadius: 24, border: 'none', cursor: 'pointer', background: '#fff',
-                      boxShadow: '0 8px 20px -14px rgba(120,90,50,0.5)' }}>
-                    <Face mood={em.key} size={68} />
-                    <span style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 21, color: '#5a4326' }}>{em.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {step === 'more' && (
-            <div className="j-fade" style={{ textAlign: 'center' }}>
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 22 }}>
-                <Face mood="ok" size={112} bg="#FFE6B8" />
-              </div>
-              <Q>Anything else?</Q>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <button onClick={() => { setRounds(r => r + 1); setScene(null); setEmotion(null); if (rounds >= 1) { finishDone(); } else { setStep('scene'); } }}
-                  className="j-press" style={{ minHeight: 72, borderRadius: 22, border: '2px solid #E5C88A', cursor: 'pointer',
-                    background: '#fff', color: '#5a4326', fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 22 }}>Show another</button>
-                <button onClick={finishDone} className="j-press" style={{ minHeight: 72, borderRadius: 22, border: 'none',
-                  cursor: 'pointer', background: '#27AE60', color: '#fff', fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 22,
-                  boxShadow: '0 14px 28px -12px rgba(39,174,96,0.6)' }}>All done</button>
-              </div>
-            </div>
-          )}
+            );
+          })()}
 
           {step === 'done' && (
             <div className="j-fade" style={{ textAlign: 'center' }}>
@@ -182,7 +193,7 @@ function ChildScreen({ nav, profile }) {
         {/* quiet skip, single tap, never sells */}
         {step !== 'done' && step !== 'intro' && (
           <div style={{ textAlign: 'center', paddingBottom: 22 }}>
-            <button onClick={finishDone} style={{ background: 'none', border: 'none', cursor: 'pointer',
+            <button onClick={() => finishDone()} style={{ background: 'none', border: 'none', cursor: 'pointer',
               fontFamily: "'Outfit', system-ui", fontSize: 15, color: '#b79a72', fontWeight: 500 }}>Skip</button>
           </div>
         )}
@@ -202,12 +213,17 @@ function ChildExitPill({ onComplete }) {
     setP(frac);
     if (frac >= 1) { stop(true); onComplete(); } else raf.current = requestAnimationFrame(tick);
   };
-  const begin = () => { start.current = 0; raf.current = requestAnimationFrame(tick); };
+  const begin = (ev) => {
+    try { ev.currentTarget.setPointerCapture(ev.pointerId); } catch (e) {}
+    start.current = 0; raf.current = requestAnimationFrame(tick);
+  };
   const stop = (done) => { if (raf.current) cancelAnimationFrame(raf.current); raf.current = null; start.current = 0; if (!done) setP(0); };
   return (
     <button onPointerDown={begin} onPointerUp={() => stop(false)} onPointerLeave={() => stop(false)} onPointerCancel={() => stop(false)}
+      onContextMenu={(ev) => ev.preventDefault()}
       style={{ position: 'relative', width: 'auto', height: 36, borderRadius: 999, border: '1.5px solid #ECD9B6', background: 'rgba(255,255,255,0.6)',
         overflow: 'hidden', cursor: 'pointer', touchAction: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '0 16px',
+        userSelect: 'none', WebkitUserSelect: 'none', WebkitTouchCallout: 'none',
         WebkitTapHighlightColor: 'transparent' }}>
       <span style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${p * 100}%`, background: 'rgba(244,201,93,0.4)' }} />
       <span style={{ position: 'relative', fontFamily: "'Outfit', system-ui", fontSize: 12.5, fontWeight: 500, color: '#a98a5e', whiteSpace: 'nowrap' }}>Hold for grown-ups</span>

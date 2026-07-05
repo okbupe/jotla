@@ -13,6 +13,53 @@ function TabTitle({ title, sub, right }) {
   );
 }
 
+// Plus: the shown month as the same bar graph the Today page draws.
+function MonthMoodGraph({ entries, year, month }) {
+  const J = window.JOTLA;
+  const pre = `${year}-${String(month + 1).padStart(2, '0')}-`;
+  let good = 0, ok = 0, hard = 0;
+  const dim = new Date(year, month + 1, 0).getDate();
+  for (let d = 1; d <= dim; d++) {
+    const m = J.dayMood(entries.filter(e => e.date === pre + String(d).padStart(2, '0')));
+    if (m === 'good') good++; else if (m === 'ok') ok++; else if (m === 'hard') hard++;
+  }
+  const blocks = [
+    { key: 'good', label: 'Good', n: good },
+    { key: 'ok',   label: 'Mixed', n: ok },
+    { key: 'hard', label: 'Hard', n: hard },
+  ];
+  const maxN = Math.max(good, ok, hard, 1);
+  const hc = {};
+  entries.forEach(e => { if (e.date.startsWith(pre) && e.mood === 'hard') hc[e.category] = (hc[e.category] || 0) + 1; });
+  const top = Object.entries(hc).sort((a, b) => b[1] - a[1])[0];
+  return (
+    <div className="j-card" style={{ padding: 18, marginTop: 18 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <span className="j-h3">How {J.MONTH_NAMES[month]} looked</span>
+        <span className="j-pillbadge" style={{ background: 'var(--tint-amber)', color: 'var(--amber)' }}>Plus</span>
+      </div>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', minHeight: 92 }}>
+        {blocks.map(b => {
+          const c = window.MOOD_COLOURS[b.key];
+          const h = 22 + (b.n / maxN) * 54;
+          return (
+            <div key={b.key} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 16, color: c, lineHeight: 1 }}>{b.n}</span>
+              <div style={{ width: '100%', height: h, borderRadius: 14, background: c }} />
+              <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--muted)' }}>{b.label}</span>
+            </div>
+          );
+        })}
+      </div>
+      <p className="j-body" style={{ fontSize: 14.5, color: 'var(--muted)', marginTop: 16 }}>
+        {top
+          ? (<><span className="j-strong">{top[0]}</span> entries come up most often as the hard moments this month.</>)
+          : 'No hard moments logged this month. Long may it last.'}
+      </p>
+    </div>
+  );
+}
+
 function MonthScreen({ nav, entries, view }) {
   const J = window.JOTLA;
   const today = J.parseISO(J.TODAY_ISO);
@@ -20,50 +67,61 @@ function MonthScreen({ nav, entries, view }) {
   // to the month the parent was reading, not the latest month
   const [offset, setOffset] = React.useState((view && view.monthOffset) || 0);
   const move = (delta) => setOffset(o => { const n = o + delta; nav.remember({ monthOffset: n }); return n; });
-  // Swipe between months (left = later, right = earlier), like a photo album.
-  const touchRef = React.useRef(null);
-  const onTouchStart = (ev) => { const t = ev.touches && ev.touches[0]; if (t) touchRef.current = { x: t.clientX, y: t.clientY }; };
-  const onTouchEnd = (ev) => {
-    const s = touchRef.current; touchRef.current = null;
-    const t = ev.changedTouches && ev.changedTouches[0];
-    if (!s || !t) return;
-    const dx = t.clientX - s.x, dy = t.clientY - s.y;
-    if (Math.abs(dx) < 56 || Math.abs(dy) > 48) return;
-    if (dx < 0) { if (offset !== 0) move(1); } else { if (canBackRef.current) move(-1); }
-  };
-  const canBackRef = React.useRef(true);
-  const shown = new Date(today.getFullYear(), today.getMonth() + offset, 1);
-  const year = shown.getFullYear();
-  const month = shown.getMonth(); // 0-based
-  const isCurrent = offset === 0;
-  const todayNum = isCurrent ? today.getDate() : 99; // no today ring or future dimming off the current month
   const earliest = entries.length ? entries.reduce((a, e) => (e.date < a ? e.date : a), entries[0].date) : J.TODAY_ISO;
-  const canBack = `${year}-${String(month + 1).padStart(2, '0')}-01` > earliest.slice(0, 8) + '01';
-  canBackRef.current = canBack;
+
+  // Month metadata + calendar cells for any offset from the current month.
+  const monthMeta = (off) => {
+    const shown = new Date(today.getFullYear(), today.getMonth() + off, 1);
+    const year = shown.getFullYear();
+    const month = shown.getMonth(); // 0-based
+    const isCurrent = off === 0;
+    const todayNum = isCurrent ? today.getDate() : 99; // no today ring or future dimming off the current month
+    const canBack = `${year}-${String(month + 1).padStart(2, '0')}-01` > earliest.slice(0, 8) + '01';
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const firstDow = (new Date(year, month, 1).getDay() + 6) % 7; // Monday-first offset
+    const cells = [];
+    for (let i = 0; i < firstDow; i++) cells.push(null);
+    for (let d = 1; d <= daysInMonth; d++) {
+      const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const dayEntries = entries.filter(e => e.date === iso);
+      cells.push({ d, iso, mood: J.dayMood(dayEntries), count: dayEntries.length, future: d > todayNum, isToday: d === todayNum });
+    }
+    return { year, month, isCurrent, canBack, cells };
+  };
+  const cur = monthMeta(offset);
+  const { year, month, isCurrent } = cur;
   const monthLabel = `${J.MONTH_NAMES[month]} ${year}`;
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const firstDow = (new Date(year, month, 1).getDay() + 6) % 7; // Monday-first offset
-  // build calendar cells for the real current month, with leading blanks for alignment
-  const cells = [];
-  for (let i = 0; i < firstDow; i++) cells.push(null);
-  for (let d = 1; d <= daysInMonth; d++) {
-    const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-    const dayEntries = entries.filter(e => e.date === iso);
-    cells.push({ d, iso, mood: J.dayMood(dayEntries), count: dayEntries.length, future: d > todayNum, isToday: d === todayNum });
-  }
+
+  // The calendar is a real swipe pager (same mechanism as the tier selector):
+  // the neighbouring months sit either side and the grid follows the finger.
+  const panelOffsets = [];
+  if (cur.canBack) panelOffsets.push(offset - 1);
+  panelOffsets.push(offset);
+  if (!isCurrent) panelOffsets.push(offset + 1);
+  const centerIdx = panelOffsets.indexOf(offset);
+  const pagerRef = React.useRef(null);
+  const settleRef = React.useRef(null);
+  React.useLayoutEffect(() => {
+    const el = pagerRef.current;
+    if (el) el.scrollLeft = centerIdx * el.clientWidth;
+  }, [offset, panelOffsets.length]);
+  const onPagerScroll = () => {
+    clearTimeout(settleRef.current);
+    settleRef.current = setTimeout(() => {
+      const el = pagerRef.current;
+      if (!el || !el.clientWidth) return;
+      const i = Math.round(el.scrollLeft / el.clientWidth);
+      const target = panelOffsets[Math.max(0, Math.min(panelOffsets.length - 1, i))];
+      if (target !== undefined && target !== offset) move(target - offset);
+    }, 90);
+  };
   const dows = J.DOW_MON; // Mon Tue Wed Thu Fri Sat Sun
 
   return (
     <div className="j-screen">
       <div className="j-scroll j-fade">
         <div className="j-pad" style={{ paddingTop: 14, paddingBottom: 100 }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-            <div style={{ flex: 1, minWidth: 0 }}><TabTitle title={monthLabel} sub="Tap any day to read it back." /></div>
-            <button className="j-chip" style={{ opacity: canBack ? 1 : 0.35, minWidth: 44 }} aria-label="Earlier month"
-              onClick={() => canBack && move(-1)}>{'‹'}</button>
-            <button className="j-chip" style={{ opacity: isCurrent ? 0.35 : 1, minWidth: 44 }} aria-label="Later month"
-              onClick={() => !isCurrent && move(1)}>{'›'}</button>
-          </div>
+          <TabTitle title={monthLabel} sub="Tap any day to read it back." />
 
           {/* plain trend: month patterns are a Plus feature */}
           {nav.plus ? (
@@ -77,49 +135,65 @@ function MonthScreen({ nav, entries, view }) {
                 const pre = `${year}-${String(month + 1).padStart(2, '0')}-`;
                 const me = entries.filter(e => e.date.startsWith(pre));
                 const h = me.filter(e => e.mood === 'hard').length;
-                if (!me.length) return (<><span className="j-strong">Nothing logged in {J.MONTH_NAMES[month]}.</span> Use the arrows to move between months.</>);
+                if (!me.length) return (<><span className="j-strong">Nothing logged in {J.MONTH_NAMES[month]}.</span> Swipe the calendar to move between months.</>);
                 return (<><span className="j-strong">{me.length} {me.length === 1 ? 'entry' : 'entries'} this month{h ? `, ${h} on hard days` : ''}.</span> Tap a tinted day to read it back.</>);
               })()}</p>
             </div>
           ) : (
             <PlusLockedCard onClick={() => nav.go('unlock')} style={{ marginBottom: 18 }}
-              title="Month patterns" text="Counts, hard-day patterns and what they line up with. Part of Plus." />
+              title="Month patterns" text="The mood graph, counts and hard-day patterns for each month. Part of Plus." />
           )}
 
-          {/* calendar (swipe left and right to change month) */}
-          <div className="j-card" style={{ padding: 14, touchAction: 'pan-y' }} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+          {/* calendar: swipe the grid itself between months, like the tier pager */}
+          <div className="j-card" style={{ padding: 14, overflow: 'hidden' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6, marginBottom: 8 }}>
               {dows.map((d, i) => <div key={i} style={{ textAlign: 'center', fontSize: 12, fontWeight: 500, color: 'var(--faint)' }}>{d}</div>)}
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 }}>
-              {cells.map((c, idx) => {
-                if (!c) return <div key={'blank-' + idx} />;
-                const tint = c.mood ? window.moodTint(c.mood) : 'transparent';
-                const ink = c.mood ? window.MOOD_COLOURS[c.mood] : (c.future ? 'var(--line)' : 'var(--faint)');
-                const tappable = c.count > 0;
+            <div ref={pagerRef} onScroll={onPagerScroll} className="j-pager" style={{ display: 'flex',
+              overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch' }}>
+              {panelOffsets.map(off => {
+                const m = off === offset ? cur : monthMeta(off);
                 return (
-                  <button key={c.d} onClick={() => tappable && nav.go('day', { date: c.iso })}
-                    className={tappable ? 'j-press' : ''}
-                    style={{ aspectRatio: '1 / 1', borderRadius: 12, cursor: tappable ? 'pointer' : 'default',
-                      border: 'none', boxShadow: c.isToday ? 'inset 0 0 0 2px var(--blue)' : 'none',
-                      background: tint, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3,
-                      opacity: c.future ? 0.55 : 1 }}>
-                    <span style={{ fontFamily: "'Outfit', system-ui", fontWeight: c.isToday ? 600 : 500, fontSize: 15, color: c.isToday ? 'var(--blue)' : ink }}>{c.d}</span>
-                    {c.mood && <MoodDot mood={c.mood} size={6} />}
-                  </button>
+                  <div key={off} style={{ flex: '0 0 100%', width: '100%', scrollSnapAlign: 'start',
+                    display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6, alignContent: 'start' }}>
+                    {m.cells.map((c, idx) => {
+                      if (!c) return <div key={'blank-' + idx} />;
+                      const tint = c.mood ? window.moodTint(c.mood) : 'transparent';
+                      const ink = c.mood ? window.MOOD_COLOURS[c.mood] : (c.future ? 'var(--line)' : 'var(--faint)');
+                      const tappable = c.count > 0;
+                      return (
+                        <button key={c.d} onClick={() => tappable && nav.go('day', { date: c.iso })}
+                          className={tappable ? 'j-press' : ''}
+                          style={{ aspectRatio: '1 / 1', borderRadius: 12, cursor: tappable ? 'pointer' : 'default',
+                            border: 'none', boxShadow: c.isToday ? 'inset 0 0 0 2px var(--blue)' : 'none',
+                            background: tint, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3,
+                            opacity: c.future ? 0.55 : 1 }}>
+                          <span style={{ fontFamily: "'Outfit', system-ui", fontWeight: c.isToday ? 600 : 500, fontSize: 15, color: c.isToday ? 'var(--blue)' : ink }}>{c.d}</span>
+                          {c.mood && <MoodDot mood={c.mood} size={6} />}
+                        </button>
+                      );
+                    })}
+                  </div>
                 );
               })}
             </div>
           </div>
 
+          {/* quiet swipe hint */}
+          <p style={{ textAlign: 'center', marginTop: 10, marginBottom: 0, fontSize: 12.5, fontWeight: 500,
+            color: 'var(--faint)', opacity: 0.75 }}>‹  swipe left and right  ›</p>
+
           {/* legend */}
-          <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 16 }}>
+          <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 12 }}>
             {[['good', 'Good day'], ['ok', 'Up and down'], ['hard', 'Hard day'], ['none', 'No note']].map(([k, l]) => (
               <span key={k} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: 'var(--faint)' }}>
                 <MoodDot mood={k} size={9} /> {l}
               </span>
             ))}
           </div>
+
+          {/* Plus: the shown month, graphed like the Today page */}
+          {nav.plus && <MonthMoodGraph entries={entries} year={year} month={month} />}
         </div>
       </div>
     </div>
