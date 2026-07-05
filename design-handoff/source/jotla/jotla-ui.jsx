@@ -35,7 +35,8 @@ function moodTint(mood) {
 }
 
 // ---- date range ----
-const RANGE_TODAY = '2026-06-12';
+// "Today" for range maths is always the real device date (was a stale hardcode).
+const RANGE_TODAY = window.JOTLA.TODAY_ISO;
 function isoMinusDays(iso, n) {
   const d = window.JOTLA.parseISO(iso); d.setDate(d.getDate() - n);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -46,7 +47,7 @@ function rangeBounds(preset, from, to) {
     case 'This week': return { from: isoMinusDays(RANGE_TODAY, 4), to: RANGE_TODAY };   // Mon 8 -> Fri 12
     case 'Last 2 weeks': return { from: isoMinusDays(RANGE_TODAY, 13), to: RANGE_TODAY };
     case 'Last 3 weeks': return { from: isoMinusDays(RANGE_TODAY, 20), to: RANGE_TODAY };
-    case 'This month': return { from: '2026-06-01', to: RANGE_TODAY };
+    case 'This month': return { from: RANGE_TODAY.slice(0, 8) + '01', to: RANGE_TODAY };
     case 'Custom': return { from: from || null, to: to || null };
     default: return { from: null, to: null }; // Any time / This term / All time
   }
@@ -64,7 +65,7 @@ function DateRangeControl({ presets, value, onChange }) {
   const dateInput = (which) => (
     <div style={{ flex: 1 }}>
       <label style={{ display: 'block', fontSize: 12.5, color: 'var(--faint)', fontWeight: 500, marginBottom: 6 }}>{which === 'from' ? 'From' : 'To'}</label>
-      <input type="date" className="j-input" min="2026-01-01" max="2026-12-31"
+      <input type="date" className="j-input" min="2019-01-01" max="2030-12-31"
         value={value[which] || ''} onChange={e => set({ [which]: e.target.value })}
         style={{ fontSize: 15, colorScheme: 'light dark', padding: '11px 12px' }} />
     </div>
@@ -86,8 +87,17 @@ function DateRangeControl({ presets, value, onChange }) {
   );
 }
 
-// A sample attached-photo tile shown inside an entry
-function PhotoAttachment({ caption = 'Photo attached (sample)' }) {
+// Attached-photo tile inside an entry. With a real image (src) it renders it;
+// otherwise it falls back to the caption tile.
+function PhotoAttachment({ caption = 'Photo attached', src }) {
+  if (src) {
+    return (
+      <div style={{ marginTop: 12, borderRadius: 14, overflow: 'hidden', background: 'var(--photo-bg)' }}>
+        <img src={src} alt={caption || 'Attached photo'} style={{ display: 'block', width: '100%', maxHeight: 280, objectFit: 'cover' }} />
+        {caption && <div style={{ padding: '8px 12px', fontSize: 13.5, color: 'var(--faint)' }}>{caption}</div>}
+      </div>
+    );
+  }
   return (
     <div style={{ marginTop: 12, borderRadius: 14, background: 'var(--photo-bg)', minHeight: 96,
       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 14 }}>
@@ -96,6 +106,26 @@ function PhotoAttachment({ caption = 'Photo attached (sample)' }) {
     </div>
   );
 }
+
+// Read an image file, downscale it, and hand back a compact JPEG data URL.
+// Keeps attached photos small enough to live in on-device storage.
+function fileToImageDataURL(file, maxDim, quality, cb) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(img.width * scale));
+      c.height = Math.max(1, Math.round(img.height * scale));
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      cb(c.toDataURL('image/jpeg', quality));
+    };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+window.fileToImageDataURL = fileToImageDataURL;
 
 // Entry card: clock time left, mood dot, setting chip, category chip, summary, optional photo.
 function EntryCard({ entry, onClick, showDate = false }) {
@@ -119,7 +149,7 @@ function EntryCard({ entry, onClick, showDate = false }) {
             </div>
           </div>
           <p className="j-body" style={{ fontSize: 16.5, marginTop: 10, lineHeight: 1.4 }}>{entry.summary}</p>
-          {entry.photo && <PhotoAttachment caption={entry.photo} />}
+          {(entry.photo || entry.photoData) && <PhotoAttachment caption={entry.photo} src={entry.photoData} />}
         </div>
       </div>
     </div>
@@ -141,8 +171,10 @@ function SectionLabel({ children, right }) {
 function MiniMonthStrip({ entries, onOpen }) {
   const J = window.JOTLA;
   let good = 0, ok = 0, hard = 0;
-  for (let d = 1; d <= 12; d++) {
-    const iso = `2026-06-${String(d).padStart(2, '0')}`;
+  const _my = J.TODAY_ISO.slice(0, 4), _mm = J.TODAY_ISO.slice(5, 7);
+  const _dim = new Date(Number(_my), Number(_mm), 0).getDate();
+  for (let d = 1; d <= _dim; d++) {
+    const iso = `${_my}-${_mm}-${String(d).padStart(2, '0')}`;
     const m = J.dayMood(entries.filter(e => e.date === iso));
     if (m === 'good') good++; else if (m === 'ok') ok++; else if (m === 'hard') hard++;
   }
@@ -152,6 +184,9 @@ function MiniMonthStrip({ entries, onOpen }) {
     { key: 'hard', label: 'Hard', n: hard },
   ];
   const maxN = Math.max(good, ok, hard, 1);
+  const _hc = {};
+  entries.forEach(e => { if (e.mood === 'hard') _hc[e.category] = (_hc[e.category] || 0) + 1; });
+  const _top = Object.entries(_hc).sort((a, b) => b[1] - a[1])[0];
   return (
     <div className="j-card j-press" onClick={onOpen} style={{ padding: 18, cursor: 'pointer' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
@@ -174,7 +209,7 @@ function MiniMonthStrip({ entries, onOpen }) {
         })}
       </div>
       <p className="j-body" style={{ fontSize: 14.5, color: 'var(--muted)', marginTop: 16 }}>
-        <span className="j-strong">Lunchtime transitions</span> are showing up as the hard moments. Tap Find to see them gathered.
+        {_top ? (<><span className="j-strong">{_top[0]}</span> entries come up most often as the hard moments. Tap Find to see them gathered.</>) : 'No hard moments logged so far. Long may it last.'}
       </p>
     </div>
   );

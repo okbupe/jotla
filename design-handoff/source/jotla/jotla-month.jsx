@@ -16,9 +16,14 @@ function TabTitle({ title, sub, right }) {
 function MonthScreen({ nav, entries }) {
   const J = window.JOTLA;
   const today = J.parseISO(J.TODAY_ISO);
-  const year = today.getFullYear();
-  const month = today.getMonth(); // 0-based
-  const todayNum = today.getDate();
+  const [offset, setOffset] = React.useState(0); // months back from the current month
+  const shown = new Date(today.getFullYear(), today.getMonth() + offset, 1);
+  const year = shown.getFullYear();
+  const month = shown.getMonth(); // 0-based
+  const isCurrent = offset === 0;
+  const todayNum = isCurrent ? today.getDate() : 99; // no today ring or future dimming off the current month
+  const earliest = entries.length ? entries.reduce((a, e) => (e.date < a ? e.date : a), entries[0].date) : J.TODAY_ISO;
+  const canBack = `${year}-${String(month + 1).padStart(2, '0')}-01` > earliest.slice(0, 8) + '01';
   const monthLabel = `${J.MONTH_NAMES[month]} ${year}`;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDow = (new Date(year, month, 1).getDay() + 6) % 7; // Monday-first offset
@@ -36,7 +41,13 @@ function MonthScreen({ nav, entries }) {
     <div className="j-screen">
       <div className="j-scroll j-fade">
         <div className="j-pad" style={{ paddingTop: 14, paddingBottom: 100 }}>
-          <TabTitle title={monthLabel} sub="Tap any day to read it back." />
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+            <div style={{ flex: 1, minWidth: 0 }}><TabTitle title={monthLabel} sub="Tap any day to read it back." /></div>
+            <button className="j-chip" style={{ opacity: canBack ? 1 : 0.35, minWidth: 44 }} aria-label="Earlier month"
+              onClick={() => canBack && setOffset(o => o - 1)}>{'‹'}</button>
+            <button className="j-chip" style={{ opacity: isCurrent ? 0.35 : 1, minWidth: 44 }} aria-label="Later month"
+              onClick={() => !isCurrent && setOffset(o => o + 1)}>{'›'}</button>
+          </div>
 
           {/* plain trend */}
           <div className="j-card" style={{ padding: 14, display: 'flex', gap: 12, alignItems: 'center', marginBottom: 18,
@@ -45,7 +56,13 @@ function MonthScreen({ nav, entries }) {
               display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Icon name="leaf" size={20} color="var(--amber)" />
             </span>
-            <p className="j-body" style={{ fontSize: 15.5 }}><span className="j-strong">Afternoons have been harder this week.</span> The tricky moments keep landing just after lunch.</p>
+            <p className="j-body" style={{ fontSize: 15.5 }}>{(() => {
+              const pre = `${year}-${String(month + 1).padStart(2, '0')}-`;
+              const me = entries.filter(e => e.date.startsWith(pre));
+              const h = me.filter(e => e.mood === 'hard').length;
+              if (!me.length) return (<><span className="j-strong">Nothing logged in {J.MONTH_NAMES[month]}.</span> Use the arrows to move between months.</>);
+              return (<><span className="j-strong">{me.length} {me.length === 1 ? 'entry' : 'entries'} this month{h ? `, ${h} on hard days` : ''}.</span> Tap a tinted day to read it back.</>);
+            })()}</p>
           </div>
 
           {/* calendar */}
@@ -142,7 +159,7 @@ function EntryScreen({ nav, entries, id }) {
 
           <div className="j-card j-card-pad">
             <p className="j-body">{e.summary}</p>
-            {e.photo && <PhotoAttachment caption={e.photo} />}
+            {(e.photo || e.photoData) && <PhotoAttachment caption={e.photo} src={e.photoData} />}
           </div>
 
           {isH && e.handover && (
@@ -169,6 +186,11 @@ function EntryScreen({ nav, entries, id }) {
               )}
             </div>
           )}
+
+          <button className="j-btn j-btn-ghost" style={{ color: '#C0392B', marginTop: 4 }}
+            onClick={() => { if (window.confirm('Delete this note from the record? This cannot be undone.')) { nav.deleteEntry(e.id); nav.back(); } }}>
+            <Icon name="close" size={18} color="#C0392B" /> Delete this note
+          </button>
         </div>
       </div>
     </div>

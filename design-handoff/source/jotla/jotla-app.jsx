@@ -9,15 +9,43 @@ const TAB_DEFS = [
   ['settings', 'Settings', 'settings'],
 ];
 const TAB_NAMES = ['today', 'month', 'find', 'settings'];
-const NAV_KEY = 'jotla_nav_v2';
+const NAV_KEY = 'jotla_nav_v3'; // v3: history remembers the tab as well as the view
 const ENTRIES_KEY = 'jotla_entries_v3';
 const DOCS_KEY = 'jotla_docs_v1';
 const PREF_KEY = 'jotla_prefs_v1';
+const SEED_ANCHOR_KEY = 'jotla_seed_anchor_v1';
 
 function loadJSON(key, fallback) {
   try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; }
 }
-function saveJSON(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {} }
+function saveJSON(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {
+    if (!window.__jotlaQuotaWarned) {
+      window.__jotlaQuotaWarned = true;
+      alert('Storage on this device is full, so the latest change could not be saved. Export your data from Settings, then remove some photos to free space.');
+    }
+  }
+}
+
+// Sample data is anchored near "today" at first load; when the app is opened again
+// weeks later, re-anchor the stored sample entries so the demo never goes stale.
+// Real records (SEED_SHIFTING false) are never touched.
+const SEED_ID_RE = /^(e|m|d)\d+$/;
+function shiftISO(iso, days) {
+  const d = window.JOTLA.parseISO(iso); d.setDate(d.getDate() + days);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function loadSeedAware(key, seeds, dateKey) {
+  const J = window.JOTLA;
+  const stored = loadJSON(key, null);
+  if (!stored) return seeds;
+  if (!J.SEED_SHIFTING) return stored;
+  const anchor = loadJSON(SEED_ANCHOR_KEY, null);
+  if (!anchor || anchor === J.TODAY_ISO) return stored;
+  const shift = Math.round((J.parseISO(J.TODAY_ISO) - J.parseISO(anchor)) / 86400000 / 7) * 7;
+  if (!shift) return stored;
+  return stored.map(x => SEED_ID_RE.test(x.id) ? { ...x, [dateKey]: shiftISO(x[dateKey], shift) } : x);
+}
 
 // ---------- persistent app header ----------
 // Tap the avatar to switch child; press and hold to open that child's options.
@@ -334,15 +362,15 @@ function DeleteChildSheet({ profile, entries, docs, onConfirm, onClose }) {
 
 function App({ appMode }) {
   const J = window.JOTLA;
-  const [entries, setEntries] = useStateApp(() => loadJSON(ENTRIES_KEY, J.SEED_ENTRIES));
-  const [docs, setDocs] = useStateApp(() => loadJSON(DOCS_KEY, J.SEED_DOCS));
-  const prefs0 = loadJSON(PREF_KEY, { dark: false, profileId: 'sam', plus: false, childCfg: {}, customProfiles: [], deletedIds: [] });
+  const [entries, setEntries] = useStateApp(() => loadSeedAware(ENTRIES_KEY, J.SEED_ENTRIES, 'date'));
+  const [docs, setDocs] = useStateApp(() => loadSeedAware(DOCS_KEY, J.SEED_DOCS, 'received'));
+  const prefs0 = loadJSON(PREF_KEY, { dark: false, profileId: J.CHILD.id, plus: false, childCfg: {}, customProfiles: [], deletedIds: [] });
   const [dark, setDark] = useStateApp(!!prefs0.dark);
   const [plus, setPlus] = useStateApp(!!prefs0.plus);
   const [childCfg, setChildCfg] = useStateApp(prefs0.childCfg || prefs0.avatarCols || {});
   const [customProfiles, setCustomProfiles] = useStateApp(prefs0.customProfiles || []);
   const [deletedIds, setDeletedIds] = useStateApp(prefs0.deletedIds || []);
-  const [profileId, setProfileId] = useStateApp(prefs0.profileId || 'sam');
+  const [profileId, setProfileId] = useStateApp(prefs0.profileId || J.CHILD.id);
   const [profileOpen, setProfileOpen] = useStateApp(false);
   const [childOptOpen, setChildOptOpen] = useStateApp(false);
 
@@ -352,6 +380,7 @@ function App({ appMode }) {
   const [tab, setTab] = useStateApp(initNav.tab || 'today');
 
   useEffectApp(() => { saveJSON(NAV_KEY, { view, history, tab }); }, [view, history, tab]);
+  useEffectApp(() => { if (J.SEED_SHIFTING) saveJSON(SEED_ANCHOR_KEY, J.TODAY_ISO); }, []);
   useEffectApp(() => { saveJSON(ENTRIES_KEY, entries); }, [entries]);
   useEffectApp(() => { saveJSON(DOCS_KEY, docs); }, [docs]);
   useEffectApp(() => { saveJSON(PREF_KEY, { dark, profileId, plus, childCfg, customProfiles, deletedIds }); }, [dark, profileId, plus, childCfg, customProfiles, deletedIds]);
@@ -361,13 +390,45 @@ function App({ appMode }) {
     .map(p => ({ ...p, ...(childCfg[p.id] || {}) }));
   const profile = profiles.find(p => p.id === profileId) || profiles[0];
 
+  // Back always returns to the previous page (including across tab switches),
+  // instead of resetting to the tab root. History entries remember view + tab.
   const nav = {
-    go: (name, params = {}) => { setHistory(h => [...h, view]); setView({ name, ...params }); },
-    back: () => setHistory(h => { if (h.length) { setView(h[h.length - 1]); return h.slice(0, -1); } setView({ name: tab }); return h; }),
-    setTab: (name) => { setTab(name); setView({ name }); setHistory([]); },
+    go: (name, params = {}) => { setHistory(h => [...h.slice(-29), { view, tab }]); setView({ name, ...params }); },
+    back: () => setHistory(h => {
+      if (h.length) {
+        const prev = h[h.length - 1];
+        setView((prev && prev.view) ? prev.view : { name: 'today' });
+        setTab((prev && prev.tab) ? prev.tab : 'today');
+        return h.slice(0, -1);
+      }
+      if (!TAB_NAMES.includes(view.name)) setView({ name: tab });
+      return h;
+    }),
+    setTab: (name) => {
+      if (name === tab && view.name === name) return;
+      setHistory(h => [...h.slice(-29), { view, tab }]);
+      setTab(name); setView({ name });
+    },
     home: () => { setTab('today'); setView({ name: 'today' }); setHistory([]); },
     addEntry: (entry) => setEntries(es => [{ ...entry, childId: profileId }, ...es]),
     addDoc: (doc) => setDocs(ds => [{ ...doc, childId: profileId }, ...ds]),
+    deleteEntry: (id) => setEntries(es => es.filter(e => e.id !== id)),
+    deleteDoc: (id) => setDocs(ds => ds.filter(d => d.id !== id)),
+    importBackup: (payload) => {
+      try {
+        if (!payload || payload.app !== 'Jotla' || !payload.child || !payload.child.id) { alert('That file does not look like a Jotla export.'); return; }
+        const child = payload.child;
+        const known = [...J.PROFILES, ...customProfiles].some(p => p.id === child.id);
+        if (!known) setCustomProfiles(list => [...list, child]);
+        setDeletedIds(s => s.filter(x => x !== child.id));
+        const newEntries = (payload.entries || []).filter(x => x && x.id);
+        const newDocs = (payload.documents || []).filter(x => x && x.id);
+        setEntries(es => { const have = new Set(es.map(e => e.id)); return [...newEntries.filter(e => !have.has(e.id)), ...es]; });
+        setDocs(ds => { const have = new Set(ds.map(d => d.id)); return [...newDocs.filter(d => !have.has(d.id)), ...ds]; });
+        setProfileId(child.id);
+        alert('Restored ' + (child.name || 'the child') + "'s record: " + newEntries.length + ' moments and ' + newDocs.length + ' documents from the file.');
+      } catch (err) { alert('Could not restore from that file.'); }
+    },
     toggleDark: () => setDark(d => !d),
     dark,
     plus,
@@ -431,7 +492,7 @@ function App({ appMode }) {
     case 'find': screen = <FindScreen nav={nav} entries={myEntries} />; break;
     case 'evidence': screen = <EvidenceScreen nav={nav} entries={myEntries} docs={myDocs} profile={profile} />; break;
     case 'adddoc': screen = <AddDocScreen nav={nav} />; break;
-    case 'settings': screen = <SettingsScreen nav={nav} profile={profile} />; break;
+    case 'settings': screen = <SettingsScreen nav={nav} profile={profile} entries={myEntries} docs={myDocs} />; break;
     case 'quicklog': screen = <QuickLogScreen nav={nav} today={today} />; break;
     case 'gateintro': screen = <GateIntroScreen nav={nav} profile={profile} />; break;
     case 'handover': screen = <HandoverScreen nav={nav} today={today} profile={profile} />; break;

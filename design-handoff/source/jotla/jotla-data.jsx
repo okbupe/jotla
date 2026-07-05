@@ -129,7 +129,7 @@ const SEED_ANCHOR_ISO = '2026-06-12'; // the last seeded day in the original dat
 
 const SETTINGS = ['School', 'Nursery', 'Home', 'Club'];
 const TIMES = ['Morning', 'Afternoon', 'Evening'];
-const CATEGORIES = ['Mornings', 'Eating', 'Play', 'Transitions', 'Lunch hall', 'Other'];
+const CATEGORIES = ['Mornings', 'Eating', 'Play', 'Transitions', 'Lunch hall', 'Incidents', 'Other'];
 
 const BEHAVIOURS = ['Crying', 'Hitting out', 'Running off', 'Refusing', 'Stomping', 'Withdrawing', 'Screaming'];
 
@@ -155,7 +155,7 @@ const CHILD_EMOTIONS = [
 ];
 
 // Filter themes for Find
-const FIND_THEMES = ['Lunch hall', 'Transitions', 'Eating', 'Play', 'Sleep', 'Mornings'];
+const FIND_THEMES = ['Lunch hall', 'Transitions', 'Eating', 'Play', 'Mornings', 'Incidents'];
 const FIND_MOODS = [
   { key: 'good', label: 'Good' },
   { key: 'ok',   label: 'Mixed' },
@@ -197,6 +197,7 @@ const SEED_DOCS_LIVE = _weekShift ? SEED_DOCS.map(d => ({ ...d, received: _isoSh
 Object.assign(window, {
   JOTLA: {
     PROFILES, CHILD, SEED_ENTRIES: SEED_ENTRIES_LIVE, SEED_DOCS: SEED_DOCS_LIVE, DOC_TYPES, DOC_SOURCES, AVATAR_COLOURS,
+    SEED_SHIFTING: true, // sample data re-anchors near "today"; a real record sets this false
     TODAY_ISO, SETTINGS, TIMES, CATEGORIES, BEHAVIOURS,
     MOODS, CHILD_SCENES, CHILD_EMOTIONS, FIND_THEMES, FIND_MOODS,
     MONTH_NAMES, DOW_SHORT, DOW_MON, DOW_LONG, parseISO, fmtLong, fmtShort, dayMood,

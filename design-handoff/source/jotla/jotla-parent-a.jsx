@@ -178,20 +178,25 @@ function PhotoPicker() {
   );
 }
 
-// Attach media (image/video from library) or Capture (take photo / record video). Prototype mock.
-function MediaPicker() {
-  const [mode, setMode] = useStateA('idle'); // idle | capture | attach
-  const [media, setMedia] = useStateA(null);  // null | { source, kind }
+// Attach media: real files. Photos are downscaled and stored with the entry; videos
+// stay in the phone's own library and the entry keeps an honest note of them.
+function MediaPicker({ value = null, onChange = () => {} }) {
+  const media = value;
+  const onFile = (e, source) => {
+    const f = e.target.files && e.target.files[0]; e.target.value = '';
+    if (!f) return;
+    if (f.type && f.type.startsWith('video')) { onChange({ source, kind: 'video', name: f.name }); return; }
+    window.fileToImageDataURL(f, 1024, 0.72, url => onChange({ source, kind: 'photo', dataUrl: url }));
+  };
 
   if (media) {
     const isVideo = media.kind === 'video';
-    const sourceLabel = media.source === 'capture'
-      ? (isVideo ? 'Recorded just now · saved to your phone' : 'Taken just now · saved to your phone')
-      : (isVideo ? 'Video chosen from your library' : 'Image chosen from your library');
+    const sourceLabel = isVideo
+      ? 'Video noted. The video itself stays safely in your photo library.'
+      : (media.source === 'capture' ? 'Taken just now' : 'Chosen from your photos');
     return (
       <div style={{ borderRadius: 14, overflow: 'hidden', border: '1px solid var(--line)' }}>
-        <div style={{ position: 'relative', minHeight: 150, background: 'var(--photo-bg)',
-          backgroundImage: 'repeating-linear-gradient(135deg, transparent 0 11px, rgba(20,40,80,0.05) 11px 12px)',
+        <div style={{ position: 'relative', minHeight: isVideo ? 110 : 0, background: 'var(--photo-bg)',
           display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {isVideo ? (
             <span style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(255,255,255,0.92)',
@@ -199,15 +204,13 @@ function MediaPicker() {
               <Icon name="play" size={26} color="var(--blue)" fill={true} />
             </span>
           ) : (
-            <Icon name="camera" size={30} color="var(--faint)" />
+            <img src={media.dataUrl} alt="Attached photo" style={{ display: 'block', width: '100%', maxHeight: 220, objectFit: 'cover' }} />
           )}
-          <button onClick={() => { setMedia(null); setMode('idle'); }} aria-label="Remove media" className="j-press"
+          <button onClick={() => onChange(null)} aria-label="Remove media" className="j-press"
             style={{ position: 'absolute', top: 8, right: 8, width: 32, height: 32, borderRadius: 10, border: 'none',
               background: 'rgba(255,255,255,0.92)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Icon name="close" size={17} color="var(--muted)" />
           </button>
-          {isVideo && <span style={{ position: 'absolute', bottom: 8, left: 8, fontSize: 11.5, fontWeight: 600, color: '#fff',
-            background: 'rgba(20,40,80,0.6)', padding: '3px 8px', borderRadius: 8 }}>0:14</span>}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 13px', background: 'var(--card)' }}>
           <Icon name={isVideo ? 'video' : 'camera'} size={17} color="var(--blue)" />
@@ -217,44 +220,21 @@ function MediaPicker() {
     );
   }
 
-  const optBtn = (label, icon, onClick, primary) => (
-    <button onClick={onClick} className="j-press" style={{ flex: 1, minHeight: 52, borderRadius: 12, cursor: 'pointer',
-      border: primary ? 'none' : '1px solid var(--chip-border)', background: primary ? 'var(--tint-blue)' : 'var(--card)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, color: 'var(--blue)', fontSize: 14.5, fontWeight: 500 }}>
-      <Icon name={icon} size={19} color="var(--blue)" /> {label}
-    </button>
+  const tile = (label, sub, icon, capture) => (
+    <label className="j-press" style={{ flex: 1, minHeight: 84, borderRadius: 14, cursor: 'pointer',
+      border: '1.5px dashed var(--chip-border)', background: 'var(--card)', display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center', gap: 7, color: 'var(--muted)' }}>
+      <Icon name={icon} size={24} color="var(--blue)" />
+      <span style={{ fontSize: 14.5, fontWeight: 500 }}>{label}</span>
+      <span style={{ fontSize: 12, color: 'var(--faint)' }}>{sub}</span>
+      <input type="file" accept="image/*,video/*" {...(capture ? { capture: 'environment' } : {})} style={{ display: 'none' }}
+        onChange={e => onFile(e, capture ? 'capture' : 'attach')} />
+    </label>
   );
-
-  if (mode === 'capture' || mode === 'attach') {
-    const cap = mode === 'capture';
-    return (
-      <div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          {optBtn(cap ? 'Take photo' : 'Choose image', 'camera', () => { setMedia({ source: cap ? 'capture' : 'attach', kind: 'photo' }); }, true)}
-          {optBtn(cap ? 'Record video' : 'Choose video', 'video', () => { setMedia({ source: cap ? 'capture' : 'attach', kind: 'video' }); }, true)}
-        </div>
-        <button onClick={() => setMode('idle')} className="j-press" style={{ marginTop: 10, width: '100%', background: 'none',
-          border: 'none', cursor: 'pointer', color: 'var(--faint)', fontSize: 13.5, fontWeight: 500, padding: 4 }}>Cancel</button>
-      </div>
-    );
-  }
-
   return (
     <div style={{ display: 'flex', gap: 12 }}>
-      <button onClick={() => setMode('capture')} className="j-press" style={{ flex: 1, minHeight: 84, borderRadius: 14, cursor: 'pointer',
-        border: '1.5px dashed var(--chip-border)', background: 'var(--card)', display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center', gap: 7, color: 'var(--muted)' }}>
-        <Icon name="camera" size={24} color="var(--blue)" />
-        <span style={{ fontSize: 14.5, fontWeight: 500 }}>Capture</span>
-        <span style={{ fontSize: 12, color: 'var(--faint)' }}>Photo or video</span>
-      </button>
-      <button onClick={() => setMode('attach')} className="j-press" style={{ flex: 1, minHeight: 84, borderRadius: 14, cursor: 'pointer',
-        border: '1.5px dashed var(--chip-border)', background: 'var(--card)', display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center', gap: 7, color: 'var(--muted)' }}>
-        <Icon name="attach" size={24} color="var(--blue)" />
-        <span style={{ fontSize: 14.5, fontWeight: 500 }}>Attach media</span>
-        <span style={{ fontSize: 12, color: 'var(--faint)' }}>Image or video</span>
-      </button>
+      {tile('Capture', 'Photo or video', 'camera', true)}
+      {tile('Attach media', 'From your photos', 'attach', false)}
     </div>
   );
 }
@@ -266,6 +246,7 @@ function QuickLogScreen({ nav, today }) {
   const [cat, setCat] = useStateA('Transitions');
   const [text, setText] = useStateA('');
   const [mood, setMood] = useStateA('good');
+  const [media, setMedia] = useStateA(null);
   const [dayMode, setDayMode] = useStateA('today'); // today | yesterday | custom
   const minus1 = (iso) => { const d = J.parseISO(iso); d.setDate(d.getDate() - 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
   const [customDate, setCustomDate] = useStateA(minus1(minus1(today)));
@@ -275,9 +256,11 @@ function QuickLogScreen({ nav, today }) {
   const save = () => {
     const entry = {
       id: 'n' + Date.now(), date: logDate, time, clock: nowClock(), setting, category: cat, mood,
-      kind: 'contemporaneous', type: 'quick',
+      kind: dayMode === 'today' ? 'contemporaneous' : 'recalled', type: 'quick',
       summary: text.trim() || `${cat} at ${setting.toLowerCase()}. ${time} went ${mood === 'good' ? 'well' : mood === 'ok' ? 'up and down' : 'hard'}.`,
     };
+    if (media && media.dataUrl) { entry.photoData = media.dataUrl; entry.photo = 'Photo from the day'; }
+    else if (media && media.kind === 'video') { entry.photo = 'Video noted (kept in your photo library)'; }
     nav.addEntry(entry);
     nav.back();
   };
@@ -295,7 +278,7 @@ function QuickLogScreen({ nav, today }) {
               <button className={'j-chip' + (dayMode === 'custom' ? ' j-chip-on' : '')} onClick={() => setDayMode('custom')}>Another day</button>
             </div>
             {dayMode === 'custom' && (
-              <input type="date" className="j-input" min="2026-01-01" max={today} value={customDate}
+              <input type="date" className="j-input" min="2019-09-01" max={today} value={customDate}
                 onChange={e => setCustomDate(e.target.value)} style={{ marginTop: 12, fontSize: 15, colorScheme: 'light dark', padding: '11px 12px' }} />
             )}
             <p className="j-sm" style={{ marginTop: 8, color: 'var(--faint)' }}>Saving to <span className="j-strong" style={{ color: 'var(--muted)' }}>{J.fmtLong(logDate)}</span></p>
@@ -308,7 +291,7 @@ function QuickLogScreen({ nav, today }) {
             <textarea className="j-input" value={text} onChange={e => setText(e.target.value)} rows={3}
               placeholder="A line is plenty. You can always add more later." />
           </div>
-          <div><FieldLabel>Add a photo or video</FieldLabel><MediaPicker /></div>
+          <div><FieldLabel>Add a photo or video</FieldLabel><MediaPicker value={media} onChange={setMedia} /></div>
           <div><FieldLabel>How did it feel?</FieldLabel><MoodFacePicker value={mood} onChange={setMood} /></div>
         </div>
       </div>
@@ -376,17 +359,27 @@ function HandoverScreen({ nav, today, profile }) {
   const [duration, setDuration] = useStateA(10);
   const [helped, setHelped] = useStateA('');
   const [nudge, setNudge] = useStateA(false);
+  const [media, setMedia] = useStateA(null);
+  const [extras, setExtras] = useStateA([]);
+  const [customOpen, setCustomOpen] = useStateA(false);
+  const [customText, setCustomText] = useStateA('');
   const [draft, setDraft] = useStateA(
     `Hi,\n\nThank you for letting me know about ${childName} this afternoon. When you have a moment, would you mind sending me a quick email with what was discussed? It really helps to have the same picture at home and school.\n\nThank you so much.`
   );
 
   const save = () => {
+    const now = new Date();
     const entry = {
-      id: 'h' + Date.now(), date: today, time: 'Afternoon', clock: '15:30', setting: 'School', category: 'Transitions',
+      id: 'h' + Date.now(), date: today,
+      time: now.getHours() < 12 ? 'Morning' : now.getHours() < 17 ? 'Afternoon' : 'Evening',
+      clock: String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0'),
+      setting: 'School', category: 'Incidents',
       mood: 'hard', kind: 'contemporaneous', type: 'handover',
       summary: during.trim() ? during.trim() : 'Hard moment captured at the gate.',
       handover: { behaviours, before, during, after, duration: duration + ' mins', helped },
     };
+    if (media && media.dataUrl) { entry.photoData = media.dataUrl; entry.photo = 'Photo from the gate'; }
+    else if (media && media.kind === 'video') { entry.photo = 'Video noted (kept in your photo library)'; }
     nav.addEntry(entry);
     setNudge(true);
   };
@@ -399,7 +392,7 @@ function HandoverScreen({ nav, today, profile }) {
         <div className="j-pad" style={{ paddingBottom: 150, paddingTop: 2, display: 'flex', flexDirection: 'column', gap: 20 }}>
           {/* auto-attached context */}
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <span className="j-pillbadge" style={{ background: 'var(--card)', border: '1px solid var(--line)', color: 'var(--muted)' }}><Icon name="clock" size={14} color="var(--muted)" /> Afternoon, 3:20pm</span>
+            <span className="j-pillbadge" style={{ background: 'var(--card)', border: '1px solid var(--line)', color: 'var(--muted)' }}><Icon name="clock" size={14} color="var(--muted)" /> {(() => { const n = new Date(); return (n.getHours() < 12 ? 'Morning' : n.getHours() < 17 ? 'Afternoon' : 'Evening') + ', ' + String(n.getHours()).padStart(2, '0') + ':' + String(n.getMinutes()).padStart(2, '0'); })()}</span>
             <span className="j-pillbadge" style={{ background: 'var(--card)', border: '1px solid var(--line)', color: 'var(--muted)' }}><Icon name="today" size={14} color="var(--muted)" /> {school}</span>
           </div>
 
@@ -422,12 +415,24 @@ function HandoverScreen({ nav, today, profile }) {
           <div>
             <FieldLabel>What did you see? Tap what fits.</FieldLabel>
             <div className="j-chiprow">
-              {J.BEHAVIOURS.map(b => (
+              {[...J.BEHAVIOURS, ...extras].map(b => (
                 <button key={b} className={'j-chip' + (behaviours.includes(b) ? ' j-chip-on' : '')}
                   onClick={() => setBehaviours(v => v.includes(b) ? v.filter(x => x !== b) : [...v, b])}>{b}</button>
               ))}
-              <button className="j-chip" style={{ borderStyle: 'dashed' }}><Icon name="plus" size={15} color="var(--faint)" /> Add your own</button>
+              <button className="j-chip" style={{ borderStyle: 'dashed' }} onClick={() => setCustomOpen(v => !v)}><Icon name="plus" size={15} color="var(--faint)" /> Add your own</button>
             </div>
+            {customOpen && (
+              <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+                <input className="j-input" style={{ flex: 1 }} value={customText} onChange={e => setCustomText(e.target.value)}
+                  placeholder="Your own word for what you saw" />
+                <button className="j-btn j-btn-soft" style={{ flex: '0 0 auto', minHeight: 48, padding: '0 18px' }} onClick={() => {
+                  const t = customText.trim(); if (!t) return;
+                  if (!extras.includes(t) && !J.BEHAVIOURS.includes(t)) setExtras(x => [...x, t]);
+                  setBehaviours(v => v.includes(t) ? v : [...v, t]);
+                  setCustomText(''); setCustomOpen(false);
+                }}>Add</button>
+              </div>
+            )}
           </div>
 
           {/* before / during / after */}
@@ -453,14 +458,17 @@ function HandoverScreen({ nav, today, profile }) {
           {/* photo at the gate */}
           <div>
             <FieldLabel>Add a photo or video</FieldLabel>
-            <MediaPicker />
+            <MediaPicker value={media} onChange={setMedia} />
           </div>
         </div>
       </div>
 
       <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '12px 20px calc(16px + env(safe-area-inset-bottom))',
         background: 'var(--fade-grad)', display: 'flex', gap: 12 }}>
-        <button className="j-btn j-btn-ghost" style={{ flex: '0 0 38%' }} onClick={() => nav.back()}>Finish later</button>
+        <button className="j-btn j-btn-ghost" style={{ flex: '0 0 38%' }} onClick={() => {
+          const touched = behaviours.length || before.trim() || during.trim() || after.trim() || helped.trim() || media;
+          if (!touched || window.confirm('Leave without saving this note? What you have entered here will be lost.')) nav.back();
+        }}>Finish later</button>
         <button className="j-btn j-btn-primary" style={{ flex: 1 }} onClick={save}><Icon name="check" size={20} color="#fff" /> Save note</button>
       </div>
 
@@ -482,7 +490,10 @@ function HandoverScreen({ nav, today, profile }) {
             <textarea className="j-input" value={draft} onChange={e => setDraft(e.target.value)} rows={6}
               style={{ fontSize: 15, lineHeight: 1.5, marginBottom: 10 }} />
             <p className="j-meta" style={{ marginBottom: 16 }}>Nothing is sent for you. This just opens your own email with the words ready, so you can change them or not send at all.</p>
-            <button className="j-btn j-btn-primary" onClick={finish}><Icon name="arrowRight" size={20} color="#fff" /> Open in email</button>
+            <button className="j-btn j-btn-primary" onClick={() => {
+              window.location.assign('mailto:?subject=' + encodeURIComponent('About ' + childName + ' today') + '&body=' + encodeURIComponent(draft));
+              finish();
+            }}><Icon name="arrowRight" size={20} color="#fff" /> Open in email</button>
             <button className="j-btn j-btn-ghost" style={{ marginTop: 10 }} onClick={finish}>Not now</button>
           </div>
         </div>

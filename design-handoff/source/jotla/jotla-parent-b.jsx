@@ -1,13 +1,13 @@
 // jotla-parent-b.jsx — Find, Evidence (records + document vault), Add document, Doc detail, Unlock, Settings.
 const { useState: useStateB, useRef: useRefB, useEffect: useEffectB } = React;
 
-const THEME_TO_CAT = { 'Lunch hall': 'Lunch hall', 'Transitions': 'Transitions', 'Eating': 'Eating', 'Play': 'Play', 'Mornings': 'Mornings', 'Sleep': '__none__' };
+const THEME_TO_CAT = new Proxy({}, { get: (_, k) => k });
 
 // ---------------- Find ----------------
 function FindScreen({ nav, entries }) {
   const J = window.JOTLA;
   const [q, setQ] = useStateB('');
-  const [themes, setThemes] = useStateB(['Lunch hall', 'Transitions']);
+  const [themes, setThemes] = useStateB([]);
   const [moods, setMoods] = useStateB([]);
   const [setting, setSetting] = useStateB('Any');
   const [range, setRange] = useStateB({ preset: 'Any time', from: '', to: '' });
@@ -104,9 +104,43 @@ function FindScreen({ nav, entries }) {
 }
 
 // ---------------- Evidence: records pack + document vault ----------------
-function evTime(i) {
-  const mins = ['3:24pm', '9:12am', '1:05pm', '8:50am', '3:31pm', '12:40pm', '2:15pm'];
-  return mins[i % mins.length];
+// Build a clean, printable day record in a new tab. The browser's own
+// Print, then Save as PDF, turns it into the family's PDF. Nothing is uploaded.
+function openPrintPack(childLabel, rangeLabel, list) {
+  const J = window.JOTLA;
+  const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const badge = k => k === 'contemporaneous'
+    ? '<span style="background:#e7f6ee;color:#1e7a45;border-radius:99px;padding:2px 10px;font-size:11px;">Same day</span>'
+    : '<span style="background:#fdf3e0;color:#a06b12;border-radius:99px;padding:2px 10px;font-size:11px;">Added later</span>';
+  const rows = list.map(e => {
+    let extra = '';
+    if (e.type === 'handover' && e.handover) {
+      const h = e.handover;
+      const part = (l, v) => v ? '<p style="margin:4px 0;"><strong>' + esc(l) + ':</strong> ' + esc(v) + '</p>' : '';
+      extra = '<div style="margin-top:6px;padding:8px 12px;background:#f5f7fb;border-radius:8px;">'
+        + (h.behaviours && h.behaviours.length ? '<p style="margin:4px 0;"><strong>Seen:</strong> ' + esc(h.behaviours.join(', ')) + '</p>' : '')
+        + part('Before', h.before) + part('During', h.during) + part('After', h.after)
+        + part('Lasted', h.duration) + part('What helped', h.helped) + '</div>';
+    }
+    return '<div style="padding:10px 0;border-bottom:1px solid #dde3ee;page-break-inside:avoid;">'
+      + '<p style="margin:0 0 4px;font-size:12px;color:#1A56A8;"><strong>' + esc(J.fmtShort(e.date)) + ' ' + esc(e.date.slice(0, 4))
+      + ', ' + esc(e.clock || e.time) + '</strong> &nbsp; ' + esc(e.setting) + ' · ' + esc(e.category) + ' &nbsp; ' + badge(e.kind) + '</p>'
+      + '<p style="margin:0;font-size:13px;line-height:1.45;">' + esc(e.summary) + '</p>' + extra + '</div>';
+  }).join('');
+  const w = window.open('', '_blank');
+  if (!w) { alert('Your browser blocked the new tab. Allow pop-ups for this page and try again.'); return false; }
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Jotla day record</title></head>'
+    + '<body style="font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#14223b;max-width:720px;margin:24px auto;padding:0 16px;">'
+    + '<p style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8892a6;margin:0 0 6px;">Day record · Jotla</p>'
+    + '<h1 style="font-size:22px;margin:0 0 2px;">' + esc(childLabel) + '</h1>'
+    + '<p style="font-size:12.5px;margin:0 0 14px;color:#5b6780;">' + esc(rangeLabel) + ' · ' + list.length + ' dated entries · Prepared ' + esc(J.fmtShort(J.TODAY_ISO)) + ' ' + esc(J.TODAY_ISO.slice(0, 4)) + '</p>'
+    + rows
+    + '<p style="font-size:10.5px;color:#8892a6;line-height:1.5;margin-top:14px;padding-top:12px;border-top:1px dashed #dde3ee;">'
+    + 'Each entry shows when it was written. "Same day" means it was logged on the day it happened. "Added later" means it was written up afterwards. Prepared by the family using their own Jotla record.</p>'
+    + '</body></html>');
+  w.document.close(); w.focus();
+  setTimeout(() => { try { w.print(); } catch (e) {} }, 500);
+  return true;
 }
 
 // A document log card (file layout)
@@ -121,7 +155,7 @@ function DocCard({ doc, onClick }) {
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
           <span className="j-tag j-tag-blue">{doc.type}</span>
-          <span className="j-meta" style={{ whiteSpace: 'nowrap' }}>{J.fmtShort(doc.received)} 2026</span>
+          <span className="j-meta" style={{ whiteSpace: 'nowrap' }}>{J.fmtShort(doc.received)} {doc.received.slice(0, 4)}</span>
         </div>
         <p className="j-strong" style={{ fontSize: 16, lineHeight: 1.25, marginBottom: 3 }}>{doc.title}</p>
         <p className="j-sm" style={{ fontSize: 13.5 }}>From {doc.from}</p>
@@ -140,7 +174,7 @@ function EvidenceScreen({ nav, entries, docs, profile }) {
   const J = window.JOTLA;
   const [view, setView] = useStateB('records'); // records | documents
   const [range, setRange] = useStateB({ preset: 'Last 3 weeks', from: '', to: '' });
-  const [themes, setThemes] = useStateB(['Transitions', 'Lunch hall']);
+  const [themes, setThemes] = useStateB([]);
   const [done, setDone] = useStateB(false);
   const childLabel = profile ? `${profile.name}, ${profile.school}` : 'Sam, Oakfield Primary';
 
@@ -191,13 +225,13 @@ function EvidenceScreen({ nav, entries, docs, profile }) {
                 <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid var(--line)' }}>
                   <p style={{ fontSize: 12, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--faint)', margin: '0 0 8px' }}>Day record</p>
                   <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 20, color: 'var(--ink)', margin: 0 }}>{childLabel}</p>
-                  <p className="j-meta" style={{ marginTop: 4 }}>{rangeLabel} · {inPack.length} dated entries · Prepared 12 June 2026</p>
+                  <p className="j-meta" style={{ marginTop: 4 }}>{rangeLabel} · {inPack.length} dated entries · Prepared {J.fmtShort(J.TODAY_ISO)} {J.TODAY_ISO.slice(0, 4)}</p>
                 </div>
                 <div style={{ padding: '8px 20px 16px' }}>
                   {inPack.slice(0, 6).map((e, i) => (
                     <div key={e.id} style={{ padding: '12px 0', borderBottom: i < Math.min(inPack.length, 6) - 1 ? '1px solid var(--line)' : 'none' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--blue)', whiteSpace: 'nowrap' }}>{J.fmtShort(e.date)} 2026, {evTime(i)}</span>
+                        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--blue)', whiteSpace: 'nowrap' }}>{J.fmtShort(e.date)} {e.date.slice(0, 4)}, {e.clock || e.time}</span>
                         <span style={{ flex: 1 }} />
                         <span className="j-pillbadge" style={{ fontSize: 10.5, padding: '2px 8px',
                           background: e.kind === 'contemporaneous' ? 'var(--tint-green)' : 'var(--tint-amber)',
@@ -237,7 +271,7 @@ function EvidenceScreen({ nav, entries, docs, profile }) {
 
       <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '12px 20px calc(16px + env(safe-area-inset-bottom))', background: 'var(--fade-grad)' }}>
         {view === 'records'
-          ? <button className="j-btn j-btn-primary j-btn-lg" onClick={() => setDone(true)}><Icon name="doc" size={20} color="#fff" /> Create PDF</button>
+          ? <button className="j-btn j-btn-primary j-btn-lg" onClick={() => { if (openPrintPack(childLabel, rangeLabel, inPack)) setDone(true); }}><Icon name="doc" size={20} color="#fff" /> Create PDF</button>
           : <button className="j-btn j-btn-primary j-btn-lg" onClick={() => nav.go('adddoc')}><Icon name="plus" size={22} color="#fff" /> Add document</button>}
       </div>
 
@@ -251,11 +285,11 @@ function EvidenceScreen({ nav, entries, docs, profile }) {
                 <Icon name="check" size={28} color="var(--green)" />
               </span>
             </div>
-            <h2 className="j-h2" style={{ textAlign: 'center', marginBottom: 8 }}>Your PDF is ready</h2>
+            <h2 className="j-h2" style={{ textAlign: 'center', marginBottom: 8 }}>Your day record is ready</h2>
             <p className="j-body" style={{ textAlign: 'center', color: 'var(--muted)', marginBottom: 20 }}>
-              Saved to your phone. It is yours to keep, print, or share whenever you choose.
+              It opened in a new tab. Use Print, then Save as PDF, to keep, print or share it. Nothing is uploaded anywhere.
             </p>
-            <button className="j-btn j-btn-primary" onClick={() => setDone(false)}><Icon name="download" size={20} color="#fff" /> Open PDF</button>
+            <button className="j-btn j-btn-primary" onClick={() => openPrintPack(childLabel, rangeLabel, inPack)}><Icon name="download" size={20} color="#fff" /> Open it again</button>
             <button className="j-btn j-btn-ghost" style={{ marginTop: 10 }} onClick={() => setDone(false)}>Done</button>
           </div>
         </div>
@@ -268,6 +302,7 @@ function EvidenceScreen({ nav, entries, docs, profile }) {
 function AddDocScreen({ nav }) {
   const J = window.JOTLA;
   const [source, setSource] = useStateB(null); // 'taken' | 'attached'
+  const [scan, setScan] = useStateB(null);     // downscaled image data URL
   const [title, setTitle] = useStateB('');
   const [type, setType] = useStateB('Letter');
   const [from, setFrom] = useStateB('School');
@@ -278,9 +313,17 @@ function AddDocScreen({ nav }) {
   const save = () => {
     nav.addDoc({
       id: 'doc' + Date.now(), title: title.trim() || 'Untitled document', type, from,
-      received: received.trim() || '2026-06-12', about: about.trim(), action: action.trim(), mood: 'good',
+      received: /^\d{4}-\d{2}-\d{2}$/.test(received.trim()) ? received.trim() : J.TODAY_ISO,
+      about: about.trim(), action: action.trim(), mood: 'good',
+      ...(scan ? { scan } : {}),
     });
     nav.back();
+  };
+  const onDocFile = (e, src2) => {
+    const f = e.target.files && e.target.files[0]; e.target.value = '';
+    if (!f) return;
+    if (!f.type || !f.type.startsWith('image')) { setSource(src2); return; }
+    window.fileToImageDataURL(f, 1280, 0.75, url => { setScan(url); setSource(src2); });
   };
 
   return (
@@ -293,30 +336,35 @@ function AddDocScreen({ nav }) {
           <div>
             <FieldLabel>The file</FieldLabel>
             {source ? (
-              <div style={{ borderRadius: 14, background: 'var(--photo-bg)', padding: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--card)', flexShrink: 0,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="doc" size={22} color="var(--blue)" /></span>
-                <span style={{ flex: 1 }}>
-                  <span style={{ display: 'block', fontSize: 15, fontWeight: 500, color: 'var(--ink)' }}>Document added (sample)</span>
-                  <span style={{ display: 'block', fontSize: 13, color: 'var(--faint)', marginTop: 1 }}>{source === 'taken' ? 'Photographed just now' : 'Chosen from your files'}</span>
-                </span>
-                <button onClick={() => setSource(null)} aria-label="Remove" className="j-press" style={{ width: 36, height: 36, borderRadius: 10,
-                  border: 'none', background: 'var(--card)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Icon name="close" size={18} color="var(--muted)" />
-                </button>
+              <div style={{ borderRadius: 14, overflow: 'hidden', border: '1px solid var(--line)', background: 'var(--photo-bg)' }}>
+                {scan && <img src={scan} alt="Document photo" style={{ display: 'block', width: '100%', maxHeight: 240, objectFit: 'cover' }} />}
+                <div style={{ padding: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <span style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--card)', flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="doc" size={20} color="var(--blue)" /></span>
+                  <span style={{ flex: 1 }}>
+                    <span style={{ display: 'block', fontSize: 14.5, fontWeight: 500, color: 'var(--ink)' }}>{scan ? 'Photo of the document attached' : 'File noted'}</span>
+                    <span style={{ display: 'block', fontSize: 12.5, color: 'var(--faint)', marginTop: 1 }}>{source === 'taken' ? 'Photographed just now' : 'Chosen from your files'}</span>
+                  </span>
+                  <button onClick={() => { setSource(null); setScan(null); }} aria-label="Remove" className="j-press" style={{ width: 36, height: 36, borderRadius: 10,
+                    border: 'none', background: 'var(--card)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon name="close" size={18} color="var(--muted)" />
+                  </button>
+                </div>
               </div>
             ) : (
               <div style={{ display: 'flex', gap: 12 }}>
-                <button onClick={() => setSource('taken')} className="j-press" style={{ flex: 1, minHeight: 84, borderRadius: 14, cursor: 'pointer',
+                <label className="j-press" style={{ flex: 1, minHeight: 84, borderRadius: 14, cursor: 'pointer',
                   border: '1.5px dashed var(--chip-border)', background: 'var(--card)', display: 'flex', flexDirection: 'column',
                   alignItems: 'center', justifyContent: 'center', gap: 7, color: 'var(--muted)' }}>
                   <Icon name="camera" size={24} color="var(--blue)" /><span style={{ fontSize: 14.5, fontWeight: 500 }}>Take photo</span>
-                </button>
-                <button onClick={() => setSource('attached')} className="j-press" style={{ flex: 1, minHeight: 84, borderRadius: 14, cursor: 'pointer',
+                  <input type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={e => onDocFile(e, 'taken')} />
+                </label>
+                <label className="j-press" style={{ flex: 1, minHeight: 84, borderRadius: 14, cursor: 'pointer',
                   border: '1.5px dashed var(--chip-border)', background: 'var(--card)', display: 'flex', flexDirection: 'column',
                   alignItems: 'center', justifyContent: 'center', gap: 7, color: 'var(--muted)' }}>
-                  <Icon name="download" size={24} color="var(--blue)" /><span style={{ fontSize: 14.5, fontWeight: 500 }}>Attach file</span>
-                </button>
+                  <Icon name="download" size={24} color="var(--blue)" /><span style={{ fontSize: 14.5, fontWeight: 500 }}>Attach image</span>
+                  <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => onDocFile(e, 'attached')} />
+                </label>
               </div>
             )}
           </div>
@@ -338,7 +386,8 @@ function AddDocScreen({ nav }) {
 
           <div>
             <FieldLabel>When did you receive it?</FieldLabel>
-            <input className="j-input" value={received} onChange={e => setReceived(e.target.value)} placeholder="e.g. 12 June 2026" />
+            <input type="date" className="j-input" min="2019-01-01" max={J.TODAY_ISO} value={received}
+              onChange={e => setReceived(e.target.value)} style={{ colorScheme: 'light dark' }} />
           </div>
 
           <div>
@@ -384,12 +433,17 @@ function DocScreen({ nav, docs, id }) {
             </div>
           </div>
 
-          {/* preview placeholder */}
-          <div style={{ borderRadius: 14, background: 'var(--photo-bg)', minHeight: 150, display: 'flex',
-            alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-            <Icon name="doc" size={22} color="var(--faint)" />
-            <span style={{ fontSize: 15, color: 'var(--faint)', fontWeight: 500 }}>Document scan (sample)</span>
-          </div>
+          {d.scan ? (
+            <div style={{ borderRadius: 14, overflow: 'hidden', border: '1px solid var(--line)' }}>
+              <img src={d.scan} alt="Document photo" style={{ display: 'block', width: '100%' }} />
+            </div>
+          ) : (
+            <div style={{ borderRadius: 14, background: 'var(--photo-bg)', minHeight: 110, display: 'flex',
+              alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <Icon name="doc" size={22} color="var(--faint)" />
+              <span style={{ fontSize: 15, color: 'var(--faint)', fontWeight: 500 }}>No photo of this document yet</span>
+            </div>
+          )}
 
           {d.action && (
             <div className="j-card" style={{ padding: 14, display: 'flex', gap: 12, alignItems: 'center', background: 'var(--tint-amber)', border: 'none' }}>
@@ -401,7 +455,7 @@ function DocScreen({ nav, docs, id }) {
           <div className="j-card j-card-pad">
             <Row label="What it is" value={d.type} />
             <Row label="From" value={d.from} />
-            <Row label="Received" value={J.fmtLong(d.received) + ' 2026'} />
+            <Row label="Received" value={J.fmtLong(d.received) + ' ' + d.received.slice(0, 4)} />
             {d.about && (
               <div style={{ paddingTop: 12 }}>
                 <span className="j-sm">About</span>
@@ -409,6 +463,10 @@ function DocScreen({ nav, docs, id }) {
               </div>
             )}
           </div>
+
+          <button className="j-btn j-btn-ghost" style={{ color: '#C0392B' }} onClick={() => {
+            if (window.confirm('Delete this document from the vault? This cannot be undone.')) { nav.deleteDoc(d.id); nav.back(); }
+          }}><Icon name="close" size={18} color="#C0392B" /> Delete this document</button>
         </div>
       </div>
     </div>
@@ -864,11 +922,69 @@ function Toggle({ on, onChange }) {
   );
 }
 
-function SettingsScreen({ nav, profile }) {
+function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
   const J = window.JOTLA;
-  const childName = (profile && profile.name) || 'Sam';
+  const childName = (profile && profile.name) || 'your child';
+  const [info, setInfo] = useStateB(null);
   const FEEDBACK_HREF = 'mailto:hello@sen.help?subject=' + encodeURIComponent('Jotla prototype feedback')
     + '&body=' + encodeURIComponent('What I was trying to do:\n\nWhat I think, or what happened:\n\nWhich screen:\n\nMy phone / browser:\n');
+
+  const exportData = () => {
+    try {
+      const payload = { app: 'Jotla', exportedAt: new Date().toISOString(), child: profile, entries, documents: docs };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'jotla-' + childName.replace(/\s+/g, '-').toLowerCase() + '-export.json';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+    } catch (e) { alert('Sorry, the export could not be created on this device.'); }
+  };
+  const onImportFile = (e) => {
+    const f = e.target.files && e.target.files[0]; e.target.value = '';
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = () => { try { nav.importBackup(JSON.parse(r.result)); } catch (err) { alert('That file could not be read as a Jotla backup.'); } };
+    r.readAsText(f);
+  };
+
+  const INFO = {
+    backup: ['Where your record is kept', [
+      'Everything you write lives on this device, inside Jotla. Nothing is sent to us, ever.',
+      'Your record rides inside your phone\'s own backup (iCloud on iPhone, Google backup on Android). If device backup is on, a lost or broken phone does not lose the record.',
+      'Worth checking once: open your phone settings and make sure device backup is switched on.',
+      'For extra safety, use Export my data every so often and keep the file somewhere safe. You can bring it back with Restore from an export.',
+    ]],
+    encrypted: ['Encrypted export', [
+      'A locked export protects the file with a passphrase only you know.',
+      'It is planned for the full app, and is not in this early test build yet.',
+      'For now, Export my data gives you a plain copy. Keep it somewhere private, like your own cloud drive.',
+    ]],
+    lock: ['Lock the app', [
+      'In the full app you will be able to lock Jotla behind your fingerprint, face or a PIN.',
+      'It is not in this early test build yet.',
+      'Until then, your phone\'s own screen lock protects the record, and both iPhone and Android can lock or pin individual apps if you share the phone.',
+    ]],
+    privacy: ['Privacy, in plain words', [
+      'No account, no login, no cloud. Everything you write stays on this device.',
+      'We never receive or access your data. There is nothing for us to read, lose or sell.',
+      'Your record leaves the phone only when you choose: an export you save, or a day record you print or share.',
+      'One thing to remember: what you write can end up in front of other people when you choose to share it. Log facts, keep other children out of photos where you can, and your record will serve you well.',
+    ]],
+    mission: ['What Jotla is for', [
+      'Every SEN parent is told to document everything. Nobody gives them the tool. Jotla is that tool.',
+      'Log the days in seconds, capture what really happened at the school gate, and keep every letter and report in one place.',
+      'When it matters, at an assessment, an annual review or a tribunal, your record is already organised, dated and ready to share.',
+      'Owned by you. Not the school, not the Local Authority. You.',
+    ]],
+    about: ['About and credits', [
+      'Jotla by SEN Help. Early test build 1.1 (July 2026).',
+      'Designed and built by SEN Help (sen.help).',
+      'Typefaces: Cal Sans and Outfit, used under the SIL Open Font Licence.',
+      'Feedback makes this better. Use "Tell us what you think" at the top of Settings.',
+    ]],
+  };
+
   return (
     <div className="j-screen">
       <div className="j-scroll j-fade">
@@ -934,21 +1050,35 @@ function SettingsScreen({ nav, profile }) {
 
           <SectionLabel>Backup and export</SectionLabel>
           <div className="j-card" style={{ marginBottom: 20, overflow: 'hidden' }}>
-            <SettingsRow icon={<Icon name="shield" size={20} color="var(--blue)" />} title="Automatic backup"
-              sub="Your backup goes to your own Google account, so your record survives a lost or broken phone. We never see it." onClick={() => {}} />
+            <SettingsRow icon={<Icon name="shield" size={20} color="var(--blue)" />} title="Where your record is kept"
+              sub="On this device, inside your phone's own backup. We never see it." onClick={() => setInfo('backup')} />
             <SettingsRow icon={<Icon name="download" size={20} color="var(--blue)" />} title="Export my data"
-              sub="A plain copy of everything. Always free." onClick={() => {}}
+              sub={'A plain copy of ' + childName + "'s whole record. Always free."} onClick={exportData}
               right={<span className="j-pillbadge" style={{ background: 'var(--tint-green)', color: 'var(--green-ink)' }}>Free</span>} />
+            <label className="j-press" style={{ width: '100%', textAlign: 'left', border: 'none',
+              background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14,
+              padding: '14px 16px', borderBottom: '1px solid var(--line)' }}>
+              <span style={{ width: 38, height: 38, borderRadius: 11, background: 'var(--tint-blue)', flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="attach" size={20} color="var(--blue)" /></span>
+              <span style={{ flex: 1 }}>
+                <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 16, fontWeight: 500, color: 'var(--ink)' }}>Restore from an export</span>
+                <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 13, color: 'var(--faint)', marginTop: 1 }}>Bring back a record from an exported file.</span>
+              </span>
+              <Icon name="chevronRight" size={18} color="var(--faint)" />
+              <input type="file" accept="application/json,.json" style={{ display: 'none' }} onChange={onImportFile} />
+            </label>
             <SettingsRow icon={<Icon name="lock" size={20} color="var(--blue)" />} title="Encrypted export"
-              sub="Your own locked copy, only you hold the key." onClick={() => {}} last />
+              sub="Your own locked copy, only you hold the key." onClick={() => setInfo('encrypted')}
+              right={<span className="j-pillbadge" style={{ background: 'var(--tag-grey-bg)', color: 'var(--muted)' }}>Planned</span>} last />
           </div>
 
           <SectionLabel>Privacy</SectionLabel>
           <div className="j-card" style={{ marginBottom: 20, overflow: 'hidden' }}>
             <SettingsRow icon={<Icon name="lock" size={20} color="var(--blue)" />} title="Lock the app"
-              sub="A fingerprint, face, or PIN on this device. Nothing leaves the phone." onClick={() => {}} />
+              sub="A fingerprint, face, or PIN on this device." onClick={() => setInfo('lock')}
+              right={<span className="j-pillbadge" style={{ background: 'var(--tag-grey-bg)', color: 'var(--muted)' }}>Planned</span>} />
             <SettingsRow icon={<Icon name="note" size={20} color="var(--blue)" />} title="How your data is kept"
-              sub="The whole privacy promise, in plain words." onClick={() => {}} last />
+              sub="The whole privacy promise, in plain words." onClick={() => setInfo('privacy')} last />
           </div>
 
           {/* privacy reassurance: no account, local lock, plain trust copy */}
@@ -964,14 +1094,25 @@ function SettingsScreen({ nav, profile }) {
               sub="A one-minute walkthrough of the whole app." onClick={() => nav.go('tour')} />
             <SettingsRow icon={<Icon name="plus" size={20} color="var(--blue)" />} title="Add another child"
               sub="Start a fresh, blank record." onClick={() => nav.go('addchild')} />
-            <SettingsRow icon={<Icon name="heart" size={20} color="var(--blue)" />} title="What Jotla is for" onClick={() => {}} />
-            <SettingsRow icon={<Icon name="note" size={20} color="var(--blue)" />} title="Privacy, in plain words" onClick={() => {}} />
-            <SettingsRow icon={<Icon name="star" size={20} color="var(--blue)" />} title="About and credits" onClick={() => {}} last />
+            <SettingsRow icon={<Icon name="heart" size={20} color="var(--blue)" />} title="What Jotla is for" onClick={() => setInfo('mission')} />
+            <SettingsRow icon={<Icon name="note" size={20} color="var(--blue)" />} title="Privacy, in plain words" onClick={() => setInfo('privacy')} />
+            <SettingsRow icon={<Icon name="star" size={20} color="var(--blue)" />} title="About and credits" onClick={() => setInfo('about')} last />
           </div>
 
-          <p className="j-meta" style={{ textAlign: 'center' }}>Jotla by SEN Help · Version 1.0</p>
+          <p className="j-meta" style={{ textAlign: 'center' }}>Jotla by SEN Help · Test build 1.1</p>
         </div>
       </div>
+
+      {info && (
+        <div className="j-sheet-scrim" onClick={() => setInfo(null)}>
+          <div className="j-sheet" onClick={e => e.stopPropagation()} style={{ maxHeight: '85%', overflowY: 'auto' }}>
+            <div className="j-sheet-grab" />
+            <h2 className="j-h2" style={{ marginBottom: 12 }}>{INFO[info][0]}</h2>
+            {INFO[info][1].map((p, idx) => <p key={idx} className="j-body" style={{ color: 'var(--muted)', marginBottom: 12 }}>{p}</p>)}
+            <button className="j-btn j-btn-primary" onClick={() => setInfo(null)}><Icon name="check" size={20} color="#fff" /> Got it</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

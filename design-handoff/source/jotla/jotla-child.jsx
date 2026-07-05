@@ -47,8 +47,31 @@ function ChildScreen({ nav, profile }) {
   const [scene, setScene] = useStateC(null);
   const [emotion, setEmotion] = useStateC(null);
   const [rounds, setRounds] = useStateC(0);
+  const [picks, setPicks] = useStateC([]);
+  const savedRef = useRefC(false);
 
   const exit = () => nav.home();
+
+  // The child's picks become a real entry in the record (previously they were discarded).
+  const finishDone = () => {
+    if (!savedRef.current && picks.length) {
+      savedRef.current = true;
+      const sceneLabel = k => { const s = J.CHILD_SCENES.find(x => x.key === k); return s ? s.label.toLowerCase() : 'school'; };
+      const emoLabel = k => { const em = J.CHILD_EMOTIONS.find(x => x.key === k); return em ? em.label.toLowerCase() : k; };
+      const keys = picks.map(p => p.emotion);
+      const mood = keys.some(k => ['sad', 'worried', 'angry'].includes(k)) ? 'hard' : keys.every(k => k === 'happy') ? 'good' : 'ok';
+      const now = new Date();
+      nav.addEntry({
+        id: 'cm' + Date.now(), date: J.TODAY_ISO,
+        time: now.getHours() < 12 ? 'Morning' : now.getHours() < 17 ? 'Afternoon' : 'Evening',
+        clock: String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0'),
+        setting: 'School', category: 'Other', mood,
+        kind: 'contemporaneous', type: 'quick', childMode: true,
+        summary: childName + ' shared their day in child mode: ' + picks.map(p => 'felt ' + emoLabel(p.emotion) + ' in the ' + sceneLabel(p.scene)).join('; ') + '.',
+      });
+    }
+    setStep('done');
+  };
 
   const sceneColours = {
     classroom: '#E7F1EC', lunch: '#EAF1FB', playground: '#FBEFE6',
@@ -106,7 +129,7 @@ function ChildScreen({ nav, profile }) {
               <Q>How did you feel?</Q>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 {J.CHILD_EMOTIONS.map(em => (
-                  <button key={em.key} onClick={() => { setEmotion(em.key); setStep('more'); }} className="j-press"
+                  <button key={em.key} onClick={() => { setEmotion(em.key); setPicks(p => [...p, { scene, emotion: em.key }]); setStep('more'); }} className="j-press"
                     style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '20px 8px',
                       minHeight: 132, borderRadius: 24, border: 'none', cursor: 'pointer', background: '#fff',
                       boxShadow: '0 8px 20px -14px rgba(120,90,50,0.5)' }}>
@@ -125,10 +148,10 @@ function ChildScreen({ nav, profile }) {
               </div>
               <Q>Anything else?</Q>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <button onClick={() => { setRounds(r => r + 1); setScene(null); setEmotion(null); setStep(rounds >= 1 ? 'done' : 'scene'); }}
+                <button onClick={() => { setRounds(r => r + 1); setScene(null); setEmotion(null); if (rounds >= 1) { finishDone(); } else { setStep('scene'); } }}
                   className="j-press" style={{ minHeight: 72, borderRadius: 22, border: '2px solid #E5C88A', cursor: 'pointer',
                     background: '#fff', color: '#5a4326', fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 22 }}>Show another</button>
-                <button onClick={() => setStep('done')} className="j-press" style={{ minHeight: 72, borderRadius: 22, border: 'none',
+                <button onClick={finishDone} className="j-press" style={{ minHeight: 72, borderRadius: 22, border: 'none',
                   cursor: 'pointer', background: '#27AE60', color: '#fff', fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 22,
                   boxShadow: '0 14px 28px -12px rgba(39,174,96,0.6)' }}>All done</button>
               </div>
@@ -159,7 +182,7 @@ function ChildScreen({ nav, profile }) {
         {/* quiet skip, single tap, never sells */}
         {step !== 'done' && step !== 'intro' && (
           <div style={{ textAlign: 'center', paddingBottom: 22 }}>
-            <button onClick={() => setStep('done')} style={{ background: 'none', border: 'none', cursor: 'pointer',
+            <button onClick={finishDone} style={{ background: 'none', border: 'none', cursor: 'pointer',
               fontFamily: "'Outfit', system-ui", fontSize: 15, color: '#b79a72', fontWeight: 500 }}>Skip</button>
           </div>
         )}

@@ -383,3 +383,31 @@ Reference renders of the key screens (captured in the preview iOS bezel — the 
 | `fonts/` | the two brand TTFs |
 
 To run the reference: open `source/jotla/Jotla.html` in a browser.
+
+---
+
+## Build 1.1 (5 July 2026): field-test fixes and working controls
+
+Found in family field-testing and a full code audit; every change verified by rendering the app headless before shipping.
+
+**Fixed**
+- Stale hardcoded "today" (12 June 2026) in the date-range helpers and the Today month card: both now use the real device date, so Find presets, the evidence pack and the month summary work on any day.
+- The active child was hardcoded to `sam`; it now derives from the seed data, so records always load.
+- Backdated quick logs were mislabelled "Same day"; provenance labels are now honest ("Added later" when logging yesterday or another day).
+- Gate notes stamped a fake 15:30 clock; they now record the real time and day part, and file under a new Incidents category.
+- The evidence preview fabricated clock times and a fixed "Prepared 12 June 2026"; it now shows each entry's real time, year, and today's prepared date.
+- Document dates: free-text dates rendered as NaN; the field is now a date picker with a safe fallback.
+- Stored sample data froze at its first-open dates; it now re-anchors near today on every load (real records are never touched, `SEED_SHIFTING`).
+- Back navigation now returns to the previous page, including across tab switches, instead of resetting to the tab root (browser/Android back included).
+
+**Now real (were mocks)**
+- Photos: quick logs, gate notes and documents attach real images (downscaled on device); videos are honestly noted rather than stored.
+- Create PDF: opens a clean printable day record in a new tab (browser Print, then Save as PDF); no upload anywhere.
+- Settings: export my data (JSON download), restore from an export (with de-duplication), and plain-word info sheets for backup, privacy, app lock (planned), mission and credits. The backup copy no longer mentions a Google account; it explains the device's own backup.
+- Child mode now saves the child's picks as a real entry (mood mapped from their chosen feelings).
+- Gate note extras: add-your-own behaviour words, a confirm before discarding an unsaved note, and "Open in email" really opens a pre-filled email.
+- Entries and documents can be deleted (guarded by a confirm).
+- Month view pages backwards and forwards with a dynamic month summary.
+- Storage-full failures now warn the parent instead of silently dropping data.
+
+Known intentional limits of the prototype: no service worker (needs network for the CDN), no entry editing (delete and re-log), Plus gating still only covers the gate note.
