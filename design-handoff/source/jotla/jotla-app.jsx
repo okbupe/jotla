@@ -10,9 +10,9 @@ const TAB_DEFS = [
 ];
 const TAB_NAMES = ['today', 'month', 'find', 'settings'];
 const NAV_KEY = 'jotla_nav_v3'; // v3: history remembers the tab as well as the view
-const ENTRIES_KEY = 'jotla_entries_v3';
-const DOCS_KEY = 'jotla_docs_v1';
-const PREF_KEY = 'jotla_prefs_v1';
+const ENTRIES_KEY = 'jotla_entries_v4'; // v4: the six-month generated sample record
+const DOCS_KEY = 'jotla_docs_v2';
+const PREF_KEY = 'jotla_prefs_v2';
 const SEED_ANCHOR_KEY = 'jotla_seed_anchor_v1';
 
 function loadJSON(key, fallback) {
@@ -427,6 +427,19 @@ function App({ appMode }) {
     addDoc: (doc) => setDocs(ds => [{ ...doc, childId: profileId }, ...ds]),
     deleteEntry: (id) => setEntries(es => es.filter(e => e.id !== id)),
     deleteDoc: (id) => setDocs(ds => ds.filter(d => d.id !== id)),
+    // Honest editing: the change is applied, the original creation date/time is
+    // never touched, and the previous wording is kept on the record (visible in
+    // the app), so an edit can never quietly rewrite history.
+    updateEntry: (id, patch) => setEntries(es => es.map(e => {
+      if (e.id !== id) return e;
+      const prior = { on: J.TODAY_ISO, summary: e.summary, mood: e.mood, category: e.category, setting: e.setting };
+      return { ...e, ...patch, editedOn: J.TODAY_ISO, history: [...(e.history || []), prior] };
+    })),
+    updateDoc: (id, patch) => setDocs(ds => ds.map(d => {
+      if (d.id !== id) return d;
+      const prior = { on: J.TODAY_ISO, title: d.title, type: d.type, from: d.from, received: d.received, about: d.about, action: d.action };
+      return { ...d, ...patch, editedOn: J.TODAY_ISO, history: [...(d.history || []), prior] };
+    })),
     importBackup: (payload) => {
       try {
         if (!payload || payload.app !== 'Jotla' || !payload.child || !payload.child.id) { alert('That file does not look like a Jotla export.'); return; }

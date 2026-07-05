@@ -57,38 +57,44 @@ function FindScreen({ nav, entries, view }) {
               style={{ flex: 1, border: 'none', outline: 'none', fontFamily: "'Outfit', system-ui", fontSize: 16, color: 'var(--ink)', background: 'transparent' }} />
           </div>
 
-          {/* theme chips */}
-          <SectionLabel>Themes</SectionLabel>
-          <div className="j-chiprow" style={{ marginBottom: 14 }}>
-            {J.FIND_THEMES.map(t => (
-              <button key={t} className={'j-chip' + (themes.includes(t) ? ' j-chip-on' : '')} onClick={() => toggle(setThemes)(t)}>{t}</button>
-            ))}
-          </div>
+          {/* Filters are the Plus half of Find; plain keyword search stays free. */}
+          {nav.plus ? (
+            <>
+              <SectionLabel>Themes</SectionLabel>
+              <div className="j-chiprow" style={{ marginBottom: 14 }}>
+                {J.FIND_THEMES.map(t => (
+                  <button key={t} className={'j-chip' + (themes.includes(t) ? ' j-chip-on' : '')} onClick={() => toggle(setThemes)(t)}>{t}</button>
+                ))}
+              </div>
 
-          {/* mood filter */}
-          <SectionLabel>Mood</SectionLabel>
-          <div className="j-chiprow" style={{ marginBottom: 14 }}>
-            {J.FIND_MOODS.map(m => {
-              const on = moods.includes(m.key);
-              return (
-                <button key={m.key} className={'j-chip' + (on ? ' j-chip-on' : '')} onClick={() => toggle(setMoods)(m.key)}>
-                  <MoodDot mood={m.key} size={11} /> {m.label}
-                </button>
-              );
-            })}
-          </div>
+              <SectionLabel>Mood</SectionLabel>
+              <div className="j-chiprow" style={{ marginBottom: 14 }}>
+                {J.FIND_MOODS.map(m => {
+                  const on = moods.includes(m.key);
+                  return (
+                    <button key={m.key} className={'j-chip' + (on ? ' j-chip-on' : '')} onClick={() => toggle(setMoods)(m.key)}>
+                      <MoodDot mood={m.key} size={11} /> {m.label}
+                    </button>
+                  );
+                })}
+              </div>
 
-          <SectionLabel>Where</SectionLabel>
-          <div className="j-chiprow" style={{ marginBottom: 18 }}>
-            {['Any', 'School', 'Home', 'Club'].map(s => (
-              <button key={s} className={'j-chip' + (setting === s ? ' j-chip-on' : '')} onClick={() => setSetting(s)}>{s}</button>
-            ))}
-          </div>
+              <SectionLabel>Where</SectionLabel>
+              <div className="j-chiprow" style={{ marginBottom: 18 }}>
+                {['Any', 'School', 'Home', 'Club'].map(s => (
+                  <button key={s} className={'j-chip' + (setting === s ? ' j-chip-on' : '')} onClick={() => setSetting(s)}>{s}</button>
+                ))}
+              </div>
 
-          <SectionLabel>When</SectionLabel>
-          <div style={{ marginBottom: 18 }}>
-            <DateRangeControl presets={['Any time', 'This week', 'Last 2 weeks', 'Custom']} value={range} onChange={setRange} />
-          </div>
+              <SectionLabel>When</SectionLabel>
+              <div style={{ marginBottom: 18 }}>
+                <DateRangeControl presets={['Any time', 'This week', 'Last 2 weeks', 'Custom']} value={range} onChange={setRange} />
+              </div>
+            </>
+          ) : (
+            <PlusLockedCard onClick={() => nav.go('unlock')} style={{ marginBottom: 18 }}
+              title="Filters" text="Combine theme, mood, place and dates to answer a question in seconds. Keyword search is always free." />
+          )}
 
           {/* standout query line + results */}
           <div className="j-card" style={{ padding: 14, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10,
@@ -134,7 +140,8 @@ function openPrintPack(childLabel, rangeLabel, list) {
     }
     return '<div style="padding:10px 0;border-bottom:1px solid #dde3ee;page-break-inside:avoid;">'
       + '<p style="margin:0 0 4px;font-size:12px;color:#1A56A8;"><strong>' + esc(J.fmtShort(e.date)) + ' ' + esc(e.date.slice(0, 4))
-      + ', ' + esc(e.clock || e.time) + '</strong> &nbsp; ' + esc(e.setting) + ' · ' + esc(e.category) + ' &nbsp; ' + badge(e.kind) + '</p>'
+      + ', ' + esc(e.clock || e.time) + '</strong> &nbsp; ' + esc(e.setting) + ' · ' + esc(e.category) + ' &nbsp; ' + badge(e.kind)
+      + (e.editedOn ? ' <span style="color:#8892a6;font-size:10.5px;">edited ' + esc(J.fmtShort(e.editedOn)) + '</span>' : '') + '</p>'
       + '<p style="margin:0;font-size:13px;line-height:1.45;">' + esc(e.summary) + '</p>' + extra + '</div>';
   }).join('');
   const w = window.open('', '_blank');
@@ -292,7 +299,9 @@ function EvidenceScreen({ nav, entries, docs, profile, navView }) {
 
       <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '12px 20px calc(16px + env(safe-area-inset-bottom))', background: 'var(--fade-grad)' }}>
         {view === 'records'
-          ? <button className="j-btn j-btn-primary j-btn-lg" onClick={() => { if (openPrintPack(childLabel, rangeLabel, inPack)) setDone(true); }}><Icon name="doc" size={20} color="#fff" /> Create PDF</button>
+          ? (nav.plus
+            ? <button className="j-btn j-btn-primary j-btn-lg" onClick={() => { if (openPrintPack(childLabel, rangeLabel, inPack)) setDone(true); }}><Icon name="doc" size={20} color="#fff" /> Create PDF</button>
+            : <button className="j-btn j-btn-primary j-btn-lg" onClick={() => nav.go('unlock')}><Icon name="lock" size={18} color="#fff" /> Create PDF is part of Plus</button>)
           : <button className="j-btn j-btn-primary j-btn-lg" onClick={() => nav.go('adddoc')}><Icon name="plus" size={22} color="#fff" /> Add document</button>}
       </div>
 
@@ -430,9 +439,60 @@ function AddDocScreen({ nav }) {
 }
 
 // ---------------- Document detail ----------------
+// Edit a document's details honestly: corrections are welcome, and the earlier
+// details stay visible on the record.
+function EditDocSheet({ doc, onSave, onClose }) {
+  const J = window.JOTLA;
+  const [title, setTitle] = useStateB(doc.title);
+  const [type, setType] = useStateB(doc.type);
+  const [from, setFrom] = useStateB(doc.from);
+  const [received, setReceived] = useStateB(doc.received);
+  const [about, setAbout] = useStateB(doc.about || '');
+  const [action, setAction] = useStateB(doc.action || '');
+  const inputStyle = { width: '100%', boxSizing: 'border-box', borderRadius: 12, border: '1.5px solid var(--chip-border)', background: 'var(--card-2)',
+    padding: '10px 12px', fontFamily: "'Outfit', system-ui", fontSize: 15.5, color: 'var(--ink)', marginBottom: 12 };
+  const changed = title.trim() !== doc.title || type !== doc.type || from.trim() !== doc.from || received !== doc.received
+    || about.trim() !== (doc.about || '') || action.trim() !== (doc.action || '');
+  return (
+    <div className="j-sheet-scrim" onClick={onClose}>
+      <div className="j-sheet" onClick={ev => ev.stopPropagation()} style={{ maxHeight: '88%', overflowY: 'auto' }}>
+        <div className="j-sheet-grab" />
+        <h2 className="j-h2" style={{ marginBottom: 4 }}>Edit this document</h2>
+        <p className="j-sm" style={{ marginBottom: 14 }}>Corrections are fine. The earlier details are kept on the record.</p>
+        <p className="j-sm" style={{ marginBottom: 6 }}>Title</p>
+        <input value={title} onChange={ev => setTitle(ev.target.value)} style={inputStyle} />
+        <p className="j-sm" style={{ marginBottom: 6 }}>What it is</p>
+        <div className="j-chiprow" style={{ marginBottom: 12 }}>
+          {J.DOC_TYPES.map(t => (
+            <button key={t} className={'j-chip' + (type === t ? ' j-chip-on' : '')} onClick={() => setType(t)}>{t}</button>
+          ))}
+        </div>
+        <p className="j-sm" style={{ marginBottom: 6 }}>From</p>
+        <input value={from} onChange={ev => setFrom(ev.target.value)} style={inputStyle} />
+        <p className="j-sm" style={{ marginBottom: 6 }}>Date received</p>
+        <input type="date" value={received} onChange={ev => setReceived(ev.target.value)} style={{ ...inputStyle, colorScheme: 'light dark' }} />
+        <p className="j-sm" style={{ marginBottom: 6 }}>About</p>
+        <textarea value={about} onChange={ev => setAbout(ev.target.value)} rows={3} style={{ ...inputStyle, resize: 'vertical' }} />
+        <p className="j-sm" style={{ marginBottom: 6 }}>Action needed (leave empty if none)</p>
+        <input value={action} onChange={ev => setAction(ev.target.value)} style={{ ...inputStyle, marginBottom: 16 }} />
+        <button className="j-btn j-btn-primary" disabled={!title.trim()} style={{ opacity: title.trim() ? 1 : 0.5 }}
+          onClick={() => {
+            const rec = /^\d{4}-\d{2}-\d{2}$/.test(received) ? received : doc.received;
+            if (changed && title.trim()) onSave({ title: title.trim(), type, from: from.trim(), received: rec, about: about.trim(), action: action.trim() });
+            onClose();
+          }}>
+          Save the change
+        </button>
+        <button className="j-btn j-btn-ghost" style={{ marginTop: 8 }} onClick={onClose}>Cancel</button>
+      </div>
+    </div>
+  );
+}
+
 function DocScreen({ nav, docs, id }) {
   const J = window.JOTLA;
   const d = docs.find(x => x.id === id);
+  const [editing, setEditing] = useStateB(false);
   if (!d) return <div className="j-screen"><PushHeader title="Document" onBack={() => nav.back()} /></div>;
   const Row = ({ label, value }) => value ? (
     <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, padding: '12px 0', borderBottom: '1px solid var(--line)' }}>
@@ -451,6 +511,11 @@ function DocScreen({ nav, docs, id }) {
             <div>
               <p className="j-h3" style={{ fontSize: 19 }}>{d.title}</p>
               <p className="j-meta" style={{ marginTop: 2 }}>{d.type} · from {d.from}</p>
+              {d.editedOn && (
+                <span className="j-pillbadge" style={{ marginTop: 6, background: 'var(--tag-grey-bg)', color: 'var(--muted)' }}>
+                  <Icon name="note" size={13} color="var(--muted)" /> Edited {J.fmtShort(d.editedOn)}
+                </span>
+              )}
             </div>
           </div>
 
@@ -485,11 +550,29 @@ function DocScreen({ nav, docs, id }) {
             )}
           </div>
 
-          <button className="j-btn j-btn-ghost" style={{ color: '#C0392B' }} onClick={() => {
-            if (window.confirm('Delete this document from the vault? This cannot be undone.')) { nav.deleteDoc(d.id); nav.back(); }
-          }}><Icon name="close" size={18} color="#C0392B" /> Delete this document</button>
+          {d.history && d.history.length > 0 && (
+            <div className="j-card j-card-pad" style={{ background: 'var(--card-2)' }}>
+              <p className="j-sm" style={{ marginBottom: 8 }}>What it said before (kept for honesty)</p>
+              {d.history.map((h, i) => (
+                <div key={i} style={{ padding: '8px 0', borderTop: i ? '1px solid var(--line)' : 'none' }}>
+                  <p className="j-meta" style={{ marginBottom: 3 }}>Until {J.fmtShort(h.on)} {h.on.slice(0, 4)}</p>
+                  <p className="j-body" style={{ fontSize: 15 }}>{h.title}{h.about ? ' · ' + h.about : ''}{h.action ? ' · Action: ' + h.action : ''}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button className="j-btn j-btn-ghost" style={{ flex: 1, color: 'var(--blue)' }} onClick={() => setEditing(true)}>
+              <Icon name="note" size={18} color="var(--blue)" /> Edit
+            </button>
+            <button className="j-btn j-btn-ghost" style={{ flex: 1, color: '#C0392B' }} onClick={() => {
+              if (window.confirm('Delete this document from the vault? This cannot be undone.')) { nav.deleteDoc(d.id); nav.back(); }
+            }}><Icon name="close" size={18} color="#C0392B" /> Delete</button>
+          </div>
         </div>
       </div>
+      {editing && <EditDocSheet doc={d} onSave={(patch) => nav.updateDoc(d.id, patch)} onClose={() => setEditing(false)} />}
     </div>
   );
 }
@@ -950,6 +1033,43 @@ function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
   const FEEDBACK_HREF = 'mailto:hello@sen.help?subject=' + encodeURIComponent('Jotla prototype feedback')
     + '&body=' + encodeURIComponent('What I was trying to do:\n\nWhat I think, or what happened:\n\nWhich screen:\n\nMy phone / browser:\n');
 
+  const feedbackCard = (
+    <button className="j-press" onClick={() => { window.location.assign(FEEDBACK_HREF); }} style={{ width: '100%', textAlign: 'left',
+      border: 'none', cursor: 'pointer', background: 'var(--tint-green)', borderRadius: 18, padding: 18, marginBottom: 20,
+      display: 'flex', alignItems: 'center', gap: 14 }}>
+      <span style={{ width: 42, height: 42, borderRadius: 12, background: 'var(--card)', flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Icon name="heart" size={22} color="var(--green)" />
+      </span>
+      <span style={{ flex: 1 }}>
+        <span style={{ display: 'block', fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 17, color: 'var(--green-ink)' }}>Tell us what you think</span>
+        <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 13, color: 'var(--muted)', marginTop: 2 }}>This is an early test, and your feedback shapes it. Opens your email.</span>
+      </span>
+      <Icon name="chevronRight" size={18} color="var(--green-ink)" />
+    </button>
+  );
+  const plusCard = (
+    <>
+      <SectionLabel>Jotla Plus</SectionLabel>
+      <button className="j-press" onClick={() => nav.go('unlock')} style={{ width: '100%', textAlign: 'left', border: 'none', cursor: 'pointer',
+        background: LIVING_GRAD, borderRadius: 18, padding: 18, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 14,
+        color: '#fff', boxShadow: '0 14px 30px -14px rgba(20,40,80,0.7)' }}>
+        <span style={{ width: 42, height: 42, borderRadius: 12, background: 'rgba(230,184,92,0.18)', flexShrink: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name="sparkle" size={22} color={LIVING_GOLD} />
+        </span>
+        <span style={{ flex: 1 }}>
+          <span style={{ display: 'block', fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 17, color: '#fff' }}>Patterns, filters and PDF pack</span>
+          <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 13, color: 'rgba(255,255,255,0.78)', marginTop: 2 }}>
+            {nav.plus ? 'Active. Yours to keep.' : 'See what Plus adds. Pay once.'}</span>
+        </span>
+        {nav.plus
+          ? <span className="j-pillbadge" style={{ background: 'rgba(230,184,92,0.22)', color: LIVING_GOLD }}>Active</span>
+          : <Icon name="chevronRight" size={18} color="rgba(255,255,255,0.8)" />}
+      </button>
+    </>
+  );
+
   const exportData = () => {
     try {
       const payload = { app: 'Jotla', exportedAt: new Date().toISOString(), child: profile, entries, documents: docs };
@@ -999,10 +1119,10 @@ function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
       'Owned by you. Not the school, not the Local Authority. You.',
     ]],
     about: ['About and credits', [
-      'Jotla by SEN Help. Early test build 1.1 (July 2026).',
+      'Jotla by SEN Help. Early test build ' + window.JOTLA_BUILD + ' (July 2026).',
       'Designed and built by SEN Help (sen.help).',
       'Typefaces: Cal Sans and Outfit, used under the SIL Open Font Licence.',
-      'Feedback makes this better. Use "Tell us what you think" at the top of Settings.',
+      'Feedback makes this better. Use "Tell us what you think" in Settings.',
     ]],
   };
 
@@ -1023,51 +1143,10 @@ function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
             <Icon name="chevronRight" size={18} color="var(--faint)" />
           </button>
 
-          {/* feedback (this is an early test build) */}
-          <button className="j-press" onClick={() => { window.location.assign(FEEDBACK_HREF); }} style={{ width: '100%', textAlign: 'left',
-            border: 'none', cursor: 'pointer', background: 'var(--tint-green)', borderRadius: 18, padding: 18, marginBottom: 20,
-            display: 'flex', alignItems: 'center', gap: 14 }}>
-            <span style={{ width: 42, height: 42, borderRadius: 12, background: 'var(--card)', flexShrink: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name="heart" size={22} color="var(--green)" />
-            </span>
-            <span style={{ flex: 1 }}>
-              <span style={{ display: 'block', fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 17, color: 'var(--green-ink)' }}>Tell us what you think</span>
-              <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 13, color: 'var(--muted)', marginTop: 2 }}>This is an early test, and your feedback shapes it. Opens your email.</span>
-            </span>
-            <Icon name="chevronRight" size={18} color="var(--green-ink)" />
-          </button>
-
-          <SectionLabel>Jotla Plus</SectionLabel>
-          <button className="j-press" onClick={() => nav.go('unlock')} style={{ width: '100%', textAlign: 'left', border: 'none', cursor: 'pointer',
-            background: LIVING_GRAD, borderRadius: 18, padding: 18, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 14,
-            color: '#fff', boxShadow: '0 14px 30px -14px rgba(20,40,80,0.7)' }}>
-            <span style={{ width: 42, height: 42, borderRadius: 12, background: 'rgba(230,184,92,0.18)', flexShrink: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name="sparkle" size={22} color={LIVING_GOLD} />
-            </span>
-            <span style={{ flex: 1 }}>
-              <span style={{ display: 'block', fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 17, color: '#fff' }}>Patterns, filters and PDF pack</span>
-              <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 13, color: 'rgba(255,255,255,0.78)', marginTop: 2 }}>
-                {nav.plus ? 'Active. Yours to keep.' : 'See what Plus adds. Pay once.'}</span>
-            </span>
-            {nav.plus
-              ? <span className="j-pillbadge" style={{ background: 'rgba(230,184,92,0.22)', color: LIVING_GOLD }}>Active</span>
-              : <Icon name="chevronRight" size={18} color="rgba(255,255,255,0.8)" />}
-          </button>
-
-          <SectionLabel>Appearance</SectionLabel>
-          <div className="j-card" style={{ marginBottom: 20, overflow: 'hidden' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px' }}>
-              <span style={{ width: 38, height: 38, borderRadius: 11, background: 'var(--tint-blue)', flexShrink: 0,
-                display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="moon" size={20} color="var(--blue)" /></span>
-              <span style={{ flex: 1 }}>
-                <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 16, fontWeight: 500, color: 'var(--ink)' }}>Dark mode</span>
-                <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 13, color: 'var(--faint)', marginTop: 1 }}>Easier on the eyes at night.</span>
-              </span>
-              <Toggle on={nav.dark} onChange={() => nav.toggleDark()} />
-            </div>
-          </div>
+          {/* The upgrade card sits high only while there is a level to go up to.
+              Once Plus is owned it moves to the bottom of Settings (and when the
+              AI tier exists, that upsell will take this high slot). */}
+          {!nav.plus && plusCard}
 
           <SectionLabel>Backup and export</SectionLabel>
           <div className="j-card" style={{ marginBottom: 20, overflow: 'hidden' }}>
@@ -1093,6 +1172,19 @@ function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
               right={<span className="j-pillbadge" style={{ background: 'var(--tag-grey-bg)', color: 'var(--muted)' }}>Planned</span>} last />
           </div>
 
+          <SectionLabel>Appearance</SectionLabel>
+          <div className="j-card" style={{ marginBottom: 20, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px' }}>
+              <span style={{ width: 38, height: 38, borderRadius: 11, background: 'var(--tint-blue)', flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="moon" size={20} color="var(--blue)" /></span>
+              <span style={{ flex: 1 }}>
+                <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 16, fontWeight: 500, color: 'var(--ink)' }}>Dark mode</span>
+                <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 13, color: 'var(--faint)', marginTop: 1 }}>Easier on the eyes at night.</span>
+              </span>
+              <Toggle on={nav.dark} onChange={() => nav.toggleDark()} />
+            </div>
+          </div>
+
           <SectionLabel>Privacy</SectionLabel>
           <div className="j-card" style={{ marginBottom: 20, overflow: 'hidden' }}>
             <SettingsRow icon={<Icon name="lock" size={20} color="var(--blue)" />} title="Lock the app"
@@ -1101,6 +1193,8 @@ function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
             <SettingsRow icon={<Icon name="note" size={20} color="var(--blue)" />} title="How your data is kept"
               sub="The whole privacy promise, in plain words." onClick={() => setInfo('privacy')} last />
           </div>
+
+          {feedbackCard}
 
           {/* privacy reassurance: no account, local lock, plain trust copy */}
           <div style={{ background: 'var(--blue)', borderRadius: 18, padding: 20, marginBottom: 20, color: '#fff' }}>
@@ -1119,6 +1213,8 @@ function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
             <SettingsRow icon={<Icon name="note" size={20} color="var(--blue)" />} title="Privacy, in plain words" onClick={() => setInfo('privacy')} />
             <SettingsRow icon={<Icon name="star" size={20} color="var(--blue)" />} title="About and credits" onClick={() => setInfo('about')} last />
           </div>
+
+          {nav.plus && plusCard}
 
           <p className="j-meta" style={{ textAlign: 'center' }}>Jotla by SEN Help · Test build {window.JOTLA_BUILD}</p>
         </div>

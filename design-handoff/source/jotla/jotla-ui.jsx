@@ -3,7 +3,28 @@ const { useState, useRef, useEffect } = React;
 
 // The single source of the visible build number. Bump this every release
 // (and keep sw.js VERSION in step) so the Settings footer can never lie.
-window.JOTLA_BUILD = '1.2.1';
+window.JOTLA_BUILD = '1.3.0';
+
+// A calm, honest locked card for Plus features in the free app: the feature is
+// visible and named, never hidden, and one tap shows what Plus is.
+function PlusLockedCard({ title, text, onClick, style }) {
+  return (
+    <button className="j-card j-press" onClick={onClick} style={{ width: '100%', textAlign: 'left', cursor: 'pointer', padding: 14,
+      display: 'flex', gap: 12, alignItems: 'center', border: '1px dashed var(--chip-border)', background: 'var(--card-2)', ...(style || {}) }}>
+      <span style={{ width: 38, height: 38, borderRadius: 12, background: 'var(--tag-grey-bg)', flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Icon name="lock" size={18} color="var(--muted)" />
+      </span>
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontWeight: 500, fontSize: 15.5, color: 'var(--ink)' }}>{title}
+          <span className="j-pillbadge" style={{ marginLeft: 8, background: 'var(--tint-blue)', color: 'var(--blue)' }}>Plus</span>
+        </span>
+        <span style={{ display: 'block', fontSize: 13, color: 'var(--faint)', marginTop: 2 }}>{text}</span>
+      </span>
+      <Icon name="chevronRight" size={16} color="var(--faint)" />
+    </button>
+  );
+}
 
 // Top bar for pushed (non-tab) screens
 function PushHeader({ title, subtitle, onBack, onClose, accent = '#1A56A8', bg = 'transparent' }) {
@@ -219,4 +240,4 @@ function MiniMonthStrip({ entries, onOpen }) {
   );
 }
 
-Object.assign(window, { PushHeader, EntryCard, SectionLabel, MiniMonthStrip, moodTint, PhotoAttachment, DateRangeControl, rangeBounds, inDateRange });
+Object.assign(window, { PushHeader, EntryCard, SectionLabel, MiniMonthStrip, moodTint, PhotoAttachment, DateRangeControl, rangeBounds, inDateRange, PlusLockedCard });

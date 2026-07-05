@@ -386,6 +386,18 @@ To run the reference: open `source/jotla/Jotla.html` in a browser.
 
 ---
 
+## Build 1.3.0 (5 July 2026): the full-record demo, honest Free vs Plus, swipe, and honest editing
+
+Built from the founder's field-test list. Verified by 22 scripted click-through checks (17 feature, 5 regression), all passing.
+
+- **The sample record is now a real six-month story.** Sam and Maria carry ~160 dated entries from January to today (school runs, lunch halls, transitions, gate notes, weekends, holidays gaps included) and 22 documents (the whole EHC assessment journey in paperwork). Generated deterministically, so every device sees the same demo, and it stays anchored near today forever.
+- **Free now looks exactly like Free.** Plus features are honestly locked with a calm, named card (never hidden, one tap shows what Plus is): Find's combined filters (keyword search stays free), Month patterns, and the PDF evidence pack. The gate note guided capture was already gated.
+- **The upgrade card only sits high when there is a level to go up to.** Once Plus is owned, the "Active" card moves to the bottom of Settings. When the AI tier exists, that upsell will take the high slot.
+- **Settings reordered:** dark mode now lives under Backup and export, and "Tell us what you think" sits between the privacy rows and the "No account" promise card.
+- **The calendar swipes.** Left for the next month, right for earlier, arrows still there.
+- **Edit, with a paper trail.** Notes and documents now have an Edit button next to Delete. The original date and time can never change, the earlier wording stays visible on the record ("What it said before"), and the printed evidence pack marks edited entries. An edit can never quietly rewrite history; that honesty is the product.
+- The private family edition always has full features (no locks on a real record).
+
 ## Build 1.2.1 (5 July 2026): Back takes you back to where you were
 
 Field-reported by the founder the same evening 1.2 shipped: Back returned you to the right page but not the state of it. Fixed across the app; every fix verified by a scripted click-through test (open, navigate away, come back, assert).
