@@ -386,6 +386,10 @@ To run the reference: open `source/jotla/Jotla.html` in a browser.
 
 ---
 
+## Build 1.6.5 (6 July 2026): one analysis home on the Month view
+
+- The standalone yellow "[N] entries this month, [N] on hard days" bar above the calendar is gone. Its counts now open the analysis sentence at the bottom of the "How [Month] looked" card, followed by the hard-moment theme, so the month reads as one graph card: bars, then the story under them.
+
 ## Build 1.6.4 (6 July 2026): the month graph badge goes purple
 
 - The "Plus" badge on the "How [Month] looked" card is now solid purple with white text, matching the TIPS pill, so everything Plus wears the same colour.

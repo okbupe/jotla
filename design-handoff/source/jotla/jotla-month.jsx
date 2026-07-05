@@ -32,6 +32,8 @@ function MonthMoodGraph({ entries, year, month }) {
   const hc = {};
   entries.forEach(e => { if (e.date.startsWith(pre) && e.mood === 'hard') hc[e.category] = (hc[e.category] || 0) + 1; });
   const top = Object.entries(hc).sort((a, b) => b[1] - a[1])[0];
+  const monthEntries = entries.filter(e => e.date.startsWith(pre));
+  const hardCount = monthEntries.filter(e => e.mood === 'hard').length;
   return (
     <div className="j-card" style={{ padding: 18, marginTop: 18 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
@@ -52,9 +54,12 @@ function MonthMoodGraph({ entries, year, month }) {
         })}
       </div>
       <p className="j-body" style={{ fontSize: 14.5, color: 'var(--muted)', marginTop: 16 }}>
-        {top
-          ? (<><span className="j-strong">{top[0]}</span> entries come up most often as the hard moments this month.</>)
-          : 'No hard moments logged this month. Long may it last.'}
+        {monthEntries.length
+          ? (<><span className="j-strong">{monthEntries.length} {monthEntries.length === 1 ? 'entry' : 'entries'} this month{hardCount ? `, ${hardCount} on hard days` : ''}.</span>{' '}
+              {top
+                ? (<><span className="j-strong">{top[0]}</span> entries come up most often as the hard moments.</>)
+                : 'No hard moments logged. Long may it last.'}</>)
+          : (<><span className="j-strong">Nothing logged in {J.MONTH_NAMES[month]}.</span> Swipe the calendar to move between months.</>)}
       </p>
     </div>
   );
@@ -123,23 +128,9 @@ function MonthScreen({ nav, entries, view }) {
         <div className="j-pad" style={{ paddingTop: 14, paddingBottom: 120 }}>
           <TabTitle title={monthLabel} sub="Tap any day to read it back." />
 
-          {/* plain trend: month patterns are a Plus feature */}
-          {nav.plus ? (
-            <div className="j-card" style={{ padding: 14, display: 'flex', gap: 12, alignItems: 'center', marginBottom: 18,
-              background: 'var(--tint-amber)', border: 'none' }}>
-              <span style={{ width: 38, height: 38, borderRadius: 12, background: 'var(--card)', flexShrink: 0,
-                display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Icon name="leaf" size={20} color="var(--amber)" />
-              </span>
-              <p className="j-body" style={{ fontSize: 15.5 }}>{(() => {
-                const pre = `${year}-${String(month + 1).padStart(2, '0')}-`;
-                const me = entries.filter(e => e.date.startsWith(pre));
-                const h = me.filter(e => e.mood === 'hard').length;
-                if (!me.length) return (<><span className="j-strong">Nothing logged in {J.MONTH_NAMES[month]}.</span> Swipe the calendar to move between months.</>);
-                return (<><span className="j-strong">{me.length} {me.length === 1 ? 'entry' : 'entries'} this month{h ? `, ${h} on hard days` : ''}.</span> Tap a tinted day to read it back.</>);
-              })()}</p>
-            </div>
-          ) : (
+          {/* month patterns are a Plus feature: free sees the honest locked card,
+              Plus gets the counts inside the graph card below the calendar */}
+          {!nav.plus && (
             <PlusLockedCard onClick={() => nav.go('unlock')} style={{ marginBottom: 18 }}
               title="Month patterns" text="The mood graph, counts and hard-day patterns for each month. Part of Plus." />
           )}
