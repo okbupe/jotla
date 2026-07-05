@@ -120,7 +120,7 @@ function MonthScreen({ nav, entries, view }) {
   return (
     <div className="j-screen">
       <div className="j-scroll j-fade">
-        <div className="j-pad" style={{ paddingTop: 14, paddingBottom: 100 }}>
+        <div className="j-pad" style={{ paddingTop: 14, paddingBottom: 120 }}>
           <TabTitle title={monthLabel} sub="Tap any day to read it back." />
 
           {/* plain trend: month patterns are a Plus feature */}

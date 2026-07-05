@@ -155,9 +155,11 @@ button, input, select, textarea { font-family: inherit; }
 .j-avatar:active { transform: scale(0.94); }
 
 /* ---- tab bar ---- */
+/* floats over the scrolling content and fades it out underneath,
+   the same effect as the pushed-screen action bars (--fade-grad) */
 .j-tabbar { display: flex; align-items: flex-end; justify-content: space-around;
-  padding: 8px 8px 40px; background: var(--tabbar-bg); backdrop-filter: blur(14px);
-  border-top: 1px solid var(--line); }
+  padding: 8px 8px 40px; background: var(--fade-grad);
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 40; }
 .j-tab { background: none; border: none; cursor: pointer; flex: 1; display: flex; flex-direction: column;
   align-items: center; gap: 4px; padding: 0; color: var(--faint); font-family: var(--f-body);
   font-size: 11px; font-weight: 500; -webkit-tap-highlight-color: transparent; }

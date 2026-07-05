@@ -386,6 +386,10 @@ To run the reference: open `source/jotla/Jotla.html` in a browser.
 
 ---
 
+## Build 1.6.3 (6 July 2026): the tab bar melts into the page
+
+- The main bottom menu bar now floats over the scrolling content with the same fade-out gradient as the Dysregulation Mode and Evidence action bars (content fades away beneath it instead of hitting a hard edge); solid background, blur and top border gone. The four tab screens gained bottom padding so nothing ever hides under it.
+
 ## Build 1.6.2 (6 July 2026): edit-history label softened
 
 - The edited-note history label drops "(kept for honesty)" and reads simply "What it said before", in light blue italic, on notes and documents alike. The honesty stays; it just stops announcing itself.

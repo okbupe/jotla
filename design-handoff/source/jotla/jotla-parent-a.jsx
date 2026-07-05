@@ -37,7 +37,7 @@ function TodayScreen({ nav, entries, today, profile }) {
   return (
     <div className="j-screen">
       <div className="j-scroll j-fade">
-        <div className="j-pad" style={{ paddingTop: 14, paddingBottom: 28 }}>
+        <div className="j-pad" style={{ paddingTop: 14, paddingBottom: 120 }}>
           <p className="j-eyebrow" style={{ marginBottom: 6 }}>{J.fmtLong(today)}</p>
           <h1 className="j-h1" style={{ marginBottom: 4 }}>{greeting()}.</h1>
           <p className="j-body" style={{ color: 'var(--muted)', marginBottom: 20 }}>{isEmpty

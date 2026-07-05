@@ -46,7 +46,7 @@ function FindScreen({ nav, entries, view }) {
   return (
     <div className="j-screen">
       <div className="j-scroll j-fade" ref={scrollRef}>
-        <div className="j-pad" style={{ paddingTop: 14, paddingBottom: 100 }}>
+        <div className="j-pad" style={{ paddingTop: 14, paddingBottom: 120 }}>
           <TabTitle title="Find" sub="Search across everything you have noted." />
 
           {/* search bar */}
@@ -1129,7 +1129,7 @@ function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
   return (
     <div className="j-screen">
       <div className="j-scroll j-fade">
-        <div className="j-pad" style={{ paddingTop: 14, paddingBottom: 100 }}>
+        <div className="j-pad" style={{ paddingTop: 14, paddingBottom: 120 }}>
           <TabTitle title="Settings" />
 
           {/* active profile */}
