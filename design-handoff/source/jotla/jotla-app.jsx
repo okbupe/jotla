@@ -392,24 +392,37 @@ function App({ appMode }) {
 
   // Back always returns to the previous page (including across tab switches),
   // instead of resetting to the tab root. History entries remember view + tab.
+  // Screens stash their transient state (month shown, filters, sub-tab, scroll
+  // position) on the view via nav.remember, so Back restores the page AS IT WAS.
+  // viewRef keeps the latest view available synchronously, because a screen often
+  // calls remember() and go() in the same tap and state updates are batched.
+  const viewRef = useRefApp(view);
+  viewRef.current = view;
   const nav = {
-    go: (name, params = {}) => { setHistory(h => [...h.slice(-29), { view, tab }]); setView({ name, ...params }); },
+    go: (name, params = {}) => {
+      const cur = viewRef.current;
+      setHistory(h => [...h.slice(-29), { view: cur, tab }]);
+      const nv = { name, ...params }; viewRef.current = nv; setView(nv);
+    },
+    remember: (patch) => { viewRef.current = { ...viewRef.current, ...patch }; setView(viewRef.current); },
     back: () => setHistory(h => {
       if (h.length) {
         const prev = h[h.length - 1];
-        setView((prev && prev.view) ? prev.view : { name: 'today' });
+        const pv = (prev && prev.view) ? prev.view : { name: 'today' };
+        viewRef.current = pv; setView(pv);
         setTab((prev && prev.tab) ? prev.tab : 'today');
         return h.slice(0, -1);
       }
-      if (!TAB_NAMES.includes(view.name)) setView({ name: tab });
+      if (!TAB_NAMES.includes(view.name)) { const pv = { name: tab }; viewRef.current = pv; setView(pv); }
       return h;
     }),
     setTab: (name) => {
       if (name === tab && view.name === name) return;
-      setHistory(h => [...h.slice(-29), { view, tab }]);
-      setTab(name); setView({ name });
+      const cur = viewRef.current;
+      setHistory(h => [...h.slice(-29), { view: cur, tab }]);
+      setTab(name); const nv = { name }; viewRef.current = nv; setView(nv);
     },
-    home: () => { setTab('today'); setView({ name: 'today' }); setHistory([]); },
+    home: () => { setTab('today'); const nv = { name: 'today' }; viewRef.current = nv; setView(nv); setHistory([]); },
     addEntry: (entry) => setEntries(es => [{ ...entry, childId: profileId }, ...es]),
     addDoc: (doc) => setDocs(ds => [{ ...doc, childId: profileId }, ...ds]),
     deleteEntry: (id) => setEntries(es => es.filter(e => e.id !== id)),
@@ -488,9 +501,9 @@ function App({ appMode }) {
   let screen = null;
   switch (view.name) {
     case 'today': screen = <TodayScreen nav={nav} entries={myEntries} today={today} profile={profile} />; break;
-    case 'month': screen = <MonthScreen nav={nav} entries={myEntries} profile={profile} />; break;
-    case 'find': screen = <FindScreen nav={nav} entries={myEntries} />; break;
-    case 'evidence': screen = <EvidenceScreen nav={nav} entries={myEntries} docs={myDocs} profile={profile} />; break;
+    case 'month': screen = <MonthScreen nav={nav} entries={myEntries} profile={profile} view={view} />; break;
+    case 'find': screen = <FindScreen nav={nav} entries={myEntries} view={view} />; break;
+    case 'evidence': screen = <EvidenceScreen nav={nav} entries={myEntries} docs={myDocs} profile={profile} navView={view} />; break;
     case 'adddoc': screen = <AddDocScreen nav={nav} />; break;
     case 'settings': screen = <SettingsScreen nav={nav} profile={profile} entries={myEntries} docs={myDocs} />; break;
     case 'quicklog': screen = <QuickLogScreen nav={nav} today={today} />; break;

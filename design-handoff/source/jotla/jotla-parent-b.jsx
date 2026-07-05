@@ -4,13 +4,23 @@ const { useState: useStateB, useRef: useRefB, useEffect: useEffectB } = React;
 const THEME_TO_CAT = new Proxy({}, { get: (_, k) => k });
 
 // ---------------- Find ----------------
-function FindScreen({ nav, entries }) {
+function FindScreen({ nav, entries, view }) {
   const J = window.JOTLA;
-  const [q, setQ] = useStateB('');
-  const [themes, setThemes] = useStateB([]);
-  const [moods, setMoods] = useStateB([]);
-  const [setting, setSetting] = useStateB('Any');
-  const [range, setRange] = useStateB({ preset: 'Any time', from: '', to: '' });
+  // Back restores this page as it was: filters live on the view (nav.remember),
+  // and the scroll position is captured when a note is opened, restored on return.
+  const saved = (view && view.find) || {};
+  const [q, setQ] = useStateB(saved.q || '');
+  const [themes, setThemes] = useStateB(saved.themes || []);
+  const [moods, setMoods] = useStateB(saved.moods || []);
+  const [setting, setSetting] = useStateB(saved.setting || 'Any');
+  const [range, setRange] = useStateB(saved.range || { preset: 'Any time', from: '', to: '' });
+  const scrollRef = useRefB(null);
+  useEffectB(() => { nav.remember({ find: { q, themes, moods, setting, range } }); }, [q, themes, moods, setting, range]);
+  useEffectB(() => { if (saved.scrollY && scrollRef.current) scrollRef.current.scrollTop = saved.scrollY; }, []);
+  const openEntry = (id) => {
+    nav.remember({ find: { q, themes, moods, setting, range, scrollY: scrollRef.current ? scrollRef.current.scrollTop : 0 } });
+    nav.go('entry', { id });
+  };
 
   const toggle = (setter) => (val) => setter(v => v.includes(val) ? v.filter(x => x !== val) : [...v, val]);
 
@@ -35,7 +45,7 @@ function FindScreen({ nav, entries }) {
 
   return (
     <div className="j-screen">
-      <div className="j-scroll j-fade">
+      <div className="j-scroll j-fade" ref={scrollRef}>
         <div className="j-pad" style={{ paddingTop: 14, paddingBottom: 100 }}>
           <TabTitle title="Find" sub="Search across everything you have noted." />
 
@@ -94,7 +104,7 @@ function FindScreen({ nav, entries }) {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {matched.map(e => <EntryCard key={e.id} entry={e} showDate onClick={() => nav.go('entry', { id: e.id })} />)}
+              {matched.map(e => <EntryCard key={e.id} entry={e} showDate onClick={() => openEntry(e.id)} />)}
             </div>
           )}
         </div>
@@ -170,12 +180,23 @@ function DocCard({ doc, onClick }) {
   );
 }
 
-function EvidenceScreen({ nav, entries, docs, profile }) {
+function EvidenceScreen({ nav, entries, docs, profile, navView }) {
   const J = window.JOTLA;
-  const [view, setView] = useStateB('records'); // records | documents
-  const [range, setRange] = useStateB({ preset: 'Last 3 weeks', from: '', to: '' });
-  const [themes, setThemes] = useStateB([]);
+  // Back restores this page as it was: the open sub-tab, filters and scroll
+  // position are remembered on the view, so reading one document and returning
+  // lands the parent back on the Documents list where they left it.
+  const saved = (navView && navView.ev) || {};
+  const [view, setView] = useStateB(saved.tab || 'records'); // records | documents
+  const [range, setRange] = useStateB(saved.range || { preset: 'Last 3 weeks', from: '', to: '' });
+  const [themes, setThemes] = useStateB(saved.themes || []);
   const [done, setDone] = useStateB(false);
+  const scrollRef = useRefB(null);
+  useEffectB(() => { nav.remember({ ev: { tab: view, range, themes } }); }, [view, range, themes]);
+  useEffectB(() => { if (saved.scrollY && scrollRef.current) scrollRef.current.scrollTop = saved.scrollY; }, []);
+  const openDoc = (id) => {
+    nav.remember({ ev: { tab: view, range, themes, scrollY: scrollRef.current ? scrollRef.current.scrollTop : 0 } });
+    nav.go('doc', { id });
+  };
   const childLabel = profile ? `${profile.name}, ${profile.school}` : 'Sam, Oakfield Primary';
 
   const bounds = window.rangeBounds(range.preset, range.from, range.to);
@@ -197,7 +218,7 @@ function EvidenceScreen({ nav, entries, docs, profile }) {
   return (
     <div className="j-screen">
       <PushHeader title="Documents and evidence" subtitle="A dated record of what you saw, when you saw it." onBack={() => nav.back()} />
-      <div className="j-scroll j-fade">
+      <div className="j-scroll j-fade" ref={scrollRef}>
         <div className="j-pad" style={{ paddingTop: 2, paddingBottom: view === 'records' ? 120 : 120 }}>
 
           {/* segmented switch */}
@@ -262,7 +283,7 @@ function EvidenceScreen({ nav, entries, docs, profile }) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {docs.length === 0
                   ? <div className="j-card" style={{ padding: 22, textAlign: 'center' }}><p className="j-sm">No documents yet. Add the first letter or report and never lose it again.</p></div>
-                  : docs.map(d => <DocCard key={d.id} doc={d} onClick={() => nav.go('doc', { id: d.id })} />)}
+                  : docs.map(d => <DocCard key={d.id} doc={d} onClick={() => openDoc(d.id)} />)}
               </div>
             </>
           )}
@@ -1099,7 +1120,7 @@ function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
             <SettingsRow icon={<Icon name="star" size={20} color="var(--blue)" />} title="About and credits" onClick={() => setInfo('about')} last />
           </div>
 
-          <p className="j-meta" style={{ textAlign: 'center' }}>Jotla by SEN Help · Test build 1.1</p>
+          <p className="j-meta" style={{ textAlign: 'center' }}>Jotla by SEN Help · Test build {window.JOTLA_BUILD}</p>
         </div>
       </div>
 

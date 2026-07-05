@@ -13,10 +13,13 @@ function TabTitle({ title, sub, right }) {
   );
 }
 
-function MonthScreen({ nav, entries }) {
+function MonthScreen({ nav, entries, view }) {
   const J = window.JOTLA;
   const today = J.parseISO(J.TODAY_ISO);
-  const [offset, setOffset] = React.useState(0); // months back from the current month
+  // months back from the current month; remembered on the view so Back returns
+  // to the month the parent was reading, not the latest month
+  const [offset, setOffset] = React.useState((view && view.monthOffset) || 0);
+  const move = (delta) => setOffset(o => { const n = o + delta; nav.remember({ monthOffset: n }); return n; });
   const shown = new Date(today.getFullYear(), today.getMonth() + offset, 1);
   const year = shown.getFullYear();
   const month = shown.getMonth(); // 0-based
@@ -44,9 +47,9 @@ function MonthScreen({ nav, entries }) {
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
             <div style={{ flex: 1, minWidth: 0 }}><TabTitle title={monthLabel} sub="Tap any day to read it back." /></div>
             <button className="j-chip" style={{ opacity: canBack ? 1 : 0.35, minWidth: 44 }} aria-label="Earlier month"
-              onClick={() => canBack && setOffset(o => o - 1)}>{'‹'}</button>
+              onClick={() => canBack && move(-1)}>{'‹'}</button>
             <button className="j-chip" style={{ opacity: isCurrent ? 0.35 : 1, minWidth: 44 }} aria-label="Later month"
-              onClick={() => !isCurrent && setOffset(o => o + 1)}>{'›'}</button>
+              onClick={() => !isCurrent && move(1)}>{'›'}</button>
           </div>
 
           {/* plain trend */}

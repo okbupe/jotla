@@ -386,6 +386,16 @@ To run the reference: open `source/jotla/Jotla.html` in a browser.
 
 ---
 
+## Build 1.2.1 (5 July 2026): Back takes you back to where you were
+
+Field-reported by the founder the same evening 1.2 shipped: Back returned you to the right page but not the state of it. Fixed across the app; every fix verified by a scripted click-through test (open, navigate away, come back, assert).
+
+- Month: read a note in an earlier month and Back returns to that month, not the latest one.
+- Find: your filters, your search and your scroll position all survive opening a note and coming back. No more re-filtering and re-scrolling after every note.
+- Documents and evidence: reading a document and pressing Back returns you to the Documents list where you left it, not the section front page.
+- The visible build number is now single-sourced (`window.JOTLA_BUILD`) and bumped every release, so the Settings footer can never claim an old build again (1.2 shipped still showing "1.1"; that mislabel caused a false "not updated" alarm on three devices).
+- Service worker updated: app code now loads network-first with offline fallback, so every deploy reaches devices on their next online load automatically. Heavy assets (fonts, icons, the vendored runtime) stay cache-first. Offline behaviour re-verified with the server switched off.
+
 ## Build 1.2 (5 July 2026): works with no signal
 
 The app now loads and runs fully offline once it has been opened online once. This was the top item on the hardening list: a parent at a school gate with no signal must still be able to log.

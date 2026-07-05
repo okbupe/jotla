@@ -1,7 +1,12 @@
 /* Jotla service worker: the app must work at a school gate with no signal.
-   Cache-first for everything precached; runtime-cache anything else same-origin.
-   Bump VERSION on every release so waiting clients pick up the new shell. */
-const VERSION = 'jotla-v1.2.0';
+   Strategy:
+   - App shell and code (HTML, JSX, CSS, manifest): NETWORK-FIRST with cache
+     fallback, so every deploy reaches devices on their next online load without
+     waiting for a service-worker version bump. Offline still serves the cache.
+   - Heavy static assets (vendor runtime, fonts, icons): CACHE-FIRST, they are
+     versioned by path or never change.
+   Bump VERSION when the precache list changes. */
+const VERSION = 'jotla-v1.2.1';
 const PRECACHE = [
   './',
   'index.html',
@@ -29,6 +34,7 @@ const PRECACHE = [
   'jotla-onboard.jsx',
   'jotla-app.jsx'
 ];
+const CACHE_FIRST = /\/vendor\/|\.(ttf|otf|woff2?|png|svg|ico)$/;
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -47,22 +53,31 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+  const sameOrigin = url.origin === self.location.origin;
+
+  const putCopy = (res) => {
+    if (res && res.ok && sameOrigin) {
+      const copy = res.clone();
+      caches.open(VERSION).then((cache) => cache.put(req, copy));
+    }
+    return res;
+  };
+
+  if (sameOrigin && CACHE_FIRST.test(url.pathname)) {
+    event.respondWith(
+      caches.match(req, { ignoreSearch: true }).then((hit) => hit || fetch(req).then(putCopy))
+    );
+    return;
+  }
+
   event.respondWith(
-    caches.match(req, { ignoreSearch: true }).then((hit) => {
-      if (hit) return hit;
-      return fetch(req).then((res) => {
-        // Runtime-cache successful same-origin responses so a first online visit
-        // leaves everything recoverable offline.
-        if (res && res.ok && new URL(req.url).origin === self.location.origin) {
-          const copy = res.clone();
-          caches.open(VERSION).then((cache) => cache.put(req, copy));
-        }
-        return res;
-      }).catch(() => {
-        // Offline and not cached: for page navigations fall back to the app shell.
+    fetch(req).then(putCopy).catch(() =>
+      caches.match(req, { ignoreSearch: true }).then((hit) => {
+        if (hit) return hit;
         if (req.mode === 'navigate') return caches.match('./');
         return Response.error();
-      });
-    })
+      })
+    )
   );
 });

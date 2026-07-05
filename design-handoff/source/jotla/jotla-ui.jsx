@@ -1,6 +1,10 @@
 // jotla-ui.jsx — shared layout atoms used across screens.
 const { useState, useRef, useEffect } = React;
 
+// The single source of the visible build number. Bump this every release
+// (and keep sw.js VERSION in step) so the Settings footer can never lie.
+window.JOTLA_BUILD = '1.2.1';
+
 // Top bar for pushed (non-tab) screens
 function PushHeader({ title, subtitle, onBack, onClose, accent = '#1A56A8', bg = 'transparent' }) {
   return (
