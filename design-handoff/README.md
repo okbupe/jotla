@@ -386,6 +386,16 @@ To run the reference: open `source/jotla/Jotla.html` in a browser.
 
 ---
 
+## Build 1.2 (5 July 2026): works with no signal
+
+The app now loads and runs fully offline once it has been opened online once. This was the top item on the hardening list: a parent at a school gate with no signal must still be able to log.
+
+- Service worker added (`sw.js`): everything the app needs is pre-cached on first visit, later visits are served cache-first, and page loads fall back to the cached app shell when the network is gone. Verified by rendering the app headless with the web server switched off: identical DOM, zero network errors.
+- No more CDN: React, ReactDOM and the Babel runtime are now self-hosted in `vendor/` and the app uses the production React build. The app makes zero external requests.
+- The private family edition gets the same change with the runtime inlined into its single file.
+
+Remaining known limits: no entry editing yet (next on the list), Plus gating still only covers the gate note, and the in-browser JSX compile is still to be replaced by a precompiled bundle.
+
 ## Build 1.1 (5 July 2026): field-test fixes and working controls
 
 Found in family field-testing and a full code audit; every change verified by rendering the app headless before shipping.
