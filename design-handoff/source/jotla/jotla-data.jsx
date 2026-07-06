@@ -279,7 +279,7 @@ const SEED_ANCHOR_ISO = '2026-06-12'; // the last seeded day in the original dat
 
 const SETTINGS = ['School', 'Nursery', 'Home', 'Club'];
 const TIMES = ['Morning', 'Afternoon', 'Evening'];
-const CATEGORIES = ['Mornings', 'Eating', 'Play', 'Transitions', 'Lunch hall', 'Incidents', 'Other'];
+const CATEGORIES = ['Mornings', 'Eating', 'Play', 'Transitions', 'Lunch hall', 'School feedback', 'New words', 'Wins', 'Incidents', 'Other'];
 
 const BEHAVIOURS = ['Crying', 'Hitting out', 'Running off', 'Refusing', 'Stomping', 'Withdrawing', 'Screaming'];
 
