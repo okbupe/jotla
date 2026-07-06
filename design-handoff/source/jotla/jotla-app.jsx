@@ -656,4 +656,50 @@ function Stage() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<Stage />);
+// ---------- error boundary: a calm floor under the whole app ----------
+// If any screen throws while rendering, a stressed parent must never see a
+// blank white page. They see reassurance (the record is stored on the device
+// and untouched) and one clear way forward. The fallback uses literal colours
+// and no app state, so it cannot fail for the same reason the app just did.
+class AppErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { crashed: false }; }
+  static getDerivedStateFromError() { return { crashed: true }; }
+  componentDidCatch(error, info) {
+    // Keep a breadcrumb for diagnostics; never surface a stack to the parent.
+    try { console.error('Jotla render error:', error, info); } catch (e) {}
+  }
+  render() {
+    if (!this.state.crashed) return this.props.children;
+    return (
+      <div style={{ position: 'fixed', inset: 0, background: '#F7F9FC', color: '#14223b',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        textAlign: 'center', padding: '32px 24px', fontFamily: "'Outfit', system-ui, sans-serif" }}>
+        <div style={{ maxWidth: 340 }}>
+          <div style={{ fontFamily: "'Cal Sans', 'Outfit', system-ui, sans-serif", fontWeight: 500,
+            fontSize: 24, lineHeight: 1.25, color: '#1A56A8', marginBottom: 14 }}>
+            Your saved days are safe
+          </div>
+          <p style={{ fontSize: 16, lineHeight: 1.5, margin: '0 0 8px' }}>
+            Something went wrong showing the app. Your record is stored on this device and has not been touched.
+          </p>
+          <p style={{ fontSize: 16, lineHeight: 1.5, margin: '0 0 24px' }}>
+            Reopen Jotla and everything will be where you left it.
+          </p>
+          <button onClick={() => window.location.reload()}
+            style={{ minHeight: 52, width: '100%', border: 'none', borderRadius: 14, cursor: 'pointer',
+              background: '#1A56A8', color: '#fff', fontSize: 17, fontWeight: 600,
+              fontFamily: "'Outfit', system-ui, sans-serif" }}>
+            Reopen Jotla
+          </button>
+          <p style={{ fontSize: 13.5, lineHeight: 1.5, margin: '20px 0 0', color: '#5a6b85' }}>
+            If this keeps happening, email hello@sen.help and we will help.
+          </p>
+        </div>
+      </div>
+    );
+  }
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <AppErrorBoundary><Stage /></AppErrorBoundary>
+);
