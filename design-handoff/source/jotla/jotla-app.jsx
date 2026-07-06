@@ -27,6 +27,48 @@ function saveJSON(key, val) {
   }
 }
 
+// ---------- error boundaries ----------
+// One bad entry must never blank the whole record. The screen boundary keeps the
+// header and tab bar alive so the parent can still reach Settings and export;
+// the app boundary is the last-resort net if the shell itself fails.
+class ScreenBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { broken: false }; }
+  static getDerivedStateFromError() { return { broken: true }; }
+  componentDidCatch(err) { try { console.error('Jotla screen error:', err); } catch (e) {} }
+  render() {
+    if (!this.state.broken) return this.props.children;
+    return (
+      <div className="j-screen"><div className="j-scroll"><div className="j-pad" style={{ paddingTop: 48, textAlign: 'center' }}>
+        <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 20, color: 'var(--ink)', margin: '0 0 10px' }}>This screen hit a problem</p>
+        <p style={{ fontFamily: "'Outfit', system-ui", fontSize: 15, color: 'var(--muted)', lineHeight: 1.55, margin: '0 0 8px' }}>Your record is safe on this device. Nothing has been lost.</p>
+        <p style={{ fontFamily: "'Outfit', system-ui", fontSize: 15, color: 'var(--muted)', lineHeight: 1.55, margin: 0 }}>Try another tab. If this keeps happening, save a copy with Export my data in Settings, then tell us what you think.</p>
+      </div></div></div>
+    );
+  }
+}
+class AppBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { broken: false }; }
+  static getDerivedStateFromError() { return { broken: true }; }
+  componentDidCatch(err) { try { console.error('Jotla app error:', err); } catch (e) {} }
+  render() {
+    if (!this.state.broken) return this.props.children;
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F7F9FC', padding: 24 }}>
+        <div style={{ maxWidth: 340, textAlign: 'center', fontFamily: "'Outfit', system-ui, sans-serif" }}>
+          <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 22, color: '#14223b', margin: '0 0 10px' }}>Jotla hit a problem opening</p>
+          <p style={{ fontSize: 15, color: '#4a5875', lineHeight: 1.55, margin: '0 0 16px' }}>Your record is still safe on this device. Nothing has been lost.</p>
+          <button onClick={() => this.setState({ broken: false })} style={{ fontFamily: "'Outfit', system-ui", fontSize: 16, fontWeight: 500,
+            color: '#fff', background: '#1A56A8', border: 'none', borderRadius: 999, padding: '12px 28px', cursor: 'pointer' }}>Try again</button>
+          <p style={{ fontSize: 13.5, color: '#8291ad', lineHeight: 1.5, margin: '16px 0 0' }}>If this keeps happening, email hello@sen.help and we will help.</p>
+        </div>
+      </div>
+    );
+  }
+}
+// Test hook for the boot-and-assert suite only: lets the suite prove the screen
+// boundary works without corrupting real data. Never set in normal use.
+function CrashProbe() { throw new Error('Jotla test: deliberate screen crash'); }
+
 // Sample data is anchored near "today" at first load; when the app is opened again
 // weeks later, re-anchor the stored sample entries so the demo never goes stale.
 // Real records (SEED_SHIFTING false) are never touched.
@@ -593,7 +635,9 @@ function App({ appMode }) {
     <div className={'jotla-root' + (dark ? ' j-dark' : '') + (appMode ? ' j-app' : '')} style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative', paddingTop: appMode ? 'max(env(safe-area-inset-top), 12px)' : 50, background: isChild ? '#FFF6EC' : 'var(--bg)' }}>
       {!isFullscreen && <AppHeader profile={profile} plus={plus} onProfile={() => setProfileOpen(true)} onOptions={() => setChildOptOpen(true)} onEvidence={() => nav.go('evidence')} />}
       <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
-        <div key={view.name + (view.id || view.date || '') + profileId} style={{ position: 'absolute', inset: 0 }}>{screen}</div>
+        <div key={view.name + (view.id || view.date || '') + profileId} style={{ position: 'absolute', inset: 0 }}>
+          <ScreenBoundary>{window.__JOTLA_TEST_THROW ? <CrashProbe /> : screen}</ScreenBoundary>
+        </div>
       </div>
       {isTab && <TabBar active={tab} onTab={nav.setTab} onLog={() => nav.go('quicklog')} />}
       {exitHint && (
@@ -656,4 +700,4 @@ function Stage() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<Stage />);
+ReactDOM.createRoot(document.getElementById('root')).render(<AppBoundary><Stage /></AppBoundary>);
