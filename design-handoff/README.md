@@ -386,6 +386,18 @@ To run the reference: open `source/jotla/Jotla.html` in a browser.
 
 ---
 
+## Build 1.7.1 (6 July 2026): the whole day fits in the log
+
+- Three new "What kind of moment?" chips, straight from the family field test that retired the paper home log: **School feedback** (what school told you today, or that nothing came home; logged twenty times, "no feedback" IS the pattern), **New words** (a new word or phrase, captured so it can be built on at home), and **Wins** (anything managed, however small; good days deserve the same care as hard ones). They flow through Month patterns and Find filters automatically.
+- The Quick log placeholder now nudges the habit that matters most at tribunal: "A line is plenty. Their exact words, in quotes, are gold."
+
+## Build 1.7.0 (6 July 2026): the record can survive a bad entry (entry backfilled with 1.7.1; shipped via PR #4)
+
+- Screen-level and app-level error boundaries: one bad entry can never blank the record; the header and tab bar stay alive with calm your-record-is-safe copy.
+- Backup health line in Settings (last saved copy, a gentle 30-day nudge, a size warning near the Android auto-backup cap).
+- Accessibility: aria-pressed on all 16 chip groups, a real switch role on Dark mode.
+- A scripted boot-and-assert suite now lives in the repo at `tests/boot-assert.js`.
+
 ## Build 1.6.6 (6 July 2026): Family sync joins the Plus promise
 
 - Founder decision: Family Sync (both grown-ups' phones staying in sync, no accounts) ships inside Plus at minimum. The Plus tier list now names it honestly as coming soon. Design doc: Jotla-Family-Sync-Design.md in the SEN Help workspace.

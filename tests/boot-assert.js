@@ -78,6 +78,23 @@ function ok(name, cond) {
   await page.waitForTimeout(250);
   const nowPressed = await page.locator('button[aria-pressed="true"]', { hasText: chipText }).count();
   ok('aria-pressed tracks selection (' + chipText + ')', nowPressed >= 1);
+
+  // ---- 5b. whole-day capture chips (build 1.7.1) + a real save ----
+  console.log('Suite 5b: whole-day chips');
+  const logText = await page.locator('#root').innerText();
+  for (const c of ['School feedback', 'New words', 'Wins']) ok('chip present: ' + c, logText.includes(c));
+  ok('placeholder nudges exact words', await page.locator('textarea[placeholder*="exact words"]').count() >= 1);
+  await page.locator('button.j-chip:has-text("Today")').first().click(); // suite 5 toggled "Yesterday"; save to today
+  await page.getByText('Wins', { exact: true }).first().click();
+  await page.locator('textarea').first().fill('Boot-assert win: tried a new food at dinner');
+  await page.getByText('Save', { exact: true }).last().click();
+  await page.waitForTimeout(700);
+  await page.getByText('Today', { exact: true }).last().click();
+  await page.waitForTimeout(500);
+  ok('saved Wins entry appears on Today', (await page.locator('#root').innerText()).includes('Boot-assert win: tried a new food'));
+  await page.getByText('Settings', { exact: true }).last().click();
+  await page.waitForTimeout(450);
+  ok('footer shows the bumped build', (await page.locator('#root').innerText()).includes('Test build 1.7.1'));
   await ctx.close();
 
   // ---- 6. app boundary: poisoned storage never blanks the app ----

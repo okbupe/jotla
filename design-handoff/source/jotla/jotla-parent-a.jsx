@@ -289,7 +289,7 @@ function QuickLogScreen({ nav, today }) {
           <div>
             <FieldLabel>What happened?</FieldLabel>
             <textarea className="j-input" value={text} onChange={e => setText(e.target.value)} rows={3}
-              placeholder="A line is plenty. You can always add more later." />
+              placeholder="A line is plenty. Their exact words, in quotes, are gold." />
           </div>
           <div><FieldLabel>Add a photo or video</FieldLabel><MediaPicker value={media} onChange={setMedia} /></div>
           <div><FieldLabel>How did it feel?</FieldLabel><MoodFacePicker value={mood} onChange={setMood} /></div>
