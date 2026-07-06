@@ -627,7 +627,8 @@ function PlusFeature({ icon, title, formal, plain }) {
 const FREE_ITEMS = ['Daily logging and the quick log', 'The child walkthrough', 'Your basic timeline',
   'Plain keyword search of your own notes', 'Raw data export', 'Appeal-deadline safety reminders'];
 const PLUS_ITEMS = ['Patterns and the Month view', 'Deep filtering', 'Dysregulation Mode',
-  'PDF evidence pack', 'Promised vs delivered provision log'];
+  'PDF evidence pack', 'Promised vs delivered provision log',
+  'Family sync: every grown-up’s phone stays up to date (coming soon)'];
 const LIVING_ITEMS = ['EHCP and SEND deadline tracker', 'What to do about a gap', 'Rights kept current',
   'Current letter templates', 'On-device AI help', 'Fresh scene and symbol packs', 'A document vault',
   'Voice capture', 'Multiple children'];

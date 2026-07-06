@@ -386,6 +386,10 @@ To run the reference: open `source/jotla/Jotla.html` in a browser.
 
 ---
 
+## Build 1.6.6 (6 July 2026): Family sync joins the Plus promise
+
+- Founder decision: Family Sync (both grown-ups' phones staying in sync, no accounts) ships inside Plus at minimum. The Plus tier list now names it honestly as coming soon. Design doc: Jotla-Family-Sync-Design.md in the SEN Help workspace.
+
 ## Build 1.6.5 (6 July 2026): one analysis home on the Month view
 
 - The standalone yellow "[N] entries this month, [N] on hard days" bar above the calendar is gone. Its counts now open the analysis sentence at the bottom of the "How [Month] looked" card, followed by the hard-moment theme, so the month reads as one graph card: bars, then the story under them.
