@@ -63,7 +63,7 @@ function FindScreen({ nav, entries, view }) {
               <SectionLabel>Themes</SectionLabel>
               <div className="j-chiprow" style={{ marginBottom: 14 }}>
                 {J.FIND_THEMES.map(t => (
-                  <button key={t} className={'j-chip' + (themes.includes(t) ? ' j-chip-on' : '')} onClick={() => toggle(setThemes)(t)}>{t}</button>
+                  <button key={t} aria-pressed={themes.includes(t)} className={'j-chip' + (themes.includes(t) ? ' j-chip-on' : '')} onClick={() => toggle(setThemes)(t)}>{t}</button>
                 ))}
               </div>
 
@@ -72,7 +72,7 @@ function FindScreen({ nav, entries, view }) {
                 {J.FIND_MOODS.map(m => {
                   const on = moods.includes(m.key);
                   return (
-                    <button key={m.key} className={'j-chip' + (on ? ' j-chip-on' : '')} onClick={() => toggle(setMoods)(m.key)}>
+                    <button key={m.key} aria-pressed={on} className={'j-chip' + (on ? ' j-chip-on' : '')} onClick={() => toggle(setMoods)(m.key)}>
                       <MoodDot mood={m.key} size={11} /> {m.label}
                     </button>
                   );
@@ -82,7 +82,7 @@ function FindScreen({ nav, entries, view }) {
               <SectionLabel>Where</SectionLabel>
               <div className="j-chiprow" style={{ marginBottom: 18 }}>
                 {['Any', 'School', 'Home', 'Club'].map(s => (
-                  <button key={s} className={'j-chip' + (setting === s ? ' j-chip-on' : '')} onClick={() => setSetting(s)}>{s}</button>
+                  <button key={s} aria-pressed={setting === s} className={'j-chip' + (setting === s ? ' j-chip-on' : '')} onClick={() => setSetting(s)}>{s}</button>
                 ))}
               </div>
 
@@ -243,7 +243,7 @@ function EvidenceScreen({ nav, entries, docs, profile, navView }) {
               <SectionLabel>Include themes</SectionLabel>
               <div className="j-chiprow" style={{ marginBottom: 18 }}>
                 {J.CATEGORIES.map(t => (
-                  <button key={t} className={'j-chip' + (themes.includes(t) ? ' j-chip-on' : '')} onClick={() => toggleTheme(t)}>{t}</button>
+                  <button key={t} aria-pressed={themes.includes(t)} className={'j-chip' + (themes.includes(t) ? ' j-chip-on' : '')} onClick={() => toggleTheme(t)}>{t}</button>
                 ))}
               </div>
 
@@ -403,14 +403,14 @@ function AddDocScreen({ nav }) {
             <FieldLabel>What is it?</FieldLabel>
             <input className="j-input" value={title} onChange={e => setTitle(e.target.value)} placeholder="Give it a name, e.g. EHC plan draft" />
             <div className="j-chiprow" style={{ marginTop: 12 }}>
-              {J.DOC_TYPES.map(t => <button key={t} className={'j-chip' + (type === t ? ' j-chip-on' : '')} onClick={() => setType(t)}>{t}</button>)}
+              {J.DOC_TYPES.map(t => <button key={t} aria-pressed={type === t} className={'j-chip' + (type === t ? ' j-chip-on' : '')} onClick={() => setType(t)}>{t}</button>)}
             </div>
           </div>
 
           <div>
             <FieldLabel>Who is it from?</FieldLabel>
             <div className="j-chiprow">
-              {J.DOC_SOURCES.map(s => <button key={s} className={'j-chip' + (from === s ? ' j-chip-on' : '')} onClick={() => setFrom(s)}>{s}</button>)}
+              {J.DOC_SOURCES.map(s => <button key={s} aria-pressed={from === s} className={'j-chip' + (from === s ? ' j-chip-on' : '')} onClick={() => setFrom(s)}>{s}</button>)}
             </div>
           </div>
 
@@ -464,7 +464,7 @@ function EditDocSheet({ doc, onSave, onClose }) {
         <p className="j-sm" style={{ marginBottom: 6 }}>What it is</p>
         <div className="j-chiprow" style={{ marginBottom: 12 }}>
           {J.DOC_TYPES.map(t => (
-            <button key={t} className={'j-chip' + (type === t ? ' j-chip-on' : '')} onClick={() => setType(t)}>{t}</button>
+            <button key={t} aria-pressed={type === t} className={'j-chip' + (type === t ? ' j-chip-on' : '')} onClick={() => setType(t)}>{t}</button>
           ))}
         </div>
         <p className="j-sm" style={{ marginBottom: 6 }}>From</p>
@@ -1017,9 +1017,9 @@ function SettingsRow({ icon, title, sub, onClick, right, last }) {
   );
 }
 
-function Toggle({ on, onChange }) {
+function Toggle({ on, onChange, label }) {
   return (
-    <button onClick={onChange} aria-label="Toggle" style={{ width: 52, height: 31, borderRadius: 999, border: 'none', cursor: 'pointer',
+    <button onClick={onChange} role="switch" aria-checked={!!on} aria-label={label || 'Toggle'} style={{ width: 52, height: 31, borderRadius: 999, border: 'none', cursor: 'pointer',
       background: on ? 'var(--green)' : 'var(--chip-border)', position: 'relative', transition: 'background .2s ease', flexShrink: 0 }}>
       <span style={{ position: 'absolute', top: 3, left: on ? 24 : 3, width: 25, height: 25, borderRadius: '50%', background: '#fff',
         transition: 'left .2s ease', boxShadow: '0 2px 5px rgba(0,0,0,0.25)' }} />
@@ -1027,10 +1027,39 @@ function Toggle({ on, onChange }) {
   );
 }
 
+// Backup health: the one story that kills this product is data loss, so Settings
+// shows when the record was last saved out, not just how to do it.
+const BACKUP_META_KEY = 'jotla_backup_v1';
+// Android's automatic app backup stops including data past ~25 MB; warn before that.
+const BACKUP_SIZE_SOFT_CAP = 20 * 1024 * 1024;
+function backupHealthLine(meta) {
+  if (!meta || !meta.lastExportAt) return 'No saved copy from this app yet.';
+  const days = Math.max(0, Math.floor((Date.now() - new Date(meta.lastExportAt).getTime()) / 86400000));
+  if (days === 0) return 'Last saved copy: today.';
+  if (days === 1) return 'Last saved copy: yesterday.';
+  return 'Last saved copy: ' + days + ' days ago.';
+}
+function recordSizeBytes() {
+  let n = 0;
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.indexOf('jotla_') === 0) n += ((localStorage.getItem(k) || '').length * 2);
+    }
+  } catch (e) {}
+  return n;
+}
+
 function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
   const J = window.JOTLA;
   const childName = (profile && profile.name) || 'your child';
   const [info, setInfo] = useStateB(null);
+  const [backupMeta, setBackupMeta] = useStateB(() => {
+    try { return JSON.parse(localStorage.getItem(BACKUP_META_KEY)) || null; } catch (e) { return null; }
+  });
+  const recordBytes = React.useMemo(recordSizeBytes, [entries, docs, backupMeta]);
+  const exportDue = !backupMeta || !backupMeta.lastExportAt
+    || (Date.now() - new Date(backupMeta.lastExportAt).getTime()) > 30 * 86400000;
   const FEEDBACK_HREF = 'mailto:hello@sen.help?subject=' + encodeURIComponent('Jotla prototype feedback')
     + '&body=' + encodeURIComponent('What I was trying to do:\n\nWhat I think, or what happened:\n\nWhich screen:\n\nMy phone / browser:\n');
 
@@ -1080,6 +1109,9 @@ function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
       a.href = url; a.download = 'jotla-' + childName.replace(/\s+/g, '-').toLowerCase() + '-export.json';
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 1500);
+      const meta = { lastExportAt: new Date().toISOString() };
+      try { localStorage.setItem(BACKUP_META_KEY, JSON.stringify(meta)); } catch (e) {}
+      setBackupMeta(meta);
     } catch (e) { alert('Sorry, the export could not be created on this device.'); }
   };
   const onImportFile = (e) => {
@@ -1151,6 +1183,17 @@ function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
 
           <SectionLabel>Backup and export</SectionLabel>
           <div className="j-card" style={{ marginBottom: 20, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 16px', borderBottom: '1px solid var(--line)' }}>
+              <span aria-hidden="true" style={{ width: 8, height: 8, borderRadius: '50%', marginTop: 5, flexShrink: 0,
+                background: exportDue ? '#F39C12' : 'var(--green)' }} />
+              <span style={{ fontFamily: "'Outfit', system-ui", fontSize: 13.5, color: 'var(--muted)', lineHeight: 1.45 }}>
+                {backupHealthLine(backupMeta)}
+                {exportDue ? ' A copy every few weeks is good insurance.' : ''}
+                {recordBytes > BACKUP_SIZE_SOFT_CAP
+                  ? ' Your record is about ' + Math.round(recordBytes / 1048576) + ' MB. Big records can fall out of your phone\'s automatic backup, so saved copies matter more now.'
+                  : ''}
+              </span>
+            </div>
             <SettingsRow icon={<Icon name="shield" size={20} color="var(--blue)" />} title="Where your record is kept"
               sub="On this device, inside your phone's own backup. We never see it." onClick={() => setInfo('backup')} />
             <SettingsRow icon={<Icon name="download" size={20} color="var(--blue)" />} title="Export my data"
@@ -1182,7 +1225,7 @@ function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
                 <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 16, fontWeight: 500, color: 'var(--ink)' }}>Dark mode</span>
                 <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 13, color: 'var(--faint)', marginTop: 1 }}>Easier on the eyes at night.</span>
               </span>
-              <Toggle on={nav.dark} onChange={() => nav.toggleDark()} />
+              <Toggle on={nav.dark} onChange={() => nav.toggleDark()} label="Dark mode" />
             </div>
           </div>
 

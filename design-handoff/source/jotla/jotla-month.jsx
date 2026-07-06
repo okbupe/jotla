@@ -239,7 +239,7 @@ function EditEntrySheet({ entry, onSave, onClose }) {
         <p className="j-sm" style={{ marginBottom: 6 }}>How the moment felt</p>
         <div className="j-chiprow" style={{ marginBottom: 12 }}>
           {J.MOODS.map(m => (
-            <button key={m.key} className={'j-chip' + (mood === m.key ? ' j-chip-on' : '')} onClick={() => setMood(m.key)}>
+            <button key={m.key} aria-pressed={mood === m.key} className={'j-chip' + (mood === m.key ? ' j-chip-on' : '')} onClick={() => setMood(m.key)}>
               <MoodDot mood={m.key} size={11} /> {m.label}
             </button>
           ))}
@@ -247,13 +247,13 @@ function EditEntrySheet({ entry, onSave, onClose }) {
         <p className="j-sm" style={{ marginBottom: 6 }}>Theme</p>
         <div className="j-chiprow" style={{ marginBottom: 12 }}>
           {J.CATEGORIES.map(c => (
-            <button key={c} className={'j-chip' + (category === c ? ' j-chip-on' : '')} onClick={() => setCategory(c)}>{c}</button>
+            <button key={c} aria-pressed={category === c} className={'j-chip' + (category === c ? ' j-chip-on' : '')} onClick={() => setCategory(c)}>{c}</button>
           ))}
         </div>
         <p className="j-sm" style={{ marginBottom: 6 }}>Where</p>
         <div className="j-chiprow" style={{ marginBottom: 16 }}>
           {J.SETTINGS.map(s => (
-            <button key={s} className={'j-chip' + (setting === s ? ' j-chip-on' : '')} onClick={() => setSetting(s)}>{s}</button>
+            <button key={s} aria-pressed={setting === s} className={'j-chip' + (setting === s ? ' j-chip-on' : '')} onClick={() => setSetting(s)}>{s}</button>
           ))}
         </div>
         <button className="j-btn j-btn-primary" disabled={!summary.trim()} style={{ opacity: summary.trim() ? 1 : 0.5 }}

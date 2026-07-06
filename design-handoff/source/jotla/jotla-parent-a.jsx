@@ -104,7 +104,7 @@ function ChipGroup({ options, value, onChange, multi = false, green = false }) {
   return (
     <div className="j-chiprow">
       {options.map(o => (
-        <button key={o} className={'j-chip' + (isOn(o) ? (green ? ' j-chip-on-green' : ' j-chip-on') : '')} onClick={() => toggle(o)}>{o}</button>
+        <button key={o} aria-pressed={isOn(o)} className={'j-chip' + (isOn(o) ? (green ? ' j-chip-on-green' : ' j-chip-on') : '')} onClick={() => toggle(o)}>{o}</button>
       ))}
     </div>
   );
@@ -273,9 +273,9 @@ function QuickLogScreen({ nav, today }) {
           <div>
             <FieldLabel>Which day?</FieldLabel>
             <div className="j-chiprow">
-              <button className={'j-chip' + (dayMode === 'today' ? ' j-chip-on' : '')} onClick={() => setDayMode('today')}>Today</button>
-              <button className={'j-chip' + (dayMode === 'yesterday' ? ' j-chip-on' : '')} onClick={() => setDayMode('yesterday')}>Yesterday</button>
-              <button className={'j-chip' + (dayMode === 'custom' ? ' j-chip-on' : '')} onClick={() => setDayMode('custom')}>Another day</button>
+              <button aria-pressed={dayMode === 'today'} className={'j-chip' + (dayMode === 'today' ? ' j-chip-on' : '')} onClick={() => setDayMode('today')}>Today</button>
+              <button aria-pressed={dayMode === 'yesterday'} className={'j-chip' + (dayMode === 'yesterday' ? ' j-chip-on' : '')} onClick={() => setDayMode('yesterday')}>Yesterday</button>
+              <button aria-pressed={dayMode === 'custom'} className={'j-chip' + (dayMode === 'custom' ? ' j-chip-on' : '')} onClick={() => setDayMode('custom')}>Another day</button>
             </div>
             {dayMode === 'custom' && (
               <input type="date" className="j-input" min="2019-09-01" max={today} value={customDate}
@@ -425,7 +425,7 @@ function HandoverScreen({ nav, today, profile }) {
             <FieldLabel>What did you see? Tap what fits.</FieldLabel>
             <div className="j-chiprow">
               {[...J.BEHAVIOURS, ...extras].map(b => (
-                <button key={b} className={'j-chip' + (behaviours.includes(b) ? ' j-chip-on' : '')}
+                <button key={b} aria-pressed={behaviours.includes(b)} className={'j-chip' + (behaviours.includes(b) ? ' j-chip-on' : '')}
                   onClick={() => setBehaviours(v => v.includes(b) ? v.filter(x => x !== b) : [...v, b])}>{b}</button>
               ))}
               <button className="j-chip" style={{ borderStyle: 'dashed' }} onClick={() => setCustomOpen(v => !v)}><Icon name="plus" size={15} color="var(--faint)" /> Add your own</button>

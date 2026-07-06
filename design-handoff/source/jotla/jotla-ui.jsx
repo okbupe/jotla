@@ -3,7 +3,7 @@ const { useState, useRef, useEffect } = React;
 
 // The single source of the visible build number. Bump this every release
 // (and keep sw.js VERSION in step) so the Settings footer can never lie.
-window.JOTLA_BUILD = '1.6.6';
+window.JOTLA_BUILD = '1.7.0';
 
 // A calm, honest locked card for Plus features in the free app: the feature is
 // visible and named, never hidden, and one tap shows what Plus is.
@@ -99,7 +99,7 @@ function DateRangeControl({ presets, value, onChange }) {
     <div>
       <div className="j-chiprow">
         {presets.map(p => (
-          <button key={p} className={'j-chip' + (value.preset === p ? ' j-chip-on' : '')} onClick={() => set({ preset: p })}>{p}</button>
+          <button key={p} aria-pressed={value.preset === p} className={'j-chip' + (value.preset === p ? ' j-chip-on' : '')} onClick={() => set({ preset: p })}>{p}</button>
         ))}
       </div>
       {value.preset === 'Custom' && (
