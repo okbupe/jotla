@@ -43,6 +43,8 @@ Thank you for taking a look. A few things to know:
 | `design-handoff/` | the full Claude Design handoff: screenshots, source, and the design spec (`design-handoff/README.md`) |
 | `design-handoff/source/jotla/` | the prototype itself (HTML + React reference build) |
 | `design-handoff/screenshots/` | reference renders of every key screen |
+| `tools/precompile.js` | build step: transpiles the `.jsx` sources into `design-handoff/source/jotla/min/` (the shipped app loads this precompiled bundle; run after any source edit, the test suite runs it automatically) |
+| `tests/boot-assert.js` | scripted boot-and-assert suite (rebuilds the bundle, then drives real rendered screens) |
 
 ## Status
 

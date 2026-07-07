@@ -1,0 +1,3124 @@
+function _extends() { return _extends = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends.apply(null, arguments); }
+// jotla-parent-b.jsx — Find, Evidence (records + document vault), Add document, Doc detail, Unlock, Settings.
+const {
+  useState: useStateB,
+  useRef: useRefB,
+  useEffect: useEffectB
+} = React;
+const THEME_TO_CAT = new Proxy({}, {
+  get: (_, k) => k
+});
+
+// ---------------- Find ----------------
+function FindScreen({
+  nav,
+  entries,
+  view
+}) {
+  const J = window.JOTLA;
+  // Back restores this page as it was: filters live on the view (nav.remember),
+  // and the scroll position is captured when a note is opened, restored on return.
+  const saved = view && view.find || {};
+  const [q, setQ] = useStateB(saved.q || '');
+  const [themes, setThemes] = useStateB(saved.themes || []);
+  const [moods, setMoods] = useStateB(saved.moods || []);
+  const [setting, setSetting] = useStateB(saved.setting || 'Any');
+  const [range, setRange] = useStateB(saved.range || {
+    preset: 'Any time',
+    from: '',
+    to: ''
+  });
+  const scrollRef = useRefB(null);
+  useEffectB(() => {
+    nav.remember({
+      find: {
+        q,
+        themes,
+        moods,
+        setting,
+        range
+      }
+    });
+  }, [q, themes, moods, setting, range]);
+  useEffectB(() => {
+    if (saved.scrollY && scrollRef.current) scrollRef.current.scrollTop = saved.scrollY;
+  }, []);
+  const openEntry = id => {
+    nav.remember({
+      find: {
+        q,
+        themes,
+        moods,
+        setting,
+        range,
+        scrollY: scrollRef.current ? scrollRef.current.scrollTop : 0
+      }
+    });
+    nav.go('entry', {
+      id
+    });
+  };
+  const toggle = setter => val => setter(v => v.includes(val) ? v.filter(x => x !== val) : [...v, val]);
+  const bounds = window.rangeBounds(range.preset, range.from, range.to);
+  const matched = entries.filter(e => {
+    const cats = themes.map(t => THEME_TO_CAT[t]);
+    const themeOk = themes.length === 0 || cats.includes(e.category);
+    const moodOk = moods.length === 0 || moods.includes(e.mood);
+    const setOk = setting === 'Any' || e.setting === setting;
+    const dateOk = window.inDateRange(e.date, bounds);
+    const text = (e.summary + ' ' + e.category).toLowerCase();
+    const qOk = !q.trim() || text.includes(q.trim().toLowerCase());
+    return themeOk && moodOk && setOk && dateOk && qOk;
+  }).sort((a, b) => a.date < b.date ? 1 : -1);
+  const queryBits = [...themes];
+  if (setting !== 'Any') queryBits.push(setting);
+  const rangeLabel = range.preset === 'Custom' ? (range.from ? J.fmtShort(range.from) : 'start') + ' to ' + (range.to ? J.fmtShort(range.to) : 'today') : range.preset === 'Any time' ? 'all dates' : range.preset.toLowerCase();
+  queryBits.push(rangeLabel);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "j-screen"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-scroll j-fade",
+    ref: scrollRef
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-pad",
+    style: {
+      paddingTop: 14,
+      paddingBottom: 120
+    }
+  }, /*#__PURE__*/React.createElement(TabTitle, {
+    title: "Find",
+    sub: "Search across everything you have noted."
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 10,
+      background: 'var(--card-2)',
+      border: '1.5px solid var(--chip-border)',
+      borderRadius: 14,
+      padding: '0 14px',
+      height: 52,
+      marginBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "search",
+    size: 20,
+    color: "var(--faint)"
+  }), /*#__PURE__*/React.createElement("input", {
+    value: q,
+    onChange: e => setQ(e.target.value),
+    placeholder: "Search your notes",
+    style: {
+      flex: 1,
+      border: 'none',
+      outline: 'none',
+      fontFamily: "'Outfit', system-ui",
+      fontSize: 'calc(16px * var(--tscale, 1))',
+      color: 'var(--ink)',
+      background: 'transparent'
+    }
+  })), nav.plus ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SectionLabel, null, "Themes"), /*#__PURE__*/React.createElement("div", {
+    className: "j-chiprow",
+    style: {
+      marginBottom: 14
+    }
+  }, J.FIND_THEMES.map(t => /*#__PURE__*/React.createElement("button", {
+    key: t,
+    "aria-pressed": themes.includes(t),
+    className: 'j-chip' + (themes.includes(t) ? ' j-chip-on' : ''),
+    onClick: () => toggle(setThemes)(t)
+  }, t))), /*#__PURE__*/React.createElement(SectionLabel, null, "Mood"), /*#__PURE__*/React.createElement("div", {
+    className: "j-chiprow",
+    style: {
+      marginBottom: 14
+    }
+  }, J.FIND_MOODS.map(m => {
+    const on = moods.includes(m.key);
+    return /*#__PURE__*/React.createElement("button", {
+      key: m.key,
+      "aria-pressed": on,
+      className: 'j-chip' + (on ? ' j-chip-on' : ''),
+      onClick: () => toggle(setMoods)(m.key)
+    }, /*#__PURE__*/React.createElement(MoodDot, {
+      mood: m.key,
+      size: 11
+    }), " ", m.label);
+  })), /*#__PURE__*/React.createElement(SectionLabel, null, "Where"), /*#__PURE__*/React.createElement("div", {
+    className: "j-chiprow",
+    style: {
+      marginBottom: 18
+    }
+  }, ['Any', 'School', 'Home', 'Club'].map(s => /*#__PURE__*/React.createElement("button", {
+    key: s,
+    "aria-pressed": setting === s,
+    className: 'j-chip' + (setting === s ? ' j-chip-on' : ''),
+    onClick: () => setSetting(s)
+  }, s))), /*#__PURE__*/React.createElement(SectionLabel, null, "When"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 18
+    }
+  }, /*#__PURE__*/React.createElement(DateRangeControl, {
+    presets: ['Any time', 'This week', 'Last 2 weeks', 'Custom'],
+    value: range,
+    onChange: setRange
+  }))) : /*#__PURE__*/React.createElement(PlusLockedCard, {
+    onClick: () => nav.go('unlock'),
+    style: {
+      marginBottom: 18
+    },
+    title: "Filters",
+    text: "Combine theme, mood, place and dates to answer a question in seconds. Keyword search is always free."
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "j-card",
+    style: {
+      padding: 14,
+      marginBottom: 14,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 10,
+      background: 'var(--tint-blue)',
+      border: 'none'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "filter",
+    size: 18,
+    color: "var(--blue)"
+  }), /*#__PURE__*/React.createElement("p", {
+    className: "j-body",
+    style: {
+      fontSize: 'calc(15px * var(--tscale, 1))',
+      color: 'var(--blue)',
+      fontWeight: 500
+    }
+  }, queryBits.join(', '))), /*#__PURE__*/React.createElement("p", {
+    className: "j-meta",
+    style: {
+      marginBottom: 10
+    }
+  }, matched.length, " ", matched.length === 1 ? 'note' : 'notes', " found"), matched.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    className: "j-card",
+    style: {
+      padding: 22,
+      textAlign: 'center'
+    }
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "j-sm"
+  }, "Nothing matches those filters yet. Try removing one.")) : /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 12
+    }
+  }, matched.map(e => /*#__PURE__*/React.createElement(EntryCard, {
+    key: e.id,
+    entry: e,
+    showDate: true,
+    onClick: () => openEntry(e.id)
+  }))))));
+}
+
+// ---------------- Evidence: records pack + document vault ----------------
+// Build a clean, printable day record in a new tab. The browser's own
+// Print, then Save as PDF, turns it into the family's PDF. Nothing is uploaded.
+function openPrintPack(childLabel, rangeLabel, list) {
+  const J = window.JOTLA;
+  const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const badge = k => k === 'contemporaneous' ? '<span style="background:#e7f6ee;color:#1e7a45;border-radius:99px;padding:2px 10px;font-size:11px;">Same day</span>' : '<span style="background:#fdf3e0;color:#a06b12;border-radius:99px;padding:2px 10px;font-size:11px;">Added later</span>';
+  const rows = list.map(e => {
+    let extra = '';
+    if (e.type === 'handover' && e.handover) {
+      const h = e.handover;
+      const part = (l, v) => v ? '<p style="margin:4px 0;"><strong>' + esc(l) + ':</strong> ' + esc(v) + '</p>' : '';
+      extra = '<div style="margin-top:6px;padding:8px 12px;background:#f5f7fb;border-radius:8px;">' + (h.behaviours && h.behaviours.length ? '<p style="margin:4px 0;"><strong>Seen:</strong> ' + esc(h.behaviours.join(', ')) + '</p>' : '') + part('Before', h.before) + part('During', h.during) + part('After', h.after) + part('Lasted', h.duration) + part('What helped', h.helped) + '</div>';
+    }
+    return '<div style="padding:10px 0;border-bottom:1px solid #dde3ee;page-break-inside:avoid;">' + '<p style="margin:0 0 4px;font-size:12px;color:#1A56A8;"><strong>' + esc(J.fmtShort(e.date)) + ' ' + esc(e.date.slice(0, 4)) + ', ' + esc(e.clock || e.time) + '</strong> &nbsp; ' + esc(e.setting) + ' · ' + esc(e.category) + ' &nbsp; ' + badge(e.kind) + (e.editedOn ? ' <span style="color:#8892a6;font-size:10.5px;">edited ' + esc(J.fmtShort(e.editedOn)) + '</span>' : '') + '</p>' + '<p style="margin:0;font-size:13px;line-height:1.45;">' + esc(e.summary) + '</p>' + extra + '</div>';
+  }).join('');
+  const w = window.open('', '_blank');
+  if (!w) {
+    alert('Your browser blocked the new tab. Allow pop-ups for this page and try again.');
+    return false;
+  }
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Jotla day record</title></head>' + '<body style="font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#14223b;max-width:720px;margin:24px auto;padding:0 16px;">' + '<p style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8892a6;margin:0 0 6px;">Day record · Jotla</p>' + '<h1 style="font-size:22px;margin:0 0 2px;">' + esc(childLabel) + '</h1>' + '<p style="font-size:12.5px;margin:0 0 14px;color:#5b6780;">' + esc(rangeLabel) + ' · ' + list.length + ' dated entries · Prepared ' + esc(J.fmtShort(J.TODAY_ISO)) + ' ' + esc(J.TODAY_ISO.slice(0, 4)) + '</p>' + rows + '<p style="font-size:10.5px;color:#8892a6;line-height:1.5;margin-top:14px;padding-top:12px;border-top:1px dashed #dde3ee;">' + 'Each entry shows when it was written. "Same day" means it was logged on the day it happened. "Added later" means it was written up afterwards. Prepared by the family using their own Jotla record.</p>' + '</body></html>');
+  w.document.close();
+  w.focus();
+  setTimeout(() => {
+    try {
+      w.print();
+    } catch (e) {}
+  }, 500);
+  return true;
+}
+
+// A document log card (file layout)
+function DocCard({
+  doc,
+  onClick
+}) {
+  const J = window.JOTLA;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "j-card j-press",
+    onClick: onClick,
+    style: {
+      padding: 14,
+      cursor: 'pointer',
+      display: 'flex',
+      gap: 12,
+      alignItems: 'flex-start'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 46,
+      height: 46,
+      borderRadius: 12,
+      background: 'var(--tint-blue)',
+      flexShrink: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "doc",
+    size: 22,
+    color: "var(--blue)"
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      minWidth: 0
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 4
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "j-tag j-tag-blue"
+  }, doc.type), /*#__PURE__*/React.createElement("span", {
+    className: "j-meta",
+    style: {
+      whiteSpace: 'nowrap'
+    }
+  }, J.fmtShort(doc.received), " ", doc.received.slice(0, 4))), /*#__PURE__*/React.createElement("p", {
+    className: "j-strong",
+    style: {
+      fontSize: 'calc(16px * var(--tscale, 1))',
+      lineHeight: 1.25,
+      marginBottom: 3
+    }
+  }, doc.title), /*#__PURE__*/React.createElement("p", {
+    className: "j-sm",
+    style: {
+      fontSize: 'calc(13.5px * var(--tscale, 1))'
+    }
+  }, "From ", doc.from), doc.action && /*#__PURE__*/React.createElement("span", {
+    className: "j-pillbadge",
+    style: {
+      marginTop: 8,
+      background: 'var(--tint-amber)',
+      color: 'var(--amber)'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "bell",
+    size: 13,
+    color: "var(--amber)"
+  }), " ", doc.action)), /*#__PURE__*/React.createElement(Icon, {
+    name: "chevronRight",
+    size: 18,
+    color: "var(--faint)",
+    style: {
+      marginTop: 4
+    }
+  }));
+}
+function EvidenceScreen({
+  nav,
+  entries,
+  docs,
+  profile,
+  navView
+}) {
+  const J = window.JOTLA;
+  // Back restores this page as it was: the open sub-tab, filters and scroll
+  // position are remembered on the view, so reading one document and returning
+  // lands the parent back on the Documents list where they left it.
+  const saved = navView && navView.ev || {};
+  const [view, setView] = useStateB(saved.tab || 'records'); // records | documents
+  const [range, setRange] = useStateB(saved.range || {
+    preset: 'Last 3 weeks',
+    from: '',
+    to: ''
+  });
+  const [themes, setThemes] = useStateB(saved.themes || []);
+  const [done, setDone] = useStateB(false);
+  const scrollRef = useRefB(null);
+  useEffectB(() => {
+    nav.remember({
+      ev: {
+        tab: view,
+        range,
+        themes
+      }
+    });
+  }, [view, range, themes]);
+  useEffectB(() => {
+    if (saved.scrollY && scrollRef.current) scrollRef.current.scrollTop = saved.scrollY;
+  }, []);
+  const openDoc = id => {
+    nav.remember({
+      ev: {
+        tab: view,
+        range,
+        themes,
+        scrollY: scrollRef.current ? scrollRef.current.scrollTop : 0
+      }
+    });
+    nav.go('doc', {
+      id
+    });
+  };
+  const childLabel = profile ? `${profile.name}, ${profile.school}` : 'Sam, Oakfield Primary';
+  const bounds = window.rangeBounds(range.preset, range.from, range.to);
+  const rangeLabel = range.preset === 'Custom' ? (range.from ? J.fmtShort(range.from) : 'start') + ' to ' + (range.to ? J.fmtShort(range.to) : 'today') : range.preset;
+  const inPack = entries.filter(e => (themes.length === 0 || themes.includes(e.category)) && window.inDateRange(e.date, bounds)).sort((a, b) => a.date < b.date ? -1 : 1);
+  const toggleTheme = t => setThemes(v => v.includes(t) ? v.filter(x => x !== t) : [...v, t]);
+  const Seg = ({
+    id,
+    label
+  }) => /*#__PURE__*/React.createElement("button", {
+    onClick: () => setView(id),
+    style: {
+      flex: 1,
+      minHeight: 44,
+      borderRadius: 999,
+      border: 'none',
+      cursor: 'pointer',
+      fontFamily: "'Outfit', system-ui",
+      fontSize: 'calc(15px * var(--tscale, 1))',
+      fontWeight: 500,
+      background: view === id ? 'var(--card)' : 'transparent',
+      color: view === id ? 'var(--blue)' : 'var(--muted)',
+      boxShadow: view === id ? '0 4px 12px -8px rgba(20,40,80,0.4)' : 'none'
+    }
+  }, label);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "j-screen"
+  }, /*#__PURE__*/React.createElement(PushHeader, {
+    title: "Documents and evidence",
+    subtitle: "A dated record of what you saw, when you saw it.",
+    onBack: () => nav.back()
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "j-scroll j-fade",
+    ref: scrollRef
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-pad",
+    style: {
+      paddingTop: 2,
+      paddingBottom: view === 'records' ? 120 : 120
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 4,
+      padding: 4,
+      borderRadius: 999,
+      background: 'var(--tag-grey-bg)',
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement(Seg, {
+    id: "records",
+    label: "Day records"
+  }), /*#__PURE__*/React.createElement(Seg, {
+    id: "documents",
+    label: "Documents"
+  })), view === 'records' && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SectionLabel, null, "Date range"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement(DateRangeControl, {
+    presets: ['Last 3 weeks', 'This month', 'All time', 'Custom'],
+    value: range,
+    onChange: setRange
+  })), /*#__PURE__*/React.createElement(SectionLabel, null, "Include themes"), /*#__PURE__*/React.createElement("div", {
+    className: "j-chiprow",
+    style: {
+      marginBottom: 18
+    }
+  }, J.CATEGORIES.map(t => /*#__PURE__*/React.createElement("button", {
+    key: t,
+    "aria-pressed": themes.includes(t),
+    className: 'j-chip' + (themes.includes(t) ? ' j-chip-on' : ''),
+    onClick: () => toggleTheme(t)
+  }, t))), /*#__PURE__*/React.createElement(SectionLabel, null, "Preview"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      borderRadius: 14,
+      background: 'var(--card)',
+      border: '1px solid var(--line)',
+      boxShadow: '0 18px 40px -24px rgba(20,40,80,0.45)',
+      overflow: 'hidden'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: '20px 20px 16px',
+      borderBottom: '1px solid var(--line)'
+    }
+  }, /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 'calc(12px * var(--tscale, 1))',
+      letterSpacing: '0.08em',
+      textTransform: 'uppercase',
+      color: 'var(--faint)',
+      margin: '0 0 8px'
+    }
+  }, "Day record"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontFamily: "'Cal Sans', system-ui",
+      fontWeight: 500,
+      fontSize: 'calc(20px * var(--tscale, 1))',
+      color: 'var(--ink)',
+      margin: 0
+    }
+  }, childLabel), /*#__PURE__*/React.createElement("p", {
+    className: "j-meta",
+    style: {
+      marginTop: 4
+    }
+  }, rangeLabel, " \xB7 ", inPack.length, " dated entries \xB7 Prepared ", J.fmtShort(J.TODAY_ISO), " ", J.TODAY_ISO.slice(0, 4))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: '8px 20px 16px'
+    }
+  }, inPack.slice(0, 6).map((e, i) => /*#__PURE__*/React.createElement("div", {
+    key: e.id,
+    style: {
+      padding: '12px 0',
+      borderBottom: i < Math.min(inPack.length, 6) - 1 ? '1px solid var(--line)' : 'none'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 4
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 'calc(13px * var(--tscale, 1))',
+      fontWeight: 500,
+      color: 'var(--blue)',
+      whiteSpace: 'nowrap'
+    }
+  }, J.fmtShort(e.date), " ", e.date.slice(0, 4), ", ", e.clock || e.time), /*#__PURE__*/React.createElement("span", {
+    style: {
+      flex: 1
+    }
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "j-pillbadge",
+    style: {
+      fontSize: 'calc(10.5px * var(--tscale, 1))',
+      padding: '2px 8px',
+      background: e.kind === 'contemporaneous' ? 'var(--tint-green)' : 'var(--tint-amber)',
+      color: e.kind === 'contemporaneous' ? 'var(--green-ink)' : 'var(--amber)'
+    }
+  }, e.kind === 'contemporaneous' ? 'Same day' : 'Added later')), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 'calc(13.5px * var(--tscale, 1))',
+      color: 'var(--body)',
+      margin: 0,
+      lineHeight: 1.4
+    }
+  }, e.summary))), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 'calc(11.5px * var(--tscale, 1))',
+      color: 'var(--faint)',
+      lineHeight: 1.5,
+      marginTop: 12,
+      paddingTop: 12,
+      borderTop: '1px dashed var(--line)'
+    }
+  }, "Each entry shows when it was written. \"Same day\" means it was logged on the day it happened. \"Added later\" means it was written up afterwards. Any edits keep the original date and time.")))), view === 'documents' && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    className: "j-card",
+    style: {
+      padding: 14,
+      marginBottom: 16,
+      display: 'flex',
+      gap: 12,
+      alignItems: 'center',
+      background: 'var(--tint-green)',
+      border: 'none'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "shield",
+    size: 20,
+    color: "var(--green-ink)",
+    style: {
+      flexShrink: 0
+    }
+  }), /*#__PURE__*/React.createElement("p", {
+    className: "j-body",
+    style: {
+      fontSize: 'calc(14.5px * var(--tscale, 1))',
+      color: 'var(--green-ink)'
+    }
+  }, "Keep every letter, report and plan in one place, so nothing important gets lost.")), /*#__PURE__*/React.createElement(SectionLabel, {
+    right: /*#__PURE__*/React.createElement("span", {
+      className: "j-meta"
+    }, docs.length, " saved")
+  }, "Your documents"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 12
+    }
+  }, docs.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    className: "j-card",
+    style: {
+      padding: 22,
+      textAlign: 'center'
+    }
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "j-sm"
+  }, "No documents yet. Add the first letter or report and never lose it again.")) : docs.map(d => /*#__PURE__*/React.createElement(DocCard, {
+    key: d.id,
+    doc: d,
+    onClick: () => openDoc(d.id)
+  })))))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+      padding: '12px 20px calc(16px + env(safe-area-inset-bottom))',
+      background: 'var(--fade-grad)'
+    }
+  }, view === 'records' ? nav.plus ? /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-primary j-btn-lg",
+    onClick: () => {
+      if (openPrintPack(childLabel, rangeLabel, inPack)) setDone(true);
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "doc",
+    size: 20,
+    color: "#fff"
+  }), " Create PDF") : /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-primary j-btn-lg",
+    onClick: () => nav.go('unlock')
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "lock",
+    size: 18,
+    color: "#fff"
+  }), " Create PDF is part of Plus") : /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-primary j-btn-lg",
+    onClick: () => nav.go('adddoc')
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "plus",
+    size: 22,
+    color: "#fff"
+  }), " Add document")), done && /*#__PURE__*/React.createElement("div", {
+    className: "j-sheet-scrim",
+    onClick: () => setDone(false)
+  }, /*#__PURE__*/React.createElement("div", {
+    onClick: e => e.stopPropagation(),
+    className: "j-sheet"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-sheet-grab"
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      justifyContent: 'center',
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 56,
+      height: 56,
+      borderRadius: '50%',
+      background: 'var(--tint-green)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "check",
+    size: 28,
+    color: "var(--green)"
+  }))), /*#__PURE__*/React.createElement("h2", {
+    className: "j-h2",
+    style: {
+      textAlign: 'center',
+      marginBottom: 8
+    }
+  }, "Your day record is ready"), /*#__PURE__*/React.createElement("p", {
+    className: "j-body",
+    style: {
+      textAlign: 'center',
+      color: 'var(--muted)',
+      marginBottom: 20
+    }
+  }, "It opened in a new tab. Use Print, then Save as PDF, to keep, print or share it. Nothing is uploaded anywhere."), /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-primary",
+    onClick: () => openPrintPack(childLabel, rangeLabel, inPack)
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "download",
+    size: 20,
+    color: "#fff"
+  }), " Open it again"), /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-ghost",
+    style: {
+      marginTop: 10
+    },
+    onClick: () => setDone(false)
+  }, "Done"))));
+}
+
+// ---------------- Add document (onboarding questions) ----------------
+function AddDocScreen({
+  nav
+}) {
+  const J = window.JOTLA;
+  const [source, setSource] = useStateB(null); // 'taken' | 'attached'
+  const [scan, setScan] = useStateB(null); // downscaled image data URL
+  const [title, setTitle] = useStateB('');
+  const [type, setType] = useStateB('Letter');
+  const [from, setFrom] = useStateB('School');
+  const [received, setReceived] = useStateB('');
+  const [about, setAbout] = useStateB('');
+  const [action, setAction] = useStateB('');
+  const save = () => {
+    nav.addDoc({
+      id: 'doc' + Date.now(),
+      title: title.trim() || 'Untitled document',
+      type,
+      from,
+      received: /^\d{4}-\d{2}-\d{2}$/.test(received.trim()) ? received.trim() : J.TODAY_ISO,
+      about: about.trim(),
+      action: action.trim(),
+      mood: 'good',
+      ...(scan ? {
+        scan
+      } : {})
+    });
+    nav.back();
+  };
+  const onDocFile = (e, src2) => {
+    const f = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    if (!f.type || !f.type.startsWith('image')) {
+      setSource(src2);
+      return;
+    }
+    window.fileToImageDataURL(f, 1280, 0.75, url => {
+      setScan(url);
+      setSource(src2);
+    });
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "j-screen"
+  }, /*#__PURE__*/React.createElement(PushHeader, {
+    title: "Add a document",
+    subtitle: "A few questions so it is easy to find later.",
+    onClose: () => nav.back()
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "j-scroll j-fade"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-pad",
+    style: {
+      paddingTop: 2,
+      paddingBottom: 120,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 22
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "The file"), source ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      borderRadius: 14,
+      overflow: 'hidden',
+      border: '1px solid var(--line)',
+      background: 'var(--photo-bg)'
+    }
+  }, scan && /*#__PURE__*/React.createElement("img", {
+    src: scan,
+    alt: "Document photo",
+    style: {
+      display: 'block',
+      width: '100%',
+      maxHeight: 240,
+      objectFit: 'cover'
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: 12,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 12
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      background: 'var(--card)',
+      flexShrink: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "doc",
+    size: 20,
+    color: "var(--blue)"
+  })), /*#__PURE__*/React.createElement("span", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'block',
+      fontSize: 'calc(14.5px * var(--tscale, 1))',
+      fontWeight: 500,
+      color: 'var(--ink)'
+    }
+  }, scan ? 'Photo of the document attached' : 'File noted'), /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'block',
+      fontSize: 'calc(12.5px * var(--tscale, 1))',
+      color: 'var(--faint)',
+      marginTop: 1
+    }
+  }, source === 'taken' ? 'Photographed just now' : 'Chosen from your files')), /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setSource(null);
+      setScan(null);
+    },
+    "aria-label": "Remove",
+    className: "j-press",
+    style: {
+      width: 36,
+      height: 36,
+      borderRadius: 10,
+      border: 'none',
+      background: 'var(--card)',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "close",
+    size: 18,
+    color: "var(--muted)"
+  })))) : /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 12
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "j-press",
+    style: {
+      flex: 1,
+      minHeight: 84,
+      borderRadius: 14,
+      cursor: 'pointer',
+      border: '1.5px dashed var(--chip-border)',
+      background: 'var(--card)',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 7,
+      color: 'var(--muted)'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "camera",
+    size: 24,
+    color: "var(--blue)"
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 'calc(14.5px * var(--tscale, 1))',
+      fontWeight: 500
+    }
+  }, "Take photo"), /*#__PURE__*/React.createElement("input", {
+    type: "file",
+    accept: "image/*",
+    capture: "environment",
+    style: {
+      display: 'none'
+    },
+    onChange: e => onDocFile(e, 'taken')
+  })), /*#__PURE__*/React.createElement("label", {
+    className: "j-press",
+    style: {
+      flex: 1,
+      minHeight: 84,
+      borderRadius: 14,
+      cursor: 'pointer',
+      border: '1.5px dashed var(--chip-border)',
+      background: 'var(--card)',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 7,
+      color: 'var(--muted)'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "download",
+    size: 24,
+    color: "var(--blue)"
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 'calc(14.5px * var(--tscale, 1))',
+      fontWeight: 500
+    }
+  }, "Attach image"), /*#__PURE__*/React.createElement("input", {
+    type: "file",
+    accept: "image/*",
+    style: {
+      display: 'none'
+    },
+    onChange: e => onDocFile(e, 'attached')
+  })))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "What is it?"), /*#__PURE__*/React.createElement("input", {
+    className: "j-input",
+    value: title,
+    onChange: e => setTitle(e.target.value),
+    placeholder: "Give it a name, e.g. EHC plan draft"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "j-chiprow",
+    style: {
+      marginTop: 12
+    }
+  }, J.DOC_TYPES.map(t => /*#__PURE__*/React.createElement("button", {
+    key: t,
+    "aria-pressed": type === t,
+    className: 'j-chip' + (type === t ? ' j-chip-on' : ''),
+    onClick: () => setType(t)
+  }, t)))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "Who is it from?"), /*#__PURE__*/React.createElement("div", {
+    className: "j-chiprow"
+  }, J.DOC_SOURCES.map(s => /*#__PURE__*/React.createElement("button", {
+    key: s,
+    "aria-pressed": from === s,
+    className: 'j-chip' + (from === s ? ' j-chip-on' : ''),
+    onClick: () => setFrom(s)
+  }, s)))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "When did you receive it?"), /*#__PURE__*/React.createElement("input", {
+    type: "date",
+    className: "j-input",
+    min: "2019-01-01",
+    max: J.TODAY_ISO,
+    value: received,
+    onChange: e => setReceived(e.target.value),
+    style: {
+      colorScheme: 'light dark'
+    }
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "What is it about?"), /*#__PURE__*/React.createElement("textarea", {
+    className: "j-input",
+    value: about,
+    onChange: e => setAbout(e.target.value),
+    rows: 3,
+    placeholder: "A line so future-you remembers what is inside."
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "Does it need a reply or action?"), /*#__PURE__*/React.createElement("input", {
+    className: "j-input",
+    value: action,
+    onChange: e => setAction(e.target.value),
+    placeholder: "e.g. Reply by 30 June. Leave blank if not."
+  })))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+      padding: '12px 20px calc(16px + env(safe-area-inset-bottom))',
+      background: 'var(--fade-grad)'
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-primary j-btn-lg",
+    onClick: save
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "check",
+    size: 22,
+    color: "#fff"
+  }), " Save document")));
+}
+
+// ---------------- Document detail ----------------
+// Edit a document's details honestly: corrections are welcome, and the earlier
+// details stay visible on the record.
+function EditDocSheet({
+  doc,
+  onSave,
+  onClose
+}) {
+  const J = window.JOTLA;
+  const [title, setTitle] = useStateB(doc.title);
+  const [type, setType] = useStateB(doc.type);
+  const [from, setFrom] = useStateB(doc.from);
+  const [received, setReceived] = useStateB(doc.received);
+  const [about, setAbout] = useStateB(doc.about || '');
+  const [action, setAction] = useStateB(doc.action || '');
+  const inputStyle = {
+    width: '100%',
+    boxSizing: 'border-box',
+    borderRadius: 12,
+    border: '1.5px solid var(--chip-border)',
+    background: 'var(--card-2)',
+    padding: '10px 12px',
+    fontFamily: "'Outfit', system-ui",
+    fontSize: 'calc(15.5px * var(--tscale, 1))',
+    color: 'var(--ink)',
+    marginBottom: 12
+  };
+  const changed = title.trim() !== doc.title || type !== doc.type || from.trim() !== doc.from || received !== doc.received || about.trim() !== (doc.about || '') || action.trim() !== (doc.action || '');
+  return /*#__PURE__*/React.createElement("div", {
+    className: "j-sheet-scrim",
+    onClick: onClose
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-sheet",
+    onClick: ev => ev.stopPropagation(),
+    style: {
+      maxHeight: '88%',
+      overflowY: 'auto'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-sheet-grab"
+  }), /*#__PURE__*/React.createElement("h2", {
+    className: "j-h2",
+    style: {
+      marginBottom: 4
+    }
+  }, "Edit this document"), /*#__PURE__*/React.createElement("p", {
+    className: "j-sm",
+    style: {
+      marginBottom: 14
+    }
+  }, "Corrections are fine. The earlier details are kept on the record."), /*#__PURE__*/React.createElement("p", {
+    className: "j-sm",
+    style: {
+      marginBottom: 6
+    }
+  }, "Title"), /*#__PURE__*/React.createElement("input", {
+    value: title,
+    onChange: ev => setTitle(ev.target.value),
+    style: inputStyle
+  }), /*#__PURE__*/React.createElement("p", {
+    className: "j-sm",
+    style: {
+      marginBottom: 6
+    }
+  }, "What it is"), /*#__PURE__*/React.createElement("div", {
+    className: "j-chiprow",
+    style: {
+      marginBottom: 12
+    }
+  }, J.DOC_TYPES.map(t => /*#__PURE__*/React.createElement("button", {
+    key: t,
+    "aria-pressed": type === t,
+    className: 'j-chip' + (type === t ? ' j-chip-on' : ''),
+    onClick: () => setType(t)
+  }, t))), /*#__PURE__*/React.createElement("p", {
+    className: "j-sm",
+    style: {
+      marginBottom: 6
+    }
+  }, "From"), /*#__PURE__*/React.createElement("input", {
+    value: from,
+    onChange: ev => setFrom(ev.target.value),
+    style: inputStyle
+  }), /*#__PURE__*/React.createElement("p", {
+    className: "j-sm",
+    style: {
+      marginBottom: 6
+    }
+  }, "Date received"), /*#__PURE__*/React.createElement("input", {
+    type: "date",
+    value: received,
+    onChange: ev => setReceived(ev.target.value),
+    style: {
+      ...inputStyle,
+      colorScheme: 'light dark'
+    }
+  }), /*#__PURE__*/React.createElement("p", {
+    className: "j-sm",
+    style: {
+      marginBottom: 6
+    }
+  }, "About"), /*#__PURE__*/React.createElement("textarea", {
+    value: about,
+    onChange: ev => setAbout(ev.target.value),
+    rows: 3,
+    style: {
+      ...inputStyle,
+      resize: 'vertical'
+    }
+  }), /*#__PURE__*/React.createElement("p", {
+    className: "j-sm",
+    style: {
+      marginBottom: 6
+    }
+  }, "Action needed (leave empty if none)"), /*#__PURE__*/React.createElement("input", {
+    value: action,
+    onChange: ev => setAction(ev.target.value),
+    style: {
+      ...inputStyle,
+      marginBottom: 16
+    }
+  }), /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-primary",
+    disabled: !title.trim(),
+    style: {
+      opacity: title.trim() ? 1 : 0.5
+    },
+    onClick: () => {
+      const rec = /^\d{4}-\d{2}-\d{2}$/.test(received) ? received : doc.received;
+      if (changed && title.trim()) onSave({
+        title: title.trim(),
+        type,
+        from: from.trim(),
+        received: rec,
+        about: about.trim(),
+        action: action.trim()
+      });
+      onClose();
+    }
+  }, "Save the change"), /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-ghost",
+    style: {
+      marginTop: 8
+    },
+    onClick: onClose
+  }, "Cancel")));
+}
+function DocScreen({
+  nav,
+  docs,
+  id
+}) {
+  const J = window.JOTLA;
+  const d = docs.find(x => x.id === id);
+  const [editing, setEditing] = useStateB(false);
+  if (!d) return /*#__PURE__*/React.createElement("div", {
+    className: "j-screen"
+  }, /*#__PURE__*/React.createElement(PushHeader, {
+    title: "Document",
+    onBack: () => nav.back()
+  }));
+  const Row = ({
+    label,
+    value
+  }) => value ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      gap: 16,
+      padding: '12px 0',
+      borderBottom: '1px solid var(--line)'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "j-sm",
+    style: {
+      flexShrink: 0
+    }
+  }, label), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 'calc(15px * var(--tscale, 1))',
+      fontWeight: 500,
+      color: 'var(--ink)',
+      textAlign: 'right'
+    }
+  }, value)) : null;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "j-screen"
+  }, /*#__PURE__*/React.createElement(PushHeader, {
+    title: "Document",
+    onBack: () => nav.back()
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "j-scroll j-fade"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-pad",
+    style: {
+      paddingTop: 4,
+      paddingBottom: 28,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 12,
+      alignItems: 'center'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 52,
+      height: 52,
+      borderRadius: 14,
+      background: 'var(--tint-blue)',
+      flexShrink: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "doc",
+    size: 26,
+    color: "var(--blue)"
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
+    className: "j-h3",
+    style: {
+      fontSize: 'calc(19px * var(--tscale, 1))'
+    }
+  }, d.title), /*#__PURE__*/React.createElement("p", {
+    className: "j-meta",
+    style: {
+      marginTop: 2
+    }
+  }, d.type, " \xB7 from ", d.from), d.editedOn && /*#__PURE__*/React.createElement("span", {
+    className: "j-pillbadge",
+    style: {
+      marginTop: 6,
+      background: 'var(--tag-grey-bg)',
+      color: 'var(--muted)'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "note",
+    size: 13,
+    color: "var(--muted)"
+  }), " Edited ", J.fmtShort(d.editedOn)))), d.scan ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      borderRadius: 14,
+      overflow: 'hidden',
+      border: '1px solid var(--line)'
+    }
+  }, /*#__PURE__*/React.createElement("img", {
+    src: d.scan,
+    alt: "Document photo",
+    style: {
+      display: 'block',
+      width: '100%'
+    }
+  })) : /*#__PURE__*/React.createElement("div", {
+    style: {
+      borderRadius: 14,
+      background: 'var(--photo-bg)',
+      minHeight: 110,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "doc",
+    size: 22,
+    color: "var(--faint)"
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 'calc(15px * var(--tscale, 1))',
+      color: 'var(--faint)',
+      fontWeight: 500
+    }
+  }, "No photo of this document yet")), d.action && /*#__PURE__*/React.createElement("div", {
+    className: "j-card",
+    style: {
+      padding: 14,
+      display: 'flex',
+      gap: 12,
+      alignItems: 'center',
+      background: 'var(--tint-amber)',
+      border: 'none'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "bell",
+    size: 20,
+    color: "var(--amber)",
+    style: {
+      flexShrink: 0
+    }
+  }), /*#__PURE__*/React.createElement("p", {
+    className: "j-body",
+    style: {
+      fontSize: 'calc(15px * var(--tscale, 1))',
+      color: 'var(--ink)'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "j-strong"
+  }, "Action:"), " ", d.action)), /*#__PURE__*/React.createElement("div", {
+    className: "j-card j-card-pad"
+  }, /*#__PURE__*/React.createElement(Row, {
+    label: "What it is",
+    value: d.type
+  }), /*#__PURE__*/React.createElement(Row, {
+    label: "From",
+    value: d.from
+  }), /*#__PURE__*/React.createElement(Row, {
+    label: "Received",
+    value: J.fmtLong(d.received) + ' ' + d.received.slice(0, 4)
+  }), d.about && /*#__PURE__*/React.createElement("div", {
+    style: {
+      paddingTop: 12
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "j-sm"
+  }, "About"), /*#__PURE__*/React.createElement("p", {
+    className: "j-body",
+    style: {
+      fontSize: 'calc(15.5px * var(--tscale, 1))',
+      marginTop: 4
+    }
+  }, d.about))), d.history && d.history.length > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "j-card j-card-pad",
+    style: {
+      background: 'var(--card-2)'
+    }
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "j-sm",
+    style: {
+      marginBottom: 8,
+      color: '#6C9BD9',
+      fontStyle: 'italic'
+    }
+  }, "What it said before"), d.history.map((h, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      padding: '8px 0',
+      borderTop: i ? '1px solid var(--line)' : 'none'
+    }
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "j-meta",
+    style: {
+      marginBottom: 3
+    }
+  }, "Until ", J.fmtShort(h.on), " ", h.on.slice(0, 4)), /*#__PURE__*/React.createElement("p", {
+    className: "j-body",
+    style: {
+      fontSize: 'calc(15px * var(--tscale, 1))'
+    }
+  }, h.title, h.about ? ' · ' + h.about : '', h.action ? ' · Action: ' + h.action : '')))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-ghost",
+    style: {
+      flex: 1,
+      color: 'var(--blue)'
+    },
+    onClick: () => setEditing(true)
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "note",
+    size: 18,
+    color: "var(--blue)"
+  }), " Edit"), /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-ghost",
+    style: {
+      flex: 1,
+      color: '#C0392B'
+    },
+    onClick: () => {
+      if (window.confirm('Delete this document from the vault? This cannot be undone.')) {
+        nav.deleteDoc(d.id);
+        nav.back();
+      }
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "close",
+    size: 18,
+    color: "#C0392B"
+  }), " Delete")))), editing && /*#__PURE__*/React.createElement(EditDocSheet, {
+    doc: d,
+    onSave: patch => nav.updateDoc(d.id, patch),
+    onClose: () => setEditing(false)
+  }));
+}
+
+// ---------------- Jotla Plus (the three-layer money model) ----------------
+
+// Free is a calm, flat darker blue. Plus has its own purple identity. The coming-soon
+// tier now wears the premium navy + gold look (and the sparkle) that Plus used to have.
+const FREE_BLUE = '#1A56A8';
+const PLUS_GRAD = 'linear-gradient(135deg, #3C2A72 0%, #6E54D6 100%)';
+const PLUS_ACCENT = '#CDBBF7';
+const PLUS_ACCENT_DEEP = '#6E54D6';
+const LIVING_GRAD = 'linear-gradient(135deg, #14294A 0%, #1E5099 100%)';
+const LIVING_GOLD = '#E6B85C';
+const LIVING_GOLD_DEEP = '#C9912F';
+
+// A simple check list used on each tier page.
+function CheckList({
+  items,
+  color,
+  tint,
+  dark
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 11
+    }
+  }, items.map(it => /*#__PURE__*/React.createElement("div", {
+    key: it,
+    style: {
+      display: 'flex',
+      gap: 11,
+      alignItems: 'flex-start'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 20,
+      height: 20,
+      borderRadius: '50%',
+      background: tint,
+      flexShrink: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: 1
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "check",
+    size: 13,
+    color: color
+  })), /*#__PURE__*/React.createElement("span", {
+    style: {
+      flex: 1,
+      minWidth: 0,
+      fontSize: 'calc(15.5px * var(--tscale, 1))',
+      lineHeight: 1.4,
+      color: dark ? 'rgba(255,255,255,0.92)' : 'var(--body)'
+    }
+  }, it))));
+}
+
+// A detailed Plus feature: a formal bottom-line sentence, then a plain "what it looks like" line.
+function PlusFeature({
+  icon,
+  title,
+  formal,
+  plain
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    className: "j-card",
+    style: {
+      padding: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 12,
+      alignItems: 'center',
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      background: 'var(--tint-blue)',
+      flexShrink: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }
+  }, icon), /*#__PURE__*/React.createElement("p", {
+    className: "j-h3"
+  }, title)), /*#__PURE__*/React.createElement("p", {
+    className: "j-body",
+    style: {
+      fontSize: 'calc(15.5px * var(--tscale, 1))',
+      marginBottom: 10
+    }
+  }, formal), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 8,
+      alignItems: 'flex-start',
+      background: 'var(--tint-blue)',
+      borderRadius: 12,
+      padding: '10px 12px'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "arrowRight",
+    size: 16,
+    color: "var(--blue)",
+    style: {
+      marginTop: 2,
+      flexShrink: 0
+    }
+  }), /*#__PURE__*/React.createElement("p", {
+    className: "j-sm",
+    style: {
+      color: 'var(--blue)'
+    }
+  }, plain)));
+}
+const FREE_ITEMS = ['Daily logging and the quick log', 'The child walkthrough', 'Your basic timeline', 'Plain keyword search of your own notes', 'Raw data export', 'Appeal-deadline safety reminders'];
+const PLUS_ITEMS = ['Patterns and the Month view', 'Deep filtering', 'Dysregulation Mode', 'PDF evidence pack', 'Promised vs delivered provision log', 'Family sync: every grown-up’s phone stays up to date (coming soon)'];
+const LIVING_ITEMS = ['EHCP and SEND deadline tracker', 'What to do about a gap', 'Rights kept current', 'Current letter templates', 'On-device AI help', 'Fresh scene and symbol packs', 'A document vault', 'Voice capture', 'Multiple children'];
+const PAGE_STYLE = {
+  flex: '0 0 100%',
+  width: '100%',
+  height: '100%',
+  scrollSnapAlign: 'start',
+  overflowY: 'auto',
+  overflowX: 'hidden'
+};
+
+// ---- Page 1: Free ----
+function FreePage() {
+  return /*#__PURE__*/React.createElement("div", {
+    style: PAGE_STYLE
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-pad",
+    style: {
+      paddingTop: 6,
+      paddingBottom: 150
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "j-pillbadge",
+    style: {
+      background: 'var(--tint-blue)',
+      color: 'var(--blue)'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "check",
+    size: 13,
+    color: "var(--blue)"
+  }), " Free, forever"), /*#__PURE__*/React.createElement("h1", {
+    className: "j-h1",
+    style: {
+      margin: '12px 0 8px'
+    }
+  }, "Everything you need to keep a record"), /*#__PURE__*/React.createElement("p", {
+    className: "j-body",
+    style: {
+      color: 'var(--muted)',
+      marginBottom: 18
+    }
+  }, "No cost. No account. It never expires."), /*#__PURE__*/React.createElement("div", {
+    className: "j-card",
+    style: {
+      padding: 18,
+      marginBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement(CheckList, {
+    items: FREE_ITEMS,
+    color: "var(--blue)",
+    tint: "var(--tint-blue)"
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: 'var(--tint-blue)',
+      borderRadius: 16,
+      padding: 16,
+      display: 'flex',
+      gap: 12,
+      alignItems: 'flex-start'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "shield",
+    size: 22,
+    color: "var(--blue)",
+    style: {
+      flexShrink: 0,
+      marginTop: 2
+    }
+  }), /*#__PURE__*/React.createElement("p", {
+    className: "j-body",
+    style: {
+      fontSize: 'calc(15px * var(--tscale, 1))',
+      color: 'var(--blue)'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 500
+    }
+  }, "Your record is yours."), " Logging and export stay free forever, and anything you have saved stays yours even if you cancel."))));
+}
+
+// ---- Limited-time offer (set SALE.on = true to re-run the £29 promotion) ----
+// Promotion setup preserved below — flip `on` back to true to relaunch it.
+const SALE = {
+  on: false,
+  price: '£29',
+  was: '£39',
+  save: '£10',
+  days: 3
+};
+
+// Counts down to a deadline kept in localStorage, so the timer survives a refresh.
+function useSaleCountdown() {
+  const [left, setLeft] = useStateB(null);
+  useEffectB(() => {
+    if (!SALE.on) return;
+    const KEY = 'jotla_sale_deadline';
+    let dl = parseInt(localStorage.getItem(KEY) || '0', 10);
+    if (!dl || dl < Date.now()) {
+      dl = Date.now() + SALE.days * 86400000;
+      localStorage.setItem(KEY, String(dl));
+    }
+    const tick = () => {
+      const ms = Math.max(0, dl - Date.now());
+      setLeft({
+        d: Math.floor(ms / 86400000),
+        h: Math.floor(ms % 86400000 / 3600000),
+        m: Math.floor(ms % 3600000 / 60000),
+        s: Math.floor(ms % 60000 / 1000)
+      });
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+  return left;
+}
+function SaleCountdown({
+  left
+}) {
+  const pad = n => String(n).padStart(2, '0');
+  const units = [['Days', left && left.d], ['Hrs', left && left.h], ['Min', left && left.m], ['Sec', left && left.s]];
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 8,
+      marginTop: 14
+    }
+  }, units.map(([lbl, val]) => /*#__PURE__*/React.createElement("div", {
+    key: lbl,
+    style: {
+      flex: 1,
+      borderRadius: 12,
+      background: 'rgba(255,255,255,0.10)',
+      border: '1px solid rgba(230,184,92,0.45)',
+      padding: '9px 0',
+      textAlign: 'center'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontFamily: "'Cal Sans', system-ui",
+      fontWeight: 500,
+      fontSize: 'calc(26px * var(--tscale, 1))',
+      lineHeight: 1,
+      color: LIVING_GOLD
+    }
+  }, left ? pad(val) : '--'), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 'calc(10.5px * var(--tscale, 1))',
+      letterSpacing: '0.06em',
+      textTransform: 'uppercase',
+      color: 'rgba(255,255,255,0.7)',
+      marginTop: 5
+    }
+  }, lbl))));
+}
+
+// ---- Page 2: Jotla Plus (premium) ----
+function PlusPage() {
+  const left = useSaleCountdown();
+  const sale = SALE.on;
+  return /*#__PURE__*/React.createElement("div", {
+    style: PAGE_STYLE
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-pad",
+    style: {
+      paddingTop: 6,
+      paddingBottom: 150
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      borderRadius: 20,
+      padding: '22px 20px',
+      background: PLUS_GRAD,
+      color: '#fff',
+      marginBottom: 18,
+      boxShadow: '0 18px 38px -18px rgba(60,42,114,0.7)'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+      flexWrap: 'wrap'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 6,
+      padding: '5px 12px',
+      borderRadius: 999,
+      background: 'rgba(205,187,247,0.18)',
+      border: `1px solid ${PLUS_ACCENT}`,
+      color: PLUS_ACCENT,
+      fontSize: 'calc(12px * var(--tscale, 1))',
+      fontWeight: 600,
+      letterSpacing: '0.08em'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "star",
+    size: 13,
+    color: PLUS_ACCENT
+  }), " JOTLA PLUS"), sale && /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 6,
+      padding: '5px 12px',
+      borderRadius: 999,
+      background: LIVING_GOLD,
+      color: '#3A2A0C',
+      fontSize: 'calc(12px * var(--tscale, 1))',
+      fontWeight: 700,
+      letterSpacing: '0.06em'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "clock",
+    size: 13,
+    color: "#3A2A0C"
+  }), " 3 DAYS ONLY")), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontFamily: "'Cal Sans', system-ui",
+      fontWeight: 500,
+      fontSize: 'calc(24px * var(--tscale, 1))',
+      lineHeight: 1.14,
+      margin: '14px 0 0'
+    }
+  }, "The tools to help you spot patterns and make your case"), sale ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'baseline',
+      gap: 10,
+      marginTop: 16,
+      flexWrap: 'wrap'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontFamily: "'Cal Sans', system-ui",
+      fontWeight: 500,
+      fontSize: 'calc(40px * var(--tscale, 1))',
+      color: LIVING_GOLD
+    }
+  }, SALE.price), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 'calc(20px * var(--tscale, 1))',
+      color: 'rgba(255,255,255,0.55)',
+      textDecoration: 'line-through'
+    }
+  }, SALE.was), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 'calc(14px * var(--tscale, 1))',
+      color: 'rgba(255,255,255,0.82)'
+    }
+  }, "one-time"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      marginLeft: 'auto',
+      fontSize: 'calc(12.5px * var(--tscale, 1))',
+      fontWeight: 700,
+      color: '#3A2A0C',
+      background: LIVING_GOLD,
+      padding: '4px 10px',
+      borderRadius: 999
+    }
+  }, "Save ", SALE.save)), /*#__PURE__*/React.createElement(SaleCountdown, {
+    left: left
+  }), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 'calc(13px * var(--tscale, 1))',
+      color: 'rgba(255,255,255,0.72)',
+      margin: '12px 0 0',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 6
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "clock",
+    size: 13,
+    color: "rgba(255,255,255,0.72)"
+  }), " When the timer runs out the price goes back to ", SALE.was, ".")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'baseline',
+      gap: 8,
+      marginTop: 16
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontFamily: "'Cal Sans', system-ui",
+      fontWeight: 500,
+      fontSize: 'calc(40px * var(--tscale, 1))',
+      color: PLUS_ACCENT
+    }
+  }, "\xA339"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 'calc(14px * var(--tscale, 1))',
+      color: 'rgba(255,255,255,0.82)'
+    }
+  }, "one-time")), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 'calc(13.5px * var(--tscale, 1))',
+      color: 'rgba(255,255,255,0.75)',
+      margin: '4px 0 0'
+    }
+  }, "Yours to keep. No subscription. No timers."))), /*#__PURE__*/React.createElement("div", {
+    className: "j-card",
+    style: {
+      padding: 14,
+      marginBottom: 18,
+      display: 'flex',
+      gap: 10,
+      alignItems: 'center',
+      background: 'var(--tint-blue)',
+      border: 'none'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "check",
+    size: 18,
+    color: "var(--blue)",
+    style: {
+      flexShrink: 0
+    }
+  }), /*#__PURE__*/React.createElement("p", {
+    className: "j-body",
+    style: {
+      fontSize: 'calc(14.5px * var(--tscale, 1))',
+      color: 'var(--blue)'
+    }
+  }, "Everything in Free is included, always.")), /*#__PURE__*/React.createElement(SectionLabel, null, "What Plus adds"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 12
+    }
+  }, /*#__PURE__*/React.createElement(PlusFeature, {
+    icon: /*#__PURE__*/React.createElement(Icon, {
+      name: "calendar",
+      size: 22,
+      color: "var(--blue)"
+    }),
+    title: "Patterns and Month View",
+    formal: "See the shape of your child's months. Patterns and the Month view turn a year of single days into a clear picture of good days and hard days, so trends you could never spot across separate notes become obvious.",
+    plain: "A calendar of green and amber days. Tap any day to read what happened behind it."
+  }), /*#__PURE__*/React.createElement(PlusFeature, {
+    icon: /*#__PURE__*/React.createElement(Icon, {
+      name: "filter",
+      size: 22,
+      color: "var(--blue)"
+    }),
+    title: "Deep Filtering",
+    formal: "Find the exact entries that prove your point. Combine theme, behaviour, setting and dates in one search, so you can pull together every relevant moment in seconds instead of reading back through months.",
+    plain: "Pick 'lunch hall' plus 'running off' plus 'this term' and get just those days, in order."
+  }), /*#__PURE__*/React.createElement(PlusFeature, {
+    icon: /*#__PURE__*/React.createElement(Icon, {
+      name: "note",
+      size: 22,
+      color: "var(--blue)"
+    }),
+    title: "Dysregulation Mode",
+    formal: "Capture a hard moment as fact, while you are still standing there. It gives you the five questions to ask, takes the answers as plain notes, and puts them in order: what led up to it, what happened, and what helped. You walk away with a usable record, not just 'a hard afternoon'.",
+    plain: "Teacher mentions a tough afternoon. You tap 'At the gate?', read the questions, tap the answers. Done in under two minutes."
+  }), /*#__PURE__*/React.createElement(PlusFeature, {
+    icon: /*#__PURE__*/React.createElement(Icon, {
+      name: "doc",
+      size: 22,
+      color: "var(--blue)"
+    }),
+    title: "PDF Evidence Pack",
+    formal: "Hand over a clean, dated record when it counts. The evidence pack lays out your chosen entries as a clear, dated document, each with the day it was logged and whether it was written the same day or added later. It is built around the formats tribunals and professionals already use.",
+    plain: "Choose your dates and themes, and get a tidy PDF you can email or print for an assessment, review or tribunal."
+  }))));
+}
+
+// ---- Page 3: Living Companion (coming soon) ----
+function LivingPage() {
+  return /*#__PURE__*/React.createElement("div", {
+    style: PAGE_STYLE
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-pad",
+    style: {
+      paddingTop: 6,
+      paddingBottom: 150
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      borderRadius: 20,
+      padding: '22px 20px',
+      background: LIVING_GRAD,
+      color: '#fff',
+      marginBottom: 18,
+      boxShadow: '0 18px 38px -18px rgba(20,40,80,0.7)'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 6,
+      padding: '5px 12px',
+      borderRadius: 999,
+      background: 'rgba(230,184,92,0.16)',
+      border: `1px solid ${LIVING_GOLD}`,
+      color: LIVING_GOLD,
+      fontSize: 'calc(12px * var(--tscale, 1))',
+      fontWeight: 600,
+      letterSpacing: '0.08em'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "sparkle",
+    size: 13,
+    color: LIVING_GOLD
+  }), " Coming soon"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontFamily: "'Cal Sans', system-ui",
+      fontWeight: 500,
+      fontSize: 'calc(26px * var(--tscale, 1))',
+      lineHeight: 1.12,
+      color: '#fff',
+      margin: '14px 0 6px'
+    }
+  }, "Living Companion"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 'calc(14.5px * var(--tscale, 1))',
+      color: 'rgba(255,255,255,0.82)',
+      margin: 0
+    }
+  }, "A monthly membership, coming with the membership.")), /*#__PURE__*/React.createElement("p", {
+    className: "j-body",
+    style: {
+      color: 'var(--muted)',
+      marginBottom: 18
+    }
+  }, "The things that keep working for you, current and maintained over time. The deadline tracker, the route guidance, the templates and the content all stay up to date, so you are never working from old information."), /*#__PURE__*/React.createElement("div", {
+    className: "j-card",
+    style: {
+      padding: 18,
+      marginBottom: 16,
+      borderColor: `${LIVING_GOLD}55`
+    }
+  }, /*#__PURE__*/React.createElement(CheckList, {
+    items: LIVING_ITEMS,
+    color: LIVING_GOLD_DEEP,
+    tint: `${LIVING_GOLD}26`
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: `${LIVING_GOLD}1F`,
+      borderRadius: 16,
+      padding: 16,
+      display: 'flex',
+      gap: 12,
+      alignItems: 'flex-start'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "leaf",
+    size: 22,
+    color: LIVING_GOLD_DEEP,
+    style: {
+      flexShrink: 0,
+      marginTop: 2
+    }
+  }), /*#__PURE__*/React.createElement("p", {
+    className: "j-body",
+    style: {
+      fontSize: 'calc(15px * var(--tscale, 1))',
+      color: 'var(--body)'
+    }
+  }, "We will let you know when it arrives. Your free tools and anything you have bought stay exactly as they are."))));
+}
+function UnlockScreen({
+  nav
+}) {
+  const owned = nav.plus;
+  const [bought, setBought] = useStateB(false);
+  const [confirmPlus, setConfirmPlus] = useStateB(false);
+  const [confirmFree, setConfirmFree] = useStateB(false);
+  const [droppedFree, setDroppedFree] = useStateB(false);
+  const [idx, setIdx] = useStateB(0);
+  const pagerRef = useRefB(null);
+  const goTo = i => {
+    const el = pagerRef.current;
+    if (!el) return;
+    el.scrollTo({
+      left: i * el.clientWidth,
+      behavior: 'smooth'
+    });
+    setIdx(i);
+  };
+  const onScroll = () => {
+    const el = pagerRef.current;
+    if (!el) return;
+    const i = Math.round(el.scrollLeft / el.clientWidth);
+    if (i !== idx) setIdx(i);
+  };
+  const TABS = [{
+    label: 'Free',
+    onBg: FREE_BLUE,
+    dotOn: FREE_BLUE
+  }, {
+    label: 'Plus',
+    onBg: PLUS_GRAD,
+    dotOn: PLUS_ACCENT_DEEP
+  }, {
+    label: 'Coming soon',
+    onBg: LIVING_GRAD,
+    dotOn: LIVING_GOLD_DEEP
+  }];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "j-screen"
+  }, /*#__PURE__*/React.createElement(PushHeader, {
+    title: "Jotla Plus",
+    subtitle: "Swipe to compare the three tiers.",
+    onClose: () => nav.back()
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 8,
+      padding: '0 16px 12px'
+    }
+  }, TABS.map((t, i) => {
+    const on = idx === i;
+    return /*#__PURE__*/React.createElement("button", {
+      key: t.label,
+      onClick: () => goTo(i),
+      className: "j-press",
+      style: {
+        flex: 1,
+        minHeight: 40,
+        borderRadius: 999,
+        border: 'none',
+        cursor: 'pointer',
+        fontFamily: "'Outfit', system-ui",
+        fontWeight: 600,
+        fontSize: 'calc(14px * var(--tscale, 1))',
+        background: on ? t.onBg : 'var(--tag-grey-bg)',
+        color: on ? '#fff' : 'var(--muted)',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6
+      }
+    }, i === 2 && /*#__PURE__*/React.createElement(Icon, {
+      name: "sparkle",
+      size: 14,
+      color: on ? LIVING_GOLD : 'var(--faint)'
+    }), t.label);
+  })), /*#__PURE__*/React.createElement("div", _extends({
+    ref: pagerRef,
+    onScroll: onScroll,
+    className: "j-pager"
+  }, pagerKeyProps(pagerRef, 'Jotla tiers'), {
+    style: {
+      flex: 1,
+      minHeight: 0,
+      display: 'flex',
+      overflowX: 'auto',
+      overflowY: 'hidden',
+      scrollSnapType: 'x mandatory',
+      WebkitOverflowScrolling: 'touch',
+      outline: 'none'
+    }
+  }), /*#__PURE__*/React.createElement(FreePage, null), /*#__PURE__*/React.createElement(PlusPage, null), /*#__PURE__*/React.createElement(LivingPage, null)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+      padding: '10px 20px calc(14px + env(safe-area-inset-bottom))',
+      background: 'var(--fade-grad)'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      justifyContent: 'center',
+      gap: 6,
+      marginBottom: 12
+    }
+  }, TABS.map((t, i) => /*#__PURE__*/React.createElement("button", {
+    key: i,
+    "aria-label": 'Tier ' + (i + 1) + ' of ' + TABS.length + ': ' + t.label,
+    "aria-current": idx === i,
+    onClick: () => goTo(i),
+    style: {
+      width: idx === i ? 18 : 7,
+      height: 7,
+      borderRadius: 99,
+      transition: 'all .2s ease',
+      border: 'none',
+      padding: 0,
+      cursor: 'pointer',
+      background: idx === i ? t.dotOn : 'var(--chip-border)'
+    }
+  }))), idx === 0 && (owned ? /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-lg",
+    style: {
+      background: 'var(--card)',
+      color: FREE_BLUE,
+      border: `1.5px solid ${FREE_BLUE}`
+    },
+    onClick: () => setConfirmFree(true)
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "arrowLeft",
+    size: 20,
+    color: FREE_BLUE
+  }), " Switch back to Free") : /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-lg",
+    style: {
+      background: FREE_BLUE,
+      color: '#fff',
+      boxShadow: '0 10px 22px -10px rgba(26,86,168,0.6)'
+    },
+    onClick: () => goTo(1)
+  }, "See Jotla Plus ", /*#__PURE__*/React.createElement(Icon, {
+    name: "arrowRight",
+    size: 20,
+    color: "#fff"
+  }))), idx === 1 && (owned ? /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-lg",
+    style: {
+      background: 'rgba(110,84,214,0.12)',
+      color: PLUS_ACCENT_DEEP,
+      border: `1.5px solid ${PLUS_ACCENT_DEEP}`
+    },
+    onClick: () => nav.back()
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "check",
+    size: 20,
+    color: PLUS_ACCENT_DEEP
+  }), " You have Jotla Plus") : /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-lg",
+    style: {
+      background: PLUS_GRAD,
+      color: '#fff',
+      boxShadow: '0 14px 28px -10px rgba(60,42,114,0.6)'
+    },
+    onClick: () => setConfirmPlus(true)
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "star",
+    size: 18,
+    color: PLUS_ACCENT
+  }), " Get Jotla Plus, ", SALE.on ? SALE.price : '£39', SALE.on && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 'calc(14px * var(--tscale, 1))',
+      opacity: 0.6,
+      textDecoration: 'line-through',
+      marginLeft: 6
+    }
+  }, SALE.was))), idx === 2 && /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-lg",
+    disabled: true,
+    style: {
+      background: 'var(--tag-grey-bg)',
+      color: 'var(--muted)',
+      cursor: 'default'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "clock",
+    size: 18,
+    color: "var(--muted)"
+  }), " Coming with the membership")), confirmPlus && /*#__PURE__*/React.createElement("div", {
+    className: "j-sheet-scrim",
+    onClick: () => setConfirmPlus(false)
+  }, /*#__PURE__*/React.createElement("div", {
+    onClick: e => e.stopPropagation(),
+    className: "j-sheet"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-sheet-grab"
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      justifyContent: 'center',
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 56,
+      height: 56,
+      borderRadius: '50%',
+      background: PLUS_GRAD,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "star",
+    size: 26,
+    color: PLUS_ACCENT
+  }))), /*#__PURE__*/React.createElement("h2", {
+    className: "j-h2",
+    style: {
+      textAlign: 'center',
+      marginBottom: 8
+    }
+  }, "You are about to switch to Jotla Plus"), /*#__PURE__*/React.createElement("p", {
+    className: "j-body",
+    style: {
+      textAlign: 'center',
+      color: 'var(--muted)',
+      marginBottom: 20
+    }
+  }, "This turns on Patterns, the Month view, Deep Filtering, Dysregulation Mode and the PDF Evidence Pack. Everything you have already saved stays exactly as it is."), /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-lg",
+    style: {
+      background: PLUS_GRAD,
+      color: '#fff',
+      marginBottom: 10
+    },
+    onClick: () => {
+      nav.buyPlus();
+      setConfirmPlus(false);
+      setBought(true);
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "check",
+    size: 20,
+    color: "#fff"
+  }), " Confirm"), /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-ghost",
+    onClick: () => setConfirmPlus(false)
+  }, "Cancel"))), confirmFree && /*#__PURE__*/React.createElement("div", {
+    className: "j-sheet-scrim",
+    onClick: () => setConfirmFree(false)
+  }, /*#__PURE__*/React.createElement("div", {
+    onClick: e => e.stopPropagation(),
+    className: "j-sheet"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-sheet-grab"
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      justifyContent: 'center',
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 56,
+      height: 56,
+      borderRadius: '50%',
+      background: 'var(--tint-blue)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "arrowLeft",
+    size: 26,
+    color: FREE_BLUE
+  }))), /*#__PURE__*/React.createElement("h2", {
+    className: "j-h2",
+    style: {
+      textAlign: 'center',
+      marginBottom: 8
+    }
+  }, "Switch back to Free?"), /*#__PURE__*/React.createElement("p", {
+    className: "j-body",
+    style: {
+      textAlign: 'center',
+      color: 'var(--muted)',
+      marginBottom: 20
+    }
+  }, "Are you sure? The Plus tools will be put away and the app goes back to the Free experience. Your record, and everything in it, stays yours and untouched."), /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-lg",
+    style: {
+      background: FREE_BLUE,
+      color: '#fff',
+      marginBottom: 10
+    },
+    onClick: () => {
+      nav.dropPlus();
+      setConfirmFree(false);
+      setDroppedFree(true);
+      goTo(0);
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "check",
+    size: 20,
+    color: "#fff"
+  }), " Yes, switch to Free"), /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-ghost",
+    onClick: () => setConfirmFree(false)
+  }, "Keep Jotla Plus"))), droppedFree && /*#__PURE__*/React.createElement("div", {
+    className: "j-sheet-scrim",
+    onClick: () => setDroppedFree(false)
+  }, /*#__PURE__*/React.createElement("div", {
+    onClick: e => e.stopPropagation(),
+    className: "j-sheet"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-sheet-grab"
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      justifyContent: 'center',
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 52,
+      height: 52,
+      borderRadius: '50%',
+      background: 'var(--tint-blue)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "check",
+    size: 26,
+    color: FREE_BLUE
+  }))), /*#__PURE__*/React.createElement("h2", {
+    className: "j-h2",
+    style: {
+      textAlign: 'center',
+      marginBottom: 6
+    }
+  }, "You are on Free"), /*#__PURE__*/React.createElement("p", {
+    className: "j-body",
+    style: {
+      textAlign: 'center',
+      color: 'var(--muted)',
+      marginBottom: 18
+    }
+  }, "The app is back to the Free experience. You can switch to Jotla Plus again any time from here."), /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-primary",
+    onClick: () => setDroppedFree(false)
+  }, "Done"))), bought && /*#__PURE__*/React.createElement("div", {
+    className: "j-sheet-scrim",
+    onClick: () => {
+      setBought(false);
+      nav.back();
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    onClick: e => e.stopPropagation(),
+    className: "j-sheet"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-sheet-grab"
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      justifyContent: 'center',
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 56,
+      height: 56,
+      borderRadius: '50%',
+      background: PLUS_GRAD,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "star",
+    size: 26,
+    color: PLUS_ACCENT
+  }))), /*#__PURE__*/React.createElement("h2", {
+    className: "j-h2",
+    style: {
+      textAlign: 'center',
+      marginBottom: 8
+    }
+  }, "You have Jotla Plus"), /*#__PURE__*/React.createElement("p", {
+    className: "j-body",
+    style: {
+      textAlign: 'center',
+      color: 'var(--muted)',
+      marginBottom: 20
+    }
+  }, "Thank you. Patterns, Deep Filtering, Dysregulation Mode and the PDF Evidence Pack are switched on. Your record stays yours, always."), /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-primary",
+    onClick: () => {
+      setBought(false);
+      nav.back();
+    }
+  }, "Done"))));
+}
+
+// ---------------- Settings ----------------
+function SettingsRow({
+  icon,
+  title,
+  sub,
+  onClick,
+  right,
+  last
+}) {
+  return /*#__PURE__*/React.createElement("button", {
+    onClick: onClick,
+    className: onClick ? 'j-press' : '',
+    style: {
+      width: '100%',
+      textAlign: 'left',
+      border: 'none',
+      background: 'none',
+      cursor: onClick ? 'pointer' : 'default',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 14,
+      padding: '14px 16px',
+      borderBottom: last ? 'none' : '1px solid var(--line)'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 38,
+      height: 38,
+      borderRadius: 11,
+      background: 'var(--tint-blue)',
+      flexShrink: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }
+  }, icon), /*#__PURE__*/React.createElement("span", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'block',
+      fontFamily: "'Outfit', system-ui",
+      fontSize: 'calc(16px * var(--tscale, 1))',
+      fontWeight: 500,
+      color: 'var(--ink)'
+    }
+  }, title), sub && /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'block',
+      fontFamily: "'Outfit', system-ui",
+      fontSize: 'calc(13px * var(--tscale, 1))',
+      color: 'var(--faint)',
+      marginTop: 1
+    }
+  }, sub)), right || onClick && /*#__PURE__*/React.createElement(Icon, {
+    name: "chevronRight",
+    size: 18,
+    color: "var(--faint)"
+  }));
+}
+function Toggle({
+  on,
+  onChange,
+  label
+}) {
+  return /*#__PURE__*/React.createElement("button", {
+    onClick: onChange,
+    role: "switch",
+    "aria-checked": !!on,
+    "aria-label": label || 'Toggle',
+    style: {
+      width: 52,
+      height: 31,
+      borderRadius: 999,
+      border: 'none',
+      cursor: 'pointer',
+      background: on ? 'var(--green)' : 'var(--chip-border)',
+      position: 'relative',
+      transition: 'background .2s ease',
+      flexShrink: 0
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      position: 'absolute',
+      top: 3,
+      left: on ? 24 : 3,
+      width: 25,
+      height: 25,
+      borderRadius: '50%',
+      background: '#fff',
+      transition: 'left .2s ease',
+      boxShadow: '0 2px 5px rgba(0,0,0,0.25)'
+    }
+  }));
+}
+
+// Backup health: the one story that kills this product is data loss, so Settings
+// shows when the record was last saved out, not just how to do it.
+const BACKUP_META_KEY = 'jotla_backup_v1';
+// Android's automatic app backup stops including data past ~25 MB; warn before that.
+const BACKUP_SIZE_SOFT_CAP = 20 * 1024 * 1024;
+function backupHealthLine(meta) {
+  if (!meta || !meta.lastExportAt) return 'No saved copy from this app yet.';
+  const days = Math.max(0, Math.floor((Date.now() - new Date(meta.lastExportAt).getTime()) / 86400000));
+  if (days === 0) return 'Last saved copy: today.';
+  if (days === 1) return 'Last saved copy: yesterday.';
+  return 'Last saved copy: ' + days + ' days ago.';
+}
+function recordSizeBytes() {
+  let n = 0;
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.indexOf('jotla_') === 0) n += (localStorage.getItem(k) || '').length * 2;
+    }
+  } catch (e) {}
+  return n;
+}
+function SettingsScreen({
+  nav,
+  profile,
+  entries = [],
+  docs = []
+}) {
+  const J = window.JOTLA;
+  const childName = profile && profile.name || 'your child';
+  const [info, setInfo] = useStateB(null);
+  const [backupMeta, setBackupMeta] = useStateB(() => {
+    try {
+      return JSON.parse(localStorage.getItem(BACKUP_META_KEY)) || null;
+    } catch (e) {
+      return null;
+    }
+  });
+  const recordBytes = React.useMemo(recordSizeBytes, [entries, docs, backupMeta]);
+  const exportDue = !backupMeta || !backupMeta.lastExportAt || Date.now() - new Date(backupMeta.lastExportAt).getTime() > 30 * 86400000;
+  const FEEDBACK_HREF = 'mailto:hello@sen.help?subject=' + encodeURIComponent('Jotla prototype feedback') + '&body=' + encodeURIComponent('What I was trying to do:\n\nWhat I think, or what happened:\n\nWhich screen:\n\nMy phone / browser:\n');
+  const feedbackCard = /*#__PURE__*/React.createElement("button", {
+    className: "j-press",
+    onClick: () => {
+      window.location.assign(FEEDBACK_HREF);
+    },
+    style: {
+      width: '100%',
+      textAlign: 'left',
+      border: 'none',
+      cursor: 'pointer',
+      background: 'var(--tint-green)',
+      borderRadius: 18,
+      padding: 18,
+      marginBottom: 20,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 14
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 42,
+      height: 42,
+      borderRadius: 12,
+      background: 'var(--card)',
+      flexShrink: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "heart",
+    size: 22,
+    color: "var(--green)"
+  })), /*#__PURE__*/React.createElement("span", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'block',
+      fontFamily: "'Cal Sans', system-ui",
+      fontWeight: 500,
+      fontSize: 'calc(17px * var(--tscale, 1))',
+      color: 'var(--green-ink)'
+    }
+  }, "Tell us what you think"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'block',
+      fontFamily: "'Outfit', system-ui",
+      fontSize: 'calc(13px * var(--tscale, 1))',
+      color: 'var(--muted)',
+      marginTop: 2
+    }
+  }, "This is an early test, and your feedback shapes it. Opens your email.")), /*#__PURE__*/React.createElement(Icon, {
+    name: "chevronRight",
+    size: 18,
+    color: "var(--green-ink)"
+  }));
+  const plusCard = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SectionLabel, null, "Jotla Plus"), /*#__PURE__*/React.createElement("button", {
+    className: "j-press",
+    onClick: () => nav.go('unlock'),
+    style: {
+      width: '100%',
+      textAlign: 'left',
+      border: 'none',
+      cursor: 'pointer',
+      background: LIVING_GRAD,
+      borderRadius: 18,
+      padding: 18,
+      marginBottom: 20,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 14,
+      color: '#fff',
+      boxShadow: '0 14px 30px -14px rgba(20,40,80,0.7)'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 42,
+      height: 42,
+      borderRadius: 12,
+      background: 'rgba(230,184,92,0.18)',
+      flexShrink: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "sparkle",
+    size: 22,
+    color: LIVING_GOLD
+  })), /*#__PURE__*/React.createElement("span", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'block',
+      fontFamily: "'Cal Sans', system-ui",
+      fontWeight: 500,
+      fontSize: 'calc(17px * var(--tscale, 1))',
+      color: '#fff'
+    }
+  }, "Patterns, filters and PDF pack"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'block',
+      fontFamily: "'Outfit', system-ui",
+      fontSize: 'calc(13px * var(--tscale, 1))',
+      color: 'rgba(255,255,255,0.78)',
+      marginTop: 2
+    }
+  }, nav.plus ? 'Active. Yours to keep.' : 'See what Plus adds. Pay once.')), nav.plus ? /*#__PURE__*/React.createElement("span", {
+    className: "j-pillbadge",
+    style: {
+      background: 'rgba(230,184,92,0.22)',
+      color: LIVING_GOLD
+    }
+  }, "Active") : /*#__PURE__*/React.createElement(Icon, {
+    name: "chevronRight",
+    size: 18,
+    color: "rgba(255,255,255,0.8)"
+  })));
+  const exportData = () => {
+    try {
+      const payload = {
+        app: 'Jotla',
+        exportedAt: new Date().toISOString(),
+        child: profile,
+        entries,
+        documents: docs
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {
+        type: 'application/json'
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'jotla-' + childName.replace(/\s+/g, '-').toLowerCase() + '-export.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+      const meta = {
+        lastExportAt: new Date().toISOString()
+      };
+      try {
+        localStorage.setItem(BACKUP_META_KEY, JSON.stringify(meta));
+      } catch (e) {}
+      setBackupMeta(meta);
+    } catch (e) {
+      alert('Sorry, the export could not be created on this device.');
+    }
+  };
+  const onImportFile = e => {
+    const f = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        nav.importBackup(JSON.parse(r.result));
+      } catch (err) {
+        alert('That file could not be read as a Jotla backup.');
+      }
+    };
+    r.readAsText(f);
+  };
+  const INFO = {
+    backup: ['Where your record is kept', ['Everything you write lives on this device, inside Jotla. Nothing is sent to us, ever.', 'Your record rides inside your phone\'s own backup (iCloud on iPhone, Google backup on Android). If device backup is on, a lost or broken phone does not lose the record.', 'Worth checking once: open your phone settings and make sure device backup is switched on.', 'For extra safety, use Export my data every so often and keep the file somewhere safe. You can bring it back with Restore from an export.']],
+    encrypted: ['Encrypted export', ['A locked export protects the file with a passphrase only you know.', 'It is planned for the full app, and is not in this early test build yet.', 'For now, Export my data gives you a plain copy. Keep it somewhere private, like your own cloud drive.']],
+    lock: ['Lock the app', ['In the full app you will be able to lock Jotla behind your fingerprint, face or a PIN.', 'It is not in this early test build yet.', 'Until then, your phone\'s own screen lock protects the record, and both iPhone and Android can lock or pin individual apps if you share the phone.']],
+    privacy: ['Privacy, in plain words', ['No account, no login, no cloud. Everything you write stays on this device.', 'We never receive or access your data. There is nothing for us to read, lose or sell.', 'Your record leaves the phone only when you choose: an export you save, or a day record you print or share.', 'One thing to remember: what you write can end up in front of other people when you choose to share it. Log facts, keep other children out of photos where you can, and your record will serve you well.']],
+    mission: ['What Jotla is for', ['Every SEN parent is told to document everything. Nobody gives them the tool. Jotla is that tool.', 'Log the days in seconds, capture what really happened at the school gate, and keep every letter and report in one place.', 'When it matters, at an assessment, an annual review or a tribunal, your record is already organised, dated and ready to share.', 'Owned by you. Not the school, not the Local Authority. You.']],
+    about: ['About and credits', ['Jotla by SEN Help. Early test build ' + window.JOTLA_BUILD + ' (July 2026).', 'Designed and built by SEN Help (sen.help).', 'Typefaces: Cal Sans and Outfit, used under the SIL Open Font Licence.', 'Feedback makes this better. Use "Tell us what you think" in Settings.']]
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "j-screen"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-scroll j-fade"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-pad",
+    style: {
+      paddingTop: 14,
+      paddingBottom: 120
+    }
+  }, /*#__PURE__*/React.createElement(TabTitle, {
+    title: "Settings"
+  }), /*#__PURE__*/React.createElement("button", {
+    className: "j-card j-press",
+    onClick: () => nav.editChild(),
+    style: {
+      width: '100%',
+      padding: 14,
+      marginBottom: 20,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 14,
+      cursor: 'pointer',
+      textAlign: 'left',
+      border: '1px solid var(--line)'
+    }
+  }, /*#__PURE__*/React.createElement(ChildAvatar, {
+    profile: profile,
+    size: 48
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'block',
+      fontFamily: "'Cal Sans', system-ui",
+      fontWeight: 500,
+      fontSize: 'calc(18px * var(--tscale, 1))',
+      color: 'var(--ink)'
+    }
+  }, childName), /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'block',
+      fontSize: 'calc(13.5px * var(--tscale, 1))',
+      color: 'var(--faint)',
+      marginTop: 1
+    }
+  }, "Edit name, school, colour and avatar")), /*#__PURE__*/React.createElement(Icon, {
+    name: "chevronRight",
+    size: 18,
+    color: "var(--faint)"
+  })), !nav.plus && plusCard, /*#__PURE__*/React.createElement(SectionLabel, null, "Backup and export"), /*#__PURE__*/React.createElement("div", {
+    className: "j-card",
+    style: {
+      marginBottom: 20,
+      overflow: 'hidden'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: 10,
+      padding: '12px 16px',
+      borderBottom: '1px solid var(--line)'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    "aria-hidden": "true",
+    style: {
+      width: 8,
+      height: 8,
+      borderRadius: '50%',
+      marginTop: 5,
+      flexShrink: 0,
+      background: exportDue ? '#F39C12' : 'var(--green)'
+    }
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontFamily: "'Outfit', system-ui",
+      fontSize: 'calc(13.5px * var(--tscale, 1))',
+      color: 'var(--muted)',
+      lineHeight: 1.45
+    }
+  }, backupHealthLine(backupMeta), exportDue ? ' A copy every few weeks is good insurance.' : '', recordBytes > BACKUP_SIZE_SOFT_CAP ? ' Your record is about ' + Math.round(recordBytes / 1048576) + ' MB. Big records can fall out of your phone\'s automatic backup, so saved copies matter more now.' : '')), /*#__PURE__*/React.createElement(SettingsRow, {
+    icon: /*#__PURE__*/React.createElement(Icon, {
+      name: "shield",
+      size: 20,
+      color: "var(--blue)"
+    }),
+    title: "Where your record is kept",
+    sub: "On this device, inside your phone's own backup. We never see it.",
+    onClick: () => setInfo('backup')
+  }), /*#__PURE__*/React.createElement(SettingsRow, {
+    icon: /*#__PURE__*/React.createElement(Icon, {
+      name: "download",
+      size: 20,
+      color: "var(--blue)"
+    }),
+    title: "Export my data",
+    sub: 'A plain copy of ' + childName + "'s whole record. Always free.",
+    onClick: exportData,
+    right: /*#__PURE__*/React.createElement("span", {
+      className: "j-pillbadge",
+      style: {
+        background: 'var(--tint-green)',
+        color: 'var(--green-ink)'
+      }
+    }, "Free")
+  }), /*#__PURE__*/React.createElement("label", {
+    className: "j-press",
+    style: {
+      width: '100%',
+      textAlign: 'left',
+      border: 'none',
+      background: 'none',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 14,
+      padding: '14px 16px',
+      borderBottom: '1px solid var(--line)'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 38,
+      height: 38,
+      borderRadius: 11,
+      background: 'var(--tint-blue)',
+      flexShrink: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "attach",
+    size: 20,
+    color: "var(--blue)"
+  })), /*#__PURE__*/React.createElement("span", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'block',
+      fontFamily: "'Outfit', system-ui",
+      fontSize: 'calc(16px * var(--tscale, 1))',
+      fontWeight: 500,
+      color: 'var(--ink)'
+    }
+  }, "Restore from an export"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'block',
+      fontFamily: "'Outfit', system-ui",
+      fontSize: 'calc(13px * var(--tscale, 1))',
+      color: 'var(--faint)',
+      marginTop: 1
+    }
+  }, "Bring back a record from an exported file.")), /*#__PURE__*/React.createElement(Icon, {
+    name: "chevronRight",
+    size: 18,
+    color: "var(--faint)"
+  }), /*#__PURE__*/React.createElement("input", {
+    type: "file",
+    accept: "application/json,.json",
+    style: {
+      display: 'none'
+    },
+    onChange: onImportFile
+  })), /*#__PURE__*/React.createElement(SettingsRow, {
+    icon: /*#__PURE__*/React.createElement(Icon, {
+      name: "lock",
+      size: 20,
+      color: "var(--blue)"
+    }),
+    title: "Encrypted export",
+    sub: "Your own locked copy, only you hold the key.",
+    onClick: () => setInfo('encrypted'),
+    right: /*#__PURE__*/React.createElement("span", {
+      className: "j-pillbadge",
+      style: {
+        background: 'var(--tag-grey-bg)',
+        color: 'var(--muted)'
+      }
+    }, "Planned"),
+    last: true
+  })), /*#__PURE__*/React.createElement(SectionLabel, null, "Appearance"), /*#__PURE__*/React.createElement("div", {
+    className: "j-card",
+    style: {
+      marginBottom: 20,
+      overflow: 'hidden'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 14,
+      padding: '14px 16px'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 38,
+      height: 38,
+      borderRadius: 11,
+      background: 'var(--tint-blue)',
+      flexShrink: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "moon",
+    size: 20,
+    color: "var(--blue)"
+  })), /*#__PURE__*/React.createElement("span", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'block',
+      fontFamily: "'Outfit', system-ui",
+      fontSize: 'calc(16px * var(--tscale, 1))',
+      fontWeight: 500,
+      color: 'var(--ink)'
+    }
+  }, "Dark mode"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'block',
+      fontFamily: "'Outfit', system-ui",
+      fontSize: 'calc(13px * var(--tscale, 1))',
+      color: 'var(--faint)',
+      marginTop: 1
+    }
+  }, "Easier on the eyes at night.")), /*#__PURE__*/React.createElement(Toggle, {
+    on: nav.dark,
+    onChange: () => nav.toggleDark(),
+    label: "Dark mode"
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 14,
+      padding: '14px 16px',
+      borderTop: '1px solid var(--line)'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 38,
+      height: 38,
+      borderRadius: 11,
+      background: 'var(--tint-blue)',
+      flexShrink: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontFamily: "'Cal Sans', system-ui",
+      fontWeight: 500,
+      fontSize: 20,
+      color: 'var(--blue)'
+    },
+    "aria-hidden": "true"
+  }, "A"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'block',
+      fontFamily: "'Outfit', system-ui",
+      fontSize: 'calc(16px * var(--tscale, 1))',
+      fontWeight: 500,
+      color: 'var(--ink)'
+    }
+  }, "Text size"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'block',
+      fontFamily: "'Outfit', system-ui",
+      fontSize: 'calc(13px * var(--tscale, 1))',
+      color: 'var(--faint)',
+      marginTop: 1
+    }
+  }, "Everything in the app follows it.")), /*#__PURE__*/React.createElement("span", {
+    role: "radiogroup",
+    "aria-label": "Text size",
+    style: {
+      display: 'inline-flex',
+      gap: 6
+    }
+  }, [{
+    v: 1,
+    label: 'Standard text',
+    fs: 14
+  }, {
+    v: 1.12,
+    label: 'Large text',
+    fs: 17
+  }, {
+    v: 1.25,
+    label: 'Extra large text',
+    fs: 20
+  }].map(o => {
+    const on = Math.abs((nav.tscale || 1) - o.v) < 0.01;
+    return /*#__PURE__*/React.createElement("button", {
+      key: o.v,
+      role: "radio",
+      "aria-checked": on,
+      "aria-label": o.label,
+      onClick: () => nav.setTscale(o.v),
+      className: "j-press",
+      style: {
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        cursor: 'pointer',
+        border: on ? '1.5px solid var(--blue)' : '1.5px solid var(--chip-border)',
+        background: on ? 'var(--tint-blue)' : 'var(--chip-bg)',
+        color: on ? 'var(--blue)' : 'var(--muted)',
+        fontFamily: "'Outfit', system-ui",
+        fontWeight: 600,
+        fontSize: o.fs,
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }
+    }, "A");
+  })))), /*#__PURE__*/React.createElement(SectionLabel, null, "Privacy"), /*#__PURE__*/React.createElement("div", {
+    className: "j-card",
+    style: {
+      marginBottom: 20,
+      overflow: 'hidden'
+    }
+  }, /*#__PURE__*/React.createElement(SettingsRow, {
+    icon: /*#__PURE__*/React.createElement(Icon, {
+      name: "lock",
+      size: 20,
+      color: "var(--blue)"
+    }),
+    title: "Lock the app",
+    sub: "A fingerprint, face, or PIN on this device.",
+    onClick: () => setInfo('lock'),
+    right: /*#__PURE__*/React.createElement("span", {
+      className: "j-pillbadge",
+      style: {
+        background: 'var(--tag-grey-bg)',
+        color: 'var(--muted)'
+      }
+    }, "Planned")
+  }), /*#__PURE__*/React.createElement(SettingsRow, {
+    icon: /*#__PURE__*/React.createElement(Icon, {
+      name: "note",
+      size: 20,
+      color: "var(--blue)"
+    }),
+    title: "How your data is kept",
+    sub: "The whole privacy promise, in plain words.",
+    onClick: () => setInfo('privacy'),
+    last: true
+  })), feedbackCard, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: 'var(--blue)',
+      borderRadius: 18,
+      padding: 20,
+      marginBottom: 20,
+      color: '#fff'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "shield",
+    size: 26,
+    color: "#fff",
+    style: {
+      marginBottom: 10
+    }
+  }), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontFamily: "'Cal Sans', system-ui",
+      fontWeight: 500,
+      fontSize: 'calc(19px * var(--tscale, 1))',
+      margin: '0 0 6px'
+    }
+  }, "No account. Nothing leaves the phone."), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 'calc(15px * var(--tscale, 1))',
+      lineHeight: 1.5,
+      color: 'rgba(255,255,255,0.9)',
+      margin: 0
+    }
+  }, "Jotla works without a login. Everything about your child stays on this device, behind your own lock. There is no cloud we can read, and we never receive or access your data.")), /*#__PURE__*/React.createElement(SectionLabel, null, "About"), /*#__PURE__*/React.createElement("div", {
+    className: "j-card",
+    style: {
+      marginBottom: 20,
+      overflow: 'hidden'
+    }
+  }, /*#__PURE__*/React.createElement(SettingsRow, {
+    icon: /*#__PURE__*/React.createElement(Icon, {
+      name: "hand",
+      size: 20,
+      color: "var(--blue)"
+    }),
+    title: "Take the tour",
+    sub: "A one-minute walkthrough of the whole app.",
+    onClick: () => nav.go('tour')
+  }), /*#__PURE__*/React.createElement(SettingsRow, {
+    icon: /*#__PURE__*/React.createElement(Icon, {
+      name: "plus",
+      size: 20,
+      color: "var(--blue)"
+    }),
+    title: "Add another child",
+    sub: "Start a fresh, blank record.",
+    onClick: () => nav.go('addchild')
+  }), /*#__PURE__*/React.createElement(SettingsRow, {
+    icon: /*#__PURE__*/React.createElement(Icon, {
+      name: "heart",
+      size: 20,
+      color: "var(--blue)"
+    }),
+    title: "What Jotla is for",
+    onClick: () => setInfo('mission')
+  }), /*#__PURE__*/React.createElement(SettingsRow, {
+    icon: /*#__PURE__*/React.createElement(Icon, {
+      name: "note",
+      size: 20,
+      color: "var(--blue)"
+    }),
+    title: "Privacy, in plain words",
+    onClick: () => setInfo('privacy')
+  }), /*#__PURE__*/React.createElement(SettingsRow, {
+    icon: /*#__PURE__*/React.createElement(Icon, {
+      name: "star",
+      size: 20,
+      color: "var(--blue)"
+    }),
+    title: "About and credits",
+    onClick: () => setInfo('about'),
+    last: true
+  })), nav.plus && plusCard, /*#__PURE__*/React.createElement("p", {
+    className: "j-meta",
+    style: {
+      textAlign: 'center'
+    }
+  }, "Jotla by SEN Help \xB7 Test build ", window.JOTLA_BUILD))), info && /*#__PURE__*/React.createElement("div", {
+    className: "j-sheet-scrim",
+    onClick: () => setInfo(null)
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-sheet",
+    onClick: e => e.stopPropagation(),
+    style: {
+      maxHeight: '85%',
+      overflowY: 'auto'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-sheet-grab"
+  }), /*#__PURE__*/React.createElement("h2", {
+    className: "j-h2",
+    style: {
+      marginBottom: 12
+    }
+  }, INFO[info][0]), INFO[info][1].map((p, idx) => /*#__PURE__*/React.createElement("p", {
+    key: idx,
+    className: "j-body",
+    style: {
+      color: 'var(--muted)',
+      marginBottom: 12
+    }
+  }, p)), /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-primary",
+    onClick: () => setInfo(null)
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "check",
+    size: 20,
+    color: "#fff"
+  }), " Got it"))));
+}
+Object.assign(window, {
+  FindScreen,
+  EvidenceScreen,
+  AddDocScreen,
+  DocScreen,
+  UnlockScreen,
+  SettingsScreen
+});

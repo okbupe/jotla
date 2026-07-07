@@ -39,9 +39,9 @@ class ScreenBoundary extends React.Component {
     if (!this.state.broken) return this.props.children;
     return (
       <div className="j-screen"><div className="j-scroll"><div className="j-pad" style={{ paddingTop: 48, textAlign: 'center' }}>
-        <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 20, color: 'var(--ink)', margin: '0 0 10px' }}>This screen hit a problem</p>
-        <p style={{ fontFamily: "'Outfit', system-ui", fontSize: 15, color: 'var(--muted)', lineHeight: 1.55, margin: '0 0 8px' }}>Your record is safe on this device. Nothing has been lost.</p>
-        <p style={{ fontFamily: "'Outfit', system-ui", fontSize: 15, color: 'var(--muted)', lineHeight: 1.55, margin: 0 }}>Try another tab. If this keeps happening, save a copy with Export my data in Settings, then tell us what you think.</p>
+        <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(20px * var(--tscale, 1))', color: 'var(--ink)', margin: '0 0 10px' }}>This screen hit a problem</p>
+        <p style={{ fontFamily: "'Outfit', system-ui", fontSize: 'calc(15px * var(--tscale, 1))', color: 'var(--muted)', lineHeight: 1.55, margin: '0 0 8px' }}>Your record is safe on this device. Nothing has been lost.</p>
+        <p style={{ fontFamily: "'Outfit', system-ui", fontSize: 'calc(15px * var(--tscale, 1))', color: 'var(--muted)', lineHeight: 1.55, margin: 0 }}>Try another tab. If this keeps happening, save a copy with Export my data in Settings, then tell us what you think.</p>
       </div></div></div>
     );
   }
@@ -55,11 +55,11 @@ class AppBoundary extends React.Component {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F7F9FC', padding: 24 }}>
         <div style={{ maxWidth: 340, textAlign: 'center', fontFamily: "'Outfit', system-ui, sans-serif" }}>
-          <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 22, color: '#14223b', margin: '0 0 10px' }}>Jotla hit a problem opening</p>
-          <p style={{ fontSize: 15, color: '#4a5875', lineHeight: 1.55, margin: '0 0 16px' }}>Your record is still safe on this device. Nothing has been lost.</p>
-          <button onClick={() => this.setState({ broken: false })} style={{ fontFamily: "'Outfit', system-ui", fontSize: 16, fontWeight: 500,
+          <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(22px * var(--tscale, 1))', color: '#14223b', margin: '0 0 10px' }}>Jotla hit a problem opening</p>
+          <p style={{ fontSize: 'calc(15px * var(--tscale, 1))', color: '#4a5875', lineHeight: 1.55, margin: '0 0 16px' }}>Your record is still safe on this device. Nothing has been lost.</p>
+          <button onClick={() => this.setState({ broken: false })} style={{ fontFamily: "'Outfit', system-ui", fontSize: 'calc(16px * var(--tscale, 1))', fontWeight: 500,
             color: '#fff', background: '#1A56A8', border: 'none', borderRadius: 999, padding: '12px 28px', cursor: 'pointer' }}>Try again</button>
-          <p style={{ fontSize: 13.5, color: '#8291ad', lineHeight: 1.5, margin: '16px 0 0' }}>If this keeps happening, email hello@sen.help and we will help.</p>
+          <p style={{ fontSize: 'calc(13.5px * var(--tscale, 1))', color: '#8291ad', lineHeight: 1.5, margin: '16px 0 0' }}>If this keeps happening, email hello@sen.help and we will help.</p>
         </div>
       </div>
     );
@@ -123,7 +123,7 @@ function TabBar({ active, onTab, onLog }) {
           return (
             <button key="log" className="j-tab-log" onClick={onLog} aria-label="Quick log">
               <span className="j-logfab"><Icon name="plus" size={28} color="#fff" stroke={2.4} /></span>
-              <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--blue)' }}>{label}</span>
+              <span style={{ fontSize: 'calc(11px * var(--tscale, 1))', fontWeight: 500, color: 'var(--blue)' }}>{label}</span>
             </button>
           );
         }
@@ -156,8 +156,8 @@ function ProfileSheet({ profiles, activeId, onPick, onAddChild, onClose }) {
                 background: on ? 'var(--tint-blue)' : 'var(--card)', cursor: 'pointer', textAlign: 'left' }}>
                 <span style={{ flexShrink: 0 }}><ChildAvatar profile={p} size={46} /></span>
                 <span style={{ flex: 1 }}>
-                  <span style={{ display: 'block', fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 18, color: 'var(--ink)' }}>{p.name}</span>
-                  <span style={{ display: 'block', fontSize: 13.5, color: 'var(--faint)', marginTop: 1 }}>{p.year} · {p.school}</span>
+                  <span style={{ display: 'block', fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(18px * var(--tscale, 1))', color: 'var(--ink)' }}>{p.name}</span>
+                  <span style={{ display: 'block', fontSize: 'calc(13.5px * var(--tscale, 1))', color: 'var(--faint)', marginTop: 1 }}>{p.year} · {p.school}</span>
                 </span>
                 {on && <Icon name="check" size={20} color="var(--blue)" />}
               </button>
@@ -167,7 +167,7 @@ function ProfileSheet({ profiles, activeId, onPick, onAddChild, onClose }) {
             borderRadius: 16, border: '1.5px dashed var(--chip-border)', background: 'transparent', cursor: 'pointer', textAlign: 'left' }}>
             <span style={{ width: 46, height: 46, borderRadius: '50%', background: 'var(--tint-blue)', flexShrink: 0,
               display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="plus" size={22} color="var(--blue)" /></span>
-            <span style={{ fontSize: 16, fontWeight: 500, color: 'var(--blue)' }}>Add a child</span>
+            <span style={{ fontSize: 'calc(16px * var(--tscale, 1))', fontWeight: 500, color: 'var(--blue)' }}>Add a child</span>
           </button>
         </div>
       </div>
@@ -199,7 +199,7 @@ function ChildOptionsSheet({ profile, entries = [], docs = [], canDelete = true,
           <ChildAvatar profile={profile} size={60} />
           <div style={{ flex: 1, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <label className="j-press" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '10px 14px', borderRadius: 12,
-              cursor: 'pointer', background: 'var(--tint-blue)', color: 'var(--blue)', fontSize: 14.5, fontWeight: 500 }}>
+              cursor: 'pointer', background: 'var(--tint-blue)', color: 'var(--blue)', fontSize: 'calc(14.5px * var(--tscale, 1))', fontWeight: 500 }}>
               <Icon name="camera" size={18} color="var(--blue)" /> {profile.photo ? 'Change photo' : 'Upload a photo'}
               <input type="file" accept="image/*" style={{ display: 'none' }}
                 onChange={e => { const f = e.target.files && e.target.files[0]; if (f) window.fileToDataURL(f, url => setCropSrc(url)); e.target.value = ''; }} />
@@ -207,7 +207,7 @@ function ChildOptionsSheet({ profile, entries = [], docs = [], canDelete = true,
             {profile.photo && (
               <button className="j-press" onClick={() => onChange({ photo: null })} style={{ display: 'inline-flex', alignItems: 'center', gap: 7,
                 padding: '10px 14px', borderRadius: 12, cursor: 'pointer', background: 'var(--card)', border: '1px solid var(--chip-border)',
-                color: 'var(--muted)', fontSize: 14.5, fontWeight: 500 }}>
+                color: 'var(--muted)', fontSize: 'calc(14.5px * var(--tscale, 1))', fontWeight: 500 }}>
                 <Icon name="close" size={17} color="var(--muted)" /> Remove
               </button>
             )}
@@ -257,7 +257,7 @@ function ChildOptionsSheet({ profile, entries = [], docs = [], canDelete = true,
 
         {/* danger zone */}
         <div style={{ marginTop: 26, paddingTop: 20, borderTop: '1px solid var(--line)' }}>
-          <p style={{ fontFamily: "'Outfit', system-ui", fontWeight: 500, fontSize: 13, letterSpacing: '0.06em',
+          <p style={{ fontFamily: "'Outfit', system-ui", fontWeight: 500, fontSize: 'calc(13px * var(--tscale, 1))', letterSpacing: '0.06em',
             textTransform: 'uppercase', color: '#C0392B', margin: '0 0 10px' }}>Danger zone</p>
           {canDelete ? (
             <button className="j-press" onClick={() => setDelOpen(true)} style={{ width: '100%', textAlign: 'left', cursor: 'pointer',
@@ -266,8 +266,8 @@ function ChildOptionsSheet({ profile, entries = [], docs = [], canDelete = true,
               <span style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(231,76,60,0.12)', flexShrink: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="close" size={18} color="#E74C3C" /></span>
               <span style={{ flex: 1 }}>
-                <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 15.5, fontWeight: 500, color: '#C0392B' }}>Delete this child</span>
-                <span style={{ display: 'block', fontSize: 12.5, color: 'var(--faint)', marginTop: 1 }}>Permanently remove {profile.name}'s record</span>
+                <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 'calc(15.5px * var(--tscale, 1))', fontWeight: 500, color: '#C0392B' }}>Delete this child</span>
+                <span style={{ display: 'block', fontSize: 'calc(12.5px * var(--tscale, 1))', color: 'var(--faint)', marginTop: 1 }}>Permanently remove {profile.name}'s record</span>
               </span>
               <Icon name="chevronRight" size={18} color="#E74C3C" />
             </button>
@@ -338,7 +338,7 @@ function DeleteChildSheet({ profile, entries, docs, onConfirm, onClose }) {
                   borderBottom: i < consequences.length - 1 ? '1px solid var(--line)' : 'none', background: i === 0 ? RED_TINT : 'transparent' }}>
                   <Icon name="close" size={18} color={RED} style={{ flexShrink: 0, marginTop: 2 }} />
                   <div>
-                    <p style={{ fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 15, color: 'var(--ink)', margin: 0 }}>{h}</p>
+                    <p style={{ fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 'calc(15px * var(--tscale, 1))', color: 'var(--ink)', margin: 0 }}>{h}</p>
                     <p className="j-sm" style={{ marginTop: 1 }}>{b}</p>
                   </div>
                 </div>
@@ -349,14 +349,14 @@ function DeleteChildSheet({ profile, entries, docs, onConfirm, onClose }) {
             <div style={{ background: 'var(--tint-blue)', borderRadius: 16, padding: 14, marginBottom: 18 }}>
               <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: backedUp ? 12 : 0 }}>
                 <Icon name="download" size={20} color="var(--blue)" style={{ flexShrink: 0, marginTop: 2 }} />
-                <p className="j-body" style={{ fontSize: 14.5, color: 'var(--blue)' }}>
+                <p className="j-body" style={{ fontSize: 'calc(14.5px * var(--tscale, 1))', color: 'var(--blue)' }}>
                   <span style={{ fontWeight: 600 }}>Back up first.</span> Save a copy of {name}'s record to your phone before you delete. You can keep it, or reimport it later.
                 </p>
               </div>
               {backedUp
-                ? <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--green-ink)', fontSize: 14, fontWeight: 500 }}>
+                ? <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--green-ink)', fontSize: 'calc(14px * var(--tscale, 1))', fontWeight: 500 }}>
                     <Icon name="check" size={18} color="var(--green)" /> Backup saved to your device. You can re-save it.
-                    <button onClick={backup} className="j-press" style={{ marginLeft: 'auto', border: 'none', background: 'none', cursor: 'pointer', color: 'var(--blue)', fontSize: 13.5, fontWeight: 600 }}>Save again</button>
+                    <button onClick={backup} className="j-press" style={{ marginLeft: 'auto', border: 'none', background: 'none', cursor: 'pointer', color: 'var(--blue)', fontSize: 'calc(13.5px * var(--tscale, 1))', fontWeight: 600 }}>Save again</button>
                   </div>
                 : <button className="j-btn j-btn-soft" onClick={backup} style={{ marginTop: 12, minHeight: 48 }}>
                     <Icon name="download" size={19} color="var(--blue)" /> {'Back up ' + name + "'s record"}
@@ -383,7 +383,7 @@ function DeleteChildSheet({ profile, entries, docs, onConfirm, onClose }) {
                 background: ack ? RED : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {ack && <Icon name="check" size={16} color="#fff" />}
               </span>
-              <span style={{ fontSize: 14.5, color: 'var(--ink)', fontWeight: 500 }}>I understand this permanently deletes {name}'s record and everything in it.</span>
+              <span style={{ fontSize: 'calc(14.5px * var(--tscale, 1))', color: 'var(--ink)', fontWeight: 500 }}>I understand this permanently deletes {name}'s record and everything in it.</span>
             </button>
 
             <input className="j-input" value={typed} onChange={e => setTyped(e.target.value)} placeholder='Type DELETE to confirm'
@@ -408,6 +408,9 @@ function App({ appMode }) {
   const [docs, setDocs] = useStateApp(() => loadSeedAware(DOCS_KEY, J.SEED_DOCS, 'received'));
   const prefs0 = loadJSON(PREF_KEY, { dark: false, profileId: J.CHILD.id, plus: false, childCfg: {}, customProfiles: [], deletedIds: [] });
   const [dark, setDark] = useStateApp(!!prefs0.dark);
+  // Dynamic type: 1 / 1.12 / 1.25, applied as --tscale on the root so every
+  // calc()-based font size in the app follows the one dial (build 1.8.0).
+  const [tscale, setTscale] = useStateApp(prefs0.tscale || 1);
   const [plus, setPlus] = useStateApp(!!prefs0.plus);
   const [childCfg, setChildCfg] = useStateApp(prefs0.childCfg || prefs0.avatarCols || {});
   const [customProfiles, setCustomProfiles] = useStateApp(prefs0.customProfiles || []);
@@ -425,7 +428,7 @@ function App({ appMode }) {
   useEffectApp(() => { if (J.SEED_SHIFTING) saveJSON(SEED_ANCHOR_KEY, J.TODAY_ISO); }, []);
   useEffectApp(() => { saveJSON(ENTRIES_KEY, entries); }, [entries]);
   useEffectApp(() => { saveJSON(DOCS_KEY, docs); }, [docs]);
-  useEffectApp(() => { saveJSON(PREF_KEY, { dark, profileId, plus, childCfg, customProfiles, deletedIds }); }, [dark, profileId, plus, childCfg, customProfiles, deletedIds]);
+  useEffectApp(() => { saveJSON(PREF_KEY, { dark, tscale, profileId, plus, childCfg, customProfiles, deletedIds }); }, [dark, tscale, profileId, plus, childCfg, customProfiles, deletedIds]);
 
   const profiles = [...J.PROFILES, ...customProfiles]
     .filter(p => !deletedIds.includes(p.id))
@@ -524,6 +527,8 @@ function App({ appMode }) {
     },
     toggleDark: () => setDark(d => !d),
     dark,
+    tscale,
+    setTscale,
     plus,
     buyPlus: () => setPlus(true),
     dropPlus: () => setPlus(false),
@@ -632,7 +637,7 @@ function App({ appMode }) {
   }
 
   return (
-    <div className={'jotla-root' + (dark ? ' j-dark' : '') + (appMode ? ' j-app' : '')} style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative', paddingTop: appMode ? 'max(env(safe-area-inset-top), 12px)' : 50, background: isChild ? '#FFF6EC' : 'var(--bg)' }}>
+    <div className={'jotla-root' + (dark ? ' j-dark' : '') + (appMode ? ' j-app' : '')} style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative', paddingTop: appMode ? 'max(env(safe-area-inset-top), 12px)' : 50, background: isChild ? '#FFF6EC' : 'var(--bg)', '--tscale': tscale }}>
       {!isFullscreen && <AppHeader profile={profile} plus={plus} onProfile={() => setProfileOpen(true)} onOptions={() => setChildOptOpen(true)} onEvidence={() => nav.go('evidence')} />}
       <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
         <div key={view.name + (view.id || view.date || '') + profileId} style={{ position: 'absolute', inset: 0 }}>
@@ -643,7 +648,7 @@ function App({ appMode }) {
       {exitHint && (
         <div style={{ position: 'absolute', left: 0, right: 0, bottom: 'calc(96px + env(safe-area-inset-bottom))',
           display: 'flex', justifyContent: 'center', pointerEvents: 'none', zIndex: 80 }}>
-          <span className="j-fade" style={{ background: 'rgba(22,30,44,0.92)', color: '#fff', fontSize: 14, fontWeight: 500,
+          <span className="j-fade" style={{ background: 'rgba(22,30,44,0.92)', color: '#fff', fontSize: 'calc(14px * var(--tscale, 1))', fontWeight: 500,
             padding: '10px 18px', borderRadius: 999, boxShadow: '0 10px 24px -10px rgba(10,20,40,0.5)' }}>
             Swipe back again to close Jotla
           </span>

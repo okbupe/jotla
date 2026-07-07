@@ -3,7 +3,25 @@ const { useState, useRef, useEffect } = React;
 
 // The single source of the visible build number. Bump this every release
 // (and keep sw.js VERSION in step) so the Settings footer can never lie.
-window.JOTLA_BUILD = '1.7.1';
+window.JOTLA_BUILD = '1.8.0';
+
+// Keyboard alternative for every swipe pager (build 1.8.0, WCAG 2.1.1): the pager
+// becomes focusable and Left/Right arrows page it, so nothing in the app is
+// swipe-only. Spread the result onto the pager div alongside ref/onScroll.
+function pagerKeyProps(ref, label) {
+  return {
+    tabIndex: 0,
+    role: 'group',
+    'aria-label': label + '. Use the left and right arrow keys to move between pages.',
+    onKeyDown: (e) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      const el = ref.current; if (!el || !el.clientWidth) return;
+      e.preventDefault();
+      const dir = e.key === 'ArrowRight' ? 1 : -1;
+      el.scrollTo({ left: el.scrollLeft + dir * el.clientWidth, behavior: 'smooth' });
+    },
+  };
+}
 
 // A calm, honest locked card for Plus features in the free app: the feature is
 // visible and named, never hidden, and one tap shows what Plus is.
@@ -16,10 +34,10 @@ function PlusLockedCard({ title, text, onClick, style }) {
         <Icon name="lock" size={18} color="var(--muted)" />
       </span>
       <span style={{ flex: 1, minWidth: 0 }}>
-        <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontWeight: 500, fontSize: 15.5, color: 'var(--ink)' }}>{title}
+        <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontWeight: 500, fontSize: 'calc(15.5px * var(--tscale, 1))', color: 'var(--ink)' }}>{title}
           <span className="j-pillbadge" style={{ marginLeft: 8, background: 'var(--tint-blue)', color: 'var(--blue)' }}>Plus</span>
         </span>
-        <span style={{ display: 'block', fontSize: 13, color: 'var(--faint)', marginTop: 2 }}>{text}</span>
+        <span style={{ display: 'block', fontSize: 'calc(13px * var(--tscale, 1))', color: 'var(--faint)', marginTop: 2 }}>{text}</span>
       </span>
       <Icon name="chevronRight" size={16} color="var(--faint)" />
     </button>
@@ -41,8 +59,8 @@ function PushHeader({ title, subtitle, onBack, onClose, accent = '#1A56A8', bg =
         }}><Icon name="chevronLeft" size={22} color="#fff" /></button>
       )}
       <div style={{ flex: 1, minWidth: 0 }}>
-        {title && <div style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 19, color: 'var(--ink)', lineHeight: 1.1 }}>{title}</div>}
-        {subtitle && <div style={{ fontSize: 13, color: 'var(--faint)', marginTop: 1 }}>{subtitle}</div>}
+        {title && <div style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(19px * var(--tscale, 1))', color: 'var(--ink)', lineHeight: 1.1 }}>{title}</div>}
+        {subtitle && <div style={{ fontSize: 'calc(13px * var(--tscale, 1))', color: 'var(--faint)', marginTop: 1 }}>{subtitle}</div>}
       </div>
       {onClose && (
         <button onClick={onClose} aria-label="Close" className="j-press" style={{
@@ -89,10 +107,10 @@ function DateRangeControl({ presets, value, onChange }) {
   const set = (patch) => onChange({ ...value, ...patch });
   const dateInput = (which) => (
     <div style={{ flex: 1 }}>
-      <label style={{ display: 'block', fontSize: 12.5, color: 'var(--faint)', fontWeight: 500, marginBottom: 6 }}>{which === 'from' ? 'From' : 'To'}</label>
+      <label style={{ display: 'block', fontSize: 'calc(12.5px * var(--tscale, 1))', color: 'var(--faint)', fontWeight: 500, marginBottom: 6 }}>{which === 'from' ? 'From' : 'To'}</label>
       <input type="date" className="j-input" min="2019-01-01" max="2030-12-31"
         value={value[which] || ''} onChange={e => set({ [which]: e.target.value })}
-        style={{ fontSize: 15, colorScheme: 'light dark', padding: '11px 12px' }} />
+        style={{ fontSize: 'calc(15px * var(--tscale, 1))', colorScheme: 'light dark', padding: '11px 12px' }} />
     </div>
   );
   return (
@@ -119,7 +137,7 @@ function PhotoAttachment({ caption = 'Photo attached', src }) {
     return (
       <div style={{ marginTop: 12, borderRadius: 14, overflow: 'hidden', background: 'var(--photo-bg)' }}>
         <img src={src} alt={caption || 'Attached photo'} style={{ display: 'block', width: '100%', maxHeight: 280, objectFit: 'cover' }} />
-        {caption && <div style={{ padding: '8px 12px', fontSize: 13.5, color: 'var(--faint)' }}>{caption}</div>}
+        {caption && <div style={{ padding: '8px 12px', fontSize: 'calc(13.5px * var(--tscale, 1))', color: 'var(--faint)' }}>{caption}</div>}
       </div>
     );
   }
@@ -127,7 +145,7 @@ function PhotoAttachment({ caption = 'Photo attached', src }) {
     <div style={{ marginTop: 12, borderRadius: 14, background: 'var(--photo-bg)', minHeight: 96,
       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 14 }}>
       <Icon name="camera" size={20} color="var(--faint)" />
-      <span style={{ fontSize: 15, color: 'var(--faint)', fontWeight: 500 }}>{caption}</span>
+      <span style={{ fontSize: 'calc(15px * var(--tscale, 1))', color: 'var(--faint)', fontWeight: 500 }}>{caption}</span>
     </div>
   );
 }
@@ -161,7 +179,7 @@ function EntryCard({ entry, onClick, showDate = false }) {
     <div className="j-card j-press" onClick={onClick} style={{ padding: 16, cursor: onClick ? 'pointer' : 'default' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', minWidth: 46, flexShrink: 0, paddingTop: 1 }}>
-          <span style={{ fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 16, color: 'var(--ink)', letterSpacing: '0.01em' }}>{timeLabel}</span>
+          <span style={{ fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 'calc(16px * var(--tscale, 1))', color: 'var(--ink)', letterSpacing: '0.01em' }}>{timeLabel}</span>
           {showDate && <span className="j-meta" style={{ marginTop: 1 }}>{J.fmtShort(entry.date)}</span>}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -173,7 +191,7 @@ function EntryCard({ entry, onClick, showDate = false }) {
               {isHandover && <span className="j-tag j-tag-blue" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><Icon name="note" size={13} color="var(--blue)" /> Gate note</span>}
             </div>
           </div>
-          <p className="j-body" style={{ fontSize: 16.5, marginTop: 10, lineHeight: 1.4 }}>{entry.summary}</p>
+          <p className="j-body" style={{ fontSize: 'calc(16.5px * var(--tscale, 1))', marginTop: 10, lineHeight: 1.4 }}>{entry.summary}</p>
           {(entry.photo || entry.photoData) && <PhotoAttachment caption={entry.photo} src={entry.photoData} />}
         </div>
       </div>
@@ -185,7 +203,7 @@ function EntryCard({ entry, onClick, showDate = false }) {
 function SectionLabel({ children, right }) {
   return (
     <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', margin: '0 0 10px' }}>
-      <span style={{ fontFamily: "'Outfit', system-ui", fontWeight: 500, fontSize: 13, letterSpacing: '0.06em',
+      <span style={{ fontFamily: "'Outfit', system-ui", fontWeight: 500, fontSize: 'calc(13px * var(--tscale, 1))', letterSpacing: '0.06em',
         textTransform: 'uppercase', color: 'var(--faint)' }}>{children}</span>
       {right}
     </div>
@@ -216,7 +234,7 @@ function MiniMonthStrip({ entries, onOpen }) {
     <div className="j-card j-press" onClick={onOpen} style={{ padding: 18, cursor: 'pointer' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <span className="j-h3">This month</span>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--blue)', fontSize: 14, fontWeight: 500 }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--blue)', fontSize: 'calc(14px * var(--tscale, 1))', fontWeight: 500 }}>
           Open Month view <Icon name="chevronRight" size={16} color="var(--blue)" />
         </span>
       </div>
@@ -226,18 +244,18 @@ function MiniMonthStrip({ entries, onOpen }) {
           const h = 22 + (b.n / maxN) * 54; // taller bar for a higher count
           return (
             <div key={b.key} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 16, color: c, lineHeight: 1 }}>{b.n}</span>
+              <span style={{ fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 'calc(16px * var(--tscale, 1))', color: c, lineHeight: 1 }}>{b.n}</span>
               <div style={{ width: '100%', height: h, borderRadius: 14, background: c }} />
-              <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--muted)' }}>{b.label}</span>
+              <span style={{ fontSize: 'calc(14px * var(--tscale, 1))', fontWeight: 500, color: 'var(--muted)' }}>{b.label}</span>
             </div>
           );
         })}
       </div>
-      <p className="j-body" style={{ fontSize: 14.5, color: 'var(--muted)', marginTop: 16 }}>
+      <p className="j-body" style={{ fontSize: 'calc(14.5px * var(--tscale, 1))', color: 'var(--muted)', marginTop: 16 }}>
         {_top ? (<><span className="j-strong">{_top[0]}</span> entries come up most often as the hard moments. Tap Find to see them gathered.</>) : 'No hard moments logged so far. Long may it last.'}
       </p>
     </div>
   );
 }
 
-Object.assign(window, { PushHeader, EntryCard, SectionLabel, MiniMonthStrip, moodTint, PhotoAttachment, DateRangeControl, rangeBounds, inDateRange, PlusLockedCard });
+Object.assign(window, { PushHeader, EntryCard, SectionLabel, MiniMonthStrip, moodTint, PhotoAttachment, DateRangeControl, rangeBounds, inDateRange, PlusLockedCard, pagerKeyProps });

@@ -5,7 +5,7 @@ function TabTitle({ title, sub, right }) {
   return (
     <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 16 }}>
       <div>
-        <h1 className="j-h1" style={{ fontSize: 28 }}>{title}</h1>
+        <h1 className="j-h1" style={{ fontSize: 'calc(28px * var(--tscale, 1))' }}>{title}</h1>
         {sub && <p className="j-sm" style={{ marginTop: 4 }}>{sub}</p>}
       </div>
       {right}
@@ -46,14 +46,14 @@ function MonthMoodGraph({ entries, year, month }) {
           const h = 22 + (b.n / maxN) * 54;
           return (
             <div key={b.key} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 16, color: c, lineHeight: 1 }}>{b.n}</span>
+              <span style={{ fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 'calc(16px * var(--tscale, 1))', color: c, lineHeight: 1 }}>{b.n}</span>
               <div style={{ width: '100%', height: h, borderRadius: 14, background: c }} />
-              <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--muted)' }}>{b.label}</span>
+              <span style={{ fontSize: 'calc(14px * var(--tscale, 1))', fontWeight: 500, color: 'var(--muted)' }}>{b.label}</span>
             </div>
           );
         })}
       </div>
-      <p className="j-body" style={{ fontSize: 14.5, color: 'var(--muted)', marginTop: 16 }}>
+      <p className="j-body" style={{ fontSize: 'calc(14.5px * var(--tscale, 1))', color: 'var(--muted)', marginTop: 16 }}>
         {monthEntries.length
           ? (<><span className="j-strong">{monthEntries.length} {monthEntries.length === 1 ? 'entry' : 'entries'} this month{hardCount ? `, ${hardCount} on hard days` : ''}.</span>{' '}
               {top
@@ -138,10 +138,11 @@ function MonthScreen({ nav, entries, view }) {
           {/* calendar: swipe the grid itself between months, like the tier pager */}
           <div className="j-card" style={{ padding: 14, overflow: 'hidden' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6, marginBottom: 8 }}>
-              {dows.map((d, i) => <div key={i} style={{ textAlign: 'center', fontSize: 12, fontWeight: 500, color: 'var(--faint)' }}>{d}</div>)}
+              {dows.map((d, i) => <div key={i} style={{ textAlign: 'center', fontSize: 'calc(12px * var(--tscale, 1))', fontWeight: 500, color: 'var(--faint)' }}>{d}</div>)}
             </div>
-            <div ref={pagerRef} onScroll={onPagerScroll} className="j-pager" style={{ display: 'flex',
-              overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch' }}>
+            <div ref={pagerRef} onScroll={onPagerScroll} className="j-pager" {...pagerKeyProps(pagerRef, 'Calendar months')}
+              style={{ display: 'flex',
+              overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch', outline: 'none' }}>
               {panelOffsets.map(off => {
                 const m = off === offset ? cur : monthMeta(off);
                 return (
@@ -159,7 +160,7 @@ function MonthScreen({ nav, entries, view }) {
                             border: 'none', boxShadow: c.isToday ? 'inset 0 0 0 2px var(--blue)' : 'none',
                             background: tint, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3,
                             opacity: c.future ? 0.55 : 1 }}>
-                          <span style={{ fontFamily: "'Outfit', system-ui", fontWeight: c.isToday ? 600 : 500, fontSize: 15, color: c.isToday ? 'var(--blue)' : ink }}>{c.d}</span>
+                          <span style={{ fontFamily: "'Outfit', system-ui", fontWeight: c.isToday ? 600 : 500, fontSize: 'calc(15px * var(--tscale, 1))', color: c.isToday ? 'var(--blue)' : ink }}>{c.d}</span>
                           {c.mood && <MoodDot mood={c.mood} size={6} />}
                         </button>
                       );
@@ -171,13 +172,13 @@ function MonthScreen({ nav, entries, view }) {
           </div>
 
           {/* quiet swipe hint */}
-          <p style={{ textAlign: 'center', marginTop: 10, marginBottom: 0, fontSize: 12.5, fontWeight: 500,
+          <p style={{ textAlign: 'center', marginTop: 10, marginBottom: 0, fontSize: 'calc(12.5px * var(--tscale, 1))', fontWeight: 500,
             color: 'var(--faint)', opacity: 0.75 }}>‹  swipe left and right  ›</p>
 
           {/* legend */}
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 12 }}>
             {[['good', 'Good day'], ['ok', 'Up and down'], ['hard', 'Hard day'], ['none', 'No note']].map(([k, l]) => (
-              <span key={k} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: 'var(--faint)' }}>
+              <span key={k} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 'calc(12.5px * var(--tscale, 1))', color: 'var(--faint)' }}>
                 <MoodDot mood={k} size={9} /> {l}
               </span>
             ))}
@@ -205,7 +206,7 @@ function DayScreen({ nav, entries, date }) {
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, alignSelf: 'flex-start',
               padding: '8px 14px', borderRadius: 999, background: window.moodTint(mood) }}>
               <MoodDot mood={mood} size={10} />
-              <span style={{ fontSize: 14, fontWeight: 500, color: window.MOOD_COLOURS[mood] }}>
+              <span style={{ fontSize: 'calc(14px * var(--tscale, 1))', fontWeight: 500, color: window.MOOD_COLOURS[mood] }}>
                 {mood === 'good' ? 'A good day overall' : mood === 'ok' ? 'Up and down' : 'A hard day'}
               </span>
             </div>
@@ -235,7 +236,7 @@ function EditEntrySheet({ entry, onSave, onClose }) {
         <p className="j-sm" style={{ marginBottom: 14 }}>The original date and time stay as they are, and the earlier wording is kept on the record. Honest edits only.</p>
         <textarea value={summary} onChange={ev => setSummary(ev.target.value)} rows={4}
           style={{ width: '100%', boxSizing: 'border-box', borderRadius: 14, border: '1.5px solid var(--chip-border)', background: 'var(--card-2)',
-            padding: 12, fontFamily: "'Outfit', system-ui", fontSize: 16, color: 'var(--ink)', resize: 'vertical', marginBottom: 14 }} />
+            padding: 12, fontFamily: "'Outfit', system-ui", fontSize: 'calc(16px * var(--tscale, 1))', color: 'var(--ink)', resize: 'vertical', marginBottom: 14 }} />
         <p className="j-sm" style={{ marginBottom: 6 }}>How the moment felt</p>
         <div className="j-chiprow" style={{ marginBottom: 12 }}>
           {J.MOODS.map(m => (
@@ -313,17 +314,17 @@ function EntryScreen({ nav, entries, id }) {
               )}
               {[['Before', e.handover.before], ['During', e.handover.during], ['After', e.handover.after]].map(([l, v]) => v && (
                 <div key={l}>
-                  <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 14, color: 'var(--blue)', marginBottom: 3 }}>{l}</p>
-                  <p className="j-body" style={{ fontSize: 15.5 }}>{v}</p>
+                  <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(14px * var(--tscale, 1))', color: 'var(--blue)', marginBottom: 3 }}>{l}</p>
+                  <p className="j-body" style={{ fontSize: 'calc(15.5px * var(--tscale, 1))' }}>{v}</p>
                 </div>
               ))}
               <div style={{ display: 'flex', gap: 20 }}>
-                {e.handover.duration && <div><p className="j-meta">Lasted</p><p className="j-strong" style={{ fontSize: 16 }}>{e.handover.duration}</p></div>}
+                {e.handover.duration && <div><p className="j-meta">Lasted</p><p className="j-strong" style={{ fontSize: 'calc(16px * var(--tscale, 1))' }}>{e.handover.duration}</p></div>}
               </div>
               {e.handover.helped && (
                 <div style={{ background: 'var(--tint-green)', borderRadius: 12, padding: 12 }}>
-                  <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 14, color: 'var(--green-ink)', marginBottom: 3 }}>What helped</p>
-                  <p className="j-body" style={{ fontSize: 15.5 }}>{e.handover.helped}</p>
+                  <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(14px * var(--tscale, 1))', color: 'var(--green-ink)', marginBottom: 3 }}>What helped</p>
+                  <p className="j-body" style={{ fontSize: 'calc(15.5px * var(--tscale, 1))' }}>{e.handover.helped}</p>
                 </div>
               )}
             </div>
@@ -335,7 +336,7 @@ function EntryScreen({ nav, entries, id }) {
               {e.history.map((h, i) => (
                 <div key={i} style={{ padding: '8px 0', borderTop: i ? '1px solid var(--line)' : 'none' }}>
                   <p className="j-meta" style={{ marginBottom: 3 }}>Until {J.fmtShort(h.on)} {h.on.slice(0, 4)}</p>
-                  <p className="j-body" style={{ fontSize: 15 }}>{h.summary}</p>
+                  <p className="j-body" style={{ fontSize: 'calc(15px * var(--tscale, 1))' }}>{h.summary}</p>
                 </div>
               ))}
             </div>

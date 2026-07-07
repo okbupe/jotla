@@ -94,16 +94,19 @@ button, input, select, textarea { font-family: inherit; }
 .j-pad { padding: 0 20px; }
 
 /* ---- type ---- */
-.j-eyebrow { font-family: var(--f-body); font-weight: 500; font-size: 13px; letter-spacing: 0.08em;
+/* Dynamic type (build 1.8.0): all text sizes scale with --tscale, set on .jotla-root
+   from the Text size setting (Standard 1 / Large 1.12 / Extra large 1.25). Inline JSX
+   sizes use the same calc() so the whole app follows the one dial. */
+.j-eyebrow { font-family: var(--f-body); font-weight: 500; font-size: calc(13px * var(--tscale, 1)); letter-spacing: 0.08em;
   text-transform: uppercase; color: var(--blue); margin: 0; }
-.j-h1 { font-family: var(--f-display); font-weight: 500; font-size: 30px; line-height: 1.08;
+.j-h1 { font-family: var(--f-display); font-weight: 500; font-size: calc(30px * var(--tscale, 1)); line-height: 1.08;
   letter-spacing: -0.01em; color: var(--ink); margin: 0; }
-.j-h2 { font-family: var(--f-display); font-weight: 500; font-size: 22px; line-height: 1.12;
+.j-h2 { font-family: var(--f-display); font-weight: 500; font-size: calc(22px * var(--tscale, 1)); line-height: 1.12;
   letter-spacing: -0.01em; color: var(--ink); margin: 0; }
-.j-h3 { font-family: var(--f-display); font-weight: 500; font-size: 18px; line-height: 1.15; color: var(--ink); margin: 0; }
-.j-body { font-family: var(--f-body); font-weight: 400; font-size: 16px; line-height: 1.45; color: var(--body); margin: 0; }
-.j-sm { font-size: 14px; line-height: 1.4; color: var(--muted); margin: 0; }
-.j-meta { font-size: 13px; color: var(--faint); margin: 0; font-weight: 400; }
+.j-h3 { font-family: var(--f-display); font-weight: 500; font-size: calc(18px * var(--tscale, 1)); line-height: 1.15; color: var(--ink); margin: 0; }
+.j-body { font-family: var(--f-body); font-weight: 400; font-size: calc(16px * var(--tscale, 1)); line-height: 1.45; color: var(--body); margin: 0; }
+.j-sm { font-size: calc(14px * var(--tscale, 1)); line-height: 1.4; color: var(--muted); margin: 0; }
+.j-meta { font-size: calc(13px * var(--tscale, 1)); color: var(--faint); margin: 0; font-weight: 400; }
 .j-strong { font-weight: 500; color: var(--ink); }
 
 /* ---- card ---- */
@@ -112,7 +115,7 @@ button, input, select, textarea { font-family: inherit; }
 .j-card-pad { padding: 16px; }
 
 /* ---- buttons ---- */
-.j-btn { font-family: var(--f-body); font-weight: 500; font-size: 17px; border: none; cursor: pointer;
+.j-btn { font-family: var(--f-body); font-weight: 500; font-size: calc(17px * var(--tscale, 1)); border: none; cursor: pointer;
   min-height: 56px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center;
   gap: 10px; width: 100%; white-space: nowrap; transition: transform .12s ease, background .15s ease, box-shadow .15s ease;
   -webkit-tap-highlight-color: transparent; }
@@ -122,10 +125,10 @@ button, input, select, textarea { font-family: inherit; }
 .j-btn-ghost { background: var(--card); color: var(--blue); border: 1.5px solid var(--chip-border); box-shadow: none; }
 .j-btn-soft { background: var(--tint-blue); color: var(--blue); }
 .j-btn-green { background: var(--green); color: #fff; box-shadow: 0 10px 22px -10px rgba(39,174,96,0.55); }
-.j-btn-lg { min-height: 60px; font-size: 18px; }
+.j-btn-lg { min-height: 60px; font-size: calc(18px * var(--tscale, 1)); }
 
 /* ---- chips ---- */
-.j-chip { font-family: var(--f-body); font-weight: 500; font-size: 15px; cursor: pointer; white-space: nowrap;
+.j-chip { font-family: var(--f-body); font-weight: 500; font-size: calc(15px * var(--tscale, 1)); cursor: pointer; white-space: nowrap;
   min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1.5px solid var(--chip-border); background: var(--chip-bg);
   color: var(--muted); display: inline-flex; align-items: center; gap: 8px; transition: all .14s ease;
   -webkit-tap-highlight-color: transparent; }
@@ -135,7 +138,7 @@ button, input, select, textarea { font-family: inherit; }
 .j-chiprow { display: flex; flex-wrap: wrap; gap: 10px; }
 
 /* ---- tags (entry chips) ---- */
-.j-tag { font-family: var(--f-body); font-weight: 500; font-size: 13.5px; padding: 5px 11px; border-radius: 999px;
+.j-tag { font-family: var(--f-body); font-weight: 500; font-size: calc(13.5px * var(--tscale, 1)); padding: 5px 11px; border-radius: 999px;
   white-space: nowrap; line-height: 1; }
 .j-tag-grey { background: var(--tag-grey-bg); color: var(--tag-grey-ink); }
 .j-tag-blue { background: var(--tag-blue-bg); color: var(--tag-blue-ink); }
@@ -151,7 +154,7 @@ button, input, select, textarea { font-family: inherit; }
 .j-iconbtn-plain { background: transparent; box-shadow: none; }
 .j-avatar { width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center; font-family: var(--f-display); font-weight: 500;
-  font-size: 17px; color: #fff; -webkit-tap-highlight-color: transparent; transition: transform .12s ease; }
+  font-size: calc(17px * var(--tscale, 1)); color: #fff; -webkit-tap-highlight-color: transparent; transition: transform .12s ease; }
 .j-avatar:active { transform: scale(0.94); }
 
 /* ---- tab bar ---- */
@@ -162,7 +165,7 @@ button, input, select, textarea { font-family: inherit; }
   position: absolute; left: 0; right: 0; bottom: 0; z-index: 40; }
 .j-tab { background: none; border: none; cursor: pointer; flex: 1; display: flex; flex-direction: column;
   align-items: center; gap: 4px; padding: 0; color: var(--faint); font-family: var(--f-body);
-  font-size: 11px; font-weight: 500; -webkit-tap-highlight-color: transparent; }
+  font-size: calc(11px * var(--tscale, 1)); font-weight: 500; -webkit-tap-highlight-color: transparent; }
 .j-tab-on { color: var(--blue); }
 html.j-appmode .j-tabbar { padding-bottom: calc(env(safe-area-inset-bottom) + 14px); }
 .j-tab-log { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; background: none;
@@ -175,7 +178,7 @@ html.j-appmode .j-tabbar { padding-bottom: calc(env(safe-area-inset-bottom) + 14
 /* ---- misc ---- */
 .j-divider { height: 1px; background: var(--line); border: none; margin: 0; }
 .j-pillbadge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px;
-  font-size: 12px; font-weight: 500; }
+  font-size: calc(12px * var(--tscale, 1)); font-weight: 500; }
 .j-row { display: flex; align-items: center; }
 .j-press { transition: transform .12s ease; -webkit-tap-highlight-color: transparent; }
 .j-press:active { transform: scale(0.99); }
@@ -189,7 +192,7 @@ html.j-appmode .j-tabbar { padding-bottom: calc(env(safe-area-inset-bottom) + 14
 
 /* inputs */
 .j-input { width: 100%; border-radius: 14px; border: 1.5px solid var(--chip-border); background: var(--card-2);
-  padding: 13px 14px; font-family: var(--f-body); font-size: 16px; color: var(--ink); line-height: 1.45;
+  padding: 13px 14px; font-family: var(--f-body); font-size: calc(16px * var(--tscale, 1)); color: var(--ink); line-height: 1.45;
   outline: none; resize: none; }
 .j-input::placeholder { color: var(--faint); }
 

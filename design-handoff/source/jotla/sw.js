@@ -6,7 +6,7 @@
    - Heavy static assets (vendor runtime, fonts, icons): CACHE-FIRST, they are
      versioned by path or never change.
    Bump VERSION when the precache list changes. */
-const VERSION = 'jotla-v1.7.1';
+const VERSION = 'jotla-v1.8.0';
 const PRECACHE = [
   './',
   'index.html',
@@ -21,18 +21,17 @@ const PRECACHE = [
   '../fonts/Outfit-VariableFont_wght.ttf',
   'vendor/react.production.min.js',
   'vendor/react-dom.production.min.js',
-  'vendor/babel.min.js',
-  'ios-frame.jsx',
-  'jotla-data.jsx',
-  'jotla-icons.jsx',
-  'jotla-illustrations.jsx',
-  'jotla-ui.jsx',
-  'jotla-parent-a.jsx',
-  'jotla-month.jsx',
-  'jotla-parent-b.jsx',
-  'jotla-child.jsx',
-  'jotla-onboard.jsx',
-  'jotla-app.jsx'
+  'min/ios-frame.js',
+  'min/jotla-data.js',
+  'min/jotla-icons.js',
+  'min/jotla-illustrations.js',
+  'min/jotla-ui.js',
+  'min/jotla-parent-a.js',
+  'min/jotla-month.js',
+  'min/jotla-parent-b.js',
+  'min/jotla-child.js',
+  'min/jotla-onboard.js',
+  'min/jotla-app.js'
 ];
 const CACHE_FIRST = /\/vendor\/|\.(ttf|otf|woff2?|png|svg|ico)$/;
 

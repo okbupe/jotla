@@ -293,4 +293,345 @@ function PhotoCropper({ src, onDone, onCancel }) {
   );
 }
 
-Object.assign(window, { Face, MoodDot, MOOD_COLOURS, Wordmark, JotlaLogo, ChildAvatar, SceneIllo, readAvatarPhoto, fileToDataURL, PhotoCropper });
+/* ---- StoryIllo (build 1.8.0): brand-style scene illustrations ----
+   The SEN Help imagery system, translated to the app: semi-flat vector scenes in
+   the brand palette, simple friendly rounded faces WITH expression, natural varied
+   skin tones (brand colour lives in the clothing, never the skin), soft tinted
+   ground, generous negative space. Used on the tour and the Tips deck; the same
+   scenes carry into the native build. Hand-authored SVG so the app stays tiny
+   and fully offline (no raster assets). */
+
+const ILLO = {
+  blue: '#1A56A8', bright: '#3A7BD4', green: '#27AE60', red: '#E74C3C',
+  amber: '#F39C12', navy: '#22344F', cream: '#FDF9F2',
+  tintBlue: 'rgba(58,123,212,0.14)', tintGreen: 'rgba(39,174,96,0.14)',
+  tintAmber: 'rgba(243,156,18,0.16)', tintRed: 'rgba(231,76,60,0.12)',
+  // natural skin tones, varied deliberately across the set (imagery-system lock)
+  skin: { light: '#F1C7A4', tan: '#D9A374', medium: '#B37A50', brown: '#8A5A3A', deep: '#684430' },
+  hair: { black: '#26211D', brown: '#544230', chestnut: '#7A4A26', darkgrey: '#3E3E42' },
+};
+
+// A simple friendly head: skin circle, soft hair cap behind, dot eyes (or closed
+// arcs), a warm mouth. Expression is deliberate: calm | warm | gentle | closed.
+function IHead(props) {
+  // coerce: JSX attribute values arrive as strings, and string + number concatenates
+  const cx = +props.cx, cy = +props.cy, r = +props.r;
+  const { skin, hair, mood = 'warm', bun = false } = props;
+  const eyeY = cy - r * 0.1, eyeDX = r * 0.4, eyeR = Math.max(1.7, r * 0.15);
+  const line = '#332A20';
+  const mw = Math.max(1.8, r * 0.16);
+  const mouths = {
+    warm:   <path d={`M ${cx - r * 0.36} ${cy + r * 0.36} Q ${cx} ${cy + r * 0.68} ${cx + r * 0.36} ${cy + r * 0.36}`} fill="none" stroke={line} strokeWidth={mw} strokeLinecap="round" />,
+    calm:   <path d={`M ${cx - r * 0.28} ${cy + r * 0.44} Q ${cx} ${cy + r * 0.58} ${cx + r * 0.28} ${cy + r * 0.44}`} fill="none" stroke={line} strokeWidth={mw} strokeLinecap="round" />,
+    gentle: <path d={`M ${cx - r * 0.22} ${cy + r * 0.46} H ${cx + r * 0.22}`} fill="none" stroke={line} strokeWidth={mw} strokeLinecap="round" />,
+  };
+  // hair = soft halo behind + a clean skull-cap fringe: one arc between two points
+  // on the head circle, closed by the chord (no free-hand arcs, no artifacts)
+  const fx = r * 0.94, fy = r * 0.34;
+  return (
+    <g>
+      <circle cx={cx} cy={cy - r * 0.18} r={r * 1.07} fill={hair} />
+      {bun && <circle cx={cx + r * 0.85} cy={cy - r * 1.05} r={r * 0.44} fill={hair} />}
+      <circle cx={cx} cy={cy} r={r} fill={skin} />
+      <path d={`M ${cx - fx} ${cy - fy} A ${r} ${r} 0 0 1 ${cx + fx} ${cy - fy} Z`} fill={hair} />
+      {mood === 'closed'
+        ? <g fill="none" stroke={line} strokeWidth={mw * 0.9} strokeLinecap="round">
+            <path d={`M ${cx - eyeDX - eyeR} ${eyeY} q ${eyeR} ${eyeR * 1.2} ${eyeR * 2} 0`} />
+            <path d={`M ${cx + eyeDX - eyeR} ${eyeY} q ${eyeR} ${eyeR * 1.2} ${eyeR * 2} 0`} />
+          </g>
+        : <g fill={line}>
+            <circle cx={cx - eyeDX} cy={eyeY} r={eyeR} />
+            <circle cx={cx + eyeDX} cy={eyeY} r={eyeR} />
+          </g>}
+      {mouths[mood === 'closed' ? 'calm' : mood]}
+    </g>
+  );
+}
+
+// Phone card used in several scenes: rounded body with three "entry" lines.
+function IPhone(props) {
+  const x = +props.x, y = +props.y, w = +(props.w || 34), h = +(props.h || 58);
+  const lines = +(props.lines || 3), accent = props.accent || ILLO.bright;
+  const pad = w * 0.18;
+  return (
+    <g>
+      <rect x={x} y={y} width={w} height={h} rx={w * 0.2} fill="#fff" stroke={ILLO.navy} strokeWidth="2.4" />
+      {Array.from({ length: lines }, (_, i) => (
+        <rect key={i} x={x + pad} y={y + h * 0.22 + i * h * 0.18} width={w - pad * 2 - (i === 1 ? w * 0.16 : 0)} height={h * 0.075} rx={h * 0.037}
+          fill={i === 0 ? accent : 'rgba(34,52,79,0.25)'} />
+      ))}
+    </g>
+  );
+}
+
+function StoryIllo({ scene = 'tourWelcome', width = 210 }) {
+  const S = ILLO.skin, H = ILLO.hair;
+  const scenes = {
+
+    /* Tips 1: Start with you — parent kneeling, eyes closed, hand on chest. */
+    tipCalm: (
+      <g>
+        <ellipse cx="110" cy="132" rx="78" ry="12" fill={ILLO.tintGreen} />
+        <path d="M92 128 q0 -34 20 -36 q22 -2 22 30 l0 6 q0 6 -6 6 l-30 0 q-6 0 -6 -6 Z" fill={ILLO.green} />
+        <path d="M96 100 q-12 10 -8 24" fill="none" stroke={ILLO.green} strokeWidth="9" strokeLinecap="round" />
+        <path d="M128 100 q6 10 -8 16" fill="none" stroke="#1F8B4D" strokeWidth="9" strokeLinecap="round" />
+        <circle cx="118" cy="118" r="5" fill={S.brown} />
+        <IHead cx="112" cy="78" r="15" skin={S.brown} hair={H.black} mood="closed" bun />
+        <path d="M148 62 c0 -5 8 -5 8 0 c0 5 -8 9 -8 9 c0 0 -8 -4 -8 -9 c0 -5 8 -5 8 0 Z" transform="translate(-4,-6)" fill={ILLO.green} opacity="0.85" />
+        <circle cx="66" cy="70" r="3" fill={ILLO.green} opacity="0.4" />
+        <circle cx="160" cy="92" r="2.5" fill={ILLO.green} opacity="0.35" />
+      </g>
+    ),
+
+    /* Tips 2: Fewer words, softer everything — adult crouched to the child's level. */
+    tipSoft: (
+      <g>
+        <ellipse cx="110" cy="132" rx="82" ry="12" fill={ILLO.tintBlue} />
+        {/* adult, crouched so heads are level */}
+        <path d="M64 128 q-2 -30 18 -32 q20 -2 20 26 l0 2 q0 4 -4 4 l-30 0 q-4 0 -4 0 Z" fill={ILLO.blue} />
+        <path d="M98 106 q10 6 16 12" fill="none" stroke={ILLO.blue} strokeWidth="8" strokeLinecap="round" />
+        <circle cx="116" cy="120" r="4.5" fill={S.light} />
+        <IHead cx="82" cy="82" r="14" skin={S.light} hair={H.darkgrey} mood="calm" />
+        {/* child, sitting */}
+        <path d="M130 128 q-2 -22 14 -23 q16 -1 15 20 l0 3 q0 0 -4 0 l-25 0 Z" fill={ILLO.bright} />
+        <IHead cx="143" cy="90" r="11.5" skin={S.tan} hair={H.chestnut} mood="gentle" />
+        {/* one soft, quiet word */}
+        <g opacity="0.9">
+          <path d="M60 38 h28 a7 7 0 0 1 7 7 v6 a7 7 0 0 1 -7 7 h-7 l-7 8 v-8 h-14 a7 7 0 0 1 -7 -7 v-6 a7 7 0 0 1 7 -7 Z" fill="#fff" stroke={ILLO.bright} strokeWidth="2" />
+          <circle cx="67" cy="48" r="1.8" fill={ILLO.bright} />
+          <circle cx="74" cy="48" r="1.8" fill={ILLO.bright} />
+          <circle cx="81" cy="48" r="1.8" fill={ILLO.bright} />
+        </g>
+      </g>
+    ),
+
+    /* Tips 3: What makes it worse — why-questions and threats, gently struck out.
+       Object-led on purpose: never a distressed child (imagery lock). */
+    tipAvoid: (
+      <g>
+        <ellipse cx="110" cy="132" rx="78" ry="12" fill={ILLO.tintRed} />
+        <g>
+          <path d="M52 44 h44 a9 9 0 0 1 9 9 v16 a9 9 0 0 1 -9 9 h-22 l-10 11 v-11 h-12 a9 9 0 0 1 -9 -9 v-16 a9 9 0 0 1 9 -9 Z" fill="#fff" stroke={ILLO.navy} strokeWidth="2.2" />
+          <text x="74" y="68" textAnchor="middle" fontFamily="'Outfit', system-ui" fontWeight="600" fontSize="20" fill={ILLO.navy}>why?</text>
+          <line x1="44" y1="86" x2="106" y2="42" stroke={ILLO.red} strokeWidth="6" strokeLinecap="round" opacity="0.85" />
+        </g>
+        <g>
+          <path d="M124 64 h40 a9 9 0 0 1 9 9 v14 a9 9 0 0 1 -9 9 h-10 l-9 10 v-10 h-21 a9 9 0 0 1 -9 -9 v-14 a9 9 0 0 1 9 -9 Z" fill="#fff" stroke={ILLO.navy} strokeWidth="2.2" />
+          <text x="144" y="86" textAnchor="middle" fontFamily="'Outfit', system-ui" fontWeight="700" fontSize="19" fill={ILLO.navy}>!!</text>
+          <line x1="116" y1="104" x2="176" y2="58" stroke={ILLO.red} strokeWidth="6" strokeLinecap="round" opacity="0.85" />
+        </g>
+        {/* a settled pause beneath: the storm gets nothing to feed on */}
+        <circle cx="96" cy="116" r="3" fill={ILLO.navy} opacity="0.28" />
+        <circle cx="110" cy="116" r="3" fill={ILLO.navy} opacity="0.28" />
+        <circle cx="124" cy="116" r="3" fill={ILLO.navy} opacity="0.28" />
+      </g>
+    ),
+
+    /* Tips 4: Give it room to pass — child settled in a calm corner, lamp low,
+       parent present but a step back. */
+    tipRoom: (
+      <g>
+        <ellipse cx="110" cy="132" rx="82" ry="12" fill={ILLO.tintAmber} />
+        {/* lamp */}
+        <line x1="52" y1="128" x2="52" y2="76" stroke={ILLO.navy} strokeWidth="3.4" strokeLinecap="round" />
+        <path d="M40 76 h24 l-5 -14 h-14 Z" fill={ILLO.amber} />
+        <path d="M52 82 q0 14 10 20" fill="none" stroke={ILLO.amber} strokeWidth="2.4" strokeLinecap="round" opacity="0.5" />
+        <ellipse cx="52" cy="129" rx="10" ry="3" fill={ILLO.navy} opacity="0.5" />
+        {/* cushion + child, knees hugged, settling */}
+        <ellipse cx="118" cy="124" rx="26" ry="8" fill={ILLO.amber} opacity="0.45" />
+        <path d="M102 122 q-2 -20 16 -21 q18 -1 17 19 l0 2 q-1 3 -5 3 l-24 0 q-4 0 -4 -3 Z" fill={ILLO.bright} />
+        <path d="M104 112 q14 -8 28 0 l0 8 q-14 6 -28 0 Z" fill={ILLO.blue} />
+        <IHead cx="119" cy="88" r="12" skin={S.deep} hair={H.black} mood="calm" />
+        {/* parent nearby, calm, giving space */}
+        <path d="M172 128 q-2 -36 14 -37 q15 -1 14 37 Z" fill={ILLO.green} />
+        <path d="M176 100 q-6 10 -4 20" fill="none" stroke="#1F8B4D" strokeWidth="8" strokeLinecap="round" />
+        <IHead cx="186" cy="78" r="12.5" skin={S.tan} hair={H.brown} mood="calm" bun />
+        <circle cx="86" cy="58" r="2.6" fill={ILLO.amber} opacity="0.45" />
+        <circle cx="150" cy="48" r="3" fill={ILLO.amber} opacity="0.4" />
+      </g>
+    ),
+
+    /* Tips 5: Afterwards, reconnect first — the hug. */
+    tipReconnect: (
+      <g>
+        <ellipse cx="110" cy="132" rx="78" ry="12" fill={ILLO.tintGreen} />
+        {/* parent */}
+        <path d="M80 128 q-4 -44 24 -45 q16 0 18 22 l2 23 Z" fill={ILLO.green} />
+        {/* child leaning in */}
+        <path d="M124 128 q0 -30 14 -31 q14 -1 14 31 Z" fill={ILLO.bright} />
+        {/* parent's arm wrapping the child */}
+        <path d="M96 96 q26 -2 38 14" fill="none" stroke="#1F8B4D" strokeWidth="9" strokeLinecap="round" />
+        <circle cx="136" cy="112" r="5" fill={S.light} />
+        {/* child's arm reaching back */}
+        <path d="M140 106 q-10 6 -18 14" fill="none" stroke={ILLO.blue} strokeWidth="7" strokeLinecap="round" />
+        <IHead cx="102" cy="72" r="14" skin={S.light} hair={H.chestnut} mood="closed" />
+        <IHead cx="139" cy="86" r="11" skin={S.light} hair={H.brown} mood="warm" />
+        <path d="M124 44 c0 -6 9 -6 9 0 c0 6 -9 10 -9 10 c0 0 -9 -4 -9 -10 c0 -6 9 -6 9 0 Z" fill={ILLO.green} />
+      </g>
+    ),
+
+    /* Tips 6: Then write it down — settled now, one honest line into the record. */
+    tipWrite: (
+      <g>
+        <ellipse cx="110" cy="132" rx="80" ry="12" fill={ILLO.tintBlue} />
+        {/* sofa hint */}
+        <path d="M56 128 l0 -22 q0 -8 8 -8 l30 0 q8 0 8 8 l0 22 Z" fill={ILLO.tintBlue} />
+        {/* parent seated with phone */}
+        <path d="M70 128 q-2 -30 18 -31 q18 -1 18 31 Z" fill={ILLO.blue} />
+        <path d="M96 108 q8 4 12 10" fill="none" stroke={ILLO.blue} strokeWidth="8" strokeLinecap="round" />
+        <circle cx="110" cy="120" r="4.5" fill={S.medium} />
+        <IHead cx="87" cy="82" r="13.5" skin={S.medium} hair={H.black} mood="calm" />
+        {/* the record, one fresh line ticked in */}
+        <IPhone x="128" y="70" w="40" h="62" lines={3} accent={ILLO.green} />
+        <circle cx="168" cy="72" r="11" fill={ILLO.green} />
+        <path d="M163 72 l3.6 3.6 l6 -7" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+      </g>
+    ),
+
+    /* Tour 1: Welcome — parent and child, side by side, starting out. */
+    tourWelcome: (
+      <g>
+        <ellipse cx="110" cy="132" rx="82" ry="12" fill={ILLO.tintBlue} />
+        <path d="M74 128 q-3 -44 20 -45 q22 -1 20 45 Z" fill={ILLO.blue} />
+        <path d="M74 96 q-10 -8 -8 -20" fill="none" stroke={ILLO.blue} strokeWidth="9" strokeLinecap="round" />
+        <circle cx="66" cy="74" r="5" fill={S.deep} />
+        <IHead cx="94" cy="66" r="15" skin={S.deep} hair={H.black} mood="warm" />
+        <path d="M126 128 q-2 -30 13 -31 q15 -1 14 31 Z" fill={ILLO.green} />
+        <IHead cx="139" cy="84" r="11.5" skin={S.brown} hair={H.black} mood="warm" bun />
+        {/* holding hands */}
+        <path d="M112 102 q8 8 16 10" fill="none" stroke={ILLO.blue} strokeWidth="8" strokeLinecap="round" />
+        <circle cx="128" cy="112" r="4.5" fill={S.deep} />
+        <path d="M166 52 c0 -6 9 -6 9 0 c0 6 -9 10 -9 10 c0 0 -9 -4 -9 -10 c0 -6 9 -6 9 0 Z" fill={ILLO.red} opacity="0.7" />
+      </g>
+    ),
+
+    /* Tour 2: Today is home — the day on one screen, morning light. */
+    tourToday: (
+      <g>
+        <ellipse cx="110" cy="132" rx="78" ry="12" fill={ILLO.tintBlue} />
+        <circle cx="62" cy="56" r="16" fill={ILLO.amber} opacity="0.85" />
+        <g stroke={ILLO.amber} strokeWidth="3" strokeLinecap="round" opacity="0.7">
+          <line x1="62" y1="30" x2="62" y2="36" /><line x1="38" y1="56" x2="44" y2="56" />
+          <line x1="45" y1="39" x2="49" y2="43" /><line x1="79" y1="43" x2="75" y2="39" transform="translate(4,-4)" />
+        </g>
+        <IPhone x="92" y="52" w="46" h="76" lines={4} accent={ILLO.bright} />
+        <circle cx="150" cy="112" r="12" fill={ILLO.green} opacity="0.16" />
+        <path d="M145 112 l3.6 3.6 l6.5 -7.5" fill="none" stroke={ILLO.green} strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+      </g>
+    ),
+
+    /* Tour 3: A line is plenty — the plus button and one written line. */
+    tourLog: (
+      <g>
+        <ellipse cx="110" cy="132" rx="76" ry="12" fill={ILLO.tintBlue} />
+        <circle cx="86" cy="82" r="26" fill={ILLO.blue} />
+        <g stroke="#fff" strokeWidth="5.5" strokeLinecap="round">
+          <line x1="86" y1="70" x2="86" y2="94" /><line x1="74" y1="82" x2="98" y2="82" />
+        </g>
+        {/* one line, being written */}
+        <rect x="122" y="78" width="52" height="9" rx="4.5" fill="rgba(34,52,79,0.22)" />
+        <rect x="122" y="78" width="34" height="9" rx="4.5" fill={ILLO.bright} />
+        <path d="M158 84 l14 -20 l6 4 l-14 20 l-7 3 Z" fill={ILLO.amber} />
+        <path d="M172 64 l6 4 l3 -4 q1 -2 -1 -3.5 q-2 -1.5 -3.5 0 Z" fill={ILLO.navy} />
+        <circle cx="130" cy="52" r="2.6" fill={ILLO.bright} opacity="0.5" />
+        <circle cx="60" cy="118" r="3" fill={ILLO.blue} opacity="0.3" />
+      </g>
+    ),
+
+    /* Tour 4: At the gate — the school gate, parent and child, hand in hand. */
+    tourGate: (
+      <g>
+        <ellipse cx="110" cy="132" rx="84" ry="12" fill={ILLO.tintGreen} />
+        {/* gate: two posts and railings */}
+        <rect x="128" y="52" width="7" height="76" rx="3" fill={ILLO.navy} />
+        <rect x="186" y="52" width="7" height="76" rx="3" fill={ILLO.navy} />
+        <path d="M128 56 q30 -16 65 0" fill="none" stroke={ILLO.navy} strokeWidth="5" strokeLinecap="round" />
+        {[144, 158, 172].map(x => <line key={x} x1={x} y1="64" x2={x} y2="126" stroke={ILLO.navy} strokeWidth="3.4" strokeLinecap="round" opacity="0.75" />)}
+        {/* parent + child arriving */}
+        <path d="M46 128 q-3 -40 18 -41 q20 -1 18 41 Z" fill={ILLO.green} />
+        <IHead cx="64" cy="70" r="14" skin={S.tan} hair={H.brown} mood="calm" bun />
+        <path d="M92 128 q-2 -26 12 -27 q13 -1 12 27 Z" fill={ILLO.bright} />
+        <IHead cx="104" cy="88" r="10.5" skin={S.tan} hair={H.chestnut} mood="warm" />
+        <path d="M80 102 q7 8 14 10" fill="none" stroke="#1F8B4D" strokeWidth="8" strokeLinecap="round" />
+        <circle cx="94" cy="112" r="4" fill={S.tan} />
+      </g>
+    ),
+
+    /* Tour 5: Their day, in their words — the child holds the phone, happy face up. */
+    tourChild: (
+      <g>
+        <ellipse cx="110" cy="132" rx="78" ry="12" fill={ILLO.tintGreen} />
+        <path d="M84 128 q-3 -34 20 -35 q22 -1 20 35 Z" fill={ILLO.bright} />
+        <IHead cx="104" cy="74" r="14.5" skin={S.light} hair={H.chestnut} mood="warm" />
+        {/* both hands holding the phone out */}
+        <path d="M88 100 q10 12 22 14" fill="none" stroke={ILLO.bright} strokeWidth="8" strokeLinecap="round" />
+        <path d="M122 100 q-4 10 -10 14" fill="none" stroke={ILLO.blue} strokeWidth="8" strokeLinecap="round" />
+        <rect x="100" y="106" width="30" height="44" rx="7" fill="#fff" stroke={ILLO.navy} strokeWidth="2.2" transform="rotate(-6 115 128)" />
+        <g transform="rotate(-6 115 128)">
+          <circle cx="115" cy="124" r="9" fill="#F4C95D" />
+          <circle cx="112" cy="122.5" r="1.2" fill="#4A3D1E" />
+          <circle cx="118" cy="122.5" r="1.2" fill="#4A3D1E" />
+          <path d="M111 126 q4 4 8 0" fill="none" stroke="#4A3D1E" strokeWidth="1.5" strokeLinecap="round" />
+        </g>
+        <circle cx="152" cy="66" r="3" fill={ILLO.green} opacity="0.45" />
+        <circle cx="66" cy="58" r="2.6" fill={ILLO.bright} opacity="0.4" />
+      </g>
+    ),
+
+    /* Tour 6: See the shape of it — the month grid becoming a pattern. */
+    tourPattern: (
+      <g>
+        <ellipse cx="110" cy="132" rx="78" ry="12" fill={ILLO.tintBlue} />
+        <rect x="56" y="46" width="82" height="72" rx="10" fill="#fff" stroke={ILLO.navy} strokeWidth="2.4" />
+        <rect x="56" y="46" width="82" height="16" rx="10" fill={ILLO.blue} />
+        <rect x="56" y="54" width="82" height="8" fill={ILLO.blue} />
+        {[
+          ['#27AE60', '#27AE60', '#F39C12', '#27AE60'],
+          ['#27AE60', '#E74C3C', '#F39C12', '#27AE60'],
+          ['#F39C12', '#E74C3C', '#27AE60', '#27AE60'],
+        ].map((row, r) => row.map((c, i) => (
+          <circle key={r + '-' + i} cx={70 + i * 18} cy={76 + r * 16} r="4.5" fill={c} opacity="0.9" />
+        )))}
+        {/* the magnifier that finds the pattern */}
+        <circle cx="146" cy="98" r="17" fill="rgba(58,123,212,0.12)" stroke={ILLO.bright} strokeWidth="3.4" />
+        <line x1="158" y1="110" x2="170" y2="122" stroke={ILLO.bright} strokeWidth="5" strokeLinecap="round" />
+      </g>
+    ),
+
+    /* Tour 7: Private by default — the record stays on the phone, behind the shield. */
+    tourPrivate: (
+      <g>
+        <ellipse cx="110" cy="132" rx="76" ry="12" fill={ILLO.tintBlue} />
+        <IPhone x="78" y="48" w="46" h="78" lines={3} accent={ILLO.bright} />
+        <path d="M138 66 q14 -7 28 0 q2 22 -14 32 q-16 -10 -14 -32 Z" fill={ILLO.blue} />
+        <path d="M146 80 l4.5 4.5 l8 -9" fill="none" stroke="#fff" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="60" cy="62" r="2.6" fill={ILLO.bright} opacity="0.4" />
+        <circle cx="152" cy="116" r="3" fill={ILLO.blue} opacity="0.3" />
+      </g>
+    ),
+
+    /* Tour 8: You are ready — off they go, together, forward. */
+    tourReady: (
+      <g>
+        <ellipse cx="110" cy="132" rx="82" ry="12" fill={ILLO.tintGreen} />
+        <circle cx="168" cy="52" r="14" fill={ILLO.amber} opacity="0.8" />
+        {/* parent mid-stride */}
+        <path d="M74 128 q-2 -42 20 -43 q21 -1 19 43 Z" fill={ILLO.blue} />
+        <path d="M112 96 q12 -6 16 -16" fill="none" stroke={ILLO.blue} strokeWidth="9" strokeLinecap="round" />
+        <circle cx="129" cy="79" r="5" fill={S.medium} />
+        <IHead cx="93" cy="68" r="14.5" skin={S.medium} hair={H.darkgrey} mood="warm" />
+        {/* child skipping ahead */}
+        <path d="M134 124 q0 -28 13 -29 q13 -1 13 29 Z" fill={ILLO.green} />
+        <IHead cx="146" cy="80" r="11" skin={S.medium} hair={H.black} mood="warm" />
+        <path d="M52 66 q10 -4 16 4" fill="none" stroke={ILLO.green} strokeWidth="3" strokeLinecap="round" opacity="0.4" />
+      </g>
+    ),
+  };
+  return (
+    <svg width={width} height={Math.round(width * 150 / 220)} viewBox="0 0 220 150" aria-hidden="true" style={{ display: 'block' }}>
+      {scenes[scene] || scenes.tourWelcome}
+    </svg>
+  );
+}
+
+Object.assign(window, { Face, MoodDot, MOOD_COLOURS, Wordmark, JotlaLogo, ChildAvatar, SceneIllo, StoryIllo, readAvatarPhoto, fileToDataURL, PhotoCropper });

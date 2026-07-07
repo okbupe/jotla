@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
-<title>Jotla by SEN Help</title>
+<title>Jotla by SEN Help (dev, source mode)</title>
 <!-- Home-screen app: name, icon, full-screen launch -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -24,9 +24,11 @@
   /* When launched from the home screen / on a real phone, fill the whole screen. */
   html.j-appmode, html.j-appmode body { background: #F7F9FC; height: 100%; overflow: hidden; }
 </style>
-<!-- Self-hosted (no CDN): the app must load with no network. Production React. -->
+<!-- DEV ENTRY: loads the raw .jsx with in-browser Babel so source edits show without
+     a build step. The shipped entry is index.html (precompiled, no Babel). -->
 <script src="vendor/react.production.min.js"></script>
 <script src="vendor/react-dom.production.min.js"></script>
+<script src="vendor/babel.min.js"></script>
 </head>
 <body>
 <div id="root"></div>
@@ -46,24 +48,20 @@
   </svg>
 </template>
 
-<!-- Precompiled bundle (build 1.8.0): plain JS transpiled ahead of time by
-     tools/precompile.js, so no Babel runs on the phone. Edit the .jsx sources,
-     re-run the tool (the test suite does it automatically), never edit min/ by
-     hand. index.dev.html still loads the raw .jsx for quick iteration. -->
-<script src="min/ios-frame.js"></script>
-<script src="min/jotla-data.js"></script>
-<script src="min/jotla-icons.js"></script>
-<script src="min/jotla-illustrations.js"></script>
-<script src="min/jotla-ui.js"></script>
-<script src="min/jotla-parent-a.js"></script>
-<script src="min/jotla-month.js"></script>
-<script src="min/jotla-parent-b.js"></script>
-<script src="min/jotla-child.js"></script>
-<script src="min/jotla-onboard.js"></script>
-<script src="min/jotla-app.js"></script>
+<script type="text/babel" data-presets="react" src="ios-frame.jsx"></script>
+<script type="text/babel" data-presets="react" src="jotla-data.jsx"></script>
+<script type="text/babel" data-presets="react" src="jotla-icons.jsx"></script>
+<script type="text/babel" data-presets="react" src="jotla-illustrations.jsx"></script>
+<script type="text/babel" data-presets="react" src="jotla-ui.jsx"></script>
+<script type="text/babel" data-presets="react" src="jotla-parent-a.jsx"></script>
+<script type="text/babel" data-presets="react" src="jotla-month.jsx"></script>
+<script type="text/babel" data-presets="react" src="jotla-parent-b.jsx"></script>
+<script type="text/babel" data-presets="react" src="jotla-child.jsx"></script>
+<script type="text/babel" data-presets="react" src="jotla-onboard.jsx"></script>
+<script type="text/babel" data-presets="react" src="jotla-app.jsx"></script>
 <script>
 // Offline support: register the service worker once the app has loaded.
-if ('serviceWorker' in navigator) {
+if (false && 'serviceWorker' in navigator) { // dev: never register the SW
   window.addEventListener('load', function () {
     navigator.serviceWorker.register('sw.js').catch(function () { /* file:// or unsupported: app still runs online-style */ });
   });

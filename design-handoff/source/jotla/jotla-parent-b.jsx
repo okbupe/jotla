@@ -54,7 +54,7 @@ function FindScreen({ nav, entries, view }) {
             borderRadius: 14, padding: '0 14px', height: 52, marginBottom: 16 }}>
             <Icon name="search" size={20} color="var(--faint)" />
             <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search your notes"
-              style={{ flex: 1, border: 'none', outline: 'none', fontFamily: "'Outfit', system-ui", fontSize: 16, color: 'var(--ink)', background: 'transparent' }} />
+              style={{ flex: 1, border: 'none', outline: 'none', fontFamily: "'Outfit', system-ui", fontSize: 'calc(16px * var(--tscale, 1))', color: 'var(--ink)', background: 'transparent' }} />
           </div>
 
           {/* Filters are the Plus half of Find; plain keyword search stays free. */}
@@ -100,7 +100,7 @@ function FindScreen({ nav, entries, view }) {
           <div className="j-card" style={{ padding: 14, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10,
             background: 'var(--tint-blue)', border: 'none' }}>
             <Icon name="filter" size={18} color="var(--blue)" />
-            <p className="j-body" style={{ fontSize: 15, color: 'var(--blue)', fontWeight: 500 }}>{queryBits.join(', ')}</p>
+            <p className="j-body" style={{ fontSize: 'calc(15px * var(--tscale, 1))', color: 'var(--blue)', fontWeight: 500 }}>{queryBits.join(', ')}</p>
           </div>
           <p className="j-meta" style={{ marginBottom: 10 }}>{matched.length} {matched.length === 1 ? 'note' : 'notes'} found</p>
 
@@ -174,8 +174,8 @@ function DocCard({ doc, onClick }) {
           <span className="j-tag j-tag-blue">{doc.type}</span>
           <span className="j-meta" style={{ whiteSpace: 'nowrap' }}>{J.fmtShort(doc.received)} {doc.received.slice(0, 4)}</span>
         </div>
-        <p className="j-strong" style={{ fontSize: 16, lineHeight: 1.25, marginBottom: 3 }}>{doc.title}</p>
-        <p className="j-sm" style={{ fontSize: 13.5 }}>From {doc.from}</p>
+        <p className="j-strong" style={{ fontSize: 'calc(16px * var(--tscale, 1))', lineHeight: 1.25, marginBottom: 3 }}>{doc.title}</p>
+        <p className="j-sm" style={{ fontSize: 'calc(13.5px * var(--tscale, 1))' }}>From {doc.from}</p>
         {doc.action && (
           <span className="j-pillbadge" style={{ marginTop: 8, background: 'var(--tint-amber)', color: 'var(--amber)' }}>
             <Icon name="bell" size={13} color="var(--amber)" /> {doc.action}
@@ -217,7 +217,7 @@ function EvidenceScreen({ nav, entries, docs, profile, navView }) {
 
   const Seg = ({ id, label }) => (
     <button onClick={() => setView(id)} style={{ flex: 1, minHeight: 44, borderRadius: 999, border: 'none', cursor: 'pointer',
-      fontFamily: "'Outfit', system-ui", fontSize: 15, fontWeight: 500,
+      fontFamily: "'Outfit', system-ui", fontSize: 'calc(15px * var(--tscale, 1))', fontWeight: 500,
       background: view === id ? 'var(--card)' : 'transparent', color: view === id ? 'var(--blue)' : 'var(--muted)',
       boxShadow: view === id ? '0 4px 12px -8px rgba(20,40,80,0.4)' : 'none' }}>{label}</button>
   );
@@ -251,26 +251,26 @@ function EvidenceScreen({ nav, entries, docs, profile, navView }) {
               <div style={{ borderRadius: 14, background: 'var(--card)', border: '1px solid var(--line)',
                 boxShadow: '0 18px 40px -24px rgba(20,40,80,0.45)', overflow: 'hidden' }}>
                 <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid var(--line)' }}>
-                  <p style={{ fontSize: 12, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--faint)', margin: '0 0 8px' }}>Day record</p>
-                  <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 20, color: 'var(--ink)', margin: 0 }}>{childLabel}</p>
+                  <p style={{ fontSize: 'calc(12px * var(--tscale, 1))', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--faint)', margin: '0 0 8px' }}>Day record</p>
+                  <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(20px * var(--tscale, 1))', color: 'var(--ink)', margin: 0 }}>{childLabel}</p>
                   <p className="j-meta" style={{ marginTop: 4 }}>{rangeLabel} · {inPack.length} dated entries · Prepared {J.fmtShort(J.TODAY_ISO)} {J.TODAY_ISO.slice(0, 4)}</p>
                 </div>
                 <div style={{ padding: '8px 20px 16px' }}>
                   {inPack.slice(0, 6).map((e, i) => (
                     <div key={e.id} style={{ padding: '12px 0', borderBottom: i < Math.min(inPack.length, 6) - 1 ? '1px solid var(--line)' : 'none' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--blue)', whiteSpace: 'nowrap' }}>{J.fmtShort(e.date)} {e.date.slice(0, 4)}, {e.clock || e.time}</span>
+                        <span style={{ fontSize: 'calc(13px * var(--tscale, 1))', fontWeight: 500, color: 'var(--blue)', whiteSpace: 'nowrap' }}>{J.fmtShort(e.date)} {e.date.slice(0, 4)}, {e.clock || e.time}</span>
                         <span style={{ flex: 1 }} />
-                        <span className="j-pillbadge" style={{ fontSize: 10.5, padding: '2px 8px',
+                        <span className="j-pillbadge" style={{ fontSize: 'calc(10.5px * var(--tscale, 1))', padding: '2px 8px',
                           background: e.kind === 'contemporaneous' ? 'var(--tint-green)' : 'var(--tint-amber)',
                           color: e.kind === 'contemporaneous' ? 'var(--green-ink)' : 'var(--amber)' }}>
                           {e.kind === 'contemporaneous' ? 'Same day' : 'Added later'}
                         </span>
                       </div>
-                      <p style={{ fontSize: 13.5, color: 'var(--body)', margin: 0, lineHeight: 1.4 }}>{e.summary}</p>
+                      <p style={{ fontSize: 'calc(13.5px * var(--tscale, 1))', color: 'var(--body)', margin: 0, lineHeight: 1.4 }}>{e.summary}</p>
                     </div>
                   ))}
-                  <p style={{ fontSize: 11.5, color: 'var(--faint)', lineHeight: 1.5, marginTop: 12, paddingTop: 12, borderTop: '1px dashed var(--line)' }}>
+                  <p style={{ fontSize: 'calc(11.5px * var(--tscale, 1))', color: 'var(--faint)', lineHeight: 1.5, marginTop: 12, paddingTop: 12, borderTop: '1px dashed var(--line)' }}>
                     Each entry shows when it was written. "Same day" means it was logged on the day it happened. "Added later" means it was written up afterwards. Any edits keep the original date and time.
                   </p>
                 </div>
@@ -283,7 +283,7 @@ function EvidenceScreen({ nav, entries, docs, profile, navView }) {
               <div className="j-card" style={{ padding: 14, marginBottom: 16, display: 'flex', gap: 12, alignItems: 'center',
                 background: 'var(--tint-green)', border: 'none' }}>
                 <Icon name="shield" size={20} color="var(--green-ink)" style={{ flexShrink: 0 }} />
-                <p className="j-body" style={{ fontSize: 14.5, color: 'var(--green-ink)' }}>Keep every letter, report and plan in one place, so nothing important gets lost.</p>
+                <p className="j-body" style={{ fontSize: 'calc(14.5px * var(--tscale, 1))', color: 'var(--green-ink)' }}>Keep every letter, report and plan in one place, so nothing important gets lost.</p>
               </div>
 
               <SectionLabel right={<span className="j-meta">{docs.length} saved</span>}>Your documents</SectionLabel>
@@ -372,8 +372,8 @@ function AddDocScreen({ nav }) {
                   <span style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--card)', flexShrink: 0,
                     display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="doc" size={20} color="var(--blue)" /></span>
                   <span style={{ flex: 1 }}>
-                    <span style={{ display: 'block', fontSize: 14.5, fontWeight: 500, color: 'var(--ink)' }}>{scan ? 'Photo of the document attached' : 'File noted'}</span>
-                    <span style={{ display: 'block', fontSize: 12.5, color: 'var(--faint)', marginTop: 1 }}>{source === 'taken' ? 'Photographed just now' : 'Chosen from your files'}</span>
+                    <span style={{ display: 'block', fontSize: 'calc(14.5px * var(--tscale, 1))', fontWeight: 500, color: 'var(--ink)' }}>{scan ? 'Photo of the document attached' : 'File noted'}</span>
+                    <span style={{ display: 'block', fontSize: 'calc(12.5px * var(--tscale, 1))', color: 'var(--faint)', marginTop: 1 }}>{source === 'taken' ? 'Photographed just now' : 'Chosen from your files'}</span>
                   </span>
                   <button onClick={() => { setSource(null); setScan(null); }} aria-label="Remove" className="j-press" style={{ width: 36, height: 36, borderRadius: 10,
                     border: 'none', background: 'var(--card)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -386,13 +386,13 @@ function AddDocScreen({ nav }) {
                 <label className="j-press" style={{ flex: 1, minHeight: 84, borderRadius: 14, cursor: 'pointer',
                   border: '1.5px dashed var(--chip-border)', background: 'var(--card)', display: 'flex', flexDirection: 'column',
                   alignItems: 'center', justifyContent: 'center', gap: 7, color: 'var(--muted)' }}>
-                  <Icon name="camera" size={24} color="var(--blue)" /><span style={{ fontSize: 14.5, fontWeight: 500 }}>Take photo</span>
+                  <Icon name="camera" size={24} color="var(--blue)" /><span style={{ fontSize: 'calc(14.5px * var(--tscale, 1))', fontWeight: 500 }}>Take photo</span>
                   <input type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={e => onDocFile(e, 'taken')} />
                 </label>
                 <label className="j-press" style={{ flex: 1, minHeight: 84, borderRadius: 14, cursor: 'pointer',
                   border: '1.5px dashed var(--chip-border)', background: 'var(--card)', display: 'flex', flexDirection: 'column',
                   alignItems: 'center', justifyContent: 'center', gap: 7, color: 'var(--muted)' }}>
-                  <Icon name="download" size={24} color="var(--blue)" /><span style={{ fontSize: 14.5, fontWeight: 500 }}>Attach image</span>
+                  <Icon name="download" size={24} color="var(--blue)" /><span style={{ fontSize: 'calc(14.5px * var(--tscale, 1))', fontWeight: 500 }}>Attach image</span>
                   <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => onDocFile(e, 'attached')} />
                 </label>
               </div>
@@ -450,7 +450,7 @@ function EditDocSheet({ doc, onSave, onClose }) {
   const [about, setAbout] = useStateB(doc.about || '');
   const [action, setAction] = useStateB(doc.action || '');
   const inputStyle = { width: '100%', boxSizing: 'border-box', borderRadius: 12, border: '1.5px solid var(--chip-border)', background: 'var(--card-2)',
-    padding: '10px 12px', fontFamily: "'Outfit', system-ui", fontSize: 15.5, color: 'var(--ink)', marginBottom: 12 };
+    padding: '10px 12px', fontFamily: "'Outfit', system-ui", fontSize: 'calc(15.5px * var(--tscale, 1))', color: 'var(--ink)', marginBottom: 12 };
   const changed = title.trim() !== doc.title || type !== doc.type || from.trim() !== doc.from || received !== doc.received
     || about.trim() !== (doc.about || '') || action.trim() !== (doc.action || '');
   return (
@@ -497,7 +497,7 @@ function DocScreen({ nav, docs, id }) {
   const Row = ({ label, value }) => value ? (
     <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, padding: '12px 0', borderBottom: '1px solid var(--line)' }}>
       <span className="j-sm" style={{ flexShrink: 0 }}>{label}</span>
-      <span style={{ fontSize: 15, fontWeight: 500, color: 'var(--ink)', textAlign: 'right' }}>{value}</span>
+      <span style={{ fontSize: 'calc(15px * var(--tscale, 1))', fontWeight: 500, color: 'var(--ink)', textAlign: 'right' }}>{value}</span>
     </div>
   ) : null;
   return (
@@ -509,7 +509,7 @@ function DocScreen({ nav, docs, id }) {
             <span style={{ width: 52, height: 52, borderRadius: 14, background: 'var(--tint-blue)', flexShrink: 0,
               display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="doc" size={26} color="var(--blue)" /></span>
             <div>
-              <p className="j-h3" style={{ fontSize: 19 }}>{d.title}</p>
+              <p className="j-h3" style={{ fontSize: 'calc(19px * var(--tscale, 1))' }}>{d.title}</p>
               <p className="j-meta" style={{ marginTop: 2 }}>{d.type} · from {d.from}</p>
               {d.editedOn && (
                 <span className="j-pillbadge" style={{ marginTop: 6, background: 'var(--tag-grey-bg)', color: 'var(--muted)' }}>
@@ -527,14 +527,14 @@ function DocScreen({ nav, docs, id }) {
             <div style={{ borderRadius: 14, background: 'var(--photo-bg)', minHeight: 110, display: 'flex',
               alignItems: 'center', justifyContent: 'center', gap: 8 }}>
               <Icon name="doc" size={22} color="var(--faint)" />
-              <span style={{ fontSize: 15, color: 'var(--faint)', fontWeight: 500 }}>No photo of this document yet</span>
+              <span style={{ fontSize: 'calc(15px * var(--tscale, 1))', color: 'var(--faint)', fontWeight: 500 }}>No photo of this document yet</span>
             </div>
           )}
 
           {d.action && (
             <div className="j-card" style={{ padding: 14, display: 'flex', gap: 12, alignItems: 'center', background: 'var(--tint-amber)', border: 'none' }}>
               <Icon name="bell" size={20} color="var(--amber)" style={{ flexShrink: 0 }} />
-              <p className="j-body" style={{ fontSize: 15, color: 'var(--ink)' }}><span className="j-strong">Action:</span> {d.action}</p>
+              <p className="j-body" style={{ fontSize: 'calc(15px * var(--tscale, 1))', color: 'var(--ink)' }}><span className="j-strong">Action:</span> {d.action}</p>
             </div>
           )}
 
@@ -545,7 +545,7 @@ function DocScreen({ nav, docs, id }) {
             {d.about && (
               <div style={{ paddingTop: 12 }}>
                 <span className="j-sm">About</span>
-                <p className="j-body" style={{ fontSize: 15.5, marginTop: 4 }}>{d.about}</p>
+                <p className="j-body" style={{ fontSize: 'calc(15.5px * var(--tscale, 1))', marginTop: 4 }}>{d.about}</p>
               </div>
             )}
           </div>
@@ -556,7 +556,7 @@ function DocScreen({ nav, docs, id }) {
               {d.history.map((h, i) => (
                 <div key={i} style={{ padding: '8px 0', borderTop: i ? '1px solid var(--line)' : 'none' }}>
                   <p className="j-meta" style={{ marginBottom: 3 }}>Until {J.fmtShort(h.on)} {h.on.slice(0, 4)}</p>
-                  <p className="j-body" style={{ fontSize: 15 }}>{h.title}{h.about ? ' · ' + h.about : ''}{h.action ? ' · Action: ' + h.action : ''}</p>
+                  <p className="j-body" style={{ fontSize: 'calc(15px * var(--tscale, 1))' }}>{h.title}{h.about ? ' · ' + h.about : ''}{h.action ? ' · Action: ' + h.action : ''}</p>
                 </div>
               ))}
             </div>
@@ -599,7 +599,7 @@ function CheckList({ items, color, tint, dark }) {
             display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>
             <Icon name="check" size={13} color={color} />
           </span>
-          <span style={{ flex: 1, minWidth: 0, fontSize: 15.5, lineHeight: 1.4, color: dark ? 'rgba(255,255,255,0.92)' : 'var(--body)' }}>{it}</span>
+          <span style={{ flex: 1, minWidth: 0, fontSize: 'calc(15.5px * var(--tscale, 1))', lineHeight: 1.4, color: dark ? 'rgba(255,255,255,0.92)' : 'var(--body)' }}>{it}</span>
         </div>
       ))}
     </div>
@@ -615,7 +615,7 @@ function PlusFeature({ icon, title, formal, plain }) {
           display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{icon}</span>
         <p className="j-h3">{title}</p>
       </div>
-      <p className="j-body" style={{ fontSize: 15.5, marginBottom: 10 }}>{formal}</p>
+      <p className="j-body" style={{ fontSize: 'calc(15.5px * var(--tscale, 1))', marginBottom: 10 }}>{formal}</p>
       <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', background: 'var(--tint-blue)', borderRadius: 12, padding: '10px 12px' }}>
         <Icon name="arrowRight" size={16} color="var(--blue)" style={{ marginTop: 2, flexShrink: 0 }} />
         <p className="j-sm" style={{ color: 'var(--blue)' }}>{plain}</p>
@@ -653,7 +653,7 @@ function FreePage() {
         </div>
         <div style={{ background: 'var(--tint-blue)', borderRadius: 16, padding: 16, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
           <Icon name="shield" size={22} color="var(--blue)" style={{ flexShrink: 0, marginTop: 2 }} />
-          <p className="j-body" style={{ fontSize: 15, color: 'var(--blue)' }}>
+          <p className="j-body" style={{ fontSize: 'calc(15px * var(--tscale, 1))', color: 'var(--blue)' }}>
             <span style={{ fontWeight: 500 }}>Your record is yours.</span> Logging and export stay free forever, and anything you have saved stays yours even if you cancel.
           </p>
         </div>
@@ -697,10 +697,10 @@ function SaleCountdown({ left }) {
       {units.map(([lbl, val]) => (
         <div key={lbl} style={{ flex: 1, borderRadius: 12, background: 'rgba(255,255,255,0.10)',
           border: '1px solid rgba(230,184,92,0.45)', padding: '9px 0', textAlign: 'center' }}>
-          <div style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 26, lineHeight: 1, color: LIVING_GOLD }}>
+          <div style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(26px * var(--tscale, 1))', lineHeight: 1, color: LIVING_GOLD }}>
             {left ? pad(val) : '--'}
           </div>
-          <div style={{ fontSize: 10.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', marginTop: 5 }}>{lbl}</div>
+          <div style={{ fontSize: 'calc(10.5px * var(--tscale, 1))', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', marginTop: 5 }}>{lbl}</div>
         </div>
       ))}
     </div>
@@ -720,40 +720,40 @@ function PlusPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 999,
               background: 'rgba(205,187,247,0.18)', border: `1px solid ${PLUS_ACCENT}`, color: PLUS_ACCENT,
-              fontSize: 12, fontWeight: 600, letterSpacing: '0.08em' }}>
+              fontSize: 'calc(12px * var(--tscale, 1))', fontWeight: 600, letterSpacing: '0.08em' }}>
               <Icon name="star" size={13} color={PLUS_ACCENT} /> JOTLA PLUS
             </span>
             {sale && (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 999,
-                background: LIVING_GOLD, color: '#3A2A0C', fontSize: 12, fontWeight: 700, letterSpacing: '0.06em' }}>
+                background: LIVING_GOLD, color: '#3A2A0C', fontSize: 'calc(12px * var(--tscale, 1))', fontWeight: 700, letterSpacing: '0.06em' }}>
                 <Icon name="clock" size={13} color="#3A2A0C" /> 3 DAYS ONLY
               </span>
             )}
           </div>
-          <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 24, lineHeight: 1.14, margin: '14px 0 0' }}>
+          <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(24px * var(--tscale, 1))', lineHeight: 1.14, margin: '14px 0 0' }}>
             The tools to help you spot patterns and make your case
           </p>
           {sale ? (
             <React.Fragment>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 16, flexWrap: 'wrap' }}>
-                <span style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 40, color: LIVING_GOLD }}>{SALE.price}</span>
-                <span style={{ fontSize: 20, color: 'rgba(255,255,255,0.55)', textDecoration: 'line-through' }}>{SALE.was}</span>
-                <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.82)' }}>one-time</span>
-                <span style={{ marginLeft: 'auto', fontSize: 12.5, fontWeight: 700, color: '#3A2A0C', background: LIVING_GOLD,
+                <span style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(40px * var(--tscale, 1))', color: LIVING_GOLD }}>{SALE.price}</span>
+                <span style={{ fontSize: 'calc(20px * var(--tscale, 1))', color: 'rgba(255,255,255,0.55)', textDecoration: 'line-through' }}>{SALE.was}</span>
+                <span style={{ fontSize: 'calc(14px * var(--tscale, 1))', color: 'rgba(255,255,255,0.82)' }}>one-time</span>
+                <span style={{ marginLeft: 'auto', fontSize: 'calc(12.5px * var(--tscale, 1))', fontWeight: 700, color: '#3A2A0C', background: LIVING_GOLD,
                   padding: '4px 10px', borderRadius: 999 }}>Save {SALE.save}</span>
               </div>
               <SaleCountdown left={left} />
-              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.72)', margin: '12px 0 0', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <p style={{ fontSize: 'calc(13px * var(--tscale, 1))', color: 'rgba(255,255,255,0.72)', margin: '12px 0 0', display: 'flex', alignItems: 'center', gap: 6 }}>
                 <Icon name="clock" size={13} color="rgba(255,255,255,0.72)" /> When the timer runs out the price goes back to {SALE.was}.
               </p>
             </React.Fragment>
           ) : (
             <React.Fragment>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 16 }}>
-                <span style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 40, color: PLUS_ACCENT }}>£39</span>
-                <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.82)' }}>one-time</span>
+                <span style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(40px * var(--tscale, 1))', color: PLUS_ACCENT }}>£39</span>
+                <span style={{ fontSize: 'calc(14px * var(--tscale, 1))', color: 'rgba(255,255,255,0.82)' }}>one-time</span>
               </div>
-              <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.75)', margin: '4px 0 0' }}>Yours to keep. No subscription. No timers.</p>
+              <p style={{ fontSize: 'calc(13.5px * var(--tscale, 1))', color: 'rgba(255,255,255,0.75)', margin: '4px 0 0' }}>Yours to keep. No subscription. No timers.</p>
             </React.Fragment>
           )}
         </div>
@@ -762,7 +762,7 @@ function PlusPage() {
         <div className="j-card" style={{ padding: 14, marginBottom: 18, display: 'flex', gap: 10, alignItems: 'center',
           background: 'var(--tint-blue)', border: 'none' }}>
           <Icon name="check" size={18} color="var(--blue)" style={{ flexShrink: 0 }} />
-          <p className="j-body" style={{ fontSize: 14.5, color: 'var(--blue)' }}>Everything in Free is included, always.</p>
+          <p className="j-body" style={{ fontSize: 'calc(14.5px * var(--tscale, 1))', color: 'var(--blue)' }}>Everything in Free is included, always.</p>
         </div>
 
         <SectionLabel>What Plus adds</SectionLabel>
@@ -798,13 +798,13 @@ function LivingPage() {
           marginBottom: 18, boxShadow: '0 18px 38px -18px rgba(20,40,80,0.7)' }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 999,
             background: 'rgba(230,184,92,0.16)', border: `1px solid ${LIVING_GOLD}`, color: LIVING_GOLD,
-            fontSize: 12, fontWeight: 600, letterSpacing: '0.08em' }}>
+            fontSize: 'calc(12px * var(--tscale, 1))', fontWeight: 600, letterSpacing: '0.08em' }}>
             <Icon name="sparkle" size={13} color={LIVING_GOLD} /> Coming soon
           </span>
-          <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 26, lineHeight: 1.12, color: '#fff', margin: '14px 0 6px' }}>
+          <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(26px * var(--tscale, 1))', lineHeight: 1.12, color: '#fff', margin: '14px 0 6px' }}>
             Living Companion
           </p>
-          <p style={{ fontSize: 14.5, color: 'rgba(255,255,255,0.82)', margin: 0 }}>A monthly membership, coming with the membership.</p>
+          <p style={{ fontSize: 'calc(14.5px * var(--tscale, 1))', color: 'rgba(255,255,255,0.82)', margin: 0 }}>A monthly membership, coming with the membership.</p>
         </div>
 
         <p className="j-body" style={{ color: 'var(--muted)', marginBottom: 18 }}>
@@ -817,7 +817,7 @@ function LivingPage() {
 
         <div style={{ background: `${LIVING_GOLD}1F`, borderRadius: 16, padding: 16, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
           <Icon name="leaf" size={22} color={LIVING_GOLD_DEEP} style={{ flexShrink: 0, marginTop: 2 }} />
-          <p className="j-body" style={{ fontSize: 15, color: 'var(--body)' }}>
+          <p className="j-body" style={{ fontSize: 'calc(15px * var(--tscale, 1))', color: 'var(--body)' }}>
             We will let you know when it arrives. Your free tools and anything you have bought stay exactly as they are.
           </p>
         </div>
@@ -862,7 +862,7 @@ function UnlockScreen({ nav }) {
           const on = idx === i;
           return (
             <button key={t.label} onClick={() => goTo(i)} className="j-press" style={{ flex: 1, minHeight: 40, borderRadius: 999,
-              border: 'none', cursor: 'pointer', fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 14,
+              border: 'none', cursor: 'pointer', fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 'calc(14px * var(--tscale, 1))',
               background: on ? t.onBg : 'var(--tag-grey-bg)', color: on ? '#fff' : 'var(--muted)',
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
               {i === 2 && <Icon name="sparkle" size={14} color={on ? LIVING_GOLD : 'var(--faint)'} />}{t.label}
@@ -872,8 +872,9 @@ function UnlockScreen({ nav }) {
       </div>
 
       {/* horizontal swipe pager */}
-      <div ref={pagerRef} onScroll={onScroll} className="j-pager" style={{ flex: 1, minHeight: 0, display: 'flex',
-        overflowX: 'auto', overflowY: 'hidden', scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}>
+      <div ref={pagerRef} onScroll={onScroll} className="j-pager" {...pagerKeyProps(pagerRef, 'Jotla tiers')}
+        style={{ flex: 1, minHeight: 0, display: 'flex',
+        overflowX: 'auto', overflowY: 'hidden', scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch', outline: 'none' }}>
         <FreePage />
         <PlusPage />
         <LivingPage />
@@ -883,7 +884,9 @@ function UnlockScreen({ nav }) {
       <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '10px 20px calc(14px + env(safe-area-inset-bottom))', background: 'var(--fade-grad)' }}>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginBottom: 12 }}>
           {TABS.map((t, i) => (
-            <span key={i} style={{ width: idx === i ? 18 : 7, height: 7, borderRadius: 99, transition: 'all .2s ease',
+            <button key={i} aria-label={'Tier ' + (i + 1) + ' of ' + TABS.length + ': ' + t.label} aria-current={idx === i}
+              onClick={() => goTo(i)}
+              style={{ width: idx === i ? 18 : 7, height: 7, borderRadius: 99, transition: 'all .2s ease', border: 'none', padding: 0, cursor: 'pointer',
               background: idx === i ? t.dotOn : 'var(--chip-border)' }} />
           ))}
         </div>
@@ -901,7 +904,7 @@ function UnlockScreen({ nav }) {
             </button>
           : <button className="j-btn j-btn-lg" style={{ background: PLUS_GRAD, color: '#fff', boxShadow: '0 14px 28px -10px rgba(60,42,114,0.6)' }} onClick={() => setConfirmPlus(true)}>
               <Icon name="star" size={18} color={PLUS_ACCENT} /> Get Jotla Plus, {SALE.on ? SALE.price : '£39'}
-              {SALE.on && <span style={{ fontSize: 14, opacity: 0.6, textDecoration: 'line-through', marginLeft: 6 }}>{SALE.was}</span>}
+              {SALE.on && <span style={{ fontSize: 'calc(14px * var(--tscale, 1))', opacity: 0.6, textDecoration: 'line-through', marginLeft: 6 }}>{SALE.was}</span>}
             </button>)}
         {idx === 2 && (
           <button className="j-btn j-btn-lg" disabled style={{ background: 'var(--tag-grey-bg)', color: 'var(--muted)', cursor: 'default' }}>
@@ -1009,8 +1012,8 @@ function SettingsRow({ icon, title, sub, onClick, right, last }) {
       <span style={{ width: 38, height: 38, borderRadius: 11, background: 'var(--tint-blue)', flexShrink: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{icon}</span>
       <span style={{ flex: 1 }}>
-        <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 16, fontWeight: 500, color: 'var(--ink)' }}>{title}</span>
-        {sub && <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 13, color: 'var(--faint)', marginTop: 1 }}>{sub}</span>}
+        <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 'calc(16px * var(--tscale, 1))', fontWeight: 500, color: 'var(--ink)' }}>{title}</span>
+        {sub && <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 'calc(13px * var(--tscale, 1))', color: 'var(--faint)', marginTop: 1 }}>{sub}</span>}
       </span>
       {right || (onClick && <Icon name="chevronRight" size={18} color="var(--faint)" />)}
     </button>
@@ -1072,8 +1075,8 @@ function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
         <Icon name="heart" size={22} color="var(--green)" />
       </span>
       <span style={{ flex: 1 }}>
-        <span style={{ display: 'block', fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 17, color: 'var(--green-ink)' }}>Tell us what you think</span>
-        <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 13, color: 'var(--muted)', marginTop: 2 }}>This is an early test, and your feedback shapes it. Opens your email.</span>
+        <span style={{ display: 'block', fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(17px * var(--tscale, 1))', color: 'var(--green-ink)' }}>Tell us what you think</span>
+        <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 'calc(13px * var(--tscale, 1))', color: 'var(--muted)', marginTop: 2 }}>This is an early test, and your feedback shapes it. Opens your email.</span>
       </span>
       <Icon name="chevronRight" size={18} color="var(--green-ink)" />
     </button>
@@ -1089,8 +1092,8 @@ function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
           <Icon name="sparkle" size={22} color={LIVING_GOLD} />
         </span>
         <span style={{ flex: 1 }}>
-          <span style={{ display: 'block', fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 17, color: '#fff' }}>Patterns, filters and PDF pack</span>
-          <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 13, color: 'rgba(255,255,255,0.78)', marginTop: 2 }}>
+          <span style={{ display: 'block', fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(17px * var(--tscale, 1))', color: '#fff' }}>Patterns, filters and PDF pack</span>
+          <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 'calc(13px * var(--tscale, 1))', color: 'rgba(255,255,255,0.78)', marginTop: 2 }}>
             {nav.plus ? 'Active. Yours to keep.' : 'See what Plus adds. Pay once.'}</span>
         </span>
         {nav.plus
@@ -1170,8 +1173,8 @@ function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
             alignItems: 'center', gap: 14, cursor: 'pointer', textAlign: 'left', border: '1px solid var(--line)' }}>
             <ChildAvatar profile={profile} size={48} />
             <span style={{ flex: 1 }}>
-              <span style={{ display: 'block', fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 18, color: 'var(--ink)' }}>{childName}</span>
-              <span style={{ display: 'block', fontSize: 13.5, color: 'var(--faint)', marginTop: 1 }}>Edit name, school, colour and avatar</span>
+              <span style={{ display: 'block', fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(18px * var(--tscale, 1))', color: 'var(--ink)' }}>{childName}</span>
+              <span style={{ display: 'block', fontSize: 'calc(13.5px * var(--tscale, 1))', color: 'var(--faint)', marginTop: 1 }}>Edit name, school, colour and avatar</span>
             </span>
             <Icon name="chevronRight" size={18} color="var(--faint)" />
           </button>
@@ -1186,7 +1189,7 @@ function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 16px', borderBottom: '1px solid var(--line)' }}>
               <span aria-hidden="true" style={{ width: 8, height: 8, borderRadius: '50%', marginTop: 5, flexShrink: 0,
                 background: exportDue ? '#F39C12' : 'var(--green)' }} />
-              <span style={{ fontFamily: "'Outfit', system-ui", fontSize: 13.5, color: 'var(--muted)', lineHeight: 1.45 }}>
+              <span style={{ fontFamily: "'Outfit', system-ui", fontSize: 'calc(13.5px * var(--tscale, 1))', color: 'var(--muted)', lineHeight: 1.45 }}>
                 {backupHealthLine(backupMeta)}
                 {exportDue ? ' A copy every few weeks is good insurance.' : ''}
                 {recordBytes > BACKUP_SIZE_SOFT_CAP
@@ -1205,8 +1208,8 @@ function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
               <span style={{ width: 38, height: 38, borderRadius: 11, background: 'var(--tint-blue)', flexShrink: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="attach" size={20} color="var(--blue)" /></span>
               <span style={{ flex: 1 }}>
-                <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 16, fontWeight: 500, color: 'var(--ink)' }}>Restore from an export</span>
-                <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 13, color: 'var(--faint)', marginTop: 1 }}>Bring back a record from an exported file.</span>
+                <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 'calc(16px * var(--tscale, 1))', fontWeight: 500, color: 'var(--ink)' }}>Restore from an export</span>
+                <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 'calc(13px * var(--tscale, 1))', color: 'var(--faint)', marginTop: 1 }}>Bring back a record from an exported file.</span>
               </span>
               <Icon name="chevronRight" size={18} color="var(--faint)" />
               <input type="file" accept="application/json,.json" style={{ display: 'none' }} onChange={onImportFile} />
@@ -1222,10 +1225,34 @@ function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
               <span style={{ width: 38, height: 38, borderRadius: 11, background: 'var(--tint-blue)', flexShrink: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="moon" size={20} color="var(--blue)" /></span>
               <span style={{ flex: 1 }}>
-                <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 16, fontWeight: 500, color: 'var(--ink)' }}>Dark mode</span>
-                <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 13, color: 'var(--faint)', marginTop: 1 }}>Easier on the eyes at night.</span>
+                <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 'calc(16px * var(--tscale, 1))', fontWeight: 500, color: 'var(--ink)' }}>Dark mode</span>
+                <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 'calc(13px * var(--tscale, 1))', color: 'var(--faint)', marginTop: 1 }}>Easier on the eyes at night.</span>
               </span>
               <Toggle on={nav.dark} onChange={() => nav.toggleDark()} label="Dark mode" />
+            </div>
+            {/* Text size: the whole app scales from this one dial (--tscale). The three
+                sample "A"s stay fixed-size on purpose, so the choice reads even at Standard. */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderTop: '1px solid var(--line)' }}>
+              <span style={{ width: 38, height: 38, borderRadius: 11, background: 'var(--tint-blue)', flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 20, color: 'var(--blue)' }} aria-hidden="true">A</span>
+              <span style={{ flex: 1 }}>
+                <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 'calc(16px * var(--tscale, 1))', fontWeight: 500, color: 'var(--ink)' }}>Text size</span>
+                <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 'calc(13px * var(--tscale, 1))', color: 'var(--faint)', marginTop: 1 }}>Everything in the app follows it.</span>
+              </span>
+              <span role="radiogroup" aria-label="Text size" style={{ display: 'inline-flex', gap: 6 }}>
+                {[{ v: 1, label: 'Standard text', fs: 14 }, { v: 1.12, label: 'Large text', fs: 17 }, { v: 1.25, label: 'Extra large text', fs: 20 }].map(o => {
+                  const on = Math.abs((nav.tscale || 1) - o.v) < 0.01;
+                  return (
+                    <button key={o.v} role="radio" aria-checked={on} aria-label={o.label} onClick={() => nav.setTscale(o.v)}
+                      className="j-press" style={{ width: 40, height: 40, borderRadius: 12, cursor: 'pointer',
+                        border: on ? '1.5px solid var(--blue)' : '1.5px solid var(--chip-border)',
+                        background: on ? 'var(--tint-blue)' : 'var(--chip-bg)',
+                        color: on ? 'var(--blue)' : 'var(--muted)',
+                        fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: o.fs,
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>A</button>
+                  );
+                })}
+              </span>
             </div>
           </div>
 
@@ -1243,8 +1270,8 @@ function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
           {/* privacy reassurance: no account, local lock, plain trust copy */}
           <div style={{ background: 'var(--blue)', borderRadius: 18, padding: 20, marginBottom: 20, color: '#fff' }}>
             <Icon name="shield" size={26} color="#fff" style={{ marginBottom: 10 }} />
-            <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 19, margin: '0 0 6px' }}>No account. Nothing leaves the phone.</p>
-            <p style={{ fontSize: 15, lineHeight: 1.5, color: 'rgba(255,255,255,0.9)', margin: 0 }}>Jotla works without a login. Everything about your child stays on this device, behind your own lock. There is no cloud we can read, and we never receive or access your data.</p>
+            <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(19px * var(--tscale, 1))', margin: '0 0 6px' }}>No account. Nothing leaves the phone.</p>
+            <p style={{ fontSize: 'calc(15px * var(--tscale, 1))', lineHeight: 1.5, color: 'rgba(255,255,255,0.9)', margin: 0 }}>Jotla works without a login. Everything about your child stays on this device, behind your own lock. There is no cloud we can read, and we never receive or access your data.</p>
           </div>
 
           <SectionLabel>About</SectionLabel>

@@ -39,8 +39,8 @@ function HoldButton({ label, sublabel, onComplete, tone = 'cream' }) {
         userSelect: 'none', WebkitUserSelect: 'none', WebkitTouchCallout: 'none',
         boxShadow: tone === 'cream' ? '0 6px 18px -12px rgba(120,90,50,0.5)' : 'none' }}>
       <span style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${p * 100}%`, background: palette.fill, transition: 'none' }} />
-      <span style={{ position: 'relative', fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 17, color: palette.ink }}>{label}</span>
-      {sublabel && <span style={{ position: 'relative', fontSize: 12.5, color: palette.ink, opacity: 0.7 }}>{sublabel}</span>}
+      <span style={{ position: 'relative', fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(17px * var(--tscale, 1))', color: palette.ink }}>{label}</span>
+      {sublabel && <span style={{ position: 'relative', fontSize: 'calc(12.5px * var(--tscale, 1))', color: palette.ink, opacity: 0.7 }}>{sublabel}</span>}
     </button>
   );
 }
@@ -101,14 +101,14 @@ function ChildScreen({ nav, profile }) {
 
   // shared big-question header
   const Q = ({ children }) => (
-    <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 32, color: '#5a4326',
+    <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(32px * var(--tscale, 1))', color: '#5a4326',
       textAlign: 'center', margin: '0 0 28px', lineHeight: 1.1 }}>{children}</p>
   );
   // the one green pill button the whole journey runs on
   const PillBtn = ({ children, onClick }) => (
     <button onClick={onClick} className="j-press" style={{ minWidth: 220, minHeight: 62, borderRadius: 999, border: 'none',
       cursor: 'pointer', background: '#27AE60', color: '#fff', fontFamily: "'Cal Sans', system-ui", fontWeight: 500,
-      fontSize: 22, boxShadow: '0 14px 28px -12px rgba(39,174,96,0.6)', padding: '0 36px' }}>{children}</button>
+      fontSize: 'calc(22px * var(--tscale, 1))', boxShadow: '0 14px 28px -12px rgba(39,174,96,0.6)', padding: '0 36px' }}>{children}</button>
   );
   // where we are on the walk
   const Dots = () => (
@@ -136,8 +136,8 @@ function ChildScreen({ nav, profile }) {
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 22 }}>
                 <Face mood="happy" size={140} bg="#FFE6B8" />
               </div>
-              <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 36, color: '#5a4326', margin: '0 0 8px' }}>Hi {childName}</p>
-              <p style={{ fontSize: 20, color: '#8a6f4e', margin: '0 0 34px' }}>How was your day?</p>
+              <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(36px * var(--tscale, 1))', color: '#5a4326', margin: '0 0 8px' }}>Hi {childName}</p>
+              <p style={{ fontSize: 'calc(20px * var(--tscale, 1))', color: '#8a6f4e', margin: '0 0 34px' }}>How was your day?</p>
               <PillBtn onClick={() => { setIdx(0); setStep('scene'); }}>Start</PillBtn>
             </div>
           )}
@@ -151,8 +151,8 @@ function ChildScreen({ nav, profile }) {
                   <SceneIllo scene={scenes[idx].key} size={94} />
                 </span>
               </div>
-              <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 34, color: '#5a4326', margin: '0 0 8px' }}>{scenes[idx].label}</p>
-              <p style={{ fontSize: 19, color: '#8a6f4e', margin: '0 0 32px' }}>{SCENE_LINES[idx]}</p>
+              <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(34px * var(--tscale, 1))', color: '#5a4326', margin: '0 0 8px' }}>{scenes[idx].label}</p>
+              <p style={{ fontSize: 'calc(19px * var(--tscale, 1))', color: '#8a6f4e', margin: '0 0 32px' }}>{SCENE_LINES[idx]}</p>
               <PillBtn onClick={() => setStep('pick')}>Next</PillBtn>
             </div>
           )}
@@ -168,7 +168,7 @@ function ChildScreen({ nav, profile }) {
                     style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0,
                       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 9, width: '28%', minWidth: 94 }}>
                     <Face mood={em.key} size={88} />
-                    <span style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 19, color: '#5a4326' }}>{em.label}</span>
+                    <span style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(19px * var(--tscale, 1))', color: '#5a4326' }}>{em.label}</span>
                   </button>
                 ))}
               </div>
@@ -184,10 +184,10 @@ function ChildScreen({ nav, profile }) {
                   <Face mood={sel} size={150} bg="#FFE6B8" />
                 </span>
               </div>
-              <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 32, color: '#5a4326', margin: '0 0 8px', lineHeight: 1.1 }}>
+              <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(32px * var(--tscale, 1))', color: '#5a4326', margin: '0 0 8px', lineHeight: 1.1 }}>
                 {idx >= scenes.length - 1 ? "That's everything!" : idx === scenes.length - 2 ? 'Ready for the last one?' : 'Ready for the next one?'}
               </p>
-              <p style={{ fontSize: 18, color: '#8a6f4e', margin: '0 0 32px' }}>
+              <p style={{ fontSize: 'calc(18px * var(--tscale, 1))', color: '#8a6f4e', margin: '0 0 32px' }}>
                 {(J.CHILD_EMOTIONS.find(e => e.key === sel) || {}).label} in the {scenes[idx].label.toLowerCase()}.
               </p>
               <PillBtn onClick={confirmNext}>{idx >= scenes.length - 1 ? 'Finish' : 'Next'}</PillBtn>
@@ -208,8 +208,8 @@ function ChildScreen({ nav, profile }) {
                   <Icon name="check" size={24} color="#fff" stroke={2.6} />
                 </span>
               </div>
-              <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 34, color: '#5a4326', margin: '0 0 8px' }}>All done</p>
-              <p style={{ fontSize: 19, color: '#8a6f4e', margin: '0 0 40px' }}>Thank you, {childName}.</p>
+              <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(34px * var(--tscale, 1))', color: '#5a4326', margin: '0 0 8px' }}>All done</p>
+              <p style={{ fontSize: 'calc(19px * var(--tscale, 1))', color: '#8a6f4e', margin: '0 0 40px' }}>Thank you, {childName}.</p>
               <HoldButton label="Give the phone back" sublabel="Press and hold" onComplete={exit} />
             </div>
           )}
@@ -219,7 +219,7 @@ function ChildScreen({ nav, profile }) {
         {step !== 'done' && step !== 'intro' && (
           <div style={{ textAlign: 'center', paddingBottom: 22 }}>
             <button onClick={() => finishDone()} style={{ background: 'none', border: 'none', cursor: 'pointer',
-              fontFamily: "'Outfit', system-ui", fontSize: 15, color: '#b79a72', fontWeight: 500 }}>Skip</button>
+              fontFamily: "'Outfit', system-ui", fontSize: 'calc(15px * var(--tscale, 1))', color: '#b79a72', fontWeight: 500 }}>Skip</button>
           </div>
         )}
       </div>
@@ -272,7 +272,7 @@ function ChildExitPill({ onComplete }) {
         userSelect: 'none', WebkitUserSelect: 'none', WebkitTouchCallout: 'none',
         WebkitTapHighlightColor: 'transparent' }}>
       <span style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${p * 100}%`, background: 'rgba(244,201,93,0.4)' }} />
-      <span style={{ position: 'relative', fontFamily: "'Outfit', system-ui", fontSize: 12.5, fontWeight: 500, color: '#a98a5e', whiteSpace: 'nowrap' }}>Hold for grown-ups</span>
+      <span style={{ position: 'relative', fontFamily: "'Outfit', system-ui", fontSize: 'calc(12.5px * var(--tscale, 1))', fontWeight: 500, color: '#a98a5e', whiteSpace: 'nowrap' }}>Hold for grown-ups</span>
     </button>
   );
 }

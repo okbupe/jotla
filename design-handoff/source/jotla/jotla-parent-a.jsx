@@ -21,8 +21,8 @@ function ActionTile({ icon, title, sub, tint, ink, onClick }) {
         {icon}
       </span>
       <span>
-        <span style={{ display: 'block', fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 16, color: ink, lineHeight: 1.1 }}>{title}</span>
-        <span style={{ display: 'block', fontSize: 12.5, color: 'var(--muted)', marginTop: 2 }}>{sub}</span>
+        <span style={{ display: 'block', fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(16px * var(--tscale, 1))', color: ink, lineHeight: 1.1 }}>{title}</span>
+        <span style={{ display: 'block', fontSize: 'calc(12.5px * var(--tscale, 1))', color: 'var(--muted)', marginTop: 2 }}>{sub}</span>
       </span>
     </button>
   );
@@ -126,7 +126,7 @@ function MoodFacePicker({ value, onChange }) {
               transition: 'box-shadow .15s ease' }}>
               <Face mood={m.key} size={48} />
             </span>
-            <span style={{ fontSize: 12, fontWeight: 500, color: on ? 'var(--ink)' : 'var(--faint)' }}>{m.label}</span>
+            <span style={{ fontSize: 'calc(12px * var(--tscale, 1))', fontWeight: 500, color: on ? 'var(--ink)' : 'var(--faint)' }}>{m.label}</span>
           </button>
         );
       })}
@@ -135,7 +135,7 @@ function MoodFacePicker({ value, onChange }) {
 }
 
 function FieldLabel({ children }) {
-  return <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 16, color: 'var(--ink)', margin: '0 0 10px' }}>{children}</p>;
+  return <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(16px * var(--tscale, 1))', color: 'var(--ink)', margin: '0 0 10px' }}>{children}</p>;
 }
 
 // Take or attach photo, with a result tile
@@ -150,8 +150,8 @@ function PhotoPicker() {
           <Icon name="camera" size={22} color="var(--blue)" />
         </span>
         <span style={{ flex: 1 }}>
-          <span style={{ display: 'block', fontSize: 15, fontWeight: 500, color: 'var(--ink)' }}>Photo attached (sample)</span>
-          <span style={{ display: 'block', fontSize: 13, color: 'var(--faint)', marginTop: 1 }}>{photo === 'taken' ? 'Taken just now' : 'Chosen from your photos'}</span>
+          <span style={{ display: 'block', fontSize: 'calc(15px * var(--tscale, 1))', fontWeight: 500, color: 'var(--ink)' }}>Photo attached (sample)</span>
+          <span style={{ display: 'block', fontSize: 'calc(13px * var(--tscale, 1))', color: 'var(--faint)', marginTop: 1 }}>{photo === 'taken' ? 'Taken just now' : 'Chosen from your photos'}</span>
         </span>
         <button onClick={() => setPhoto(null)} aria-label="Remove photo" className="j-press" style={{ width: 36, height: 36, borderRadius: 10,
           border: 'none', background: 'var(--card)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -166,13 +166,13 @@ function PhotoPicker() {
         border: '1.5px dashed var(--chip-border)', background: 'var(--card)', display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center', gap: 7, color: 'var(--muted)' }}>
         <Icon name="camera" size={24} color="var(--blue)" />
-        <span style={{ fontSize: 14.5, fontWeight: 500 }}>Take photo</span>
+        <span style={{ fontSize: 'calc(14.5px * var(--tscale, 1))', fontWeight: 500 }}>Take photo</span>
       </button>
       <button onClick={() => setPhoto('attached')} className="j-press" style={{ flex: 1, minHeight: 84, borderRadius: 14, cursor: 'pointer',
         border: '1.5px dashed var(--chip-border)', background: 'var(--card)', display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center', gap: 7, color: 'var(--muted)' }}>
         <Icon name="download" size={24} color="var(--blue)" />
-        <span style={{ fontSize: 14.5, fontWeight: 500 }}>Attach image</span>
+        <span style={{ fontSize: 'calc(14.5px * var(--tscale, 1))', fontWeight: 500 }}>Attach image</span>
       </button>
     </div>
   );
@@ -214,7 +214,7 @@ function MediaPicker({ value = null, onChange = () => {} }) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 13px', background: 'var(--card)' }}>
           <Icon name={isVideo ? 'video' : 'camera'} size={17} color="var(--blue)" />
-          <span style={{ fontSize: 13.5, color: 'var(--faint)' }}>{sourceLabel}</span>
+          <span style={{ fontSize: 'calc(13.5px * var(--tscale, 1))', color: 'var(--faint)' }}>{sourceLabel}</span>
         </div>
       </div>
     );
@@ -225,8 +225,8 @@ function MediaPicker({ value = null, onChange = () => {} }) {
       border: '1.5px dashed var(--chip-border)', background: 'var(--card)', display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center', gap: 7, color: 'var(--muted)' }}>
       <Icon name={icon} size={24} color="var(--blue)" />
-      <span style={{ fontSize: 14.5, fontWeight: 500 }}>{label}</span>
-      <span style={{ fontSize: 12, color: 'var(--faint)' }}>{sub}</span>
+      <span style={{ fontSize: 'calc(14.5px * var(--tscale, 1))', fontWeight: 500 }}>{label}</span>
+      <span style={{ fontSize: 'calc(12px * var(--tscale, 1))', color: 'var(--faint)' }}>{sub}</span>
       <input type="file" accept="image/*,video/*" {...(capture ? { capture: 'environment' } : {})} style={{ display: 'none' }}
         onChange={e => onFile(e, capture ? 'capture' : 'attach')} />
     </label>
@@ -279,7 +279,7 @@ function QuickLogScreen({ nav, today }) {
             </div>
             {dayMode === 'custom' && (
               <input type="date" className="j-input" min="2019-09-01" max={today} value={customDate}
-                onChange={e => setCustomDate(e.target.value)} style={{ marginTop: 12, fontSize: 15, colorScheme: 'light dark', padding: '11px 12px' }} />
+                onChange={e => setCustomDate(e.target.value)} style={{ marginTop: 12, fontSize: 'calc(15px * var(--tscale, 1))', colorScheme: 'light dark', padding: '11px 12px' }} />
             )}
             <p className="j-sm" style={{ marginTop: 8, color: 'var(--faint)' }}>Saving to <span className="j-strong" style={{ color: 'var(--muted)' }}>{J.fmtLong(logDate)}</span></p>
           </div>
@@ -325,12 +325,12 @@ function Stepper({ value, onChange, unit = 'mins' }) {
   );
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-      {btn(<span style={{ fontSize: 26, fontWeight: 400, lineHeight: 1 }}>-</span>, dec)}
+      {btn(<span style={{ fontSize: 'calc(26px * var(--tscale, 1))', fontWeight: 400, lineHeight: 1 }}>-</span>, dec)}
       <div style={{ minWidth: 96, textAlign: 'center' }}>
-        <span style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 26, color: 'var(--ink)' }}>{value}</span>
-        <span style={{ fontSize: 15, color: 'var(--faint)', marginLeft: 6 }}>{unit}</span>
+        <span style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(26px * var(--tscale, 1))', color: 'var(--ink)' }}>{value}</span>
+        <span style={{ fontSize: 'calc(15px * var(--tscale, 1))', color: 'var(--faint)', marginLeft: 6 }}>{unit}</span>
       </div>
-      {btn(<span style={{ fontSize: 24, fontWeight: 400, lineHeight: 1 }}>+</span>, inc)}
+      {btn(<span style={{ fontSize: 'calc(24px * var(--tscale, 1))', fontWeight: 400, lineHeight: 1 }}>+</span>, inc)}
     </div>
   );
 }
@@ -339,10 +339,10 @@ function PhaseField({ label, hint, value, onChange }) {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
-        <span style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 15, color: 'var(--blue)' }}>{hint}</span>
-        <span style={{ fontSize: 12.5, color: 'var(--faint)' }}>{label}</span>
+        <span style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(15px * var(--tscale, 1))', color: 'var(--blue)' }}>{hint}</span>
+        <span style={{ fontSize: 'calc(12.5px * var(--tscale, 1))', color: 'var(--faint)' }}>{label}</span>
       </div>
-      <textarea className="j-input" style={{ fontSize: 15.5 }} value={value} onChange={e => onChange(e.target.value)} rows={2}
+      <textarea className="j-input" style={{ fontSize: 'calc(15.5px * var(--tscale, 1))' }} value={value} onChange={e => onChange(e.target.value)} rows={2}
         placeholder="Type a few words, or tap chips below." />
     </div>
   );
@@ -405,7 +405,7 @@ function HandoverScreen({ nav, today, profile }) {
               </div>
               <button onClick={() => nav.go('tips')} className="j-press" style={{ border: 'none', cursor: 'pointer', flexShrink: 0,
                 display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 15px', borderRadius: 999, marginTop: 2,
-                background: '#6E54D6', color: '#fff', fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 14,
+                background: '#6E54D6', color: '#fff', fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 'calc(14px * var(--tscale, 1))',
                 boxShadow: '0 8px 18px -8px rgba(110,84,214,0.7)' }}>
                 <Icon name="star" size={16} color="#fff" /> TIPS</button>
             </div>
@@ -413,8 +413,8 @@ function HandoverScreen({ nav, today, profile }) {
               {GATE_QUESTIONS(childName).map((q, i) => (
                 <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                   <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--card)', color: 'var(--blue)',
-                    fontSize: 12, fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>{i + 1}</span>
-                  <p style={{ flex: 1, minWidth: 0, margin: 0, fontSize: 15.5, color: 'var(--ink)', fontWeight: 400, lineHeight: 1.4 }}>{q}</p>
+                    fontSize: 'calc(12px * var(--tscale, 1))', fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>{i + 1}</span>
+                  <p style={{ flex: 1, minWidth: 0, margin: 0, fontSize: 'calc(15.5px * var(--tscale, 1))', color: 'var(--ink)', fontWeight: 400, lineHeight: 1.4 }}>{q}</p>
                 </div>
               ))}
             </div>
@@ -454,14 +454,14 @@ function HandoverScreen({ nav, today, profile }) {
 
           {/* duration */}
           <div>
-            <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 15, color: 'var(--blue)', margin: '0 0 10px' }}>How long did it last?</p>
+            <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(15px * var(--tscale, 1))', color: 'var(--blue)', margin: '0 0 10px' }}>How long did it last?</p>
             <Stepper value={duration} onChange={setDuration} />
           </div>
 
           {/* what helped */}
           <div>
-            <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 15, color: 'var(--blue)', margin: '0 0 10px' }}>What helped them settle?</p>
-            <textarea className="j-input" style={{ fontSize: 15.5 }} value={helped} onChange={e => setHelped(e.target.value)} rows={2}
+            <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(15px * var(--tscale, 1))', color: 'var(--blue)', margin: '0 0 10px' }}>What helped them settle?</p>
+            <textarea className="j-input" style={{ fontSize: 'calc(15.5px * var(--tscale, 1))' }} value={helped} onChange={e => setHelped(e.target.value)} rows={2}
               placeholder="The thing that worked, however small." />
           </div>
 
@@ -498,7 +498,7 @@ function HandoverScreen({ nav, today, profile }) {
               Want to drop the teacher a quick line? It helps to have the same picture at home and school.
             </p>
             <textarea className="j-input" value={draft} onChange={e => setDraft(e.target.value)} rows={6}
-              style={{ fontSize: 15, lineHeight: 1.5, marginBottom: 10 }} />
+              style={{ fontSize: 'calc(15px * var(--tscale, 1))', lineHeight: 1.5, marginBottom: 10 }} />
             <p className="j-meta" style={{ marginBottom: 16 }}>Nothing is sent for you. This just opens your own email with the words ready, so you can change them or not send at all.</p>
             <button className="j-btn j-btn-primary" onClick={() => {
               window.location.assign('mailto:?subject=' + encodeURIComponent('About ' + childName + ' today') + '&body=' + encodeURIComponent(draft));
@@ -580,19 +580,19 @@ function GateIntroScreen({ nav, profile }) {
 // A calm, swipeable deck rather than a wall of text. Widely accepted co-regulation
 // practice in plain language; never medical advice, and it says so.
 const DYSREG_TIPS = [
-  { icon: 'heart', tint: 'var(--tint-green)', ink: 'var(--green)', title: 'Start with you',
+  { illo: 'tipCalm', icon: 'heart', tint: 'var(--tint-green)', ink: 'var(--green)', title: 'Start with you',
     body: 'Your calm is the tool. Take one slow breath before any words. A dysregulated child borrows their calm from the nearest steady adult; that is co-regulation, and you are the anchor.',
     say: '"I\'m here. You\'re safe."' },
-  { icon: 'hand', tint: 'var(--tint-blue)', ink: 'var(--blue)', title: 'Fewer words, softer everything',
+  { illo: 'tipSoft', icon: 'hand', tint: 'var(--tint-blue)', ink: 'var(--blue)', title: 'Fewer words, softer everything',
     body: 'Keep it short and simple. Lower your voice, come down to their level, stand slightly side-on rather than face-on. No questions yet: in the storm the thinking part of the brain is offline, so reasoning cannot land.' },
-  { icon: 'close', tint: 'rgba(216,72,72,0.12)', ink: '#C0392B', title: 'What makes it worse',
+  { illo: 'tipAvoid', icon: 'close', tint: 'rgba(216,72,72,0.12)', ink: '#C0392B', title: 'What makes it worse',
     body: 'Asking why. Threatening consequences. Crowding, holding or blocking the way unless safety truly demands it. Taking what is said in the storm personally. Dysregulation is not naughtiness, and mid-storm is never the teaching moment.' },
-  { icon: 'leaf', tint: 'var(--tint-amber)', ink: 'var(--amber)', title: 'Give it room to pass',
+  { illo: 'tipRoom', icon: 'leaf', tint: 'var(--tint-amber)', ink: 'var(--amber)', title: 'Give it room to pass',
     body: 'Less noise, less light, less audience, if you can manage it. One steady presence beats a crowd. A storm passes faster when nothing feeds it.' },
-  { icon: 'heart', tint: 'var(--tint-green)', ink: 'var(--green)', title: 'Afterwards, reconnect first',
+  { illo: 'tipReconnect', icon: 'heart', tint: 'var(--tint-green)', ink: 'var(--green)', title: 'Afterwards, reconnect first',
     body: 'Repair before review. Let them know the storm did not change anything between you. Save the talking-through for later, once everyone is truly calm, and keep it free of blame.',
     say: '"That was hard. We\'re okay."' },
-  { icon: 'note', tint: 'var(--tint-blue)', ink: 'var(--blue)', title: 'Then write it down',
+  { illo: 'tipWrite', icon: 'note', tint: 'var(--tint-blue)', ink: 'var(--blue)', title: 'Then write it down',
     body: 'Once things are settled, open a gate note. It asks you the right questions in the right order while everything is still fresh. Hours later is fine; the record keeps its timing honest.', cta: true },
 ];
 
@@ -607,22 +607,26 @@ function DysregTipsScreen({ nav }) {
   return (
     <div className="j-screen">
       <PushHeader title="Tips" subtitle="How to be, when it is happening" onClose={() => nav.back()} />
-      <div ref={pagerRef} onScroll={onScroll} className="j-pager j-fade" style={{ flex: 1, minHeight: 0, display: 'flex',
-        overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch' }}>
+      <div ref={pagerRef} onScroll={onScroll} className="j-pager j-fade" {...pagerKeyProps(pagerRef, 'Tips')}
+        style={{ flex: 1, minHeight: 0, display: 'flex',
+        overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch', outline: 'none' }}>
         {DYSREG_TIPS.map((t, i) => (
           <div key={i} style={{ flex: '0 0 100%', width: '100%', height: '100%', scrollSnapAlign: 'start', overflowY: 'auto' }}>
-            <div className="j-pad" style={{ paddingTop: 26, paddingBottom: 140, display: 'flex', flexDirection: 'column',
+            <div className="j-pad" style={{ paddingTop: 18, paddingBottom: 140, display: 'flex', flexDirection: 'column',
               alignItems: 'center', textAlign: 'center' }}>
-              <span style={{ width: 76, height: 76, borderRadius: 24, background: t.tint, display: 'flex',
-                alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
-                <Icon name={t.icon} size={36} color={t.ink} />
-              </span>
+              {/* brand-style scene illustration (build 1.8.0); the old icon square is the fallback */}
+              {t.illo
+                ? <span style={{ marginBottom: 12 }}><StoryIllo scene={t.illo} width={210} /></span>
+                : <span style={{ width: 76, height: 76, borderRadius: 24, background: t.tint, display: 'flex',
+                    alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
+                    <Icon name={t.icon} size={36} color={t.ink} />
+                  </span>}
               <p className="j-eyebrow" style={{ marginBottom: 6 }}>{i + 1} of {DYSREG_TIPS.length}</p>
               <h1 className="j-h1" style={{ marginBottom: 12 }}>{t.title}</h1>
-              <p className="j-body" style={{ color: 'var(--muted)', fontSize: 16.5, lineHeight: 1.55, maxWidth: 330 }}>{t.body}</p>
+              <p className="j-body" style={{ color: 'var(--muted)', fontSize: 'calc(16.5px * var(--tscale, 1))', lineHeight: 1.55, maxWidth: 330 }}>{t.body}</p>
               {t.say && (
                 <span style={{ marginTop: 18, padding: '10px 18px', borderRadius: 999, background: t.tint, color: t.ink,
-                  fontSize: 15.5, fontWeight: 500 }}>{t.say}</span>
+                  fontSize: 'calc(15.5px * var(--tscale, 1))', fontWeight: 500 }}>{t.say}</span>
               )}
               {t.cta && (
                 <button className="j-btn j-btn-primary" style={{ marginTop: 22 }} onClick={() => nav.go('handover')}>
@@ -637,7 +641,9 @@ function DysregTipsScreen({ nav }) {
         padding: '10px 20px calc(14px + env(safe-area-inset-bottom))', background: 'var(--fade-grad)' }}>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginBottom: 8 }}>
           {DYSREG_TIPS.map((t, i) => (
-            <span key={i} style={{ width: idx === i ? 18 : 7, height: 7, borderRadius: 99, transition: 'all .2s ease',
+            <button key={i} aria-label={'Tip ' + (i + 1) + ' of ' + DYSREG_TIPS.length + ': ' + t.title} aria-current={idx === i}
+              onClick={() => { const el = pagerRef.current; if (el) el.scrollTo({ left: i * el.clientWidth, behavior: 'smooth' }); }}
+              style={{ width: idx === i ? 18 : 7, height: 7, borderRadius: 99, transition: 'all .2s ease', border: 'none', padding: 0, cursor: 'pointer',
               background: idx === i ? 'var(--blue)' : 'var(--chip-border)' }} />
           ))}
         </div>

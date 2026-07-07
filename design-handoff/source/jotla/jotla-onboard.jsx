@@ -34,12 +34,12 @@ function AddChildScreen({ nav }) {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, marginBottom: 18 }}>
             <ChildAvatar profile={preview} size={88} />
             <div style={{ textAlign: 'center' }}>
-              <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 22, color: 'var(--ink)', margin: 0 }}>{preview.name}</p>
+              <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(22px * var(--tscale, 1))', color: 'var(--ink)', margin: 0 }}>{preview.name}</p>
               <p className="j-sm" style={{ marginTop: 2 }}>{[year.trim(), school.trim()].filter(Boolean).join(' · ') || 'Their details, in a moment'}</p>
             </div>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
               <label className="j-press" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '9px 14px', borderRadius: 12,
-                cursor: 'pointer', background: 'var(--tint-blue)', color: 'var(--blue)', fontSize: 14, fontWeight: 500 }}>
+                cursor: 'pointer', background: 'var(--tint-blue)', color: 'var(--blue)', fontSize: 'calc(14px * var(--tscale, 1))', fontWeight: 500 }}>
                 <Icon name="camera" size={17} color="var(--blue)" /> {photo ? 'Change photo' : 'Upload a photo'}
                 <input type="file" accept="image/*" style={{ display: 'none' }}
                   onChange={e => { const f = e.target.files && e.target.files[0]; if (f) window.fileToDataURL(f, url => setCropSrc(url)); e.target.value = ''; }} />
@@ -47,14 +47,14 @@ function AddChildScreen({ nav }) {
               {photo && (
                 <button className="j-press" onClick={() => setPhoto(null)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7,
                   padding: '9px 14px', borderRadius: 12, cursor: 'pointer', background: 'var(--card)', border: '1px solid var(--chip-border)',
-                  color: 'var(--muted)', fontSize: 14, fontWeight: 500 }}>
+                  color: 'var(--muted)', fontSize: 'calc(14px * var(--tscale, 1))', fontWeight: 500 }}>
                   <Icon name="close" size={16} color="var(--muted)" /> Remove
                 </button>
               )}
             </div>
           </div>
 
-          <p className="j-body" style={{ color: 'var(--muted)', marginBottom: 22, textAlign: 'center', fontSize: 15.5 }}>
+          <p className="j-body" style={{ color: 'var(--muted)', marginBottom: 22, textAlign: 'center', fontSize: 'calc(15.5px * var(--tscale, 1))' }}>
             Each child keeps their own private record on this phone. Nothing is shared, and you can switch between children any time from the avatar at the top.
           </p>
 
@@ -112,28 +112,28 @@ function AddChildScreen({ nav }) {
 // learn the whole app in a minute.
 const TOUR_STEPS = (name) => [
   { tint: 'var(--tint-blue)',  color: 'var(--blue)',  icon: 'heart',
-    title: 'Welcome to Jotla',
+    illo: 'tourWelcome', title: 'Welcome to Jotla',
     body: `This is ${name}'s record, and right now it is completely blank. That is exactly how it should start. You will fill it one ordinary day at a time.` },
   { tint: 'var(--tint-blue)',  color: 'var(--blue)',  icon: 'today',
-    title: 'Today is home',
+    illo: 'tourToday', title: 'Today is home',
     body: 'The Today screen is where you land. It shows how the day is going and gives you two calm shortcuts: hand the phone to your child, or capture what happened at the gate.' },
   { tint: 'var(--tint-green)', color: 'var(--green)', icon: 'plus',
-    title: 'A line is plenty',
+    illo: 'tourLog', title: 'A line is plenty',
     body: 'Tap the round plus button any time to log a moment. Where, when, what kind, how it felt. It takes under thirty seconds, and one line is enough.' },
   { tint: 'var(--tint-blue)',  color: 'var(--blue)',  icon: 'note',
-    title: 'At the gate',
+    illo: 'tourGate', title: 'At the gate',
     body: 'On a hard day, Jotla helps you ask the right things while you are still standing there. Five gentle questions, tapped answers, put in order: what led up to it, what happened, what helped.' },
   { tint: 'var(--tint-green)', color: 'var(--green)', icon: 'heart', face: true,
-    title: 'Their day, in their words',
+    illo: 'tourChild', title: 'Their day, in their words',
     body: `Tap "Your day" to hand the phone to ${name}. Friendly faces and simple scenes let them show how school felt, with no typing.` },
   { tint: 'var(--tint-blue)',  color: 'var(--blue)',  icon: 'calendar',
-    title: 'See the shape of it',
+    illo: 'tourPattern', title: 'See the shape of it',
     body: 'Over time, Month and Find turn single days into a picture. The hard moments gather, the patterns show, and you can pull the exact entries that prove a point.' },
   { tint: 'var(--tint-blue)',  color: 'var(--blue)',  icon: 'shield',
-    title: 'Private by default',
+    illo: 'tourPrivate', title: 'Private by default',
     body: 'No account, and nothing leaves this phone. Documents, letters and reports live in one place, and your record stays yours, always.' },
   { tint: 'var(--tint-green)', color: 'var(--green)', icon: 'check',
-    title: 'You are ready',
+    illo: 'tourReady', title: 'You are ready',
     body: `That is the whole app. Start whenever you like with a single line about ${name}'s day.` },
 ];
 
@@ -150,21 +150,26 @@ function TourScreen({ nav, profile }) {
     <div className="j-screen" style={{ background: 'var(--bg)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px 4px' }}>
         <span className="j-eyebrow">Tour · {i + 1} of {steps.length}</span>
-        <button onClick={() => nav.home()} className="j-press" style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--faint)', fontSize: 14.5, fontWeight: 500, padding: 4 }}>Skip</button>
+        <button onClick={() => nav.home()} className="j-press" style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--faint)', fontSize: 'calc(14.5px * var(--tscale, 1))', fontWeight: 500, padding: 4 }}>Skip</button>
       </div>
 
       <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '0 28px' }}>
-        <div style={{ width: 134, height: 134, borderRadius: '50%', background: step.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 30 }}>
-          {step.face ? <Face mood="good" size={92} /> : <Icon name={step.icon} size={58} color={step.color} stroke={1.9} />}
-        </div>
+        {/* brand-style scene illustration (build 1.8.0); icon disc kept as the fallback */}
+        {step.illo
+          ? <span style={{ marginBottom: 22 }}><StoryIllo scene={step.illo} width={228} /></span>
+          : <div style={{ width: 134, height: 134, borderRadius: '50%', background: step.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 30 }}>
+              {step.face ? <Face mood="good" size={92} /> : <Icon name={step.icon} size={58} color={step.color} stroke={1.9} />}
+            </div>}
         <h1 className="j-h1" style={{ marginBottom: 12, maxWidth: 320 }}>{step.title}</h1>
-        <p className="j-body" style={{ color: 'var(--muted)', fontSize: 16.5, lineHeight: 1.5, maxWidth: 332 }}>{step.body}</p>
+        <p className="j-body" style={{ color: 'var(--muted)', fontSize: 'calc(16.5px * var(--tscale, 1))', lineHeight: 1.5, maxWidth: 332 }}>{step.body}</p>
       </div>
 
       <div style={{ padding: '12px 20px calc(18px + env(safe-area-inset-bottom))' }}>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginBottom: 16 }}>
-          {steps.map((_, k) => (
-            <span key={k} style={{ width: k === i ? 18 : 7, height: 7, borderRadius: 99, transition: 'all .2s ease', background: k === i ? 'var(--blue)' : 'var(--chip-border)' }} />
+          {steps.map((s2, k) => (
+            <button key={k} aria-label={'Step ' + (k + 1) + ' of ' + steps.length + ': ' + s2.title} aria-current={k === i}
+              onClick={() => setI(k)}
+              style={{ width: k === i ? 18 : 7, height: 7, borderRadius: 99, transition: 'all .2s ease', border: 'none', padding: 0, cursor: 'pointer', background: k === i ? 'var(--blue)' : 'var(--chip-border)' }} />
           ))}
         </div>
         <div style={{ display: 'flex', gap: 12 }}>
