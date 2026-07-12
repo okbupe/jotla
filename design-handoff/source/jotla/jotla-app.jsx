@@ -510,6 +510,16 @@ function App({ appMode }) {
       const prior = { on: J.TODAY_ISO, title: d.title, type: d.type, from: d.from, received: d.received, about: d.about, action: d.action };
       return { ...d, ...patch, editedOn: J.TODAY_ISO, history: [...(d.history || []), prior] };
     })),
+    // The document itself (12 Jul 2026): attachments ride the doc row. Adding
+    // and removing are their own operations, never the edit-history path, so
+    // a file coming on or off can never rewrite what the details said.
+    // '__scan' removes the older single-photo field earlier builds kept.
+    addDocMedia: (id, items) => setDocs(ds => ds.map(d => d.id === id ? { ...d, media: [...(d.media || []), ...items] } : d)),
+    removeDocMedia: (id, mediaId) => setDocs(ds => ds.map(d => {
+      if (d.id !== id) return d;
+      if (mediaId === '__scan') { const n = { ...d }; delete n.scan; return n; }
+      return { ...d, media: (d.media || []).filter(m => m.id !== mediaId) };
+    })),
     importBackup: (payload) => {
       try {
         if (!payload || payload.app !== 'Jotla' || !payload.child || !payload.child.id) { alert('That file does not look like a Jotla export.'); return; }

@@ -386,6 +386,10 @@ To run the reference: open `source/jotla/Jotla.html` in a browser.
 
 ---
 
+## Build 1.9.1 (12 July 2026): vault document upload parity
+
+Vault document upload parity with the native Round 7 build (the sync-law top-up): the vault can keep the document itself as part of Plus (capture, attach, or pick a file such as a PDF, on Add and Edit; the honest locked card on Free; viewing and removing never gate), with the mechanical title/date prefill from the picked file's own name and date (a typed value always wins, no content reading), paperclip counts on document rows, tap-to-open kept files, and the info pages saying the web truth: photos and kept files live in browser storage and travel inside the export, videos are never copied, and a file over 2 MB is refused kindly at pick time.
+
 ## Build 1.9.0 (12 July 2026): 12 Jul native parity
 
 The catch-up port under the standing sync law (12 Jul 2026: the native app and this web version must never diverge). Everything the native device-feedback rounds shipped on 12 July now lives here too, adapted only where the web's own reality differs.

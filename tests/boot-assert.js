@@ -97,7 +97,7 @@ function ok(name, cond) {
   ok('saved Wins entry appears on Today', (await page.locator('#root').innerText()).includes('Boot-assert win: tried a new food'));
   await page.getByText('Settings', { exact: true }).last().click();
   await page.waitForTimeout(450);
-  ok('footer shows the bumped build', (await page.locator('#root').innerText()).includes('Test build 1.9.0'));
+  ok('footer shows the bumped build', (await page.locator('#root').innerText()).includes('Test build 1.9.1'));
   await ctx.close();
 
   // ---- 6. app boundary: poisoned storage never blanks the app ----
@@ -237,7 +237,7 @@ function ok(name, cond) {
   await page4.getByText('About Jotla', { exact: true }).first().click();
   await page4.waitForTimeout(500);
   const aboutText = await page4.locator('#root').innerText();
-  ok('About carries the live build number', aboutText.includes('Early test build 1.9.0'));
+  ok('About carries the live build number', aboutText.includes('Early test build 1.9.1'));
   ok('About drops the fonts credit line', !aboutText.includes('Typefaces'));
   ok('no uncaught page errors across suite 8', errors4.length === 0);
   await ctx4.close();
@@ -302,6 +302,84 @@ function ok(name, cond) {
   ok('question chips are tappable words', qCards.includes('Teachers') && qCards.includes('Friends'));
   ok('no uncaught page errors across suite 9', errors5.length === 0);
   await ctx5.close();
+
+  // ---- 10. build 1.9.1: the vault can keep the document itself (Plus) ----
+  console.log('Suite 10: vault document upload (1.9.1)');
+  // free tier: adding the document itself is honestly locked; nothing else changes
+  const ctx6 = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  const page6 = await ctx6.newPage();
+  const errors6 = [];
+  page6.on('pageerror', e => errors6.push(String(e)));
+  await page6.goto(URL_APP, { waitUntil: 'networkidle' });
+  await page6.waitForTimeout(1200);
+  await page6.locator('button[aria-label="Documents"]').click();
+  await page6.waitForTimeout(500);
+  await page6.getByText('Documents', { exact: true }).first().click();
+  await page6.waitForTimeout(400);
+  await page6.getByText('Add document').first().click();
+  await page6.waitForTimeout(500);
+  const addFree = await page6.locator('#root').innerText();
+  ok('free Add document shows the locked vault-upload card', addFree.includes('Add the document itself') && addFree.includes('Keep the letter with its details. Part of Plus.'));
+  ok('free Add document has no live upload tiles', !addFree.includes('Pick a file'));
+  await ctx6.close();
+
+  // Plus tier: live tiles, a real file pick, the mechanical prefill, the
+  // paperclip count and the honest open row
+  const ctx7 = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  const page7 = await ctx7.newPage();
+  const errors7 = [];
+  page7.on('pageerror', e => errors7.push(String(e)));
+  await page7.addInitScript(() => {
+    try {
+      localStorage.setItem('jotla_prefs_v2', JSON.stringify({
+        dark: false, tscale: 1, profileId: 'sam', plus: true, childCfg: {}, customProfiles: [], deletedIds: [],
+      }));
+    } catch (e) {}
+  });
+  await page7.goto(URL_APP, { waitUntil: 'networkidle' });
+  await page7.waitForTimeout(1200);
+  await page7.locator('button[aria-label="Documents"]').click();
+  await page7.waitForTimeout(500);
+  await page7.getByText('Documents', { exact: true }).first().click();
+  await page7.waitForTimeout(400);
+  await page7.getByText('Add document').first().click();
+  await page7.waitForTimeout(500);
+  const addPlus = await page7.locator('#root').innerText();
+  ok('Plus Add document offers the live upload tiles', addPlus.includes('Capture') && addPlus.includes('Pick a file'));
+  ok('Plus Add document never shows the locked card', !addPlus.includes('Part of Plus.'));
+
+  // a real file pick with a real past modified date drives the mechanical prefill
+  await page7.evaluate(() => {
+    const input = Array.from(document.querySelectorAll('input[type="file"]')).find(i => (i.accept || '').includes('application/pdf'));
+    const f = new File([new Uint8Array([37, 80, 68, 70, 10])], 'EHC-plan-draft.v2.pdf', { type: 'application/pdf', lastModified: Date.now() - 40 * 86400000 });
+    const dt = new DataTransfer(); dt.items.add(f);
+    input.files = dt.files;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  await page7.waitForTimeout(600);
+  const titleVal = await page7.locator('input[placeholder^="Give it a name"]').inputValue();
+  ok('title prefills mechanically from the file name (' + titleVal + ')', titleVal === 'EHC plan draft v2');
+  const addPicked = await page7.locator('#root').innerText();
+  ok('title prefill carries its honesty hint', addPicked.includes('Filled from the file name. Check it matches the letter.'));
+  ok("date prefills from the file's own past date, with its hint", addPicked.includes("Filled from the file's own date. Check it matches the letter."));
+  ok('the pending file tile shows the original filename', addPicked.includes('EHC-plan-draft.v2.pdf'));
+
+  // the parent's own typing always wins and retires the hint
+  await page7.locator('input[placeholder^="Give it a name"]').fill('Draft EHC plan, our copy');
+  await page7.waitForTimeout(250);
+  ok('typing retires the title hint', !(await page7.locator('#root').innerText()).includes('Filled from the file name'));
+
+  await page7.getByText('Save document').click();
+  await page7.waitForTimeout(700);
+  const listText = await page7.locator('#root').innerText();
+  ok('the saved doc lands back on the Documents list', listText.includes('Draft EHC plan, our copy'));
+  ok('the doc row carries the paperclip count', (await page7.locator('[aria-label="1 attached"]').count()) >= 1);
+  await page7.getByText('Draft EHC plan, our copy').first().click();
+  await page7.waitForTimeout(500);
+  const docText = await page7.locator('#root').innerText();
+  ok('the document page shows the kept file with a live open row', docText.includes('EHC-plan-draft.v2.pdf') && docText.includes('Tap to open'));
+  ok('no uncaught page errors across suite 10', errors6.length === 0 && errors7.length === 0);
+  await ctx7.close();
 
   await browser.close();
   server.kill();

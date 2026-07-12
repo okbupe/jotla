@@ -249,12 +249,22 @@ function openPrintPack(childLabel, rangeLabel, list) {
   return true;
 }
 
-// A document log card (file layout)
+// How many things ride a document row: the media attachments plus the older
+// single "scan" photo earlier builds kept (still honoured, never migrated away
+// silently).
+function docAttachedCount(doc) {
+  return (doc.media ? doc.media.length : 0) + (doc.scan ? 1 : 0);
+}
+
+// A document log card (file layout). When the document itself is kept (12 Jul
+// 2026), a small paperclip count rides the meta row, so the parent can see
+// which letters carry their file at a glance.
 function DocCard({
   doc,
   onClick
 }) {
   const J = window.JOTLA;
+  const attached = docAttachedCount(doc);
   return /*#__PURE__*/React.createElement("div", {
     className: "j-card j-press",
     onClick: onClick,
@@ -299,7 +309,20 @@ function DocCard({
     style: {
       whiteSpace: 'nowrap'
     }
-  }, J.fmtShort(doc.received), " ", doc.received.slice(0, 4))), /*#__PURE__*/React.createElement("p", {
+  }, J.fmtShort(doc.received), " ", doc.received.slice(0, 4)), attached > 0 && /*#__PURE__*/React.createElement("span", {
+    "aria-label": attached + ' attached',
+    style: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 3
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "attach",
+    size: 13,
+    color: "var(--faint)"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "j-meta"
+  }, attached))), /*#__PURE__*/React.createElement("p", {
     className: "j-strong",
     style: {
       fontSize: 'calc(16px * var(--tscale, 1))',
@@ -670,13 +693,513 @@ function EvidenceScreen({
   }, "Done"))));
 }
 
+// ---------------- The document itself (12 Jul 2026, native Round 7 parity) ----------------
+// The vault can keep the letter with its details, as part of Plus: capture a
+// photo or video, attach from photos, or pick a file such as a PDF. Free sees
+// the honest locked card in the same spot; viewing and removing saved files
+// never gate. This build follows the web's own storage reality: photos are
+// downscaled and kept inside the record, and picked files are kept inside the
+// record too (so both travel inside Export my data); videos are never copied,
+// exactly like the note picker, so the record keeps an honest note of them.
+
+// The mechanical prefill (the native build's doc-prefill rules, mirrored
+// exactly). The ONLY sources are the picked file's own name and its own
+// modified date: nothing is read from the file's content (true auto-populate
+// stays the future Jotla AI tier), and a value the parent has set is never
+// overwritten.
+const DOC_EXT_RE = /\.[A-Za-z0-9]{1,5}$/; // one trailing dot + 1-5 alphanumerics
+function titleFromFilename(name) {
+  const base = String(name || '').replace(DOC_EXT_RE, '');
+  const words = base.replace(/[_\-.]+/g, ' ').replace(/\s+/g, ' ').trim();
+  return words.length > 0 ? words : null;
+}
+// The file's own modified day, only when it is trustworthy: a stamp landing on
+// today carries no information (today is already what an empty field means),
+// and anything in the future or before 2000 is a wrong clock, not a letter.
+function receivedFromFileDate(lastModified, today) {
+  if (typeof lastModified !== 'number' || !Number.isFinite(lastModified) || lastModified <= 0) return null;
+  const d = new Date(lastModified);
+  const day = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  if (day >= today) return null;
+  if (day < '2000-01-01') return null;
+  return day;
+}
+
+// Browser storage is the honest limit here: a photo is downscaled to fit, but
+// a file cannot be shrunk, so a very large file is refused kindly at pick time
+// (saveJSON's storage-full alert stays as the backstop, per the info pages).
+const DOC_FILE_CAP = 2 * 1024 * 1024;
+
+// The saved attachment row keeps only what the record needs, never the
+// picker's transient prefill metadata.
+function keptDocMedia(list) {
+  return list.map(m => {
+    const r = {
+      id: m.id,
+      kind: m.kind
+    };
+    if (m.dataUrl) r.dataUrl = m.dataUrl;
+    if (m.name) r.name = m.name;
+    return r;
+  });
+}
+
+// Open a kept file (a PDF or anything else) with the browser's own machinery:
+// a new tab where the browser can show it, or a download when the tab is
+// blocked. Never a dead tile.
+function openDocFile(m) {
+  try {
+    const comma = m.dataUrl.indexOf(',');
+    const mime = (m.dataUrl.slice(0, comma).match(/^data:([^;]+)/) || [])[1] || 'application/octet-stream';
+    const bin = atob(m.dataUrl.slice(comma + 1));
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const url = URL.createObjectURL(new Blob([bytes], {
+      type: mime
+    }));
+    const w = window.open(url, '_blank');
+    if (!w) {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = m.name || 'document';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch (e) {
+    alert('Sorry, this file could not be opened on this device.');
+  }
+}
+
+// One kept-file row: the doc glyph, the original filename, an honest sub-line.
+// Pending picks get a remove x; on the document page the row opens the file.
+function DocFileTile({
+  name,
+  sub,
+  onOpen,
+  onRemove
+}) {
+  const inner = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      background: 'var(--tint-blue)',
+      flexShrink: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "doc",
+    size: 20,
+    color: "var(--blue)"
+  })), /*#__PURE__*/React.createElement("span", {
+    style: {
+      flex: 1,
+      minWidth: 0
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'block',
+      fontFamily: "'Outfit', system-ui",
+      fontWeight: 500,
+      fontSize: 'calc(14.5px * var(--tscale, 1))',
+      color: 'var(--ink)',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap'
+    }
+  }, name), /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'block',
+      fontSize: 'calc(12.5px * var(--tscale, 1))',
+      color: 'var(--faint)',
+      marginTop: 1
+    }
+  }, sub)));
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 12,
+      borderRadius: 14,
+      border: '1px solid var(--line)',
+      background: 'var(--card)',
+      padding: 10
+    }
+  }, onOpen ? /*#__PURE__*/React.createElement("button", {
+    className: "j-press",
+    onClick: onOpen,
+    "aria-label": 'Open the file ' + name,
+    style: {
+      flex: 1,
+      minWidth: 0,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 12,
+      border: 'none',
+      background: 'none',
+      cursor: 'pointer',
+      textAlign: 'left',
+      padding: 0
+    }
+  }, inner) : /*#__PURE__*/React.createElement("span", {
+    style: {
+      flex: 1,
+      minWidth: 0,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 12
+    }
+  }, inner), onRemove && /*#__PURE__*/React.createElement("button", {
+    className: "j-press",
+    onClick: onRemove,
+    "aria-label": 'Remove file ' + name,
+    style: {
+      width: 36,
+      height: 36,
+      borderRadius: 10,
+      border: 'none',
+      background: 'var(--tag-grey-bg)',
+      cursor: 'pointer',
+      flexShrink: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "close",
+    size: 16,
+    color: "var(--muted)"
+  })));
+}
+
+// The video note row. Web reality, same as the note picker: the video itself
+// is never copied, so the vault keeps an honest note of it instead.
+const VIDEO_NOTE_SUB = 'The video itself stays safely in your photo library.';
+function VideoNoteTile({
+  onRemove
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 12,
+      borderRadius: 14,
+      border: '1px solid var(--line)',
+      background: 'var(--card)',
+      padding: 10
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      background: 'var(--tint-blue)',
+      flexShrink: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "video",
+    size: 20,
+    color: "var(--blue)"
+  })), /*#__PURE__*/React.createElement("span", {
+    style: {
+      flex: 1,
+      minWidth: 0
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'block',
+      fontFamily: "'Outfit', system-ui",
+      fontWeight: 500,
+      fontSize: 'calc(14.5px * var(--tscale, 1))',
+      color: 'var(--ink)'
+    }
+  }, "Video noted"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'block',
+      fontSize: 'calc(12.5px * var(--tscale, 1))',
+      color: 'var(--faint)',
+      marginTop: 1
+    }
+  }, VIDEO_NOTE_SUB)), onRemove && /*#__PURE__*/React.createElement("button", {
+    className: "j-press",
+    onClick: onRemove,
+    "aria-label": "Remove video note",
+    style: {
+      width: 36,
+      height: 36,
+      borderRadius: 10,
+      border: 'none',
+      background: 'var(--tag-grey-bg)',
+      cursor: 'pointer',
+      flexShrink: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "close",
+    size: 16,
+    color: "var(--muted)"
+  })));
+}
+
+// Capture / attach / pick the document itself: the note picker's two tiles
+// plus a third, Pick a file, for the PDFs and other files letters actually
+// arrive as. Everything picked waits as a pending tile with a remove x and is
+// only written to the record on Save, so closing the screen discards it
+// cleanly. Only picks from the FILE picker carry a usable name and date, and
+// only those feed the mechanical prefill (a camera capture's generated
+// filename says nothing about the letter).
+let _docMediaSeq = 0;
+function DocMediaPicker({
+  items,
+  onAdd,
+  onRemove
+}) {
+  const [hint, setHint] = useStateB(null);
+  const takeFiles = (fileList, fromFilePicker) => {
+    const files = Array.from(fileList || []);
+    if (!files.length) return;
+    setHint(null);
+    const out = [];
+    let waiting = 0;
+    let tooBig = null;
+    let readFail = false;
+    const done = () => {
+      if (waiting > 0) return;
+      const picked = out.filter(Boolean);
+      if (picked.length) onAdd(picked);
+      if (tooBig) setHint('"' + tooBig + '" is over 2 MB, more than this browser\'s storage can safely keep with the record. A photo of the letter works well instead.');else if (readFail) setHint('That file could not be read just now. You can try again, or capture a photo of it instead.');
+    };
+    files.forEach((f, idx) => {
+      const id = 'dm' + Date.now() + '-' + _docMediaSeq++;
+      const meta = fromFilePicker ? {
+        name: f.name,
+        lastModified: f.lastModified
+      } : {};
+      const type = f.type || '';
+      if (type.indexOf('video/') === 0) {
+        out[idx] = {
+          id,
+          kind: 'video',
+          ...meta
+        };
+        return;
+      }
+      if (type.indexOf('image/') === 0) {
+        waiting++;
+        window.fileToImageDataURL(f, 1280, 0.75, url => {
+          out[idx] = {
+            id,
+            kind: 'photo',
+            dataUrl: url,
+            ...meta
+          };
+          waiting--;
+          done();
+        });
+        return;
+      }
+      if (f.size > DOC_FILE_CAP) {
+        tooBig = f.name;
+        return;
+      }
+      waiting++;
+      const r = new FileReader();
+      r.onload = () => {
+        out[idx] = {
+          id,
+          kind: 'file',
+          dataUrl: r.result,
+          name: f.name,
+          lastModified: f.lastModified
+        };
+        waiting--;
+        done();
+      };
+      r.onerror = () => {
+        readFail = true;
+        waiting--;
+        done();
+      };
+      r.readAsDataURL(f);
+    });
+    done();
+  };
+  const tile = (label, sub, icon, inputProps) => /*#__PURE__*/React.createElement("label", {
+    className: "j-press",
+    style: {
+      flex: 1,
+      minHeight: 84,
+      borderRadius: 14,
+      cursor: 'pointer',
+      border: '1.5px dashed var(--chip-border)',
+      background: 'var(--card)',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 7,
+      color: 'var(--muted)'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: icon,
+    size: 24,
+    color: "var(--blue)"
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 'calc(14.5px * var(--tscale, 1))',
+      fontWeight: 500
+    }
+  }, label), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 'calc(12px * var(--tscale, 1))',
+      color: 'var(--faint)'
+    }
+  }, sub), /*#__PURE__*/React.createElement("input", _extends({
+    type: "file",
+    style: {
+      display: 'none'
+    }
+  }, inputProps)));
+  const photoItems = items.map((m, i) => ({
+    m,
+    i
+  })).filter(({
+    m
+  }) => m.kind === 'photo');
+  const rowItems = items.map((m, i) => ({
+    m,
+    i
+  })).filter(({
+    m
+  }) => m.kind !== 'photo');
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 12
+    }
+  }, tile('Capture', 'Photo or video', 'camera', {
+    accept: 'image/*,video/*',
+    capture: 'environment',
+    onChange: e => {
+      takeFiles(e.target.files, false);
+      e.target.value = '';
+    }
+  }), tile('Attach', 'From your photos', 'attach', {
+    accept: 'image/*,video/*',
+    multiple: true,
+    onChange: e => {
+      takeFiles(e.target.files, false);
+      e.target.value = '';
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      marginTop: 12
+    }
+  }, tile('Pick a file', 'A PDF or any other file', 'doc', {
+    accept: 'application/pdf,.pdf,.doc,.docx,.odt,.rtf,.txt,.csv,image/*,video/*',
+    multiple: true,
+    onChange: e => {
+      takeFiles(e.target.files, true);
+      e.target.value = '';
+    }
+  })), hint && /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 'calc(13px * var(--tscale, 1))',
+      lineHeight: 1.4,
+      color: 'var(--muted)',
+      margin: '8px 0 0'
+    }
+  }, hint), photoItems.length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: 10,
+      marginTop: 12
+    }
+  }, photoItems.map(({
+    m,
+    i
+  }) => /*#__PURE__*/React.createElement("span", {
+    key: m.id,
+    style: {
+      position: 'relative',
+      width: 86,
+      height: 86,
+      borderRadius: 12,
+      overflow: 'hidden',
+      border: '1px solid var(--line)',
+      background: 'var(--photo-bg)',
+      display: 'block'
+    }
+  }, /*#__PURE__*/React.createElement("img", {
+    src: m.dataUrl,
+    alt: "Photo of the document, waiting to be saved",
+    style: {
+      display: 'block',
+      width: '100%',
+      height: '100%',
+      objectFit: 'cover'
+    }
+  }), /*#__PURE__*/React.createElement("button", {
+    className: "j-press",
+    onClick: () => onRemove(i),
+    "aria-label": "Remove photo",
+    style: {
+      position: 'absolute',
+      top: 4,
+      right: 4,
+      width: 26,
+      height: 26,
+      borderRadius: 8,
+      border: 'none',
+      background: 'rgba(255,255,255,0.92)',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "close",
+    size: 14,
+    color: "#51607A"
+  }))))), rowItems.length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 10,
+      marginTop: 12
+    }
+  }, rowItems.map(({
+    m,
+    i
+  }) => m.kind === 'video' ? /*#__PURE__*/React.createElement(VideoNoteTile, {
+    key: m.id,
+    onRemove: () => onRemove(i)
+  }) : /*#__PURE__*/React.createElement(DocFileTile, {
+    key: m.id,
+    name: m.name || 'File',
+    sub: "Chosen from your files",
+    onRemove: () => onRemove(i)
+  }))));
+}
+
 // ---------------- Add document (onboarding questions) ----------------
 function AddDocScreen({
   nav
 }) {
   const J = window.JOTLA;
-  const [source, setSource] = useStateB(null); // 'taken' | 'attached'
-  const [scan, setScan] = useStateB(null); // downscaled image data URL
+  // The document itself, waiting for Save (Plus). Closing the screen discards it.
+  const [docMedia, setDocMedia] = useStateB([]);
   const [title, setTitle] = useStateB('');
   const [type, setType] = useStateB('Letter');
   const [from, setFrom] = useStateB('School');
@@ -684,8 +1207,40 @@ function AddDocScreen({
   const [about, setAbout] = useStateB('');
   const [action, setAction] = useStateB('');
   const [datePickerOpen, setDatePickerOpen] = useStateB(false);
+  // Prefill honesty flags: each shows its one small hint line, and each dies
+  // the moment the parent touches the field it filled.
+  const [titlePrefilled, setTitlePrefilled] = useStateB(false);
+  const [datePrefilled, setDatePrefilled] = useStateB(false);
+  // True once the parent has picked a day themselves OR a prefill has filled
+  // it: either way the date field is no longer at its untouched default.
+  const [dateSet, setDateSet] = useStateB(false);
+
+  // The mechanical prefill: from the picked file's own name and own modified
+  // date, nothing else. Only picks that carry a name can prefill (the file
+  // picker's), only into fields the parent has not set, and never a second
+  // time once a field holds anything.
+  const onAddMedia = picked => {
+    setDocMedia(v => [...v, ...picked]);
+    const source = picked.find(p => p.name);
+    if (!source) return;
+    if (title.trim() === '') {
+      const fromName = titleFromFilename(source.name);
+      if (fromName) {
+        setTitle(fromName);
+        setTitlePrefilled(true);
+      }
+    }
+    if (!dateSet) {
+      const fromDate = receivedFromFileDate(source.lastModified, J.TODAY_ISO);
+      if (fromDate) {
+        setReceived(fromDate);
+        setDatePrefilled(true);
+        setDateSet(true);
+      }
+    }
+  };
   const save = () => {
-    nav.addDoc({
+    const doc = {
       id: 'doc' + Date.now(),
       title: title.trim() || 'Untitled document',
       type,
@@ -693,25 +1248,11 @@ function AddDocScreen({
       received: /^\d{4}-\d{2}-\d{2}$/.test(received.trim()) ? received.trim() : J.TODAY_ISO,
       about: about.trim(),
       action: action.trim(),
-      mood: 'good',
-      ...(scan ? {
-        scan
-      } : {})
-    });
+      mood: 'good'
+    };
+    if (docMedia.length) doc.media = keptDocMedia(docMedia);
+    nav.addDoc(doc);
     nav.back();
-  };
-  const onDocFile = (e, src2) => {
-    const f = e.target.files && e.target.files[0];
-    e.target.value = '';
-    if (!f) return;
-    if (!f.type || !f.type.startsWith('image')) {
-      setSource(src2);
-      return;
-    }
-    window.fileToImageDataURL(f, 1280, 0.75, url => {
-      setScan(url);
-      setSource(src2);
-    });
   };
   return /*#__PURE__*/React.createElement("div", {
     className: "j-screen"
@@ -730,160 +1271,31 @@ function AddDocScreen({
       flexDirection: 'column',
       gap: 22
     }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "The file"), source ? /*#__PURE__*/React.createElement("div", {
-    style: {
-      borderRadius: 14,
-      overflow: 'hidden',
-      border: '1px solid var(--line)',
-      background: 'var(--photo-bg)'
-    }
-  }, scan && /*#__PURE__*/React.createElement("img", {
-    src: scan,
-    alt: "Document photo",
-    style: {
-      display: 'block',
-      width: '100%',
-      maxHeight: 240,
-      objectFit: 'cover'
-    }
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: 12,
-      display: 'flex',
-      alignItems: 'center',
-      gap: 12
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      width: 40,
-      height: 40,
-      borderRadius: 12,
-      background: 'var(--card)',
-      flexShrink: 0,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "doc",
-    size: 20,
-    color: "var(--blue)"
-  })), /*#__PURE__*/React.createElement("span", {
-    style: {
-      flex: 1
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      display: 'block',
-      fontSize: 'calc(14.5px * var(--tscale, 1))',
-      fontWeight: 500,
-      color: 'var(--ink)'
-    }
-  }, scan ? 'Photo of the document attached' : 'File noted'), /*#__PURE__*/React.createElement("span", {
-    style: {
-      display: 'block',
-      fontSize: 'calc(12.5px * var(--tscale, 1))',
-      color: 'var(--faint)',
-      marginTop: 1
-    }
-  }, source === 'taken' ? 'Photographed just now' : 'Chosen from your files')), /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      setSource(null);
-      setScan(null);
-    },
-    "aria-label": "Remove",
-    className: "j-press",
-    style: {
-      width: 36,
-      height: 36,
-      borderRadius: 10,
-      border: 'none',
-      background: 'var(--card)',
-      cursor: 'pointer',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "close",
-    size: 18,
-    color: "var(--muted)"
-  })))) : /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      gap: 12
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "j-press",
-    style: {
-      flex: 1,
-      minHeight: 84,
-      borderRadius: 14,
-      cursor: 'pointer',
-      border: '1.5px dashed var(--chip-border)',
-      background: 'var(--card)',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 7,
-      color: 'var(--muted)'
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "camera",
-    size: 24,
-    color: "var(--blue)"
-  }), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 'calc(14.5px * var(--tscale, 1))',
-      fontWeight: 500
-    }
-  }, "Take photo"), /*#__PURE__*/React.createElement("input", {
-    type: "file",
-    accept: "image/*",
-    capture: "environment",
-    style: {
-      display: 'none'
-    },
-    onChange: e => onDocFile(e, 'taken')
-  })), /*#__PURE__*/React.createElement("label", {
-    className: "j-press",
-    style: {
-      flex: 1,
-      minHeight: 84,
-      borderRadius: 14,
-      cursor: 'pointer',
-      border: '1.5px dashed var(--chip-border)',
-      background: 'var(--card)',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 7,
-      color: 'var(--muted)'
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "download",
-    size: 24,
-    color: "var(--blue)"
-  }), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 'calc(14.5px * var(--tscale, 1))',
-      fontWeight: 500
-    }
-  }, "Attach image"), /*#__PURE__*/React.createElement("input", {
-    type: "file",
-    accept: "image/*",
-    style: {
-      display: 'none'
-    },
-    onChange: e => onDocFile(e, 'attached')
-  })))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "What is it?"), /*#__PURE__*/React.createElement("input", {
+  }, nav.plus ? /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "The document itself"), /*#__PURE__*/React.createElement(DocMediaPicker, {
+    items: docMedia,
+    onAdd: onAddMedia,
+    onRemove: i => setDocMedia(v => v.filter((_, x) => x !== i))
+  })) : /*#__PURE__*/React.createElement(PlusLockedCard, {
+    title: "Add the document itself",
+    text: "Keep the letter with its details. Part of Plus.",
+    onClick: () => nav.go('unlock')
+  }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "What is it?"), /*#__PURE__*/React.createElement("input", {
     className: "j-input",
     value: title,
-    onChange: e => setTitle(e.target.value),
+    onChange: e => {
+      // The parent's own typing always wins; the prefill hint goes
+      // the moment the words are theirs.
+      setTitle(e.target.value);
+      setTitlePrefilled(false);
+    },
     placeholder: "Give it a name, e.g. EHC plan draft"
-  }), /*#__PURE__*/React.createElement("div", {
+  }), titlePrefilled && /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 'calc(12px * var(--tscale, 1))',
+      color: 'var(--faint)',
+      margin: '4px 0 0'
+    }
+  }, "Filled from the file name. Check it matches the letter."), /*#__PURE__*/React.createElement("div", {
     className: "j-chiprow",
     style: {
       marginTop: 12
@@ -905,7 +1317,13 @@ function AddDocScreen({
     placeholder: "Left blank, today's date is used",
     label: "When did you receive it",
     onClick: () => setDatePickerOpen(true)
-  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "What is it about?"), /*#__PURE__*/React.createElement("textarea", {
+  }), datePrefilled && /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 'calc(12px * var(--tscale, 1))',
+      color: 'var(--faint)',
+      margin: '4px 0 0'
+    }
+  }, "Filled from the file's own date. Check it matches the letter.")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "What is it about?"), /*#__PURE__*/React.createElement("textarea", {
     className: "j-input",
     value: about,
     onChange: e => setAbout(e.target.value),
@@ -935,16 +1353,28 @@ function AddDocScreen({
   }), " Save document")), datePickerOpen && /*#__PURE__*/React.createElement(CalendarSheet, {
     onClose: () => setDatePickerOpen(false),
     value: /^\d{4}-\d{2}-\d{2}$/.test(received) ? received : null,
-    onSelect: setReceived
+    onSelect: iso => {
+      setReceived(iso);
+      setDateSet(true);
+      setDatePrefilled(false);
+    }
   }));
 }
 
 // ---------------- Document detail ----------------
 // Edit a document's details honestly: corrections are welcome, and the earlier
-// details stay visible on the record.
+// details stay visible on the record. The document itself can be added here
+// too (part of Plus, the web's own post-save door the native build defers);
+// added files only commit on Save, and no prefill runs here, because every
+// field already holds the parent's own value and a set value is never
+// overwritten. Removing existing attachments lives on the document's page and
+// never gates.
 function EditDocSheet({
   doc,
+  plus,
   onSave,
+  onAddMedia,
+  onUnlock,
   onClose
 }) {
   const J = window.JOTLA;
@@ -954,7 +1384,9 @@ function EditDocSheet({
   const [received, setReceived] = useStateB(doc.received);
   const [about, setAbout] = useStateB(doc.about || '');
   const [action, setAction] = useStateB(doc.action || '');
+  const [newMedia, setNewMedia] = useStateB([]); // pending adds, committed on Save
   const [datePickerOpen, setDatePickerOpen] = useStateB(false);
+  const alreadyAttached = docAttachedCount(doc);
   const inputStyle = {
     width: '100%',
     boxSizing: 'border-box',
@@ -1062,6 +1494,31 @@ function EditDocSheet({
       ...inputStyle,
       marginBottom: 16
     }
+  }), /*#__PURE__*/React.createElement("p", {
+    className: "j-sm",
+    style: {
+      marginBottom: 6
+    }
+  }, "The document itself"), plus ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 16
+    }
+  }, alreadyAttached > 0 && /*#__PURE__*/React.createElement("p", {
+    className: "j-meta",
+    style: {
+      marginBottom: 8
+    }
+  }, alreadyAttached, " already attached. View or remove them on the document's page."), /*#__PURE__*/React.createElement(DocMediaPicker, {
+    items: newMedia,
+    onAdd: p => setNewMedia(v => [...v, ...p]),
+    onRemove: i => setNewMedia(v => v.filter((_, x) => x !== i))
+  })) : /*#__PURE__*/React.createElement(PlusLockedCard, {
+    title: "Add the document itself",
+    text: "Keep the letter with its details. Part of Plus.",
+    onClick: onUnlock,
+    style: {
+      marginBottom: 16
+    }
   }), /*#__PURE__*/React.createElement("button", {
     className: "j-btn j-btn-primary",
     disabled: !title.trim(),
@@ -1078,6 +1535,7 @@ function EditDocSheet({
         about: about.trim(),
         action: action.trim()
       });
+      if (newMedia.length) onAddMedia(keptDocMedia(newMedia));
       onClose();
     }
   }, "Save the change"), /*#__PURE__*/React.createElement("button", {
@@ -1106,6 +1564,19 @@ function DocScreen({
     title: "Document",
     onBack: () => nav.back()
   }));
+  // The document itself: the media rows plus the older single "scan" photo
+  // earlier builds kept, shown the same way. Viewing and removing never gate:
+  // saved data is never held hostage, whatever the tier.
+  const attachments = [...(d.scan ? [{
+    id: '__scan',
+    kind: 'photo',
+    dataUrl: d.scan
+  }] : []), ...(d.media || [])];
+  // Removing one attachment sits behind its own confirm, like every delete.
+  const removeMedia = m => {
+    const msg = m.kind === 'video' ? 'Remove this video note? It comes off this document. The video itself was never copied from your photo library.' : 'Remove this ' + (m.kind === 'photo' ? 'photo' : 'file') + "? It comes off this document and Jotla's copy is deleted from this device. This cannot be undone.";
+    if (window.confirm(msg)) nav.removeDocMedia(d.id, m.id);
+  };
   const Row = ({
     label,
     value
@@ -1188,40 +1659,60 @@ function DocScreen({
     name: "note",
     size: 13,
     color: "var(--muted)"
-  }), " Edited ", J.fmtShort(d.editedOn)))), d.scan ? /*#__PURE__*/React.createElement("div", {
+  }), " Edited ", J.fmtShort(d.editedOn)))), attachments.length > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 12
+    }
+  }, attachments.map(m => m.kind === 'photo' ? /*#__PURE__*/React.createElement("div", {
+    key: m.id,
+    style: {
+      position: 'relative',
       borderRadius: 14,
       overflow: 'hidden',
-      border: '1px solid var(--line)'
+      border: '1px solid var(--line)',
+      background: 'var(--photo-bg)'
     }
   }, /*#__PURE__*/React.createElement("img", {
-    src: d.scan,
-    alt: "Document photo",
+    src: m.dataUrl,
+    alt: "Photo of the document",
     style: {
       display: 'block',
       width: '100%'
     }
-  })) : /*#__PURE__*/React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("button", {
+    className: "j-press",
+    onClick: () => removeMedia(m),
+    "aria-label": "Remove photo",
     style: {
-      borderRadius: 14,
-      background: 'var(--photo-bg)',
-      minHeight: 110,
+      position: 'absolute',
+      top: 8,
+      right: 8,
+      width: 32,
+      height: 32,
+      borderRadius: 10,
+      border: 'none',
+      background: 'rgba(255,255,255,0.92)',
+      cursor: 'pointer',
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'center',
-      gap: 8
+      justifyContent: 'center'
     }
   }, /*#__PURE__*/React.createElement(Icon, {
-    name: "doc",
-    size: 22,
-    color: "var(--faint)"
-  }), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 'calc(15px * var(--tscale, 1))',
-      color: 'var(--faint)',
-      fontWeight: 500
-    }
-  }, "No photo of this document yet")), d.action && /*#__PURE__*/React.createElement("div", {
+    name: "close",
+    size: 17,
+    color: "#51607A"
+  }))) : m.kind === 'video' ? /*#__PURE__*/React.createElement(VideoNoteTile, {
+    key: m.id,
+    onRemove: () => removeMedia(m)
+  }) : /*#__PURE__*/React.createElement(DocFileTile, {
+    key: m.id,
+    name: m.name || 'File',
+    sub: "Chosen from your files. Tap to open.",
+    onOpen: () => openDocFile(m),
+    onRemove: () => removeMedia(m)
+  }))), d.action && /*#__PURE__*/React.createElement("div", {
     className: "j-card",
     style: {
       padding: 14,
@@ -1331,7 +1822,13 @@ function DocScreen({
     color: "#C0392B"
   }), " Delete")))), editing && /*#__PURE__*/React.createElement(EditDocSheet, {
     doc: d,
+    plus: nav.plus,
     onSave: patch => nav.updateDoc(d.id, patch),
+    onAddMedia: items => nav.addDocMedia(d.id, items),
+    onUnlock: () => {
+      setEditing(false);
+      nav.go('unlock');
+    },
     onClose: () => setEditing(false)
   }));
 }
@@ -2347,7 +2844,9 @@ function UnlockScreen({
 // the whole story, not a summary over a dimmed background. Every claim below
 // is checked against THIS build's own code (the web prototype), not the
 // native app's: where the two builds genuinely differ (browser storage, a
-// live restore, photos inside the export) the copy says the web truth.
+// live restore, photos AND vault document files inside the export where the
+// native app keeps files on the phone outside its export) the copy says the
+// web truth.
 
 // The page shell: round blue Back, title and subtitle, then a scrolling
 // column of blocks.
@@ -2537,14 +3036,14 @@ function InfoPrivacyScreen({
     title: "The promise"
   }, /*#__PURE__*/React.createElement(InfoP, null, /*#__PURE__*/React.createElement("span", {
     className: "j-strong"
-  }, "We never send your record anywhere."), " Jotla works without an account, a login or a cloud. Everything you write about your child stays on this device, and so does every photo you keep with a note (part of Jotla Plus)."), /*#__PURE__*/React.createElement(InfoP, null, "We never receive or access your data. There is nothing for us to read, lose or sell."), /*#__PURE__*/React.createElement(InfoP, {
+  }, "We never send your record anywhere."), " Jotla works without an account, a login or a cloud. Everything you write about your child stays on this device, and so does every photo you keep with a note and every document file you keep in the vault (adding them is part of Jotla Plus)."), /*#__PURE__*/React.createElement(InfoP, null, "We never receive or access your data. There is nothing for us to read, lose or sell."), /*#__PURE__*/React.createElement(InfoP, {
     last: true
   }, "This is not a policy we promise to follow; it is how the app is built. There is no upload in Jotla, so your record has nowhere to go except where you choose to send it.")), /*#__PURE__*/React.createElement(InfoBlock, {
     icon: "arrowRight",
     title: "What leaves this device"
   }, /*#__PURE__*/React.createElement(InfoP, null, "Nothing leaves this device unless you send it yourself. The app has exactly three doors out, and you open every one:"), /*#__PURE__*/React.createElement(InfoP, null, /*#__PURE__*/React.createElement("span", {
     className: "j-strong"
-  }, "Export my data"), " (in Settings, and offered again before you delete a child's record) saves a file of the whole record to your device. You choose where that file goes. Photos you kept with notes travel inside it; videos never do, because Jotla never copies the video file in the first place."), /*#__PURE__*/React.createElement(InfoP, null, /*#__PURE__*/React.createElement("span", {
+  }, "Export my data"), " (in Settings, and offered again before you delete a child's record) saves a file of the whole record to your device. You choose where that file goes. Photos you kept with notes, and the document files you kept in the vault, travel inside it; videos never do, because Jotla never copies the video file in the first place."), /*#__PURE__*/React.createElement(InfoP, null, /*#__PURE__*/React.createElement("span", {
     className: "j-strong"
   }, "Create PDF"), " (the day record, part of Plus) opens a printable page in a new tab. It carries your words, never your photos, and it goes nowhere until you print or save it yourself."), /*#__PURE__*/React.createElement(InfoP, null, /*#__PURE__*/React.createElement("span", {
     className: "j-strong"
@@ -2594,19 +3093,19 @@ function InfoDataScreen({
   }, /*#__PURE__*/React.createElement(InfoBlock, {
     icon: "shield",
     title: "On this device"
-  }, /*#__PURE__*/React.createElement(InfoP, null, "Everything you write lives on this device, in this browser's own storage for Jotla, and so does every photo you keep with a note (part of Jotla Plus). Nothing is sent to us, ever."), /*#__PURE__*/React.createElement(InfoP, null, "Once it has loaded, Jotla works offline: no account, no login, and no internet connection needed."), /*#__PURE__*/React.createElement(InfoP, {
+  }, /*#__PURE__*/React.createElement(InfoP, null, "Everything you write lives on this device, in this browser's own storage for Jotla, and so does every photo you keep with a note and every document file you keep in the vault (adding them is part of Jotla Plus). Nothing is sent to us, ever."), /*#__PURE__*/React.createElement(InfoP, null, "Once it has loaded, Jotla works offline: no account, no login, and no internet connection needed."), /*#__PURE__*/React.createElement(InfoP, {
     last: true
   }, "It also means this browser holds the record. The copies that exist are the ones you make with Export my data.")), /*#__PURE__*/React.createElement(InfoBlock, {
     icon: "bell",
     title: "One honest limit"
-  }, /*#__PURE__*/React.createElement(InfoP, null, "Browser storage is not for ever: clearing this site's data in the browser's settings removes the record with it, and a browser can clear site data itself if the device runs very low on space."), /*#__PURE__*/React.createElement(InfoP, null, "Storage also has a size limit, and photos grow the record fastest. If a save ever cannot fit, Jotla warns you the moment it happens rather than losing anything quietly."), /*#__PURE__*/React.createElement(InfoP, {
+  }, /*#__PURE__*/React.createElement(InfoP, null, "Browser storage is not for ever: clearing this site's data in the browser's settings removes the record with it, and a browser can clear site data itself if the device runs very low on space."), /*#__PURE__*/React.createElement(InfoP, null, "Storage also has a size limit, and photos and document files grow the record fastest. A very large file is refused kindly the moment you pick it, and if a save ever cannot fit, Jotla warns you the moment it happens rather than losing anything quietly."), /*#__PURE__*/React.createElement(InfoP, {
     last: true
   }, "That is the honest trade of a record that never leaves your hands, and it is why a saved copy every few weeks is good insurance.")), /*#__PURE__*/React.createElement(InfoBlock, {
     icon: "download",
     title: "Export my data: your own copy"
   }, /*#__PURE__*/React.createElement(InfoP, null, /*#__PURE__*/React.createElement("span", {
     className: "j-strong"
-  }, "What is in it."), " One file holding the whole of a child's record: every note with its date, its mood and what you wrote, the photos you kept with notes, and the details of every letter and report you have logged, in a form the app can read straight back in."), /*#__PURE__*/React.createElement(InfoP, null, /*#__PURE__*/React.createElement("span", {
+  }, "What is in it."), " One file holding the whole of a child's record: every note with its date, its mood and what you wrote, the photos you kept with notes, the document files you kept in the vault, and the details of every letter and report you have logged, in a form the app can read straight back in."), /*#__PURE__*/React.createElement(InfoP, null, /*#__PURE__*/React.createElement("span", {
     className: "j-strong"
   }, "What is not."), " Videos are never inside it: Jotla notes that a video exists but never copies the file, so the video itself stays in your own photo library. The printable day record carries your words only."), /*#__PURE__*/React.createElement(InfoP, null, /*#__PURE__*/React.createElement("span", {
     className: "j-strong"
@@ -2659,7 +3158,7 @@ function InfoAboutScreen({
   }, "Jotla is a private, on-device record for parents of children with special educational needs: log the moments, the moods and the school handoffs, keep the details of every letter and report, and export the record when someone needs to see it.")), /*#__PURE__*/React.createElement(InfoBlock, {
     icon: "check",
     title: "What is live now"
-  }, /*#__PURE__*/React.createElement(InfoP, null, "This early build already does the everyday job: quick daily logging with moods, gate notes for the handover moments, photos and videos kept with a note (part of Plus), a vault for letters and reports with a photo of each document, and keyword search of your own notes."), /*#__PURE__*/React.createElement(InfoP, {
+  }, /*#__PURE__*/React.createElement(InfoP, null, "This early build already does the everyday job: quick daily logging with moods, gate notes for the handover moments, photos and videos kept with a note (part of Plus), a vault for letters and reports that can keep the document itself, as a photo or the file (adding it is part of Plus), and keyword search of your own notes."), /*#__PURE__*/React.createElement(InfoP, {
     last: true
   }, "Around that: the month calendar (its mood patterns are part of Plus), the printable day record (part of Plus), the tips deck for hard moments, the child check-in with its follow-up questions (the questions are part of Plus), dark mode, larger text sizes, a free export of the whole record, and restore from an export.")), /*#__PURE__*/React.createElement(InfoBlock, {
     icon: "clock",
