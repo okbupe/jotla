@@ -600,7 +600,8 @@ function MediaPicker({
 }
 function QuickLogScreen({
   nav,
-  today
+  today,
+  view
 }) {
   const J = window.JOTLA;
   const [setting, setSetting] = useStateA('School');
@@ -609,13 +610,17 @@ function QuickLogScreen({
   const [text, setText] = useStateA('');
   const [mood, setMood] = useStateA('good');
   const [media, setMedia] = useStateA(null);
-  const [dayMode, setDayMode] = useStateA('today'); // today | yesterday | custom
   const minus1 = iso => {
     const d = J.parseISO(iso);
     d.setDate(d.getDate() - 1);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   };
-  const [customDate, setCustomDate] = useStateA(minus1(minus1(today)));
+  // A date can arrive on the view (the Day view's "Add a note", 12 Jul 2026),
+  // pre-setting the day chips so nothing needs re-picking.
+  const preset = view && typeof view.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(view.date) && view.date >= window.MIN_LOG_DAY && view.date <= today ? view.date : null;
+  const [dayMode, setDayMode] = useStateA(!preset || preset === today ? 'today' : preset === minus1(today) ? 'yesterday' : 'custom'); // today | yesterday | custom
+  const [customDate, setCustomDate] = useStateA(preset && preset !== today && preset !== minus1(today) ? preset : minus1(minus1(today)));
+  const [dayPickerOpen, setDayPickerOpen] = useStateA(false);
   const logDate = dayMode === 'today' ? today : dayMode === 'yesterday' ? minus1(today) : customDate;
   const nowClock = () => {
     const d = new Date();
@@ -674,20 +679,16 @@ function QuickLogScreen({
     "aria-pressed": dayMode === 'custom',
     className: 'j-chip' + (dayMode === 'custom' ? ' j-chip-on' : ''),
     onClick: () => setDayMode('custom')
-  }, "Another day")), dayMode === 'custom' && /*#__PURE__*/React.createElement("input", {
-    type: "date",
-    className: "j-input",
-    min: "2019-09-01",
-    max: today,
-    value: customDate,
-    onChange: e => setCustomDate(e.target.value),
+  }, "Another day")), dayMode === 'custom' && /*#__PURE__*/React.createElement("div", {
     style: {
-      marginTop: 12,
-      fontSize: 'calc(15px * var(--tscale, 1))',
-      colorScheme: 'light dark',
-      padding: '11px 12px'
+      marginTop: 12
     }
-  }), /*#__PURE__*/React.createElement("p", {
+  }, /*#__PURE__*/React.createElement(DateField, {
+    compact: true,
+    value: J.fmtLong(customDate),
+    label: "Which day",
+    onClick: () => setDayPickerOpen(true)
+  })), /*#__PURE__*/React.createElement("p", {
     className: "j-sm",
     style: {
       marginTop: 8,
@@ -716,10 +717,14 @@ function QuickLogScreen({
     onChange: e => setText(e.target.value),
     rows: 3,
     placeholder: "A line is plenty. Their exact words, in quotes, are gold."
-  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "Add a photo or video"), /*#__PURE__*/React.createElement(MediaPicker, {
+  })), nav.plus ? /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "Add a photo or video"), /*#__PURE__*/React.createElement(MediaPicker, {
     value: media,
     onChange: setMedia
-  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "How did it feel?"), /*#__PURE__*/React.createElement(MoodFacePicker, {
+  })) : /*#__PURE__*/React.createElement(PlusLockedCard, {
+    title: "Add photos and videos",
+    text: "Keep a photo or video with the note. Sometimes the picture is the evidence. Part of Plus.",
+    onClick: () => nav.go('unlock')
+  }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "How did it feel?"), /*#__PURE__*/React.createElement(MoodFacePicker, {
     value: mood,
     onChange: setMood
   })))), /*#__PURE__*/React.createElement("div", {
@@ -738,7 +743,13 @@ function QuickLogScreen({
     name: "check",
     size: 22,
     color: "#fff"
-  }), " Save")));
+  }), " Save")), dayPickerOpen && /*#__PURE__*/React.createElement(CalendarSheet, {
+    onClose: () => setDayPickerOpen(false),
+    value: customDate,
+    onSelect: setCustomDate,
+    minDate: window.MIN_LOG_DAY,
+    maxDate: today
+  }));
 }
 
 // ---------------- Gate note (guided capture) ----------------
@@ -1138,10 +1149,14 @@ function HandoverScreen({
     onChange: e => setHelped(e.target.value),
     rows: 2,
     placeholder: "The thing that worked, however small."
-  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "Add a photo or video"), /*#__PURE__*/React.createElement(MediaPicker, {
+  })), nav.plus ? /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "Add a photo or video"), /*#__PURE__*/React.createElement(MediaPicker, {
     value: media,
     onChange: setMedia
-  })))), /*#__PURE__*/React.createElement("div", {
+  })) : /*#__PURE__*/React.createElement(PlusLockedCard, {
+    title: "Add photos and videos",
+    text: "Keep a photo or video with the note. Sometimes the picture is the evidence. Part of Plus.",
+    onClick: () => nav.go('unlock')
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       position: 'absolute',
       left: 0,

@@ -386,6 +386,27 @@ To run the reference: open `source/jotla/Jotla.html` in a browser.
 
 ---
 
+## Build 1.9.0 (12 July 2026): 12 Jul native parity
+
+The catch-up port under the standing sync law (12 Jul 2026: the native app and this web version must never diverge). Everything the native device-feedback rounds shipped on 12 July now lives here too, adapted only where the web's own reality differs.
+
+- **Storybook illustrations.** All 14 tour and Tips scenes plus the 3 child-mode scene emblems replaced with the illustration-grade vector art approved on the native build (layered tint grounds, the shared character system, natural varied skin tones, no text in the artwork). Same `StoryIllo`/`SceneIllo` API, still hand-authored SVG, still fully offline.
+- **Header lockup corrected.** "by SEN Help" now rests on the logotype's real baseline (measured from the SVG paths; the old fictional "J descender" constant floated it high), and +PLUS became a violet pill: Cal Sans skewed -8deg for the italic, zero letter spacing, the Plus tint/ink tokens in both palettes.
+- **Five-bar graphs**, ordered Good, Mixed, Hard, Gate, Dysregulation (dysregulation last, label tucked to the card edge) on the Today strip and the Plus month graph. Mood bars count days; the two new bars count moments, mutually exclusive by type (gate = handover, dysregulation = Incidents quick logs). Honest trend lines for every shape of month.
+- **Dysregulation and gate visual language.** A dysregulation log wears a plum accent stripe and a solid "Dysregulation" pill; a gate note wears blue and a "Gate note" pill. New plum tokens in light and dark.
+- **Calendar pickers everywhere.** Every typed date field (quick log custom day, document dates, the custom evidence/find range) became a tap-to-open CalendarSheet: Monday-first grid fixed at six week rows, chevrons clamped to each field's own rule, today ringed, out-of-rule days untappable, a clear path where "no date" is allowed.
+- **Month view opened up.** Pages back to September 2019 (the data epoch) with visible prev/next controls; every past day and today is tappable, even empty; the Day view offers "Add a note" preset to that exact date; the grid holds one fixed six-row height; and the pager is a fixed virtualised timeline, so paging never reshuffles or flashes.
+- **Settings info sheets became full pages** (What Jotla is for / Privacy, in plain words / Where your record is kept / About Jotla), with the comprehensive honest copy checked against THIS build: browser storage (no phone-backup claim), a live Restore from an export, photos inside the export file and videos never copied in, three named doors out. About drops the typefaces line.
+- **Your day goes dynamic (Plus).** After a face is picked, a More button opens per-place swipeable question cards (chips + a type box, every card skippable), then "Anywhere else?" offers Library, PE, Assembly, Trip, Music and Club. Answers land in the day's record in the child's own words; grown-up exits bank whatever was already given. Free keeps today's flow exactly; nothing sells inside child mode.
+- **Media on logs is Plus-gated for adding** (the honest locked card sits in the same spot on Free and routes to Unlock); viewing saved media never gates. The Unlock feature list gains "Photos and Videos on Notes", and the purchase confirms name it.
+- Suite grown to 60 checks (two new parity suites, free and Plus tiers).
+
+## Build 1.8.0 (7 July 2026): precompiled bundle + dynamic type (entry backfilled with 1.9.0)
+
+- Precompiled JS bundle (`min/`, built by `tools/precompile.js`): no in-browser Babel, a markedly faster first boot.
+- Dynamic type: the Settings text-size dial (Standard / Large / Extra large) scales every font in the app.
+- Keyboard alternatives on every swipe pager, and the illustrated tour and Tips scenes (first vector pass, replaced by the approved art in 1.9.0).
+
 ## Build 1.7.1 (6 July 2026): the whole day fits in the log
 
 - Three new "What kind of moment?" chips, straight from the family field test that retired the paper home log: **School feedback** (what school told you today, or that nothing came home; logged twenty times, "no feedback" IS the pattern), **New words** (a new word or phrase, captured so it can be built on at home), and **Wins** (anything managed, however small; good days deserve the same care as hard ones). They flow through Month patterns and Find filters automatically.

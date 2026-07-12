@@ -239,7 +239,7 @@ function MediaPicker({ value = null, onChange = () => {} }) {
   );
 }
 
-function QuickLogScreen({ nav, today }) {
+function QuickLogScreen({ nav, today, view }) {
   const J = window.JOTLA;
   const [setting, setSetting] = useStateA('School');
   const [time, setTime] = useStateA('Afternoon');
@@ -247,9 +247,14 @@ function QuickLogScreen({ nav, today }) {
   const [text, setText] = useStateA('');
   const [mood, setMood] = useStateA('good');
   const [media, setMedia] = useStateA(null);
-  const [dayMode, setDayMode] = useStateA('today'); // today | yesterday | custom
   const minus1 = (iso) => { const d = J.parseISO(iso); d.setDate(d.getDate() - 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
-  const [customDate, setCustomDate] = useStateA(minus1(minus1(today)));
+  // A date can arrive on the view (the Day view's "Add a note", 12 Jul 2026),
+  // pre-setting the day chips so nothing needs re-picking.
+  const preset = view && typeof view.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(view.date)
+    && view.date >= window.MIN_LOG_DAY && view.date <= today ? view.date : null;
+  const [dayMode, setDayMode] = useStateA(!preset || preset === today ? 'today' : preset === minus1(today) ? 'yesterday' : 'custom'); // today | yesterday | custom
+  const [customDate, setCustomDate] = useStateA(preset && preset !== today && preset !== minus1(today) ? preset : minus1(minus1(today)));
+  const [dayPickerOpen, setDayPickerOpen] = useStateA(false);
   const logDate = dayMode === 'today' ? today : dayMode === 'yesterday' ? minus1(today) : customDate;
 
   const nowClock = () => { const d = new Date(); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
@@ -278,8 +283,9 @@ function QuickLogScreen({ nav, today }) {
               <button aria-pressed={dayMode === 'custom'} className={'j-chip' + (dayMode === 'custom' ? ' j-chip-on' : '')} onClick={() => setDayMode('custom')}>Another day</button>
             </div>
             {dayMode === 'custom' && (
-              <input type="date" className="j-input" min="2019-09-01" max={today} value={customDate}
-                onChange={e => setCustomDate(e.target.value)} style={{ marginTop: 12, fontSize: 'calc(15px * var(--tscale, 1))', colorScheme: 'light dark', padding: '11px 12px' }} />
+              <div style={{ marginTop: 12 }}>
+                <DateField compact value={J.fmtLong(customDate)} label="Which day" onClick={() => setDayPickerOpen(true)} />
+              </div>
             )}
             <p className="j-sm" style={{ marginTop: 8, color: 'var(--faint)' }}>Saving to <span className="j-strong" style={{ color: 'var(--muted)' }}>{J.fmtLong(logDate)}</span></p>
           </div>
@@ -291,7 +297,16 @@ function QuickLogScreen({ nav, today }) {
             <textarea className="j-input" value={text} onChange={e => setText(e.target.value)} rows={3}
               placeholder="A line is plenty. Their exact words, in quotes, are gold." />
           </div>
-          <div><FieldLabel>Add a photo or video</FieldLabel><MediaPicker value={media} onChange={setMedia} /></div>
+          {/* Adding media is part of Jotla Plus (12 Jul 2026): Free sees the
+              honest locked card in the same spot; viewing saved media never
+              gates anywhere. */}
+          {nav.plus ? (
+            <div><FieldLabel>Add a photo or video</FieldLabel><MediaPicker value={media} onChange={setMedia} /></div>
+          ) : (
+            <PlusLockedCard title="Add photos and videos"
+              text="Keep a photo or video with the note. Sometimes the picture is the evidence. Part of Plus."
+              onClick={() => nav.go('unlock')} />
+          )}
           <div><FieldLabel>How did it feel?</FieldLabel><MoodFacePicker value={mood} onChange={setMood} /></div>
         </div>
       </div>
@@ -300,6 +315,13 @@ function QuickLogScreen({ nav, today }) {
           <Icon name="check" size={22} color="#fff" /> Save
         </button>
       </div>
+      {/* The same bounds as ever, now picked instead of typed: nothing before
+          the app's epoch, nothing after today. Out-of-rule days are greyed
+          and untappable. */}
+      {dayPickerOpen && (
+        <CalendarSheet onClose={() => setDayPickerOpen(false)} value={customDate}
+          onSelect={setCustomDate} minDate={window.MIN_LOG_DAY} maxDate={today} />
+      )}
     </div>
   );
 }
@@ -465,11 +487,18 @@ function HandoverScreen({ nav, today, profile }) {
               placeholder="The thing that worked, however small." />
           </div>
 
-          {/* photo at the gate */}
-          <div>
-            <FieldLabel>Add a photo or video</FieldLabel>
-            <MediaPicker value={media} onChange={setMedia} />
-          </div>
+          {/* photo at the gate: adding media is part of Jotla Plus
+              (12 Jul 2026); viewing saved media never gates anywhere */}
+          {nav.plus ? (
+            <div>
+              <FieldLabel>Add a photo or video</FieldLabel>
+              <MediaPicker value={media} onChange={setMedia} />
+            </div>
+          ) : (
+            <PlusLockedCard title="Add photos and videos"
+              text="Keep a photo or video with the note. Sometimes the picture is the evidence. Part of Plus."
+              onClick={() => nav.go('unlock')} />
+          )}
         </div>
       </div>
 

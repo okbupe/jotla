@@ -23,6 +23,17 @@
   --tint-amber: #FCF1DC;
   --tint-red: #FCEAE8;
 
+  /* The dysregulation kind colour (12 Jul 2026): its own plum, distinct from
+     the moods, the gate blue and the Plus violet (from the avatar rainbow). */
+  --dysreg: #A12FC0;
+  --dysreg-ink: #8A28A5;
+  --tint-dysreg: #F6EAFA;
+
+  /* The Plus violet pill pair (wordmark +PLUS): the unlock screen's own
+     "You have Jotla Plus" surface under its #6E54D6 ink. */
+  --plus-tint: rgba(110,84,214,0.12);
+  --plus-ink: #6E54D6;
+
   --chip-bg: #ffffff;          /* chip / icon-button surface */
   --chip-border: #dbe4f1;
   --photo-bg: #E8EEF7;
@@ -69,6 +80,15 @@ button, input, select, textarea { font-family: inherit; }
   --tint-green: #163728;
   --tint-amber: #3A2E18;
   --tint-red: #3A1F1C;
+
+  /* Plum lifted for dark ground, the same relationship as blue -> #5B9BF0. */
+  --dysreg: #C86BDF;
+  --dysreg-ink: #DB9AEC;
+  --tint-dysreg: #3A1F44;
+
+  /* The Plus violet pair on dark ground (the JOTLA PLUS badge treatment). */
+  --plus-tint: rgba(205,187,247,0.18);
+  --plus-ink: #CDBBF7;
 
   --chip-bg: #1F2C44;
   --chip-border: #324162;

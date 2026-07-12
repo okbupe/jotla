@@ -683,6 +683,7 @@ function AddDocScreen({
   const [received, setReceived] = useStateB('');
   const [about, setAbout] = useStateB('');
   const [action, setAction] = useStateB('');
+  const [datePickerOpen, setDatePickerOpen] = useStateB(false);
   const save = () => {
     nav.addDoc({
       id: 'doc' + Date.now(),
@@ -899,16 +900,11 @@ function AddDocScreen({
     "aria-pressed": from === s,
     className: 'j-chip' + (from === s ? ' j-chip-on' : ''),
     onClick: () => setFrom(s)
-  }, s)))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "When did you receive it?"), /*#__PURE__*/React.createElement("input", {
-    type: "date",
-    className: "j-input",
-    min: "2019-01-01",
-    max: J.TODAY_ISO,
-    value: received,
-    onChange: e => setReceived(e.target.value),
-    style: {
-      colorScheme: 'light dark'
-    }
+  }, s)))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "When did you receive it?"), /*#__PURE__*/React.createElement(DateField, {
+    value: /^\d{4}-\d{2}-\d{2}$/.test(received) ? J.fmtLong(received) + ' ' + received.slice(0, 4) : null,
+    placeholder: "Left blank, today's date is used",
+    label: "When did you receive it",
+    onClick: () => setDatePickerOpen(true)
   })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "What is it about?"), /*#__PURE__*/React.createElement("textarea", {
     className: "j-input",
     value: about,
@@ -936,7 +932,11 @@ function AddDocScreen({
     name: "check",
     size: 22,
     color: "#fff"
-  }), " Save document")));
+  }), " Save document")), datePickerOpen && /*#__PURE__*/React.createElement(CalendarSheet, {
+    onClose: () => setDatePickerOpen(false),
+    value: /^\d{4}-\d{2}-\d{2}$/.test(received) ? received : null,
+    onSelect: setReceived
+  }));
 }
 
 // ---------------- Document detail ----------------
@@ -954,6 +954,7 @@ function EditDocSheet({
   const [received, setReceived] = useStateB(doc.received);
   const [about, setAbout] = useStateB(doc.about || '');
   const [action, setAction] = useStateB(doc.action || '');
+  const [datePickerOpen, setDatePickerOpen] = useStateB(false);
   const inputStyle = {
     width: '100%',
     boxSizing: 'border-box',
@@ -1027,13 +1028,14 @@ function EditDocSheet({
     style: {
       marginBottom: 6
     }
-  }, "Date received"), /*#__PURE__*/React.createElement("input", {
-    type: "date",
-    value: received,
-    onChange: ev => setReceived(ev.target.value),
+  }, "Date received"), /*#__PURE__*/React.createElement(DateField, {
+    compact: true,
+    value: /^\d{4}-\d{2}-\d{2}$/.test(received) ? J.fmtLong(received) + ' ' + received.slice(0, 4) : null,
+    placeholder: "Pick the date",
+    label: "Date received",
+    onClick: () => setDatePickerOpen(true),
     style: {
-      ...inputStyle,
-      colorScheme: 'light dark'
+      marginBottom: 12
     }
   }), /*#__PURE__*/React.createElement("p", {
     className: "j-sm",
@@ -1084,7 +1086,11 @@ function EditDocSheet({
       marginTop: 8
     },
     onClick: onClose
-  }, "Cancel")));
+  }, "Cancel")), datePickerOpen && /*#__PURE__*/React.createElement(CalendarSheet, {
+    onClose: () => setDatePickerOpen(false),
+    value: /^\d{4}-\d{2}-\d{2}$/.test(received) ? received : null,
+    onSelect: setReceived
+  }));
 }
 function DocScreen({
   nav,
@@ -1452,7 +1458,6 @@ function PlusFeature({
   }, plain)));
 }
 const FREE_ITEMS = ['Daily logging and the quick log', 'The child walkthrough', 'Your basic timeline', 'Plain keyword search of your own notes', 'Raw data export', 'Appeal-deadline safety reminders'];
-const PLUS_ITEMS = ['Patterns and the Month view', 'Deep filtering', 'Dysregulation Mode', 'PDF evidence pack', 'Promised vs delivered provision log', 'Family sync: every grown-up’s phone stays up to date (coming soon)'];
 const LIVING_ITEMS = ['EHCP and SEND deadline tracker', 'What to do about a gap', 'Rights kept current', 'Current letter templates', 'On-device AI help', 'Fresh scene and symbol packs', 'A document vault', 'Voice capture', 'Multiple children'];
 const PAGE_STYLE = {
   flex: '0 0 100%',
@@ -1816,6 +1821,15 @@ function PlusPage() {
     plain: "Teacher mentions a tough afternoon. You tap 'At the gate?', read the questions, tap the answers. Done in under two minutes."
   }), /*#__PURE__*/React.createElement(PlusFeature, {
     icon: /*#__PURE__*/React.createElement(Icon, {
+      name: "attach",
+      size: 22,
+      color: "var(--blue)"
+    }),
+    title: "Photos and Videos on Notes",
+    formal: "Keep the picture with the fact. Capture a photo or video, or attach one from your library, and it stays with the note on this phone. Sometimes the picture is the evidence.",
+    plain: "A mark at pick-up: capture it with the gate note and it sits with that day's record, ready when you need it."
+  }), /*#__PURE__*/React.createElement(PlusFeature, {
+    icon: /*#__PURE__*/React.createElement(Icon, {
       name: "doc",
       size: 22,
       color: "var(--blue)"
@@ -2151,7 +2165,7 @@ function UnlockScreen({
       color: 'var(--muted)',
       marginBottom: 20
     }
-  }, "This turns on Patterns, the Month view, Deep Filtering, Dysregulation Mode and the PDF Evidence Pack. Everything you have already saved stays exactly as it is."), /*#__PURE__*/React.createElement("button", {
+  }, "This turns on Patterns, the Month view, Deep Filtering, Dysregulation Mode, Photos and Videos on Notes, and the PDF Evidence Pack. Everything you have already saved stays exactly as it is."), /*#__PURE__*/React.createElement("button", {
     className: "j-btn j-btn-lg",
     style: {
       background: PLUS_GRAD,
@@ -2319,13 +2333,384 @@ function UnlockScreen({
       color: 'var(--muted)',
       marginBottom: 20
     }
-  }, "Thank you. Patterns, Deep Filtering, Dysregulation Mode and the PDF Evidence Pack are switched on. Your record stays yours, always."), /*#__PURE__*/React.createElement("button", {
+  }, "Thank you. Patterns, Deep Filtering, Dysregulation Mode, Photos and Videos on Notes, and the PDF Evidence Pack are switched on. Your record stays yours, always."), /*#__PURE__*/React.createElement("button", {
     className: "j-btn j-btn-primary",
     onClick: () => {
       setBought(false);
       nav.back();
     }
   }, "Done"))));
+}
+
+// ---------------- Settings info pages (12 Jul 2026) ----------------
+// The informational sheets grew into full pushed screens, so a parent gets
+// the whole story, not a summary over a dimmed background. Every claim below
+// is checked against THIS build's own code (the web prototype), not the
+// native app's: where the two builds genuinely differ (browser storage, a
+// live restore, photos inside the export) the copy says the web truth.
+
+// The page shell: round blue Back, title and subtitle, then a scrolling
+// column of blocks.
+function InfoPage({
+  nav,
+  title,
+  subtitle,
+  children
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    className: "j-screen"
+  }, /*#__PURE__*/React.createElement(PushHeader, {
+    title: title,
+    subtitle: subtitle,
+    onBack: () => nav.back()
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "j-scroll j-fade"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-pad",
+    style: {
+      paddingTop: 4,
+      paddingBottom: 40,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 14
+    }
+  }, children)));
+}
+
+// One explainer card: icon disc, Cal Sans heading, optional status pill on
+// the right, then paragraphs.
+function InfoBlock({
+  icon,
+  title,
+  pill,
+  children
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    className: "j-card",
+    style: {
+      padding: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 12,
+      marginBottom: 10,
+      flexWrap: 'wrap'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 38,
+      height: 38,
+      borderRadius: 11,
+      background: 'var(--tint-blue)',
+      flexShrink: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: icon,
+    size: 20,
+    color: "var(--blue)"
+  })), /*#__PURE__*/React.createElement("span", {
+    className: "j-h3",
+    style: {
+      flexShrink: 1
+    }
+  }, title), pill), children);
+}
+
+// A body paragraph inside a block, muted exactly like the old info sheets.
+function InfoP({
+  children,
+  last = false
+}) {
+  return /*#__PURE__*/React.createElement("p", {
+    className: "j-body",
+    style: {
+      color: 'var(--muted)',
+      marginBottom: last ? 0 : 10
+    }
+  }, children);
+}
+
+// The grey status pill the Settings rows use for not-yet features.
+function PlannedPill({
+  label = 'Planned'
+}) {
+  return /*#__PURE__*/React.createElement("span", {
+    className: "j-pillbadge",
+    style: {
+      background: 'var(--tag-grey-bg)',
+      color: 'var(--muted)'
+    }
+  }, label);
+}
+
+// One planned-feature row on the About page: title beside its status pill,
+// then a one-line note.
+function PlanRow({
+  title,
+  note,
+  pill = 'Planned'
+}) {
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+      flexWrap: 'wrap'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontFamily: "'Outfit', system-ui",
+      fontWeight: 500,
+      fontSize: 'calc(15.5px * var(--tscale, 1))',
+      color: 'var(--ink)'
+    }
+  }, title), /*#__PURE__*/React.createElement(PlannedPill, {
+    label: pill
+  })), /*#__PURE__*/React.createElement("p", {
+    className: "j-sm",
+    style: {
+      marginTop: 2
+    }
+  }, note));
+}
+
+// What Jotla is for. The first block is the mission copy the sheets carried;
+// the rest expands it with what this build genuinely does.
+function InfoMissionScreen({
+  nav
+}) {
+  return /*#__PURE__*/React.createElement(InfoPage, {
+    nav: nav,
+    title: "What Jotla is for",
+    subtitle: "For the parents told to document everything"
+  }, /*#__PURE__*/React.createElement(InfoBlock, {
+    icon: "heart",
+    title: "The tool parents are told to need"
+  }, /*#__PURE__*/React.createElement(InfoP, null, "Every SEN parent is told to document everything. Nobody gives them the tool. Jotla is that tool."), /*#__PURE__*/React.createElement(InfoP, null, "Log the days in seconds, capture what really happened at the school gate, and keep every letter and report in one place."), /*#__PURE__*/React.createElement(InfoP, {
+    last: true
+  }, "Owned by you. Not the school, not the Local Authority. You.")), /*#__PURE__*/React.createElement(InfoBlock, {
+    icon: "star",
+    title: "When the record does its work"
+  }, /*#__PURE__*/React.createElement(InfoP, null, "When it matters, at an assessment, an annual review or a tribunal, your record is already organised, dated and ready to share."), /*#__PURE__*/React.createElement(InfoP, null, "Take it into an EHCP annual review to show the year as it really was, not as memory serves it. Bring dated notes to a school meeting so the conversation starts from what happened. And when you write to the Local Authority, the dates and details are already in one place."), /*#__PURE__*/React.createElement(InfoP, {
+    last: true
+  }, "One honest line: Jotla keeps the record, it does not give legal advice. What you can control is walking in with the facts ready.")), /*#__PURE__*/React.createElement(InfoBlock, {
+    icon: "clock",
+    title: "Why the dates can be trusted"
+  }, /*#__PURE__*/React.createElement(InfoP, null, "Every note carries an honest label: ", /*#__PURE__*/React.createElement("span", {
+    className: "j-strong"
+  }, "Same day"), " when it was logged on the day it happened, ", /*#__PURE__*/React.createElement("span", {
+    className: "j-strong"
+  }, "Added later"), " when it was not."), /*#__PURE__*/React.createElement(InfoP, null, "The label is decided once, when the note is first saved, and it never changes. Editing the wording later does not rewrite it, and the note keeps its history of earlier wordings."), /*#__PURE__*/React.createElement(InfoP, {
+    last: true
+  }, "Hours later is fine; the record keeps its timing honest. A record that is straight about when things were written is worth more when someone else reads it.")), /*#__PURE__*/React.createElement(InfoBlock, {
+    icon: "edit",
+    title: "What makes a strong record"
+  }, /*#__PURE__*/React.createElement(InfoP, null, "Log facts: what happened, when, and who was there. Keep other children out of what you write where you can."), /*#__PURE__*/React.createElement(InfoP, null, "Little and often beats perfect. The quick log takes seconds, and a plain sentence written today is worth more than a polished page written next month."), /*#__PURE__*/React.createElement(InfoP, {
+    last: true
+  }, "After a hard handover, open a gate note. It asks you the right questions in the right order while everything is still fresh.")), /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-soft",
+    onClick: () => nav.go('infoprivacy')
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "lock",
+    size: 18,
+    color: "var(--blue)"
+  }), " How your record stays private"));
+}
+
+// Privacy, in plain words. Claims verified against this build: there is no
+// upload anywhere in the source; the only record-content exits are the ones
+// named below, and every one is user-driven.
+function InfoPrivacyScreen({
+  nav
+}) {
+  return /*#__PURE__*/React.createElement(InfoPage, {
+    nav: nav,
+    title: "Privacy, in plain words",
+    subtitle: "What we can see, and what leaves this device"
+  }, /*#__PURE__*/React.createElement(InfoBlock, {
+    icon: "shield",
+    title: "The promise"
+  }, /*#__PURE__*/React.createElement(InfoP, null, /*#__PURE__*/React.createElement("span", {
+    className: "j-strong"
+  }, "We never send your record anywhere."), " Jotla works without an account, a login or a cloud. Everything you write about your child stays on this device, and so does every photo you keep with a note (part of Jotla Plus)."), /*#__PURE__*/React.createElement(InfoP, null, "We never receive or access your data. There is nothing for us to read, lose or sell."), /*#__PURE__*/React.createElement(InfoP, {
+    last: true
+  }, "This is not a policy we promise to follow; it is how the app is built. There is no upload in Jotla, so your record has nowhere to go except where you choose to send it.")), /*#__PURE__*/React.createElement(InfoBlock, {
+    icon: "arrowRight",
+    title: "What leaves this device"
+  }, /*#__PURE__*/React.createElement(InfoP, null, "Nothing leaves this device unless you send it yourself. The app has exactly three doors out, and you open every one:"), /*#__PURE__*/React.createElement(InfoP, null, /*#__PURE__*/React.createElement("span", {
+    className: "j-strong"
+  }, "Export my data"), " (in Settings, and offered again before you delete a child's record) saves a file of the whole record to your device. You choose where that file goes. Photos you kept with notes travel inside it; videos never do, because Jotla never copies the video file in the first place."), /*#__PURE__*/React.createElement(InfoP, null, /*#__PURE__*/React.createElement("span", {
+    className: "j-strong"
+  }, "Create PDF"), " (the day record, part of Plus) opens a printable page in a new tab. It carries your words, never your photos, and it goes nowhere until you print or save it yourself."), /*#__PURE__*/React.createElement(InfoP, null, /*#__PURE__*/React.createElement("span", {
+    className: "j-strong"
+  }, "Email this to the teacher"), " (after a gate note) opens your own email app with the note typed in for you. Nothing goes anywhere until you press send."), /*#__PURE__*/React.createElement(InfoP, {
+    last: true
+  }, "Those are the only places in the app that move what you have written. Everything else stays put.")), /*#__PURE__*/React.createElement(InfoBlock, {
+    icon: "lock",
+    title: "Who can see the record"
+  }, /*#__PURE__*/React.createElement(InfoP, null, "On this device: anyone you hand it to unlocked, in this browser. Jotla does not have a lock of its own yet, so your device's own lock is the front door."), /*#__PURE__*/React.createElement(InfoP, null, "Once you share a copy, that copy is out of your hands. Whoever you send it to can read it, keep it and pass it on. Share with people you trust, when it serves your child."), /*#__PURE__*/React.createElement(InfoP, {
+    last: true
+  }, "And us? We can never see your record. There is no account and no cloud, so there is nothing on our side to look at.")), /*#__PURE__*/React.createElement(InfoBlock, {
+    icon: "lock",
+    title: "Lock the app",
+    pill: /*#__PURE__*/React.createElement(PlannedPill, null)
+  }, /*#__PURE__*/React.createElement(InfoP, null, "In the full app you will be able to lock Jotla behind your fingerprint, face or a PIN. It is not in this early test build yet."), /*#__PURE__*/React.createElement(InfoP, {
+    last: true
+  }, "Until then, your device's own screen lock protects the record, and phones can also lock or pin individual apps if you share the device.")), /*#__PURE__*/React.createElement(InfoBlock, {
+    icon: "play",
+    title: "Handing the phone to your child"
+  }, /*#__PURE__*/React.createElement(InfoP, null, "The Today screen has a child-safe flow for the moments you pass the phone over: Your day."), /*#__PURE__*/React.createElement(InfoP, {
+    last: true
+  }, "It is a calm screen with no way back into your notes. The system back button is swallowed while it is open, and leaving it takes a deliberate grown-up press-and-hold, never a stray tap, so a curious child cannot land in the record.")), /*#__PURE__*/React.createElement(InfoBlock, {
+    icon: "edit",
+    title: "Write with sharing in mind"
+  }, /*#__PURE__*/React.createElement(InfoP, null, "What you write can end up in front of other people when you choose to share it. That is the record doing its job."), /*#__PURE__*/React.createElement(InfoP, {
+    last: true
+  }, "So log facts, keep other children out of what you write and what you photograph where you can, and your record will serve you well.")), /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-soft",
+    onClick: () => nav.go('infodata')
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "shield",
+    size: 18,
+    color: "var(--blue)"
+  }), " Where your record is kept"));
+}
+
+// Where your record is kept. This is the web build, so the honest story is
+// browser storage: no phone-backup claim is made here (that story belongs to
+// the native app).
+function InfoDataScreen({
+  nav
+}) {
+  return /*#__PURE__*/React.createElement(InfoPage, {
+    nav: nav,
+    title: "Where your record is kept",
+    subtitle: "On this device, in your hands"
+  }, /*#__PURE__*/React.createElement(InfoBlock, {
+    icon: "shield",
+    title: "On this device"
+  }, /*#__PURE__*/React.createElement(InfoP, null, "Everything you write lives on this device, in this browser's own storage for Jotla, and so does every photo you keep with a note (part of Jotla Plus). Nothing is sent to us, ever."), /*#__PURE__*/React.createElement(InfoP, null, "Once it has loaded, Jotla works offline: no account, no login, and no internet connection needed."), /*#__PURE__*/React.createElement(InfoP, {
+    last: true
+  }, "It also means this browser holds the record. The copies that exist are the ones you make with Export my data.")), /*#__PURE__*/React.createElement(InfoBlock, {
+    icon: "bell",
+    title: "One honest limit"
+  }, /*#__PURE__*/React.createElement(InfoP, null, "Browser storage is not for ever: clearing this site's data in the browser's settings removes the record with it, and a browser can clear site data itself if the device runs very low on space."), /*#__PURE__*/React.createElement(InfoP, null, "Storage also has a size limit, and photos grow the record fastest. If a save ever cannot fit, Jotla warns you the moment it happens rather than losing anything quietly."), /*#__PURE__*/React.createElement(InfoP, {
+    last: true
+  }, "That is the honest trade of a record that never leaves your hands, and it is why a saved copy every few weeks is good insurance.")), /*#__PURE__*/React.createElement(InfoBlock, {
+    icon: "download",
+    title: "Export my data: your own copy"
+  }, /*#__PURE__*/React.createElement(InfoP, null, /*#__PURE__*/React.createElement("span", {
+    className: "j-strong"
+  }, "What is in it."), " One file holding the whole of a child's record: every note with its date, its mood and what you wrote, the photos you kept with notes, and the details of every letter and report you have logged, in a form the app can read straight back in."), /*#__PURE__*/React.createElement(InfoP, null, /*#__PURE__*/React.createElement("span", {
+    className: "j-strong"
+  }, "What is not."), " Videos are never inside it: Jotla notes that a video exists but never copies the file, so the video itself stays in your own photo library. The printable day record carries your words only."), /*#__PURE__*/React.createElement(InfoP, null, /*#__PURE__*/React.createElement("span", {
+    className: "j-strong"
+  }, "Where it goes."), " The export saves as a file on your device, and you choose where it lives from there: your files, your own cloud drive, an email to yourself. It is free, and it stays free."), /*#__PURE__*/React.createElement(InfoP, {
+    last: true
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "j-strong"
+  }, "Who can see it."), " Only the people you give it to. Jotla can only know an export was run; keeping that copy safe is in your hands too.")), /*#__PURE__*/React.createElement(InfoBlock, {
+    icon: "attach",
+    title: "Restore from an export"
+  }, /*#__PURE__*/React.createElement(InfoP, null, "Live in this build: Settings has Restore from an export. Pick a Jotla export file and the record in it comes back, the child included."), /*#__PURE__*/React.createElement(InfoP, {
+    last: true
+  }, "Anything already on this device stays: the restore adds what the file holds and never doubles up a note it already has.")), /*#__PURE__*/React.createElement(InfoBlock, {
+    icon: "lock",
+    title: "Encrypted export",
+    pill: /*#__PURE__*/React.createElement(PlannedPill, null)
+  }, /*#__PURE__*/React.createElement(InfoP, null, "A locked export protects the file with a passphrase only you know. It is planned for the full app, and is not in this early test build yet."), /*#__PURE__*/React.createElement(InfoP, {
+    last: true
+  }, "For now, Export my data gives you a plain copy. Keep it somewhere private, like your own cloud drive.")), /*#__PURE__*/React.createElement(InfoBlock, {
+    icon: "close",
+    title: "If this device is lost or broken"
+  }, /*#__PURE__*/React.createElement(InfoP, null, "If you have an export file saved somewhere safe, Restore from an export brings the record back on a new device."), /*#__PURE__*/React.createElement(InfoP, {
+    last: true
+  }, "If there is no export, the record is gone with the device. Exports are the safety net in this build; make them often.")), /*#__PURE__*/React.createElement(InfoBlock, {
+    icon: "edit",
+    title: "Deleting things"
+  }, /*#__PURE__*/React.createElement(InfoP, null, "Delete a note or a document from its own page. Every delete sits behind a confirm, and cannot be undone."), /*#__PURE__*/React.createElement(InfoP, null, "Remove a whole child's record from their details sheet (hold the avatar, or tap the child's card in Settings). It is deliberately hard to do by accident: you confirm what will go, you are offered a backup file first, and you type DELETE to finish. The last child cannot be removed: the app always keeps at least one record."), /*#__PURE__*/React.createElement(InfoP, {
+    last: true
+  }, "Deleting in Jotla deletes from this device. There is no copy on our side to linger, because there never was one. Copies you exported earlier stay wherever you put them.")));
+}
+
+// About Jotla: version, what the app is, an honest live-now against planned
+// board, the Plus summary, and the feedback door. No typeface credit line
+// (dropped 12 Jul 2026, founder instruction).
+function InfoAboutScreen({
+  nav
+}) {
+  const FEEDBACK_HREF = 'mailto:hello@sen.help?subject=' + encodeURIComponent('Jotla prototype feedback') + '&body=' + encodeURIComponent('What I was trying to do:\n\nWhat I think, or what happened:\n\nWhich screen:\n\nMy phone / browser:\n');
+  return /*#__PURE__*/React.createElement(InfoPage, {
+    nav: nav,
+    title: "About Jotla",
+    subtitle: "The build, what is live, and what is next"
+  }, /*#__PURE__*/React.createElement(InfoBlock, {
+    icon: "star",
+    title: "Jotla"
+  }, /*#__PURE__*/React.createElement(InfoP, null, /*#__PURE__*/React.createElement("span", {
+    className: "j-strong"
+  }, "Jotla by SEN Help."), " Early test build ", window.JOTLA_BUILD, " (July 2026)."), /*#__PURE__*/React.createElement(InfoP, null, "Designed and built by SEN Help (sen.help)."), /*#__PURE__*/React.createElement(InfoP, {
+    last: true
+  }, "Jotla is a private, on-device record for parents of children with special educational needs: log the moments, the moods and the school handoffs, keep the details of every letter and report, and export the record when someone needs to see it.")), /*#__PURE__*/React.createElement(InfoBlock, {
+    icon: "check",
+    title: "What is live now"
+  }, /*#__PURE__*/React.createElement(InfoP, null, "This early build already does the everyday job: quick daily logging with moods, gate notes for the handover moments, photos and videos kept with a note (part of Plus), a vault for letters and reports with a photo of each document, and keyword search of your own notes."), /*#__PURE__*/React.createElement(InfoP, {
+    last: true
+  }, "Around that: the month calendar (its mood patterns are part of Plus), the printable day record (part of Plus), the tips deck for hard moments, the child check-in with its follow-up questions (the questions are part of Plus), dark mode, larger text sizes, a free export of the whole record, and restore from an export.")), /*#__PURE__*/React.createElement(InfoBlock, {
+    icon: "clock",
+    title: "What is coming"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 12
+    }
+  }, /*#__PURE__*/React.createElement(PlanRow, {
+    title: "Encrypted export",
+    note: "Your own locked copy, only you hold the key."
+  }), /*#__PURE__*/React.createElement(PlanRow, {
+    title: "Lock the app",
+    note: "A fingerprint, face, or PIN on this device."
+  }), /*#__PURE__*/React.createElement(PlanRow, {
+    title: "Family Sync",
+    note: "Part of Jotla Plus: the record on every grown-up's phone.",
+    pill: "Coming soon"
+  }), /*#__PURE__*/React.createElement(InfoP, {
+    last: true
+  }, "Planned means exactly that: none of the above is switched on yet, and nothing in this app pretends to be."))), /*#__PURE__*/React.createElement(InfoBlock, {
+    icon: "sparkle",
+    title: "Jotla Plus"
+  }, /*#__PURE__*/React.createElement(InfoP, null, "The record itself is free, forever: logging, your timeline, search and export never cost anything, never expire, and stay yours."), /*#__PURE__*/React.createElement(InfoP, null, "Jotla Plus adds the tools to help you spot patterns and make your case: photos and videos kept with your notes, patterns and the Month view, deep filtering, Dysregulation Mode, and the PDF evidence pack. Pay once and it is yours to keep. No subscription. No timers."), /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-soft",
+    onClick: () => nav.go('unlock')
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "sparkle",
+    size: 18,
+    color: "var(--blue)"
+  }), " See what Plus adds")), /*#__PURE__*/React.createElement(InfoBlock, {
+    icon: "heart",
+    title: "Tell us what you think"
+  }, /*#__PURE__*/React.createElement(InfoP, null, "This is an early test, and your feedback shapes it."), /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-primary",
+    onClick: () => {
+      window.location.assign(FEEDBACK_HREF);
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "heart",
+    size: 18,
+    color: "#fff"
+  }), " Tell us what you think"), /*#__PURE__*/React.createElement("p", {
+    className: "j-meta",
+    style: {
+      textAlign: 'center',
+      marginTop: 8
+    }
+  }, "Opens your email.")));
 }
 
 // ---------------- Settings ----------------
@@ -2428,7 +2813,8 @@ function Toggle({
 // Backup health: the one story that kills this product is data loss, so Settings
 // shows when the record was last saved out, not just how to do it.
 const BACKUP_META_KEY = 'jotla_backup_v1';
-// Android's automatic app backup stops including data past ~25 MB; warn before that.
+// Browser storage quotas vary; photos grow a record fastest, so warn well
+// before a save can start failing (saveJSON already alerts if one does).
 const BACKUP_SIZE_SOFT_CAP = 20 * 1024 * 1024;
 function backupHealthLine(meta) {
   if (!meta || !meta.lastExportAt) return 'No saved copy from this app yet.';
@@ -2455,7 +2841,6 @@ function SettingsScreen({
 }) {
   const J = window.JOTLA;
   const childName = profile && profile.name || 'your child';
-  const [info, setInfo] = useStateB(null);
   const [backupMeta, setBackupMeta] = useStateB(() => {
     try {
       return JSON.parse(localStorage.getItem(BACKUP_META_KEY)) || null;
@@ -2633,14 +3018,6 @@ function SettingsScreen({
     };
     r.readAsText(f);
   };
-  const INFO = {
-    backup: ['Where your record is kept', ['Everything you write lives on this device, inside Jotla. Nothing is sent to us, ever.', 'Your record rides inside your phone\'s own backup (iCloud on iPhone, Google backup on Android). If device backup is on, a lost or broken phone does not lose the record.', 'Worth checking once: open your phone settings and make sure device backup is switched on.', 'For extra safety, use Export my data every so often and keep the file somewhere safe. You can bring it back with Restore from an export.']],
-    encrypted: ['Encrypted export', ['A locked export protects the file with a passphrase only you know.', 'It is planned for the full app, and is not in this early test build yet.', 'For now, Export my data gives you a plain copy. Keep it somewhere private, like your own cloud drive.']],
-    lock: ['Lock the app', ['In the full app you will be able to lock Jotla behind your fingerprint, face or a PIN.', 'It is not in this early test build yet.', 'Until then, your phone\'s own screen lock protects the record, and both iPhone and Android can lock or pin individual apps if you share the phone.']],
-    privacy: ['Privacy, in plain words', ['No account, no login, no cloud. Everything you write stays on this device.', 'We never receive or access your data. There is nothing for us to read, lose or sell.', 'Your record leaves the phone only when you choose: an export you save, or a day record you print or share.', 'One thing to remember: what you write can end up in front of other people when you choose to share it. Log facts, keep other children out of photos where you can, and your record will serve you well.']],
-    mission: ['What Jotla is for', ['Every SEN parent is told to document everything. Nobody gives them the tool. Jotla is that tool.', 'Log the days in seconds, capture what really happened at the school gate, and keep every letter and report in one place.', 'When it matters, at an assessment, an annual review or a tribunal, your record is already organised, dated and ready to share.', 'Owned by you. Not the school, not the Local Authority. You.']],
-    about: ['About and credits', ['Jotla by SEN Help. Early test build ' + window.JOTLA_BUILD + ' (July 2026).', 'Designed and built by SEN Help (sen.help).', 'Typefaces: Cal Sans and Outfit, used under the SIL Open Font Licence.', 'Feedback makes this better. Use "Tell us what you think" in Settings.']]
-  };
   return /*#__PURE__*/React.createElement("div", {
     className: "j-screen"
   }, /*#__PURE__*/React.createElement("div", {
@@ -2724,15 +3101,15 @@ function SettingsScreen({
       color: 'var(--muted)',
       lineHeight: 1.45
     }
-  }, backupHealthLine(backupMeta), exportDue ? ' A copy every few weeks is good insurance.' : '', recordBytes > BACKUP_SIZE_SOFT_CAP ? ' Your record is about ' + Math.round(recordBytes / 1048576) + ' MB. Big records can fall out of your phone\'s automatic backup, so saved copies matter more now.' : '')), /*#__PURE__*/React.createElement(SettingsRow, {
+  }, backupHealthLine(backupMeta), exportDue ? ' A copy every few weeks is good insurance.' : '', recordBytes > BACKUP_SIZE_SOFT_CAP ? ' Your record is about ' + Math.round(recordBytes / 1048576) + ' MB. Big records can press against this browser\'s storage limit, so saved copies matter more now.' : '')), /*#__PURE__*/React.createElement(SettingsRow, {
     icon: /*#__PURE__*/React.createElement(Icon, {
       name: "shield",
       size: 20,
       color: "var(--blue)"
     }),
     title: "Where your record is kept",
-    sub: "On this device, inside your phone's own backup. We never see it.",
-    onClick: () => setInfo('backup')
+    sub: "On this device, in this browser's own storage. We never see it.",
+    onClick: () => nav.go('infodata')
   }), /*#__PURE__*/React.createElement(SettingsRow, {
     icon: /*#__PURE__*/React.createElement(Icon, {
       name: "download",
@@ -2817,7 +3194,7 @@ function SettingsScreen({
     }),
     title: "Encrypted export",
     sub: "Your own locked copy, only you hold the key.",
-    onClick: () => setInfo('encrypted'),
+    onClick: () => nav.go('infodata'),
     right: /*#__PURE__*/React.createElement("span", {
       className: "j-pillbadge",
       style: {
@@ -2980,7 +3357,7 @@ function SettingsScreen({
     }),
     title: "Lock the app",
     sub: "A fingerprint, face, or PIN on this device.",
-    onClick: () => setInfo('lock'),
+    onClick: () => nav.go('infoprivacy'),
     right: /*#__PURE__*/React.createElement("span", {
       className: "j-pillbadge",
       style: {
@@ -2996,7 +3373,7 @@ function SettingsScreen({
     }),
     title: "How your data is kept",
     sub: "The whole privacy promise, in plain words.",
-    onClick: () => setInfo('privacy'),
+    onClick: () => nav.go('infoprivacy'),
     last: true
   })), feedbackCard, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -3058,7 +3435,7 @@ function SettingsScreen({
       color: "var(--blue)"
     }),
     title: "What Jotla is for",
-    onClick: () => setInfo('mission')
+    onClick: () => nav.go('infomission')
   }), /*#__PURE__*/React.createElement(SettingsRow, {
     icon: /*#__PURE__*/React.createElement(Icon, {
       name: "note",
@@ -3066,53 +3443,22 @@ function SettingsScreen({
       color: "var(--blue)"
     }),
     title: "Privacy, in plain words",
-    onClick: () => setInfo('privacy')
+    onClick: () => nav.go('infoprivacy')
   }), /*#__PURE__*/React.createElement(SettingsRow, {
     icon: /*#__PURE__*/React.createElement(Icon, {
       name: "star",
       size: 20,
       color: "var(--blue)"
     }),
-    title: "About and credits",
-    onClick: () => setInfo('about'),
+    title: "About Jotla",
+    onClick: () => nav.go('infoabout'),
     last: true
   })), nav.plus && plusCard, /*#__PURE__*/React.createElement("p", {
     className: "j-meta",
     style: {
       textAlign: 'center'
     }
-  }, "Jotla by SEN Help \xB7 Test build ", window.JOTLA_BUILD))), info && /*#__PURE__*/React.createElement("div", {
-    className: "j-sheet-scrim",
-    onClick: () => setInfo(null)
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "j-sheet",
-    onClick: e => e.stopPropagation(),
-    style: {
-      maxHeight: '85%',
-      overflowY: 'auto'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "j-sheet-grab"
-  }), /*#__PURE__*/React.createElement("h2", {
-    className: "j-h2",
-    style: {
-      marginBottom: 12
-    }
-  }, INFO[info][0]), INFO[info][1].map((p, idx) => /*#__PURE__*/React.createElement("p", {
-    key: idx,
-    className: "j-body",
-    style: {
-      color: 'var(--muted)',
-      marginBottom: 12
-    }
-  }, p)), /*#__PURE__*/React.createElement("button", {
-    className: "j-btn j-btn-primary",
-    onClick: () => setInfo(null)
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "check",
-    size: 20,
-    color: "#fff"
-  }), " Got it"))));
+  }, "Jotla by SEN Help \xB7 Test build ", window.JOTLA_BUILD))));
 }
 Object.assign(window, {
   FindScreen,
@@ -3120,5 +3466,9 @@ Object.assign(window, {
   AddDocScreen,
   DocScreen,
   UnlockScreen,
-  SettingsScreen
+  SettingsScreen,
+  InfoMissionScreen,
+  InfoPrivacyScreen,
+  InfoDataScreen,
+  InfoAboutScreen
 });

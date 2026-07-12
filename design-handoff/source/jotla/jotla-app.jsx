@@ -622,7 +622,11 @@ function App({ appMode }) {
     case 'evidence': screen = <EvidenceScreen nav={nav} entries={myEntries} docs={myDocs} profile={profile} navView={view} />; break;
     case 'adddoc': screen = <AddDocScreen nav={nav} />; break;
     case 'settings': screen = <SettingsScreen nav={nav} profile={profile} entries={myEntries} docs={myDocs} />; break;
-    case 'quicklog': screen = <QuickLogScreen nav={nav} today={today} />; break;
+    case 'quicklog': screen = <QuickLogScreen nav={nav} today={today} view={view} />; break;
+    case 'infomission': screen = <InfoMissionScreen nav={nav} />; break;
+    case 'infoprivacy': screen = <InfoPrivacyScreen nav={nav} />; break;
+    case 'infodata': screen = <InfoDataScreen nav={nav} />; break;
+    case 'infoabout': screen = <InfoAboutScreen nav={nav} />; break;
     case 'gateintro': screen = <GateIntroScreen nav={nav} profile={profile} />; break;
     case 'handover': screen = <HandoverScreen nav={nav} today={today} profile={profile} />; break;
     case 'tips': screen = <DysregTipsScreen nav={nav} />; break;

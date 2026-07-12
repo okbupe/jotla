@@ -339,6 +339,7 @@ function AddDocScreen({ nav }) {
   const [received, setReceived] = useStateB('');
   const [about, setAbout] = useStateB('');
   const [action, setAction] = useStateB('');
+  const [datePickerOpen, setDatePickerOpen] = useStateB(false);
 
   const save = () => {
     nav.addDoc({
@@ -416,8 +417,9 @@ function AddDocScreen({ nav }) {
 
           <div>
             <FieldLabel>When did you receive it?</FieldLabel>
-            <input type="date" className="j-input" min="2019-01-01" max={J.TODAY_ISO} value={received}
-              onChange={e => setReceived(e.target.value)} style={{ colorScheme: 'light dark' }} />
+            <DateField value={/^\d{4}-\d{2}-\d{2}$/.test(received) ? J.fmtLong(received) + ' ' + received.slice(0, 4) : null}
+              placeholder="Left blank, today's date is used" label="When did you receive it"
+              onClick={() => setDatePickerOpen(true)} />
           </div>
 
           <div>
@@ -434,6 +436,13 @@ function AddDocScreen({ nav }) {
       <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '12px 20px calc(16px + env(safe-area-inset-bottom))', background: 'var(--fade-grad)' }}>
         <button className="j-btn j-btn-primary j-btn-lg" onClick={save}><Icon name="check" size={22} color="#fff" /> Save document</button>
       </div>
+      {/* No bounds, mirroring the field's own rule exactly: any real calendar
+          date is accepted here, so no day is disabled. */}
+      {datePickerOpen && (
+        <CalendarSheet onClose={() => setDatePickerOpen(false)}
+          value={/^\d{4}-\d{2}-\d{2}$/.test(received) ? received : null}
+          onSelect={setReceived} />
+      )}
     </div>
   );
 }
@@ -449,6 +458,7 @@ function EditDocSheet({ doc, onSave, onClose }) {
   const [received, setReceived] = useStateB(doc.received);
   const [about, setAbout] = useStateB(doc.about || '');
   const [action, setAction] = useStateB(doc.action || '');
+  const [datePickerOpen, setDatePickerOpen] = useStateB(false);
   const inputStyle = { width: '100%', boxSizing: 'border-box', borderRadius: 12, border: '1.5px solid var(--chip-border)', background: 'var(--card-2)',
     padding: '10px 12px', fontFamily: "'Outfit', system-ui", fontSize: 'calc(15.5px * var(--tscale, 1))', color: 'var(--ink)', marginBottom: 12 };
   const changed = title.trim() !== doc.title || type !== doc.type || from.trim() !== doc.from || received !== doc.received
@@ -470,7 +480,9 @@ function EditDocSheet({ doc, onSave, onClose }) {
         <p className="j-sm" style={{ marginBottom: 6 }}>From</p>
         <input value={from} onChange={ev => setFrom(ev.target.value)} style={inputStyle} />
         <p className="j-sm" style={{ marginBottom: 6 }}>Date received</p>
-        <input type="date" value={received} onChange={ev => setReceived(ev.target.value)} style={{ ...inputStyle, colorScheme: 'light dark' }} />
+        <DateField compact value={/^\d{4}-\d{2}-\d{2}$/.test(received) ? J.fmtLong(received) + ' ' + received.slice(0, 4) : null}
+          placeholder="Pick the date" label="Date received" onClick={() => setDatePickerOpen(true)}
+          style={{ marginBottom: 12 }} />
         <p className="j-sm" style={{ marginBottom: 6 }}>About</p>
         <textarea value={about} onChange={ev => setAbout(ev.target.value)} rows={3} style={{ ...inputStyle, resize: 'vertical' }} />
         <p className="j-sm" style={{ marginBottom: 6 }}>Action needed (leave empty if none)</p>
@@ -485,6 +497,12 @@ function EditDocSheet({ doc, onSave, onClose }) {
         </button>
         <button className="j-btn j-btn-ghost" style={{ marginTop: 8 }} onClick={onClose}>Cancel</button>
       </div>
+      {/* No bounds, the same rule as adding the document. */}
+      {datePickerOpen && (
+        <CalendarSheet onClose={() => setDatePickerOpen(false)}
+          value={/^\d{4}-\d{2}-\d{2}$/.test(received) ? received : null}
+          onSelect={setReceived} />
+      )}
     </div>
   );
 }
@@ -626,9 +644,6 @@ function PlusFeature({ icon, title, formal, plain }) {
 
 const FREE_ITEMS = ['Daily logging and the quick log', 'The child walkthrough', 'Your basic timeline',
   'Plain keyword search of your own notes', 'Raw data export', 'Appeal-deadline safety reminders'];
-const PLUS_ITEMS = ['Patterns and the Month view', 'Deep filtering', 'Dysregulation Mode',
-  'PDF evidence pack', 'Promised vs delivered provision log',
-  'Family sync: every grown-up’s phone stays up to date (coming soon)'];
 const LIVING_ITEMS = ['EHCP and SEND deadline tracker', 'What to do about a gap', 'Rights kept current',
   'Current letter templates', 'On-device AI help', 'Fresh scene and symbol packs', 'A document vault',
   'Voice capture', 'Multiple children'];
@@ -779,6 +794,10 @@ function PlusPage() {
             title="Dysregulation Mode"
             formal="Capture a hard moment as fact, while you are still standing there. It gives you the five questions to ask, takes the answers as plain notes, and puts them in order: what led up to it, what happened, and what helped. You walk away with a usable record, not just 'a hard afternoon'."
             plain="Teacher mentions a tough afternoon. You tap 'At the gate?', read the questions, tap the answers. Done in under two minutes." />
+          <PlusFeature icon={<Icon name="attach" size={22} color="var(--blue)" />}
+            title="Photos and Videos on Notes"
+            formal="Keep the picture with the fact. Capture a photo or video, or attach one from your library, and it stays with the note on this phone. Sometimes the picture is the evidence."
+            plain="A mark at pick-up: capture it with the gate note and it sits with that day's record, ready when you need it." />
           <PlusFeature icon={<Icon name="doc" size={22} color="var(--blue)" />}
             title="PDF Evidence Pack"
             formal="Hand over a clean, dated record when it counts. The evidence pack lays out your chosen entries as a clear, dated document, each with the day it was logged and whether it was written the same day or added later. It is built around the formats tribunals and professionals already use."
@@ -926,7 +945,7 @@ function UnlockScreen({ nav }) {
             </div>
             <h2 className="j-h2" style={{ textAlign: 'center', marginBottom: 8 }}>You are about to switch to Jotla Plus</h2>
             <p className="j-body" style={{ textAlign: 'center', color: 'var(--muted)', marginBottom: 20 }}>
-              This turns on Patterns, the Month view, Deep Filtering, Dysregulation Mode and the PDF Evidence Pack. Everything you have already saved stays exactly as it is.
+              This turns on Patterns, the Month view, Deep Filtering, Dysregulation Mode, Photos and Videos on Notes, and the PDF Evidence Pack. Everything you have already saved stays exactly as it is.
             </p>
             <button className="j-btn j-btn-lg" style={{ background: PLUS_GRAD, color: '#fff', marginBottom: 10 }}
               onClick={() => { nav.buyPlus(); setConfirmPlus(false); setBought(true); }}>
@@ -993,13 +1012,257 @@ function UnlockScreen({ nav }) {
             </div>
             <h2 className="j-h2" style={{ textAlign: 'center', marginBottom: 8 }}>You have Jotla Plus</h2>
             <p className="j-body" style={{ textAlign: 'center', color: 'var(--muted)', marginBottom: 20 }}>
-              Thank you. Patterns, Deep Filtering, Dysregulation Mode and the PDF Evidence Pack are switched on. Your record stays yours, always.
+              Thank you. Patterns, Deep Filtering, Dysregulation Mode, Photos and Videos on Notes, and the PDF Evidence Pack are switched on. Your record stays yours, always.
             </p>
             <button className="j-btn j-btn-primary" onClick={() => { setBought(false); nav.back(); }}>Done</button>
           </div>
         </div>
       )}
     </div>
+  );
+}
+
+// ---------------- Settings info pages (12 Jul 2026) ----------------
+// The informational sheets grew into full pushed screens, so a parent gets
+// the whole story, not a summary over a dimmed background. Every claim below
+// is checked against THIS build's own code (the web prototype), not the
+// native app's: where the two builds genuinely differ (browser storage, a
+// live restore, photos inside the export) the copy says the web truth.
+
+// The page shell: round blue Back, title and subtitle, then a scrolling
+// column of blocks.
+function InfoPage({ nav, title, subtitle, children }) {
+  return (
+    <div className="j-screen">
+      <PushHeader title={title} subtitle={subtitle} onBack={() => nav.back()} />
+      <div className="j-scroll j-fade">
+        <div className="j-pad" style={{ paddingTop: 4, paddingBottom: 40, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// One explainer card: icon disc, Cal Sans heading, optional status pill on
+// the right, then paragraphs.
+function InfoBlock({ icon, title, pill, children }) {
+  return (
+    <div className="j-card" style={{ padding: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10, flexWrap: 'wrap' }}>
+        <span style={{ width: 38, height: 38, borderRadius: 11, background: 'var(--tint-blue)', flexShrink: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name={icon} size={20} color="var(--blue)" />
+        </span>
+        <span className="j-h3" style={{ flexShrink: 1 }}>{title}</span>
+        {pill}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// A body paragraph inside a block, muted exactly like the old info sheets.
+function InfoP({ children, last = false }) {
+  return <p className="j-body" style={{ color: 'var(--muted)', marginBottom: last ? 0 : 10 }}>{children}</p>;
+}
+
+// The grey status pill the Settings rows use for not-yet features.
+function PlannedPill({ label = 'Planned' }) {
+  return <span className="j-pillbadge" style={{ background: 'var(--tag-grey-bg)', color: 'var(--muted)' }}>{label}</span>;
+}
+
+// One planned-feature row on the About page: title beside its status pill,
+// then a one-line note.
+function PlanRow({ title, note, pill = 'Planned' }) {
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <span style={{ fontFamily: "'Outfit', system-ui", fontWeight: 500, fontSize: 'calc(15.5px * var(--tscale, 1))', color: 'var(--ink)' }}>{title}</span>
+        <PlannedPill label={pill} />
+      </div>
+      <p className="j-sm" style={{ marginTop: 2 }}>{note}</p>
+    </div>
+  );
+}
+
+// What Jotla is for. The first block is the mission copy the sheets carried;
+// the rest expands it with what this build genuinely does.
+function InfoMissionScreen({ nav }) {
+  return (
+    <InfoPage nav={nav} title="What Jotla is for" subtitle="For the parents told to document everything">
+      <InfoBlock icon="heart" title="The tool parents are told to need">
+        <InfoP>Every SEN parent is told to document everything. Nobody gives them the tool. Jotla is that tool.</InfoP>
+        <InfoP>Log the days in seconds, capture what really happened at the school gate, and keep every letter and report in one place.</InfoP>
+        <InfoP last>Owned by you. Not the school, not the Local Authority. You.</InfoP>
+      </InfoBlock>
+
+      <InfoBlock icon="star" title="When the record does its work">
+        <InfoP>When it matters, at an assessment, an annual review or a tribunal, your record is already organised, dated and ready to share.</InfoP>
+        <InfoP>Take it into an EHCP annual review to show the year as it really was, not as memory serves it. Bring dated notes to a school meeting so the conversation starts from what happened. And when you write to the Local Authority, the dates and details are already in one place.</InfoP>
+        <InfoP last>One honest line: Jotla keeps the record, it does not give legal advice. What you can control is walking in with the facts ready.</InfoP>
+      </InfoBlock>
+
+      <InfoBlock icon="clock" title="Why the dates can be trusted">
+        <InfoP>Every note carries an honest label: <span className="j-strong">Same day</span> when it was logged on the day it happened, <span className="j-strong">Added later</span> when it was not.</InfoP>
+        <InfoP>The label is decided once, when the note is first saved, and it never changes. Editing the wording later does not rewrite it, and the note keeps its history of earlier wordings.</InfoP>
+        <InfoP last>Hours later is fine; the record keeps its timing honest. A record that is straight about when things were written is worth more when someone else reads it.</InfoP>
+      </InfoBlock>
+
+      <InfoBlock icon="edit" title="What makes a strong record">
+        <InfoP>Log facts: what happened, when, and who was there. Keep other children out of what you write where you can.</InfoP>
+        <InfoP>Little and often beats perfect. The quick log takes seconds, and a plain sentence written today is worth more than a polished page written next month.</InfoP>
+        <InfoP last>After a hard handover, open a gate note. It asks you the right questions in the right order while everything is still fresh.</InfoP>
+      </InfoBlock>
+
+      <button className="j-btn j-btn-soft" onClick={() => nav.go('infoprivacy')}>
+        <Icon name="lock" size={18} color="var(--blue)" /> How your record stays private
+      </button>
+    </InfoPage>
+  );
+}
+
+// Privacy, in plain words. Claims verified against this build: there is no
+// upload anywhere in the source; the only record-content exits are the ones
+// named below, and every one is user-driven.
+function InfoPrivacyScreen({ nav }) {
+  return (
+    <InfoPage nav={nav} title="Privacy, in plain words" subtitle="What we can see, and what leaves this device">
+      <InfoBlock icon="shield" title="The promise">
+        <InfoP><span className="j-strong">We never send your record anywhere.</span> Jotla works without an account, a login or a cloud. Everything you write about your child stays on this device, and so does every photo you keep with a note (part of Jotla Plus).</InfoP>
+        <InfoP>We never receive or access your data. There is nothing for us to read, lose or sell.</InfoP>
+        <InfoP last>This is not a policy we promise to follow; it is how the app is built. There is no upload in Jotla, so your record has nowhere to go except where you choose to send it.</InfoP>
+      </InfoBlock>
+
+      <InfoBlock icon="arrowRight" title="What leaves this device">
+        <InfoP>Nothing leaves this device unless you send it yourself. The app has exactly three doors out, and you open every one:</InfoP>
+        <InfoP><span className="j-strong">Export my data</span> (in Settings, and offered again before you delete a child's record) saves a file of the whole record to your device. You choose where that file goes. Photos you kept with notes travel inside it; videos never do, because Jotla never copies the video file in the first place.</InfoP>
+        <InfoP><span className="j-strong">Create PDF</span> (the day record, part of Plus) opens a printable page in a new tab. It carries your words, never your photos, and it goes nowhere until you print or save it yourself.</InfoP>
+        <InfoP><span className="j-strong">Email this to the teacher</span> (after a gate note) opens your own email app with the note typed in for you. Nothing goes anywhere until you press send.</InfoP>
+        <InfoP last>Those are the only places in the app that move what you have written. Everything else stays put.</InfoP>
+      </InfoBlock>
+
+      <InfoBlock icon="lock" title="Who can see the record">
+        <InfoP>On this device: anyone you hand it to unlocked, in this browser. Jotla does not have a lock of its own yet, so your device's own lock is the front door.</InfoP>
+        <InfoP>Once you share a copy, that copy is out of your hands. Whoever you send it to can read it, keep it and pass it on. Share with people you trust, when it serves your child.</InfoP>
+        <InfoP last>And us? We can never see your record. There is no account and no cloud, so there is nothing on our side to look at.</InfoP>
+      </InfoBlock>
+
+      <InfoBlock icon="lock" title="Lock the app" pill={<PlannedPill />}>
+        <InfoP>In the full app you will be able to lock Jotla behind your fingerprint, face or a PIN. It is not in this early test build yet.</InfoP>
+        <InfoP last>Until then, your device's own screen lock protects the record, and phones can also lock or pin individual apps if you share the device.</InfoP>
+      </InfoBlock>
+
+      <InfoBlock icon="play" title="Handing the phone to your child">
+        <InfoP>The Today screen has a child-safe flow for the moments you pass the phone over: Your day.</InfoP>
+        <InfoP last>It is a calm screen with no way back into your notes. The system back button is swallowed while it is open, and leaving it takes a deliberate grown-up press-and-hold, never a stray tap, so a curious child cannot land in the record.</InfoP>
+      </InfoBlock>
+
+      <InfoBlock icon="edit" title="Write with sharing in mind">
+        <InfoP>What you write can end up in front of other people when you choose to share it. That is the record doing its job.</InfoP>
+        <InfoP last>So log facts, keep other children out of what you write and what you photograph where you can, and your record will serve you well.</InfoP>
+      </InfoBlock>
+
+      <button className="j-btn j-btn-soft" onClick={() => nav.go('infodata')}>
+        <Icon name="shield" size={18} color="var(--blue)" /> Where your record is kept
+      </button>
+    </InfoPage>
+  );
+}
+
+// Where your record is kept. This is the web build, so the honest story is
+// browser storage: no phone-backup claim is made here (that story belongs to
+// the native app).
+function InfoDataScreen({ nav }) {
+  return (
+    <InfoPage nav={nav} title="Where your record is kept" subtitle="On this device, in your hands">
+      <InfoBlock icon="shield" title="On this device">
+        <InfoP>Everything you write lives on this device, in this browser's own storage for Jotla, and so does every photo you keep with a note (part of Jotla Plus). Nothing is sent to us, ever.</InfoP>
+        <InfoP>Once it has loaded, Jotla works offline: no account, no login, and no internet connection needed.</InfoP>
+        <InfoP last>It also means this browser holds the record. The copies that exist are the ones you make with Export my data.</InfoP>
+      </InfoBlock>
+
+      <InfoBlock icon="bell" title="One honest limit">
+        <InfoP>Browser storage is not for ever: clearing this site's data in the browser's settings removes the record with it, and a browser can clear site data itself if the device runs very low on space.</InfoP>
+        <InfoP>Storage also has a size limit, and photos grow the record fastest. If a save ever cannot fit, Jotla warns you the moment it happens rather than losing anything quietly.</InfoP>
+        <InfoP last>That is the honest trade of a record that never leaves your hands, and it is why a saved copy every few weeks is good insurance.</InfoP>
+      </InfoBlock>
+
+      <InfoBlock icon="download" title="Export my data: your own copy">
+        <InfoP><span className="j-strong">What is in it.</span> One file holding the whole of a child's record: every note with its date, its mood and what you wrote, the photos you kept with notes, and the details of every letter and report you have logged, in a form the app can read straight back in.</InfoP>
+        <InfoP><span className="j-strong">What is not.</span> Videos are never inside it: Jotla notes that a video exists but never copies the file, so the video itself stays in your own photo library. The printable day record carries your words only.</InfoP>
+        <InfoP><span className="j-strong">Where it goes.</span> The export saves as a file on your device, and you choose where it lives from there: your files, your own cloud drive, an email to yourself. It is free, and it stays free.</InfoP>
+        <InfoP last><span className="j-strong">Who can see it.</span> Only the people you give it to. Jotla can only know an export was run; keeping that copy safe is in your hands too.</InfoP>
+      </InfoBlock>
+
+      <InfoBlock icon="attach" title="Restore from an export">
+        <InfoP>Live in this build: Settings has Restore from an export. Pick a Jotla export file and the record in it comes back, the child included.</InfoP>
+        <InfoP last>Anything already on this device stays: the restore adds what the file holds and never doubles up a note it already has.</InfoP>
+      </InfoBlock>
+
+      <InfoBlock icon="lock" title="Encrypted export" pill={<PlannedPill />}>
+        <InfoP>A locked export protects the file with a passphrase only you know. It is planned for the full app, and is not in this early test build yet.</InfoP>
+        <InfoP last>For now, Export my data gives you a plain copy. Keep it somewhere private, like your own cloud drive.</InfoP>
+      </InfoBlock>
+
+      <InfoBlock icon="close" title="If this device is lost or broken">
+        <InfoP>If you have an export file saved somewhere safe, Restore from an export brings the record back on a new device.</InfoP>
+        <InfoP last>If there is no export, the record is gone with the device. Exports are the safety net in this build; make them often.</InfoP>
+      </InfoBlock>
+
+      <InfoBlock icon="edit" title="Deleting things">
+        <InfoP>Delete a note or a document from its own page. Every delete sits behind a confirm, and cannot be undone.</InfoP>
+        <InfoP>Remove a whole child's record from their details sheet (hold the avatar, or tap the child's card in Settings). It is deliberately hard to do by accident: you confirm what will go, you are offered a backup file first, and you type DELETE to finish. The last child cannot be removed: the app always keeps at least one record.</InfoP>
+        <InfoP last>Deleting in Jotla deletes from this device. There is no copy on our side to linger, because there never was one. Copies you exported earlier stay wherever you put them.</InfoP>
+      </InfoBlock>
+    </InfoPage>
+  );
+}
+
+// About Jotla: version, what the app is, an honest live-now against planned
+// board, the Plus summary, and the feedback door. No typeface credit line
+// (dropped 12 Jul 2026, founder instruction).
+function InfoAboutScreen({ nav }) {
+  const FEEDBACK_HREF = 'mailto:hello@sen.help?subject=' + encodeURIComponent('Jotla prototype feedback')
+    + '&body=' + encodeURIComponent('What I was trying to do:\n\nWhat I think, or what happened:\n\nWhich screen:\n\nMy phone / browser:\n');
+  return (
+    <InfoPage nav={nav} title="About Jotla" subtitle="The build, what is live, and what is next">
+      <InfoBlock icon="star" title="Jotla">
+        <InfoP><span className="j-strong">Jotla by SEN Help.</span> Early test build {window.JOTLA_BUILD} (July 2026).</InfoP>
+        <InfoP>Designed and built by SEN Help (sen.help).</InfoP>
+        <InfoP last>Jotla is a private, on-device record for parents of children with special educational needs: log the moments, the moods and the school handoffs, keep the details of every letter and report, and export the record when someone needs to see it.</InfoP>
+      </InfoBlock>
+
+      <InfoBlock icon="check" title="What is live now">
+        <InfoP>This early build already does the everyday job: quick daily logging with moods, gate notes for the handover moments, photos and videos kept with a note (part of Plus), a vault for letters and reports with a photo of each document, and keyword search of your own notes.</InfoP>
+        <InfoP last>Around that: the month calendar (its mood patterns are part of Plus), the printable day record (part of Plus), the tips deck for hard moments, the child check-in with its follow-up questions (the questions are part of Plus), dark mode, larger text sizes, a free export of the whole record, and restore from an export.</InfoP>
+      </InfoBlock>
+
+      <InfoBlock icon="clock" title="What is coming">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <PlanRow title="Encrypted export" note="Your own locked copy, only you hold the key." />
+          <PlanRow title="Lock the app" note="A fingerprint, face, or PIN on this device." />
+          <PlanRow title="Family Sync" note="Part of Jotla Plus: the record on every grown-up's phone." pill="Coming soon" />
+          <InfoP last>Planned means exactly that: none of the above is switched on yet, and nothing in this app pretends to be.</InfoP>
+        </div>
+      </InfoBlock>
+
+      <InfoBlock icon="sparkle" title="Jotla Plus">
+        <InfoP>The record itself is free, forever: logging, your timeline, search and export never cost anything, never expire, and stay yours.</InfoP>
+        <InfoP>Jotla Plus adds the tools to help you spot patterns and make your case: photos and videos kept with your notes, patterns and the Month view, deep filtering, Dysregulation Mode, and the PDF evidence pack. Pay once and it is yours to keep. No subscription. No timers.</InfoP>
+        <button className="j-btn j-btn-soft" onClick={() => nav.go('unlock')}>
+          <Icon name="sparkle" size={18} color="var(--blue)" /> See what Plus adds
+        </button>
+      </InfoBlock>
+
+      <InfoBlock icon="heart" title="Tell us what you think">
+        <InfoP>This is an early test, and your feedback shapes it.</InfoP>
+        <button className="j-btn j-btn-primary" onClick={() => { window.location.assign(FEEDBACK_HREF); }}>
+          <Icon name="heart" size={18} color="#fff" /> Tell us what you think
+        </button>
+        <p className="j-meta" style={{ textAlign: 'center', marginTop: 8 }}>Opens your email.</p>
+      </InfoBlock>
+    </InfoPage>
   );
 }
 
@@ -1033,7 +1296,8 @@ function Toggle({ on, onChange, label }) {
 // Backup health: the one story that kills this product is data loss, so Settings
 // shows when the record was last saved out, not just how to do it.
 const BACKUP_META_KEY = 'jotla_backup_v1';
-// Android's automatic app backup stops including data past ~25 MB; warn before that.
+// Browser storage quotas vary; photos grow a record fastest, so warn well
+// before a save can start failing (saveJSON already alerts if one does).
 const BACKUP_SIZE_SOFT_CAP = 20 * 1024 * 1024;
 function backupHealthLine(meta) {
   if (!meta || !meta.lastExportAt) return 'No saved copy from this app yet.';
@@ -1056,7 +1320,6 @@ function recordSizeBytes() {
 function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
   const J = window.JOTLA;
   const childName = (profile && profile.name) || 'your child';
-  const [info, setInfo] = useStateB(null);
   const [backupMeta, setBackupMeta] = useStateB(() => {
     try { return JSON.parse(localStorage.getItem(BACKUP_META_KEY)) || null; } catch (e) { return null; }
   });
@@ -1125,43 +1388,6 @@ function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
     r.readAsText(f);
   };
 
-  const INFO = {
-    backup: ['Where your record is kept', [
-      'Everything you write lives on this device, inside Jotla. Nothing is sent to us, ever.',
-      'Your record rides inside your phone\'s own backup (iCloud on iPhone, Google backup on Android). If device backup is on, a lost or broken phone does not lose the record.',
-      'Worth checking once: open your phone settings and make sure device backup is switched on.',
-      'For extra safety, use Export my data every so often and keep the file somewhere safe. You can bring it back with Restore from an export.',
-    ]],
-    encrypted: ['Encrypted export', [
-      'A locked export protects the file with a passphrase only you know.',
-      'It is planned for the full app, and is not in this early test build yet.',
-      'For now, Export my data gives you a plain copy. Keep it somewhere private, like your own cloud drive.',
-    ]],
-    lock: ['Lock the app', [
-      'In the full app you will be able to lock Jotla behind your fingerprint, face or a PIN.',
-      'It is not in this early test build yet.',
-      'Until then, your phone\'s own screen lock protects the record, and both iPhone and Android can lock or pin individual apps if you share the phone.',
-    ]],
-    privacy: ['Privacy, in plain words', [
-      'No account, no login, no cloud. Everything you write stays on this device.',
-      'We never receive or access your data. There is nothing for us to read, lose or sell.',
-      'Your record leaves the phone only when you choose: an export you save, or a day record you print or share.',
-      'One thing to remember: what you write can end up in front of other people when you choose to share it. Log facts, keep other children out of photos where you can, and your record will serve you well.',
-    ]],
-    mission: ['What Jotla is for', [
-      'Every SEN parent is told to document everything. Nobody gives them the tool. Jotla is that tool.',
-      'Log the days in seconds, capture what really happened at the school gate, and keep every letter and report in one place.',
-      'When it matters, at an assessment, an annual review or a tribunal, your record is already organised, dated and ready to share.',
-      'Owned by you. Not the school, not the Local Authority. You.',
-    ]],
-    about: ['About and credits', [
-      'Jotla by SEN Help. Early test build ' + window.JOTLA_BUILD + ' (July 2026).',
-      'Designed and built by SEN Help (sen.help).',
-      'Typefaces: Cal Sans and Outfit, used under the SIL Open Font Licence.',
-      'Feedback makes this better. Use "Tell us what you think" in Settings.',
-    ]],
-  };
-
   return (
     <div className="j-screen">
       <div className="j-scroll j-fade">
@@ -1193,12 +1419,12 @@ function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
                 {backupHealthLine(backupMeta)}
                 {exportDue ? ' A copy every few weeks is good insurance.' : ''}
                 {recordBytes > BACKUP_SIZE_SOFT_CAP
-                  ? ' Your record is about ' + Math.round(recordBytes / 1048576) + ' MB. Big records can fall out of your phone\'s automatic backup, so saved copies matter more now.'
+                  ? ' Your record is about ' + Math.round(recordBytes / 1048576) + ' MB. Big records can press against this browser\'s storage limit, so saved copies matter more now.'
                   : ''}
               </span>
             </div>
             <SettingsRow icon={<Icon name="shield" size={20} color="var(--blue)" />} title="Where your record is kept"
-              sub="On this device, inside your phone's own backup. We never see it." onClick={() => setInfo('backup')} />
+              sub="On this device, in this browser's own storage. We never see it." onClick={() => nav.go('infodata')} />
             <SettingsRow icon={<Icon name="download" size={20} color="var(--blue)" />} title="Export my data"
               sub={'A plain copy of ' + childName + "'s whole record. Always free."} onClick={exportData}
               right={<span className="j-pillbadge" style={{ background: 'var(--tint-green)', color: 'var(--green-ink)' }}>Free</span>} />
@@ -1215,7 +1441,7 @@ function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
               <input type="file" accept="application/json,.json" style={{ display: 'none' }} onChange={onImportFile} />
             </label>
             <SettingsRow icon={<Icon name="lock" size={20} color="var(--blue)" />} title="Encrypted export"
-              sub="Your own locked copy, only you hold the key." onClick={() => setInfo('encrypted')}
+              sub="Your own locked copy, only you hold the key." onClick={() => nav.go('infodata')}
               right={<span className="j-pillbadge" style={{ background: 'var(--tag-grey-bg)', color: 'var(--muted)' }}>Planned</span>} last />
           </div>
 
@@ -1259,10 +1485,10 @@ function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
           <SectionLabel>Privacy</SectionLabel>
           <div className="j-card" style={{ marginBottom: 20, overflow: 'hidden' }}>
             <SettingsRow icon={<Icon name="lock" size={20} color="var(--blue)" />} title="Lock the app"
-              sub="A fingerprint, face, or PIN on this device." onClick={() => setInfo('lock')}
+              sub="A fingerprint, face, or PIN on this device." onClick={() => nav.go('infoprivacy')}
               right={<span className="j-pillbadge" style={{ background: 'var(--tag-grey-bg)', color: 'var(--muted)' }}>Planned</span>} />
             <SettingsRow icon={<Icon name="note" size={20} color="var(--blue)" />} title="How your data is kept"
-              sub="The whole privacy promise, in plain words." onClick={() => setInfo('privacy')} last />
+              sub="The whole privacy promise, in plain words." onClick={() => nav.go('infoprivacy')} last />
           </div>
 
           {feedbackCard}
@@ -1280,9 +1506,9 @@ function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
               sub="A one-minute walkthrough of the whole app." onClick={() => nav.go('tour')} />
             <SettingsRow icon={<Icon name="plus" size={20} color="var(--blue)" />} title="Add another child"
               sub="Start a fresh, blank record." onClick={() => nav.go('addchild')} />
-            <SettingsRow icon={<Icon name="heart" size={20} color="var(--blue)" />} title="What Jotla is for" onClick={() => setInfo('mission')} />
-            <SettingsRow icon={<Icon name="note" size={20} color="var(--blue)" />} title="Privacy, in plain words" onClick={() => setInfo('privacy')} />
-            <SettingsRow icon={<Icon name="star" size={20} color="var(--blue)" />} title="About and credits" onClick={() => setInfo('about')} last />
+            <SettingsRow icon={<Icon name="heart" size={20} color="var(--blue)" />} title="What Jotla is for" onClick={() => nav.go('infomission')} />
+            <SettingsRow icon={<Icon name="note" size={20} color="var(--blue)" />} title="Privacy, in plain words" onClick={() => nav.go('infoprivacy')} />
+            <SettingsRow icon={<Icon name="star" size={20} color="var(--blue)" />} title="About Jotla" onClick={() => nav.go('infoabout')} last />
           </div>
 
           {nav.plus && plusCard}
@@ -1290,19 +1516,9 @@ function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
           <p className="j-meta" style={{ textAlign: 'center' }}>Jotla by SEN Help · Test build {window.JOTLA_BUILD}</p>
         </div>
       </div>
-
-      {info && (
-        <div className="j-sheet-scrim" onClick={() => setInfo(null)}>
-          <div className="j-sheet" onClick={e => e.stopPropagation()} style={{ maxHeight: '85%', overflowY: 'auto' }}>
-            <div className="j-sheet-grab" />
-            <h2 className="j-h2" style={{ marginBottom: 12 }}>{INFO[info][0]}</h2>
-            {INFO[info][1].map((p, idx) => <p key={idx} className="j-body" style={{ color: 'var(--muted)', marginBottom: 12 }}>{p}</p>)}
-            <button className="j-btn j-btn-primary" onClick={() => setInfo(null)}><Icon name="check" size={20} color="#fff" /> Got it</button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
 
-Object.assign(window, { FindScreen, EvidenceScreen, AddDocScreen, DocScreen, UnlockScreen, SettingsScreen });
+Object.assign(window, { FindScreen, EvidenceScreen, AddDocScreen, DocScreen, UnlockScreen, SettingsScreen,
+  InfoMissionScreen, InfoPrivacyScreen, InfoDataScreen, InfoAboutScreen });

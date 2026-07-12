@@ -97,7 +97,7 @@ function ok(name, cond) {
   ok('saved Wins entry appears on Today', (await page.locator('#root').innerText()).includes('Boot-assert win: tried a new food'));
   await page.getByText('Settings', { exact: true }).last().click();
   await page.waitForTimeout(450);
-  ok('footer shows the bumped build', (await page.locator('#root').innerText()).includes('Test build 1.8.0'));
+  ok('footer shows the bumped build', (await page.locator('#root').innerText()).includes('Test build 1.9.0'));
   await ctx.close();
 
   // ---- 6. app boundary: poisoned storage never blanks the app ----
@@ -162,8 +162,149 @@ function ok(name, cond) {
   ok('step 2 carries its own illustrated scene', (await page3.locator('svg[viewBox="0 0 220 150"]').count()) >= 1);
   await ctx3.close();
 
+  // ---- 8. build 1.9.0 (12 Jul native parity), free tier ----
+  console.log('Suite 8: 12 Jul parity, free tier');
+  const ctx4 = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  const page4 = await ctx4.newPage();
+  const errors4 = [];
+  page4.on('pageerror', e => errors4.push(String(e)));
+  await page4.goto(URL_APP, { waitUntil: 'networkidle' });
+  await page4.waitForTimeout(1200);
+
+  // five-bar This month strip: Gate + Dysregulation join the mood trio
+  const todayText = await page4.locator('#root').innerText();
+  ok('Today strip carries the Gate bar', todayText.includes('Gate'));
+  ok('Today strip carries the Dysregulation bar', todayText.includes('Dysregulation'));
+
+  // month view: visible month chevrons, fixed-height flash-free paging,
+  // any past day tappable, and the Day view offering "Add a note"
+  await page4.getByText('Month', { exact: true }).last().click();
+  await page4.waitForTimeout(500);
+  const prevBtn = page4.locator('button[aria-label="Previous month"]');
+  ok('month view grows prev/next controls', await prevBtn.count() === 1 && await prevBtn.isEnabled());
+  const gridBox1 = await page4.locator('.j-pager').first().boundingBox();
+  await prevBtn.click();
+  await page4.waitForTimeout(700);
+  const gridBox2 = await page4.locator('.j-pager').first().boundingBox();
+  ok('calendar keeps one fixed height across months (' + Math.round(gridBox1.height) + 'px)',
+    !!gridBox1 && !!gridBox2 && Math.abs(gridBox1.height - gridBox2.height) < 1);
+  await prevBtn.click();
+  await page4.waitForTimeout(700);
+  const emptyDay = page4.locator('button[aria-label$="no note"]').first();
+  ok('an empty past day is tappable', await emptyDay.count() > 0 && await emptyDay.isEnabled());
+  await emptyDay.click();
+  await page4.waitForTimeout(500);
+  const dayText = await page4.locator('#root').innerText();
+  ok('empty Day view shows the calm invitation', dayText.includes('No notes on this day.'));
+  await page4.getByText('Add a note', { exact: true }).first().click();
+  await page4.waitForTimeout(500);
+  const qlPreset = await page4.locator('#root').innerText();
+  ok('Add a note lands in Quick log preset to that day', qlPreset.includes('Quick log') && qlPreset.includes('Saving to'));
+
+  // the custom day is picked from a calendar sheet, never typed
+  await page4.locator('button.j-chip:has-text("Another day")').first().click();
+  await page4.waitForTimeout(250);
+  await page4.locator('button[aria-label*="opens a calendar"]').first().click();
+  await page4.waitForTimeout(400);
+  ok('calendar sheet opens with a full six-week grid', (await page4.locator('.j-sheet button[aria-pressed]').count()) === 42);
+  ok('no typed date input remains in Quick log', (await page4.locator('input[type="date"]').count()) === 0);
+  await page4.locator('.j-sheet .j-btn-ghost:has-text("Cancel")').click();
+  await page4.waitForTimeout(300);
+  await page4.locator('button[aria-label="Close"]').first().click();
+  await page4.waitForTimeout(400);
+  // step back out of the pushed Day view so the tab bar is reachable again
+  await page4.locator('button[aria-label="Back"]').first().click();
+  await page4.waitForTimeout(400);
+
+  // adding media is Plus-gated on the free tier (viewing never gates)
+  await page4.getByText('Log', { exact: true }).last().click();
+  await page4.waitForTimeout(500);
+  const qlFree = await page4.locator('#root').innerText();
+  ok('free Quick log shows the honest locked media card', qlFree.includes('Add photos and videos') && qlFree.includes('Part of Plus'));
+  ok('free Quick log has no live media tiles', !qlFree.includes('Attach media'));
+  await page4.locator('button[aria-label="Close"]').first().click();
+  await page4.waitForTimeout(400);
+
+  // settings info sheets became full pushed pages, About drops the fonts line
+  await page4.getByText('Settings', { exact: true }).last().click();
+  await page4.waitForTimeout(450);
+  await page4.getByText('What Jotla is for', { exact: true }).first().click();
+  await page4.waitForTimeout(500);
+  const missionText = await page4.locator('#root').innerText();
+  ok('mission opens as a full page with the whole story', missionText.includes('The tool parents are told to need'));
+  await page4.locator('button[aria-label="Back"]').first().click();
+  await page4.waitForTimeout(400);
+  await page4.getByText('About Jotla', { exact: true }).first().click();
+  await page4.waitForTimeout(500);
+  const aboutText = await page4.locator('#root').innerText();
+  ok('About carries the live build number', aboutText.includes('Early test build 1.9.0'));
+  ok('About drops the fonts credit line', !aboutText.includes('Typefaces'));
+  ok('no uncaught page errors across suite 8', errors4.length === 0);
+  await ctx4.close();
+
+  // ---- 9. build 1.9.0 (12 Jul native parity), Plus tier ----
+  console.log('Suite 9: 12 Jul parity, Plus tier');
+  const ctx5 = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  const page5 = await ctx5.newPage();
+  const errors5 = [];
+  page5.on('pageerror', e => errors5.push(String(e)));
+  await page5.addInitScript(() => {
+    try {
+      localStorage.setItem('jotla_prefs_v2', JSON.stringify({
+        dark: false, tscale: 1, profileId: 'sam', plus: true, childCfg: {}, customProfiles: [], deletedIds: [],
+      }));
+    } catch (e) {}
+  });
+  await page5.goto(URL_APP, { waitUntil: 'networkidle' });
+  await page5.waitForTimeout(1200);
+
+  ok('header wordmark wears the +PLUS pill', (await page5.locator('.j-appheader').innerText()).includes('+PLUS'));
+
+  // Plus quick log: the media tiles are live
+  await page5.getByText('Log', { exact: true }).last().click();
+  await page5.waitForTimeout(500);
+  const qlPlus = await page5.locator('#root').innerText();
+  ok('Plus Quick log offers Capture and Attach media', qlPlus.includes('Capture') && qlPlus.includes('Attach media'));
+  await page5.locator('button[aria-label="Close"]').first().click();
+  await page5.waitForTimeout(400);
+
+  // Plus month graph draws all five bars
+  await page5.getByText('Month', { exact: true }).last().click();
+  await page5.waitForTimeout(500);
+  const monthPlus = await page5.locator('#root').innerText();
+  ok('Plus month graph shows the five-bar story', /How .+ looked/.test(monthPlus) && monthPlus.includes('Dysregulation') && monthPlus.includes('Gate'));
+
+  // the Plus feature list gains Photos and Videos on Notes
+  await page5.getByText('Settings', { exact: true }).last().click();
+  await page5.waitForTimeout(450);
+  await page5.getByText('Patterns, filters and PDF pack', { exact: false }).first().click();
+  await page5.waitForTimeout(600);
+  ok('Unlock lists Photos and Videos on Notes', (await page5.locator('#root').innerText()).includes('Photos and Videos on Notes'));
+  await page5.locator('button[aria-label="Close"]').first().click();
+  await page5.waitForTimeout(400);
+
+  // child mode goes dynamic on Plus: More under Next, question cards
+  await page5.getByText('Today', { exact: true }).last().click();
+  await page5.waitForTimeout(450);
+  await page5.getByText('Your day', { exact: true }).first().click();
+  await page5.waitForTimeout(500);
+  await page5.getByText('Start', { exact: true }).first().click();
+  await page5.waitForTimeout(400);
+  await page5.getByText('Next', { exact: true }).first().click();
+  await page5.waitForTimeout(400);
+  await page5.getByText('Happy', { exact: true }).first().click();
+  await page5.waitForTimeout(500);
+  ok('a picked face grows the More button on Plus', await page5.getByText('More', { exact: true }).first().isVisible());
+  await page5.getByText('More', { exact: true }).first().click();
+  await page5.waitForTimeout(500);
+  const qCards = await page5.locator('#root').innerText();
+  ok('More opens the per-place question cards', qCards.includes('Who was there?'));
+  ok('question chips are tappable words', qCards.includes('Teachers') && qCards.includes('Friends'));
+  ok('no uncaught page errors across suite 9', errors5.length === 0);
+  await ctx5.close();
+
   await browser.close();
   server.kill();
-  console.log('\n' + passed + '/' + (passed + failed) + ' checks green' + (failed ? ' — ' + failed + ' FAILED' : ''));
+  console.log('\n' + passed + '/' + (passed + failed) + ' checks green' + (failed ? ' - ' + failed + ' FAILED' : ''));
   process.exit(failed ? 1 : 0);
 })().catch(e => { console.error('Suite crashed:', e); process.exit(2); });

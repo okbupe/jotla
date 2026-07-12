@@ -28,7 +28,13 @@ function TabTitle({
   }, sub)), right);
 }
 
-// Plus: the shown month as the same bar graph the Today page draws.
+// Plus: the shown month as the same bar graph the Today page draws, five bars
+// since 12 Jul 2026: Good / Mixed / Hard days in the static mood colours, then
+// Gate and Dysregulation moments in their own colours (Dysregulation LAST with
+// its label tucked to the right edge, exactly as the Today strip), and the
+// plain summary sentence. The counting rule lives with kindBarBlocks in
+// jotla-ui.jsx: mood bars count DAYS, the two new bars count MOMENTS,
+// mutually exclusive by type.
 function MonthMoodGraph({
   entries,
   year,
@@ -44,26 +50,22 @@ function MonthMoodGraph({
     const m = J.dayMood(entries.filter(e => e.date === pre + String(d).padStart(2, '0')));
     if (m === 'good') good++;else if (m === 'ok') ok++;else if (m === 'hard') hard++;
   }
-  const blocks = [{
-    key: 'good',
-    label: 'Good',
-    n: good
-  }, {
-    key: 'ok',
-    label: 'Mixed',
-    n: ok
-  }, {
-    key: 'hard',
-    label: 'Hard',
-    n: hard
-  }];
-  const maxN = Math.max(good, ok, hard, 1);
+  const monthEntries = entries.filter(e => e.date.startsWith(pre));
+  const dys = monthEntries.filter(e => e.type !== 'handover' && e.category === 'Incidents').length;
+  const gate = monthEntries.filter(e => e.type === 'handover').length;
+  const blocks = window.kindBarBlocks({
+    good,
+    ok,
+    hard,
+    gate,
+    dys
+  });
+  const maxN = Math.max(good, ok, hard, gate, dys, 1);
   const hc = {};
-  entries.forEach(e => {
-    if (e.date.startsWith(pre) && e.mood === 'hard') hc[e.category] = (hc[e.category] || 0) + 1;
+  monthEntries.forEach(e => {
+    if (e.mood === 'hard' && e.category) hc[e.category] = (hc[e.category] || 0) + 1;
   });
   const top = Object.entries(hc).sort((a, b) => b[1] - a[1])[0];
-  const monthEntries = entries.filter(e => e.date.startsWith(pre));
   const hardCount = monthEntries.filter(e => e.mood === 'hard').length;
   return /*#__PURE__*/React.createElement("div", {
     className: "j-card",
@@ -86,48 +88,10 @@ function MonthMoodGraph({
       background: '#6E54D6',
       color: '#fff'
     }
-  }, "Plus")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      gap: 12,
-      alignItems: 'flex-end',
-      minHeight: 92
-    }
-  }, blocks.map(b => {
-    const c = window.MOOD_COLOURS[b.key];
-    const h = 22 + b.n / maxN * 54;
-    return /*#__PURE__*/React.createElement("div", {
-      key: b.key,
-      style: {
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 8
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontFamily: "'Outfit', system-ui",
-        fontWeight: 600,
-        fontSize: 'calc(16px * var(--tscale, 1))',
-        color: c,
-        lineHeight: 1
-      }
-    }, b.n), /*#__PURE__*/React.createElement("div", {
-      style: {
-        width: '100%',
-        height: h,
-        borderRadius: 14,
-        background: c
-      }
-    }), /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 'calc(14px * var(--tscale, 1))',
-        fontWeight: 500,
-        color: 'var(--muted)'
-      }
-    }, b.label));
-  })), /*#__PURE__*/React.createElement("p", {
+  }, "Plus")), /*#__PURE__*/React.createElement(KindBars, {
+    blocks: blocks,
+    maxN: maxN
+  }), /*#__PURE__*/React.createElement("p", {
     className: "j-body",
     style: {
       fontSize: 'calc(14.5px * var(--tscale, 1))',
@@ -138,7 +102,14 @@ function MonthMoodGraph({
     className: "j-strong"
   }, monthEntries.length, " ", monthEntries.length === 1 ? 'entry' : 'entries', " this month", hardCount ? `, ${hardCount} on hard days` : '', "."), ' ', top ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
     className: "j-strong"
-  }, top[0]), " entries come up most often as the hard moments.") : 'No hard moments logged. Long may it last.') : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+  }, top[0]), " entries come up most often as the hard moments.") : hardCount === 0 ? dys > 0
+  // Dysregulation moments can carry a good or mixed mood, so
+  // "no hard moments" alone would sit dishonestly next to a
+  // plum bar with a count in it.
+  ? `${dys} dysregulation ${dys === 1 ? 'moment' : 'moments'} logged, none marked as a hard moment.` : 'No hard moments logged. Long may it last.'
+  // Hard moments with no theme tagged: saying "no hard moments"
+  // here would be a false claim, so count them honestly.
+  : `${hardCount} hard ${hardCount === 1 ? 'moment' : 'moments'} logged, not tagged to a theme.`) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
     className: "j-strong"
   }, "Nothing logged in ", J.MONTH_NAMES[month], "."), " Swipe the calendar to move between months.")));
 }
@@ -149,26 +120,33 @@ function MonthScreen({
 }) {
   const J = window.JOTLA;
   const today = J.parseISO(J.TODAY_ISO);
-  // months back from the current month; remembered on the view so Back returns
-  // to the month the parent was reading, not the latest month
-  const [offset, setOffset] = React.useState(view && view.monthOffset || 0);
-  const move = delta => setOffset(o => {
-    const n = o + delta;
-    nav.remember({
-      monthOffset: n
-    });
-    return n;
-  });
-  const earliest = entries.length ? entries.reduce((a, e) => e.date < a ? e.date : a, entries[0].date) : J.TODAY_ISO;
+
+  // How far back the calendar pages: the app's data epoch (Quick log's own
+  // minimum day), whether or not anything is logged that far back
+  // (12 Jul 2026): the past is freely browsable, so a parent can open any old
+  // day and add to it from there.
+  const [epochY, epochM] = window.MIN_LOG_DAY.split('-').map(Number);
+  const epochMonthIndex = epochY * 12 + (epochM - 1);
+  const minOffset = epochMonthIndex - (today.getFullYear() * 12 + today.getMonth());
+
+  // Months back from the current month; remembered on the view so Back
+  // returns to the month the parent was reading. Read defensively: only a
+  // finite number counts, clamped between the epoch and the current month.
+  const remembered = view && view.monthOffset;
+  const [offset, setOffset] = React.useState(typeof remembered === 'number' && isFinite(remembered) ? Math.max(minOffset, Math.min(0, Math.trunc(remembered))) : 0);
 
   // Month metadata + calendar cells for any offset from the current month.
+  // Always exactly six week rows (42 cells), whatever the month's shape: the
+  // tail fills with the same blanks as the lead-in, so the calendar card
+  // never resizes and nothing below it ever moves when the month changes
+  // (12 Jul 2026).
   const monthMeta = off => {
     const shown = new Date(today.getFullYear(), today.getMonth() + off, 1);
     const year = shown.getFullYear();
     const month = shown.getMonth(); // 0-based
     const isCurrent = off === 0;
     const todayNum = isCurrent ? today.getDate() : 99; // no today ring or future dimming off the current month
-    const canBack = `${year}-${String(month + 1).padStart(2, '0')}-01` > earliest.slice(0, 8) + '01';
+    const canBack = year * 12 + month > epochMonthIndex;
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const firstDow = (new Date(year, month, 1).getDay() + 6) % 7; // Monday-first offset
     const cells = [];
@@ -185,6 +163,7 @@ function MonthScreen({
         isToday: d === todayNum
       });
     }
+    while (cells.length < 42) cells.push(null);
     return {
       year,
       month,
@@ -201,28 +180,94 @@ function MonthScreen({
   } = cur;
   const monthLabel = `${J.MONTH_NAMES[month]} ${year}`;
 
-  // The calendar is a real swipe pager (same mechanism as the tier selector):
-  // the neighbouring months sit either side and the grid follows the finger.
-  const panelOffsets = [];
-  if (cur.canBack) panelOffsets.push(offset - 1);
-  panelOffsets.push(offset);
-  if (!isCurrent) panelOffsets.push(offset + 1);
-  const centerIdx = panelOffsets.indexOf(offset);
+  // The calendar is a real swipe pager, like the tier selector: the
+  // neighbouring months sit either side and the grid follows the finger.
+  // Under the swipe it is one fixed timeline of every month from the epoch to
+  // now, every panel the same fixed six-row size, so a settled swipe never
+  // rebuilds or recentres anything: it only updates the title and the cards
+  // around the grid (12 Jul 2026: the old three-panel window recentred after
+  // paint and visibly reshuffled). Only the shown month's near neighbours
+  // materialise their cells; the rest are empty same-size panels, so the DOM
+  // stays light without any layout shift.
+  const monthOffsets = [];
+  for (let o = minOffset; o <= 0; o++) monthOffsets.push(o);
   const pagerRef = React.useRef(null);
   const settleRef = React.useRef(null);
+  const targetRef = React.useRef(offset); // where the pager is headed, for rapid chevrons
   React.useLayoutEffect(() => {
+    // Park the pager on the shown month before the first paint; never again
+    // from a render (a live gesture must never have the grid moved under it).
     const el = pagerRef.current;
-    if (el) el.scrollLeft = centerIdx * el.clientWidth;
-  }, [offset, panelOffsets.length]);
+    if (el && el.clientWidth) el.scrollLeft = (targetRef.current - minOffset) * el.clientWidth;
+    // Re-align on a real resize: a paging scroller holds its pixel offset
+    // across a resize, which would otherwise wedge it between two months.
+    const realign = () => {
+      const el2 = pagerRef.current;
+      if (el2 && el2.clientWidth) el2.scrollLeft = (targetRef.current - minOffset) * el2.clientWidth;
+    };
+    window.addEventListener('resize', realign);
+    return () => window.removeEventListener('resize', realign);
+  }, []);
+  const adopt = target => {
+    targetRef.current = target;
+    setOffset(o => {
+      if (target === o) return o;
+      nav.remember({
+        monthOffset: target
+      });
+      return target;
+    });
+  };
   const onPagerScroll = () => {
     clearTimeout(settleRef.current);
     settleRef.current = setTimeout(() => {
       const el = pagerRef.current;
       if (!el || !el.clientWidth) return;
       const i = Math.round(el.scrollLeft / el.clientWidth);
-      const target = panelOffsets[Math.max(0, Math.min(panelOffsets.length - 1, i))];
-      if (target !== undefined && target !== offset) move(target - offset);
+      const target = monthOffsets[Math.max(0, Math.min(monthOffsets.length - 1, i))];
+      if (target !== undefined) adopt(target);
     }, 90);
+  };
+  // Prev/next month controls (12 Jul 2026): the swipe pager stays, these make
+  // the same moves visible and reachable without the gesture. The scroll is
+  // the single source of movement: the settle handler adopts the month.
+  const move = delta => {
+    const el = pagerRef.current;
+    const next = Math.max(minOffset, Math.min(0, targetRef.current + delta));
+    if (next === targetRef.current || !el || !el.clientWidth) return;
+    targetRef.current = next;
+    el.scrollTo({
+      left: (next - minOffset) * el.clientWidth,
+      behavior: 'smooth'
+    });
+  };
+  const monthNavBtn = dir => {
+    const enabled = dir === 'prev' ? cur.canBack : !isCurrent;
+    return /*#__PURE__*/React.createElement("button", {
+      key: dir,
+      onClick: () => enabled && move(dir === 'prev' ? -1 : 1),
+      disabled: !enabled,
+      "aria-label": dir === 'prev' ? 'Previous month' : 'Next month',
+      className: "j-press",
+      style: {
+        width: 44,
+        height: 44,
+        borderRadius: 14,
+        border: 'none',
+        background: 'var(--chip-bg)',
+        boxShadow: 'var(--card-shadow)',
+        cursor: enabled ? 'pointer' : 'default',
+        opacity: enabled ? 1 : 0.4,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0
+      }
+    }, /*#__PURE__*/React.createElement(Icon, {
+      name: dir === 'prev' ? 'chevronLeft' : 'chevronRight',
+      size: 20,
+      color: enabled ? 'var(--blue)' : 'var(--faint)'
+    }));
   };
   const dows = J.DOW_MON; // Mon Tue Wed Thu Fri Sat Sun
 
@@ -238,7 +283,13 @@ function MonthScreen({
     }
   }, /*#__PURE__*/React.createElement(TabTitle, {
     title: monthLabel,
-    sub: "Tap any day to read it back."
+    sub: "Tap any day to read it back.",
+    right: /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        gap: 8
+      }
+    }, monthNavBtn('prev'), monthNavBtn('next'))
   }), !nav.plus && /*#__PURE__*/React.createElement(PlusLockedCard, {
     onClick: () => nav.go('unlock'),
     style: {
@@ -279,7 +330,21 @@ function MonthScreen({
       WebkitOverflowScrolling: 'touch',
       outline: 'none'
     }
-  }), panelOffsets.map(off => {
+  }), monthOffsets.map(off => {
+    // Materialise cells only near the shown month; the far panels
+    // stay as fixed-size placeholders (they stretch to the row's
+    // height, so paging is always pixel-stable).
+    if (Math.abs(off - offset) > 2) {
+      return /*#__PURE__*/React.createElement("div", {
+        key: off,
+        "aria-hidden": "true",
+        style: {
+          flex: '0 0 100%',
+          width: '100%',
+          scrollSnapAlign: 'start'
+        }
+      });
+    }
     const m = off === offset ? cur : monthMeta(off);
     return /*#__PURE__*/React.createElement("div", {
       key: off,
@@ -294,17 +359,24 @@ function MonthScreen({
       }
     }, m.cells.map((c, idx) => {
       if (!c) return /*#__PURE__*/React.createElement("div", {
-        key: 'blank-' + idx
+        key: 'blank-' + idx,
+        style: {
+          aspectRatio: '1 / 1'
+        }
       });
       const tint = c.mood ? window.moodTint(c.mood) : 'transparent';
       const ink = c.mood ? window.MOOD_COLOURS[c.mood] : c.future ? 'var(--line)' : 'var(--faint)';
-      const tappable = c.count > 0;
+      // Every past day and today opens the Day view, notes or
+      // not (12 Jul 2026); only future days stay inert.
+      const tappable = !c.future;
       return /*#__PURE__*/React.createElement("button", {
         key: c.d,
         onClick: () => tappable && nav.go('day', {
           date: c.iso
         }),
         className: tappable ? 'j-press' : '',
+        disabled: !tappable,
+        "aria-label": c.future ? `${c.d} ${J.MONTH_NAMES[m.month]} ${m.year}, in the future` : `${c.d} ${J.MONTH_NAMES[m.month]} ${m.year}, ${c.count > 0 ? c.count + (c.count === 1 ? ' note' : ' notes') : 'no note'}`,
         style: {
           aspectRatio: '1 / 1',
           borderRadius: 12,
@@ -368,6 +440,10 @@ function MonthScreen({
 }
 
 // ---------------- Day detail ----------------
+// Every day from the data epoch to today offers "Add a note", preset to this
+// exact date (12 Jul 2026), so an empty day is an invitation rather than a
+// dead end. The date rides the view to Quick log, so the day arrives pre-set
+// there and nothing needs re-picking.
 function DayScreen({
   nav,
   entries,
@@ -376,6 +452,7 @@ function DayScreen({
   const J = window.JOTLA;
   const list = entries.filter(e => e.date === date);
   const mood = J.dayMood(list);
+  const canAdd = !!date && date >= window.MIN_LOG_DAY && date <= J.TODAY_ISO;
   return /*#__PURE__*/React.createElement("div", {
     className: "j-screen"
   }, /*#__PURE__*/React.createElement(PushHeader, {
@@ -412,13 +489,42 @@ function DayScreen({
       fontWeight: 500,
       color: window.MOOD_COLOURS[mood]
     }
-  }, mood === 'good' ? 'A good day overall' : mood === 'ok' ? 'Up and down' : 'A hard day')), list.map(e => /*#__PURE__*/React.createElement(EntryCard, {
+  }, mood === 'good' ? 'A good day overall' : mood === 'ok' ? 'Up and down' : 'A hard day')), list.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: '28px 0',
+      textAlign: 'center'
+    }
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "j-body",
+    style: {
+      color: 'var(--muted)'
+    }
+  }, "No notes on this day."), canAdd && /*#__PURE__*/React.createElement("p", {
+    className: "j-sm",
+    style: {
+      color: 'var(--faint)',
+      marginTop: 4
+    }
+  }, "You can still add one now.")) : list.map(e => /*#__PURE__*/React.createElement(EntryCard, {
     key: e.id,
     entry: e,
     onClick: () => nav.go('entry', {
       id: e.id
     })
-  })))));
+  })), canAdd && /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-primary",
+    "aria-label": 'Add a note for ' + J.fmtLong(date),
+    style: {
+      marginTop: list.length === 0 ? 0 : 6
+    },
+    onClick: () => nav.go('quicklog', {
+      date
+    })
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "plus",
+    size: 20,
+    color: "#fff"
+  }), " Add a note"))));
 }
 
 // ---------------- Single entry detail ----------------

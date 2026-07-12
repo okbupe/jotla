@@ -13,7 +13,7 @@ Thank you for taking a look. A few things to know:
 - It opens like a normal web page. On a phone it behaves like an app.
 - **Your notes stay on your device only.** Nothing is uploaded, nothing is shared, and you will not break anything. Tap around freely.
 - It comes pre-filled with a sample child ("Sam") so the screens are not empty. You can also add your own child to see the blank, first-time experience.
-- Some bits are mocked on purpose (taking a photo or video does not really use your camera yet). That is expected at this stage.
+- Nothing costs anything here: "buying" Jotla Plus in this prototype is a free switch (no real payment), so you can try everything, including photos and videos on notes.
 
 ### How to open it
 

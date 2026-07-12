@@ -1,6 +1,16 @@
-// jotla-illustrations.jsx — original placeholder illustrations.
-// Friendly rounded faces (not emoji), simple scene emblems, wordmark, mood dots.
-// Built from basic shapes only. Exported to window.
+// jotla-illustrations.jsx: the brand illustration layer.
+// Friendly rounded faces (not emoji), scene emblems, wordmark, mood dots.
+// The 14 StoryIllo tour and Tips scenes and the 3 child-mode SceneIllo
+// emblems carry the illustration-grade vector art approved on the native
+// build (12 Jul 2026, founder feedback: proper vector illustrations for the
+// tours and walkthroughs), ported back here under the sync law. Same warm
+// world, the app's own palette, one consistent visual language: layered
+// tint discs and grounds, a shared character system (heads, torsos, limbs,
+// one shoe colour), shared accent helpers (sparkle, leaf, heart), no text
+// baked into the artwork. Hand-authored SVG so the app stays tiny and fully
+// offline (no raster assets). The brand hues stay static in dark mode;
+// every colour was checked against both the light (#F7F9FC) and dark
+// (#0E1726) app backgrounds.
 
 const FACE_FILL = '#F4C95D'; // warm butter
 const FACE_LINE = '#4A3D1E'; // soft dark brown features
@@ -158,65 +168,89 @@ function JotlaLogo({
   }));
 }
 
-// Header lockup: the Jotla logo + the quiet "by SEN Help" sub-label.
-// Sized to keep the same footprint as the old text wordmark so the header does not shift.
+/* ---- Wordmark: the header lockup, corrected 12 Jul 2026 ----
+   The logo, the +PLUS pill (once this device owns Plus), and the quiet
+   "by SEN Help" endorsement resting on the logotype baseline.
+
+   Alignment is computed from the artwork, not guessed. Measured from the SVG
+   paths (viewBox 0 0 1747.5 627.55): the flat bottoms of the t and l stems
+   sit at y = 616.58, which is the logotype baseline (0.9825 of the rendered
+   height); the o, a and J bottoms overshoot to ~627.55 (round-letter
+   overshoot, ~1.75% of the height, under half a pixel at header sizes). The
+   artwork has NO descender below the baseline, so the old drop = 0.167 *
+   logoH constant (a fictional "J descender") lifted the whole lockup 3-4 px
+   above the true baseline and floated the sub-label and +PLUS high: the bug
+   the founder flagged on device, fixed on native (Wordmark.tsx) and mirrored
+   here.
+
+   Mechanics: the row aligns items on the CSS baseline. The logo wrapper is
+   cut to exactly baseline height with overflow hidden, so its synthesised
+   baseline (its bottom edge) IS the logotype baseline; the sub-label is real
+   text, so its glyph baseline lands on the same line with no magic numbers.
+   The pill also clips (baseline = its bottom edge) and is then lifted with a
+   relative top so its centre sits on the cap band's midline, level with the
+   wordmark. The +PLUS itself: Cal Sans, skewX(-8deg) for the italic (the
+   design truth; no italic cut ships), ZERO letter spacing (the old 0.12em
+   tracking is gone), Plus violet pill colours from the tokens. */
+const LOGO_BASELINE = 616.58 / 627.55; // baseline, fraction of logo height
+const LOGO_CAP = (616.58 - 25.34) / 627.55; // cap band, fraction of logo height
 function Wordmark({
   size = 30,
   color = '#1A56A8',
   sub = true,
   subColor,
-  plus = false,
-  plusColor = '#6E54D6'
+  plus = false
 }) {
   const logoH = Math.round(size * 0.8);
-  const drop = Math.round(logoH * 0.167); // the J descender hangs below the lowercase baseline
-  const plusBase = logoH * 0.5; // +PLUS cap height ≈ half the logo height
-  const gapLogo = Math.round(logoH * 0.18); // +PLUS rides close to the logo
-  const gapSub = Math.round(logoH * 0.37); // original logo→sub distance, preserved
+  const logoW = Math.round(logoH * JOTLA_LOGO_RATIO);
+  const baseY = logoH * LOGO_BASELINE; // logo top down to the baseline, px
+  const capH = logoH * LOGO_CAP; // baseline up to the J cap top, px
+  const gapLogo = Math.round(logoH * 0.18); // logo to pill
+  const gapSub = Math.round(logoH * 0.37); // into the sub-label
+  const pillFont = logoH * 0.5; // +PLUS keeps its old type size
+  const pillH = pillFont * 1.78; // Cal Sans box (1.3em) + 0.48em padding
+  const pillLift = capH / 2 - pillH / 2; // pill centre onto the cap band midline
   return /*#__PURE__*/React.createElement("span", {
     style: {
       display: 'inline-flex',
-      alignItems: 'baseline',
-      gap: 0
+      alignItems: 'baseline'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'inline-block',
+      width: logoW,
+      height: baseY,
+      overflow: 'hidden'
     }
   }, /*#__PURE__*/React.createElement(JotlaLogo, {
     height: logoH,
-    color: color,
+    color: color
+  })), plus && /*#__PURE__*/React.createElement("span", {
     style: {
-      marginBottom: -drop
-    }
-  }), plus && /*#__PURE__*/React.createElement("span", {
-    style: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      overflow: 'hidden',
       marginLeft: gapLogo,
-      marginRight: gapSub,
-      alignSelf: 'flex-start',
-      display: 'inline-flex',
+      height: pillH,
+      padding: `0 ${pillFont * 0.62}px`,
+      borderRadius: 999,
+      background: 'var(--plus-tint)',
       position: 'relative',
-      top: 1
+      top: -pillLift
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
-      display: 'inline-flex',
-      alignItems: 'baseline',
+      display: 'inline-block',
       fontFamily: "'Cal Sans', system-ui",
-      fontWeight: 900,
-      transform: 'skewX(-8deg)',
-      transformOrigin: 'left bottom',
-      letterSpacing: '0.12em',
-      textTransform: 'uppercase',
-      color: plusColor,
-      lineHeight: 1
+      fontWeight: 500,
+      fontSize: pillFont,
+      lineHeight: 1,
+      letterSpacing: 0,
+      color: 'var(--plus-ink)',
+      transform: 'skewX(-8deg)'
     }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: Math.round(plusBase * 1.18),
-      marginRight: '0.04em'
-    }
-  }, "+"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: Math.round(plusBase)
-    }
-  }, "PLUS"))), sub && /*#__PURE__*/React.createElement("span", {
+  }, "+PLUS")), sub && /*#__PURE__*/React.createElement("span", {
     style: {
       fontFamily: "'Outfit', system-ui",
       fontWeight: 400,
@@ -224,7 +258,7 @@ function Wordmark({
       color: subColor || 'rgba(15,23,42,0.45)',
       letterSpacing: '0.01em',
       whiteSpace: 'nowrap',
-      marginLeft: plus ? 0 : gapSub
+      marginLeft: gapSub
     }
   }, "by SEN Help"));
 }
@@ -313,140 +347,772 @@ function ChildAvatar({
   }, inner);
 }
 
-// Scene emblems for child mode — simple friendly shapes on a soft disc
+/* ------------------------------------------------------------------ */
+/* The storybook system shared by SceneIllo and StoryIllo              */
+/* (approved art, 12 Jul 2026; kept in step with the native build)     */
+/* ------------------------------------------------------------------ */
+
+const ILLO = {
+  blue: '#1A56A8',
+  bright: '#3A7BD4',
+  deep: '#0F3D7A',
+  // trousers and the one shoe colour across the set
+  green: '#27AE60',
+  greenDeep: '#1F8B4D',
+  amber: '#F39C12',
+  amberDeep: '#D9820B',
+  red: '#E74C3C',
+  slate: '#46618C',
+  // structural ink that reads on light and dark grounds
+  navy: '#22344F',
+  // details sitting on white surfaces
+  cream: '#FDF9F2',
+  white: '#FFFFFF',
+  screen: '#EFF5FD',
+  // device screen inset
+  butter: '#F4C95D',
+  // the Face fill (child-mode continuity)
+  butterInk: '#4A3D1E',
+  tintBlue: 'rgba(58,123,212,0.16)',
+  tintGreen: 'rgba(39,174,96,0.16)',
+  tintAmber: 'rgba(243,156,18,0.18)',
+  tintRed: 'rgba(231,76,60,0.13)',
+  shadow: 'rgba(20,30,50,0.16)',
+  // contact shadow, works on both grounds
+  faintRow: 'rgba(34,52,79,0.22)',
+  // quiet entry rows on white cards
+  // natural skin tones, varied deliberately across the set (imagery-system lock)
+  skin: {
+    light: '#F1C7A4',
+    tan: '#D9A374',
+    medium: '#B37A50',
+    brown: '#8A5A3A',
+    deep: '#684430'
+  },
+  hair: {
+    black: '#26211D',
+    brown: '#544230',
+    chestnut: '#7A4A26',
+    darkgrey: '#3E3E42'
+  },
+  blush: 'rgba(226,110,80,0.30)',
+  wood: '#8A5A2B'
+};
+
+// A simple friendly head: hair halo behind, skin circle, skull-cap fringe,
+// blush cheeks, dot eyes (or closed arcs), a warm mouth. Expression is
+// deliberate: warm | calm | gentle | closed (eyes shut, calm mouth) |
+// joy (eyes shut, warm mouth). `tilt` leans the whole head in degrees.
+function IHead({
+  cx,
+  cy,
+  r,
+  skin,
+  hair,
+  mood = 'warm',
+  bun = false,
+  tilt = 0
+}) {
+  const eyeY = cy - r * 0.1,
+    eyeDX = r * 0.4,
+    eyeR = Math.max(1.7, r * 0.15);
+  const line = '#332A20';
+  const mw = Math.max(1.8, r * 0.16);
+  const fx = r * 0.94,
+    fy = r * 0.34;
+  const mouths = {
+    warm: `M ${cx - r * 0.36} ${cy + r * 0.36} Q ${cx} ${cy + r * 0.68} ${cx + r * 0.36} ${cy + r * 0.36}`,
+    calm: `M ${cx - r * 0.28} ${cy + r * 0.44} Q ${cx} ${cy + r * 0.58} ${cx + r * 0.28} ${cy + r * 0.44}`,
+    gentle: `M ${cx - r * 0.22} ${cy + r * 0.46} H ${cx + r * 0.22}`
+  };
+  const mouthD = mood === 'warm' || mood === 'joy' ? mouths.warm : mood === 'gentle' ? mouths.gentle : mouths.calm;
+  const closed = mood === 'closed' || mood === 'joy';
+  const inner = /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("circle", {
+    cx: cx,
+    cy: cy - r * 0.18,
+    r: r * 1.07,
+    fill: hair
+  }), bun && /*#__PURE__*/React.createElement("circle", {
+    cx: cx + r * 0.85,
+    cy: cy - r * 1.05,
+    r: r * 0.44,
+    fill: hair
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: cx,
+    cy: cy,
+    r: r,
+    fill: skin
+  }), /*#__PURE__*/React.createElement("path", {
+    d: `M ${cx - fx} ${cy - fy} A ${r} ${r} 0 0 1 ${cx + fx} ${cy - fy} Z`,
+    fill: hair
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: cx - r * 0.56,
+    cy: cy + r * 0.22,
+    r: r * 0.17,
+    fill: ILLO.blush
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: cx + r * 0.56,
+    cy: cy + r * 0.22,
+    r: r * 0.17,
+    fill: ILLO.blush
+  }), closed ? /*#__PURE__*/React.createElement("g", {
+    fill: "none",
+    stroke: line,
+    strokeWidth: mw * 0.9,
+    strokeLinecap: "round"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: `M ${cx - eyeDX - eyeR} ${eyeY} q ${eyeR} ${eyeR * 1.2} ${eyeR * 2} 0`
+  }), /*#__PURE__*/React.createElement("path", {
+    d: `M ${cx + eyeDX - eyeR} ${eyeY} q ${eyeR} ${eyeR * 1.2} ${eyeR * 2} 0`
+  })) : /*#__PURE__*/React.createElement("g", {
+    fill: line
+  }, /*#__PURE__*/React.createElement("circle", {
+    cx: cx - eyeDX,
+    cy: eyeY,
+    r: eyeR
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: cx + eyeDX,
+    cy: eyeY,
+    r: eyeR
+  })), /*#__PURE__*/React.createElement("path", {
+    d: mouthD,
+    fill: "none",
+    stroke: line,
+    strokeWidth: mw,
+    strokeLinecap: "round"
+  }));
+  return tilt ? /*#__PURE__*/React.createElement("g", {
+    transform: `rotate(${tilt} ${cx} ${cy})`
+  }, inner) : inner;
+}
+
+// Arch-top torso: soft shoulders, straight sides, flat hem.
+function ITorso({
+  cx,
+  top,
+  hw,
+  bottom,
+  color
+}) {
+  return /*#__PURE__*/React.createElement("path", {
+    d: `M ${cx - hw} ${bottom} L ${cx - hw} ${top + 8} Q ${cx - hw} ${top} ${cx} ${top} Q ${cx + hw} ${top} ${cx + hw} ${top + 8} L ${cx + hw} ${bottom} Z`,
+    fill: color
+  });
+}
+
+// Trouser band under a torso: straight top, gently rounded hem.
+function IBand({
+  cx,
+  top,
+  hw,
+  depth,
+  color
+}) {
+  return /*#__PURE__*/React.createElement("path", {
+    d: `M ${cx - hw} ${top} L ${cx + hw} ${top} L ${cx + hw} ${top + depth} Q ${cx} ${top + depth + 4} ${cx - hw} ${top + depth} Z`,
+    fill: color
+  });
+}
+
+// Round-capped limb stroke.
+function ILimb({
+  d,
+  color,
+  w
+}) {
+  return /*#__PURE__*/React.createElement("path", {
+    d: d,
+    fill: "none",
+    stroke: color,
+    strokeWidth: w,
+    strokeLinecap: "round"
+  });
+}
+
+// Hand circle.
+function IHand({
+  x,
+  y,
+  r,
+  skin
+}) {
+  return /*#__PURE__*/React.createElement("circle", {
+    cx: x,
+    cy: y,
+    r: r,
+    fill: skin
+  });
+}
+
+// Shoe lozenge (optionally rotated). One shoe colour across the set.
+function IShoe({
+  cx,
+  cy,
+  rx = 6,
+  ry = 3.2,
+  rot = 0
+}) {
+  const e = /*#__PURE__*/React.createElement("ellipse", {
+    cx: cx,
+    cy: cy,
+    rx: rx,
+    ry: ry,
+    fill: ILLO.deep
+  });
+  return rot ? /*#__PURE__*/React.createElement("g", {
+    transform: `rotate(${rot} ${cx} ${cy})`
+  }, e) : e;
+}
+
+// Four-point sparkle.
+function ISparkle({
+  x,
+  y,
+  s,
+  color,
+  op = 1
+}) {
+  const d = `M ${x} ${y - s} L ${x + s * 0.3} ${y - s * 0.3} L ${x + s} ${y} L ${x + s * 0.3} ${y + s * 0.3}` + ` L ${x} ${y + s} L ${x - s * 0.3} ${y + s * 0.3} L ${x - s} ${y} L ${x - s * 0.3} ${y - s * 0.3} Z`;
+  return /*#__PURE__*/React.createElement("path", {
+    d: d,
+    fill: color,
+    opacity: op
+  });
+}
+
+// Small leaf with a centre vein so it reads as a leaf, not a pebble.
+function ILeaf({
+  x,
+  y,
+  s,
+  color,
+  rot = 0,
+  op = 1
+}) {
+  return /*#__PURE__*/React.createElement("g", {
+    transform: `rotate(${rot} ${x} ${y})`,
+    opacity: op
+  }, /*#__PURE__*/React.createElement("path", {
+    d: `M ${x} ${y} Q ${x + s * 0.5} ${y - s * 0.62} ${x + s} ${y} Q ${x + s * 0.5} ${y + s * 0.62} ${x} ${y} Z`,
+    fill: color
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: x + s * 0.16,
+    y1: y,
+    x2: x + s * 0.84,
+    y2: y,
+    stroke: ILLO.white,
+    strokeWidth: Math.max(0.8, s * 0.1),
+    strokeLinecap: "round",
+    opacity: "0.55"
+  }));
+}
+
+// Small heart.
+function IHeart({
+  cx,
+  cy,
+  s,
+  color,
+  op = 1
+}) {
+  const d = `M ${cx} ${cy + s} C ${cx - 1.5 * s} ${cy - 0.34 * s} ${cx - 0.62 * s} ${cy - 1.1 * s} ${cx} ${cy - 0.38 * s}` + ` C ${cx + 0.62 * s} ${cy - 1.1 * s} ${cx + 1.5 * s} ${cy - 0.34 * s} ${cx} ${cy + s} Z`;
+  return /*#__PURE__*/React.createElement("path", {
+    d: d,
+    fill: color,
+    opacity: op
+  });
+}
+
+// Phone card: white body, slate stroke, screen inset, entry rows and an
+// optional mood-dot row (the Jotla trio, green/amber/green).
+function IPhone({
+  x,
+  y,
+  w = 34,
+  h = 58,
+  lines = 3,
+  accent = ILLO.bright,
+  moodRow = false
+}) {
+  const pad = w * 0.16;
+  const moodColours = [ILLO.green, ILLO.amber, ILLO.green];
+  return /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("rect", {
+    x: x,
+    y: y,
+    width: w,
+    height: h,
+    rx: w * 0.18,
+    fill: ILLO.white,
+    stroke: ILLO.slate,
+    strokeWidth: "2.4"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: x + w * 0.09,
+    y: y + h * 0.07,
+    width: w * 0.82,
+    height: h * 0.86,
+    rx: w * 0.12,
+    fill: ILLO.screen
+  }), Array.from({
+    length: lines
+  }, (_, i) => /*#__PURE__*/React.createElement("rect", {
+    key: i,
+    x: x + pad,
+    y: y + h * 0.22 + i * h * 0.16,
+    width: w - pad * 2 - (i % 2 === 1 ? w * 0.18 : 0),
+    height: h * 0.068,
+    rx: h * 0.034,
+    fill: i === 0 ? accent : ILLO.faintRow
+  })), moodRow ? moodColours.map((c, k) => /*#__PURE__*/React.createElement("circle", {
+    key: 'm' + k,
+    cx: x + w / 2 + (k - 1) * 9,
+    cy: y + h * 0.8,
+    r: "2.6",
+    fill: c
+  })) : null);
+}
+
+// Two-layer ground: the wide tint pool and the contact shadow under weight.
+function IGround({
+  cx,
+  rx,
+  tint
+}) {
+  return /*#__PURE__*/React.createElement("ellipse", {
+    cx: cx,
+    cy: "132",
+    rx: rx,
+    ry: "11.5",
+    fill: tint
+  });
+}
+function IContact({
+  cx,
+  rx
+}) {
+  return /*#__PURE__*/React.createElement("ellipse", {
+    cx: cx,
+    cy: "129.5",
+    rx: rx,
+    ry: "4",
+    fill: ILLO.shadow
+  });
+}
+function IDisc({
+  cx,
+  cy,
+  r,
+  tint
+}) {
+  return /*#__PURE__*/React.createElement("circle", {
+    cx: cx,
+    cy: cy,
+    r: r,
+    fill: tint
+  });
+}
+
+// Sun: soft halo, warm core, eight round rays.
+function ISun({
+  cx,
+  cy,
+  r
+}) {
+  return /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("circle", {
+    cx: cx,
+    cy: cy,
+    r: r + 7,
+    fill: ILLO.amber,
+    opacity: "0.18"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: cx,
+    cy: cy,
+    r: r,
+    fill: ILLO.amber,
+    opacity: "0.9"
+  }), Array.from({
+    length: 8
+  }, (_, i) => {
+    const a = Math.PI * 2 * i / 8 + Math.PI / 8;
+    return /*#__PURE__*/React.createElement("line", {
+      key: i,
+      x1: cx + Math.cos(a) * (r + 4.5),
+      y1: cy + Math.sin(a) * (r + 4.5),
+      x2: cx + Math.cos(a) * (r + 9),
+      y2: cy + Math.sin(a) * (r + 9),
+      stroke: ILLO.amber,
+      strokeWidth: "3",
+      strokeLinecap: "round",
+      opacity: "0.75"
+    });
+  }));
+}
+
+// Speech bubble with a soft tail ('bl' bottom-left, 'br' bottom-right).
+function IBubble({
+  x,
+  y,
+  w,
+  h,
+  tail,
+  fill,
+  stroke
+}) {
+  const tailD = tail === 'br' ? `M ${x + w - 22} ${y + h} l 7 9 l 3 -9 Z` : `M ${x + 15} ${y + h} l -4 9 l 11 -9 Z`;
+  return /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("rect", {
+    x: x,
+    y: y,
+    width: w,
+    height: h,
+    rx: "9",
+    fill: fill,
+    stroke: stroke,
+    strokeWidth: "2.2"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: tailD,
+    fill: fill,
+    stroke: stroke,
+    strokeWidth: "2.2",
+    strokeLinejoin: "round"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: x + 2,
+    y: y + h - 4,
+    width: w - 4,
+    height: "6",
+    rx: "3",
+    fill: fill
+  }));
+}
+
+/* ------------------------------------------------------------------ */
+/* SceneIllo: scene emblems for child mode                             */
+/* ------------------------------------------------------------------ */
+
+// Friendly little places on the child-mode pastel panels: the board and
+// desk, the lunch plate, the slide in the sun.
 function SceneIllo({
   scene = 'classroom',
   size = 96
 }) {
   const emblems = {
-    classroom: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("rect", {
-      x: "22",
-      y: "26",
-      width: "56",
-      height: "38",
+    classroom: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("line", {
+      x1: "26",
+      y1: "60",
+      x2: "21",
+      y2: "80",
+      stroke: ILLO.slate,
+      strokeWidth: "3",
+      strokeLinecap: "round"
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "74",
+      y1: "60",
+      x2: "79",
+      y2: "80",
+      stroke: ILLO.slate,
+      strokeWidth: "3",
+      strokeLinecap: "round"
+    }), /*#__PURE__*/React.createElement("rect", {
+      x: "16",
+      y: "16",
+      width: "68",
+      height: "46",
       rx: "6",
       fill: "#2E7D5B"
     }), /*#__PURE__*/React.createElement("rect", {
-      x: "22",
-      y: "26",
-      width: "56",
-      height: "38",
+      x: "16",
+      y: "16",
+      width: "68",
+      height: "46",
       rx: "6",
       fill: "none",
-      stroke: "#fff",
+      stroke: ILLO.white,
       strokeWidth: "3"
     }), /*#__PURE__*/React.createElement("line", {
-      x1: "31",
-      y1: "38",
+      x1: "26",
+      y1: "30",
       x2: "58",
-      y2: "38",
-      stroke: "#fff",
+      y2: "30",
+      stroke: ILLO.white,
       strokeWidth: "3",
       strokeLinecap: "round"
     }), /*#__PURE__*/React.createElement("line", {
-      x1: "31",
-      y1: "46",
-      x2: "64",
-      y2: "46",
-      stroke: "#fff",
+      x1: "26",
+      y1: "40",
+      x2: "70",
+      y2: "40",
+      stroke: ILLO.white,
       strokeWidth: "3",
       strokeLinecap: "round"
     }), /*#__PURE__*/React.createElement("line", {
-      x1: "31",
-      y1: "54",
-      x2: "50",
-      y2: "54",
-      stroke: "#fff",
+      x1: "26",
+      y1: "50",
+      x2: "46",
+      y2: "50",
+      stroke: ILLO.white,
       strokeWidth: "3",
       strokeLinecap: "round"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "64",
+      cy: "50",
+      r: "4",
+      fill: ILLO.amber
     }), /*#__PURE__*/React.createElement("rect", {
-      x: "46",
-      y: "64",
-      width: "8",
+      x: "28",
+      y: "70",
+      width: "44",
+      height: "7",
+      rx: "3.5",
+      fill: ILLO.wood
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "35",
+      y1: "78",
+      x2: "35",
+      y2: "88",
+      stroke: ILLO.wood,
+      strokeWidth: "3.5",
+      strokeLinecap: "round"
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "65",
+      y1: "78",
+      x2: "65",
+      y2: "88",
+      stroke: ILLO.wood,
+      strokeWidth: "3.5",
+      strokeLinecap: "round"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "40",
+      cy: "64",
+      r: "5.5",
+      fill: ILLO.red
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "40",
+      y1: "58.5",
+      x2: "40",
+      y2: "55.5",
+      stroke: ILLO.wood,
+      strokeWidth: "2",
+      strokeLinecap: "round"
+    }), /*#__PURE__*/React.createElement(ILeaf, {
+      x: 40.5,
+      y: 56.5,
+      s: 5,
+      color: ILLO.green,
+      rot: -24
+    }), /*#__PURE__*/React.createElement("rect", {
+      x: "52",
+      y: "61",
+      width: "11",
       height: "10",
-      rx: "2",
-      fill: "#8a5a2b"
+      rx: "2.5",
+      fill: ILLO.bright
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "55.5",
+      y1: "61",
+      x2: "55.5",
+      y2: "53",
+      stroke: ILLO.amber,
+      strokeWidth: "2.6",
+      strokeLinecap: "round"
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "60",
+      y1: "61",
+      x2: "60",
+      y2: "55",
+      stroke: ILLO.green,
+      strokeWidth: "2.6",
+      strokeLinecap: "round"
     })),
-    lunch: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("circle", {
+    lunch: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("ellipse", {
       cx: "50",
-      cy: "50",
-      r: "24",
-      fill: "#fff"
+      cy: "64",
+      rx: "38",
+      ry: "14",
+      fill: ILLO.white,
+      opacity: "0.75"
     }), /*#__PURE__*/React.createElement("circle", {
-      cx: "50",
-      cy: "50",
-      r: "24",
+      cx: "44",
+      cy: "58",
+      r: "20",
+      fill: ILLO.white
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "44",
+      cy: "58",
+      r: "20",
       fill: "none",
-      stroke: "#1A56A8",
+      stroke: ILLO.blue,
       strokeWidth: "3"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M 33 63 L 55 63 L 44 48 Z",
+      fill: "#F0D9A6"
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "35.5",
+      y1: "62",
+      x2: "52.5",
+      y2: "62",
+      stroke: ILLO.green,
+      strokeWidth: "2.4",
+      strokeLinecap: "round"
     }), /*#__PURE__*/React.createElement("circle", {
-      cx: "50",
-      cy: "50",
-      r: "12",
-      fill: "#3A7BD4",
-      opacity: "0.25"
+      cx: "53",
+      cy: "53",
+      r: "3.2",
+      fill: ILLO.red,
+      opacity: "0.85"
     }), /*#__PURE__*/React.createElement("rect", {
-      x: "20",
-      y: "34",
-      width: "4",
-      height: "32",
-      rx: "2",
-      fill: "#5B4636"
-    }), /*#__PURE__*/React.createElement("rect", {
-      x: "76",
-      y: "34",
-      width: "4",
-      height: "32",
-      rx: "2",
-      fill: "#5B4636"
-    }), /*#__PURE__*/React.createElement("rect", {
-      x: "74",
-      y: "34",
-      width: "8",
-      height: "4",
-      rx: "2",
-      fill: "#5B4636"
+      x: "70",
+      y: "42",
+      width: "15",
+      height: "19",
+      rx: "4",
+      fill: ILLO.bright
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "79",
+      y1: "42",
+      x2: "84",
+      y2: "30",
+      stroke: ILLO.amber,
+      strokeWidth: "2.8",
+      strokeLinecap: "round"
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "14",
+      y1: "46",
+      x2: "14",
+      y2: "70",
+      stroke: ILLO.slate,
+      strokeWidth: "3",
+      strokeLinecap: "round"
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "10.5",
+      y1: "38",
+      x2: "10.5",
+      y2: "46",
+      stroke: ILLO.slate,
+      strokeWidth: "2.2",
+      strokeLinecap: "round"
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "14",
+      y1: "38",
+      x2: "14",
+      y2: "46",
+      stroke: ILLO.slate,
+      strokeWidth: "2.2",
+      strokeLinecap: "round"
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "17.5",
+      y1: "38",
+      x2: "17.5",
+      y2: "46",
+      stroke: ILLO.slate,
+      strokeWidth: "2.2",
+      strokeLinecap: "round"
     })),
     playground: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("circle", {
-      cx: "38",
-      cy: "34",
-      r: "12",
-      fill: "#F4C95D"
+      cx: "24",
+      cy: "22",
+      r: "9",
+      fill: ILLO.amber
     }), /*#__PURE__*/React.createElement("g", {
-      stroke: "#F4C95D",
+      stroke: ILLO.amber,
+      strokeWidth: "2.5",
+      strokeLinecap: "round",
+      opacity: "0.8"
+    }, /*#__PURE__*/React.createElement("line", {
+      x1: "24",
+      y1: "7",
+      x2: "24",
+      y2: "11"
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "9",
+      y1: "22",
+      x2: "13",
+      y2: "22"
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "13",
+      y1: "11",
+      x2: "16",
+      y2: "14"
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "35",
+      y1: "11",
+      x2: "32",
+      y2: "14"
+    })), /*#__PURE__*/React.createElement("line", {
+      x1: "70",
+      y1: "36",
+      x2: "70",
+      y2: "66",
+      stroke: ILLO.slate,
       strokeWidth: "3",
       strokeLinecap: "round"
-    }, /*#__PURE__*/React.createElement("line", {
-      x1: "38",
-      y1: "14",
-      x2: "38",
-      y2: "19"
     }), /*#__PURE__*/React.createElement("line", {
-      x1: "22",
-      y1: "34",
-      x2: "27",
-      y2: "34"
-    }), /*#__PURE__*/React.createElement("line", {
-      x1: "24",
-      y1: "20",
-      x2: "28",
-      y2: "24"
-    })), /*#__PURE__*/React.createElement("path", {
-      d: "M58 30 L58 64 L80 64",
-      fill: "none",
-      stroke: "#E74C3C",
-      strokeWidth: "5",
-      strokeLinecap: "round",
-      strokeLinejoin: "round"
-    }), /*#__PURE__*/React.createElement("line", {
-      x1: "58",
-      y1: "46",
-      x2: "46",
-      y2: "64",
-      stroke: "#27AE60",
-      strokeWidth: "5",
+      x1: "79",
+      y1: "36",
+      x2: "79",
+      y2: "66",
+      stroke: ILLO.slate,
+      strokeWidth: "3",
       strokeLinecap: "round"
-    }))
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "70",
+      y1: "44",
+      x2: "79",
+      y2: "44",
+      stroke: ILLO.slate,
+      strokeWidth: "2.4",
+      strokeLinecap: "round"
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "70",
+      y1: "52",
+      x2: "79",
+      y2: "52",
+      stroke: ILLO.slate,
+      strokeWidth: "2.4",
+      strokeLinecap: "round"
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "70",
+      y1: "60",
+      x2: "79",
+      y2: "60",
+      stroke: ILLO.slate,
+      strokeWidth: "2.4",
+      strokeLinecap: "round"
+    }), /*#__PURE__*/React.createElement("rect", {
+      x: "60",
+      y: "30",
+      width: "24",
+      height: "7",
+      rx: "3.5",
+      fill: ILLO.slate
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M 62 36 Q 48 40 40 54 Q 34 64 22 68",
+      fill: "none",
+      stroke: ILLO.red,
+      strokeWidth: "6.5",
+      strokeLinecap: "round"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "46",
+      cy: "76",
+      r: "7.5",
+      fill: ILLO.bright
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M 39.5 74 Q 46 69 52.5 74",
+      fill: "none",
+      stroke: ILLO.white,
+      strokeWidth: "2.6",
+      strokeLinecap: "round"
+    }), /*#__PURE__*/React.createElement("g", {
+      stroke: ILLO.green,
+      strokeWidth: "2.2",
+      strokeLinecap: "round",
+      fill: "none"
+    }, /*#__PURE__*/React.createElement("path", {
+      d: "M 16 86 q 0 -5 2 -7"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M 21 86 q 0 -4 -1 -6"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M 72 88 q 0 -5 2 -7"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M 77 88 q 0 -4 -1 -6"
+    })))
   };
   return /*#__PURE__*/React.createElement("svg", {
     width: size,
@@ -685,990 +1351,1888 @@ function PhotoCropper({
   }, "Cancel")));
 }
 
-/* ---- StoryIllo (build 1.8.0): brand-style scene illustrations ----
-   The SEN Help imagery system, translated to the app: semi-flat vector scenes in
-   the brand palette, simple friendly rounded faces WITH expression, natural varied
-   skin tones (brand colour lives in the clothing, never the skin), soft tinted
-   ground, generous negative space. Used on the tour and the Tips deck; the same
-   scenes carry into the native build. Hand-authored SVG so the app stays tiny
-   and fully offline (no raster assets). */
+/* ------------------------------------------------------------------ */
+/* StoryIllo: brand-style scene illustrations (tour + Tips deck)       */
+/* ------------------------------------------------------------------ */
 
-const ILLO = {
-  blue: '#1A56A8',
-  bright: '#3A7BD4',
-  green: '#27AE60',
-  red: '#E74C3C',
-  amber: '#F39C12',
-  navy: '#22344F',
-  cream: '#FDF9F2',
-  tintBlue: 'rgba(58,123,212,0.14)',
-  tintGreen: 'rgba(39,174,96,0.14)',
-  tintAmber: 'rgba(243,156,18,0.16)',
-  tintRed: 'rgba(231,76,60,0.12)',
-  // natural skin tones, varied deliberately across the set (imagery-system lock)
-  skin: {
-    light: '#F1C7A4',
-    tan: '#D9A374',
-    medium: '#B37A50',
-    brown: '#8A5A3A',
-    deep: '#684430'
-  },
-  hair: {
-    black: '#26211D',
-    brown: '#544230',
-    chestnut: '#7A4A26',
-    darkgrey: '#3E3E42'
-  }
-};
-
-// A simple friendly head: skin circle, soft hair cap behind, dot eyes (or closed
-// arcs), a warm mouth. Expression is deliberate: calm | warm | gentle | closed.
-function IHead(props) {
-  // coerce: JSX attribute values arrive as strings, and string + number concatenates
-  const cx = +props.cx,
-    cy = +props.cy,
-    r = +props.r;
-  const {
-    skin,
-    hair,
-    mood = 'warm',
-    bun = false
-  } = props;
-  const eyeY = cy - r * 0.1,
-    eyeDX = r * 0.4,
-    eyeR = Math.max(1.7, r * 0.15);
-  const line = '#332A20';
-  const mw = Math.max(1.8, r * 0.16);
-  const mouths = {
-    warm: /*#__PURE__*/React.createElement("path", {
-      d: `M ${cx - r * 0.36} ${cy + r * 0.36} Q ${cx} ${cy + r * 0.68} ${cx + r * 0.36} ${cy + r * 0.36}`,
-      fill: "none",
-      stroke: line,
-      strokeWidth: mw,
-      strokeLinecap: "round"
-    }),
-    calm: /*#__PURE__*/React.createElement("path", {
-      d: `M ${cx - r * 0.28} ${cy + r * 0.44} Q ${cx} ${cy + r * 0.58} ${cx + r * 0.28} ${cy + r * 0.44}`,
-      fill: "none",
-      stroke: line,
-      strokeWidth: mw,
-      strokeLinecap: "round"
-    }),
-    gentle: /*#__PURE__*/React.createElement("path", {
-      d: `M ${cx - r * 0.22} ${cy + r * 0.46} H ${cx + r * 0.22}`,
-      fill: "none",
-      stroke: line,
-      strokeWidth: mw,
-      strokeLinecap: "round"
-    })
-  };
-  // hair = soft halo behind + a clean skull-cap fringe: one arc between two points
-  // on the head circle, closed by the chord (no free-hand arcs, no artifacts)
-  const fx = r * 0.94,
-    fy = r * 0.34;
-  return /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("circle", {
-    cx: cx,
-    cy: cy - r * 0.18,
-    r: r * 1.07,
-    fill: hair
-  }), bun && /*#__PURE__*/React.createElement("circle", {
-    cx: cx + r * 0.85,
-    cy: cy - r * 1.05,
-    r: r * 0.44,
-    fill: hair
-  }), /*#__PURE__*/React.createElement("circle", {
-    cx: cx,
-    cy: cy,
-    r: r,
-    fill: skin
-  }), /*#__PURE__*/React.createElement("path", {
-    d: `M ${cx - fx} ${cy - fy} A ${r} ${r} 0 0 1 ${cx + fx} ${cy - fy} Z`,
-    fill: hair
-  }), mood === 'closed' ? /*#__PURE__*/React.createElement("g", {
-    fill: "none",
-    stroke: line,
-    strokeWidth: mw * 0.9,
-    strokeLinecap: "round"
-  }, /*#__PURE__*/React.createElement("path", {
-    d: `M ${cx - eyeDX - eyeR} ${eyeY} q ${eyeR} ${eyeR * 1.2} ${eyeR * 2} 0`
-  }), /*#__PURE__*/React.createElement("path", {
-    d: `M ${cx + eyeDX - eyeR} ${eyeY} q ${eyeR} ${eyeR * 1.2} ${eyeR * 2} 0`
-  })) : /*#__PURE__*/React.createElement("g", {
-    fill: line
-  }, /*#__PURE__*/React.createElement("circle", {
-    cx: cx - eyeDX,
-    cy: eyeY,
-    r: eyeR
-  }), /*#__PURE__*/React.createElement("circle", {
-    cx: cx + eyeDX,
-    cy: eyeY,
-    r: eyeR
-  })), mouths[mood === 'closed' ? 'calm' : mood]);
-}
-
-// Phone card used in several scenes: rounded body with three "entry" lines.
-function IPhone(props) {
-  const x = +props.x,
-    y = +props.y,
-    w = +(props.w || 34),
-    h = +(props.h || 58);
-  const lines = +(props.lines || 3),
-    accent = props.accent || ILLO.bright;
-  const pad = w * 0.18;
-  return /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("rect", {
-    x: x,
-    y: y,
-    width: w,
-    height: h,
-    rx: w * 0.2,
-    fill: "#fff",
-    stroke: ILLO.navy,
-    strokeWidth: "2.4"
-  }), Array.from({
-    length: lines
-  }, (_, i) => /*#__PURE__*/React.createElement("rect", {
-    key: i,
-    x: x + pad,
-    y: y + h * 0.22 + i * h * 0.18,
-    width: w - pad * 2 - (i === 1 ? w * 0.16 : 0),
-    height: h * 0.075,
-    rx: h * 0.037,
-    fill: i === 0 ? accent : 'rgba(34,52,79,0.25)'
-  })));
-}
 function StoryIllo({
   scene = 'tourWelcome',
   width = 210
 }) {
   const S = ILLO.skin,
     H = ILLO.hair;
+  const patternColours = [[ILLO.green, ILLO.green, ILLO.amber, ILLO.green], [ILLO.green, ILLO.red, ILLO.amber, ILLO.green], [ILLO.amber, ILLO.red, ILLO.green, ILLO.green]];
   const scenes = {
-    /* Tips 1: Start with you — parent kneeling, eyes closed, hand on chest. */
-    tipCalm: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("ellipse", {
+    /* Tips 1: Start with you: seated, eyes closed, hand on chest, breath rising. */
+    tipCalm: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement(IDisc, {
+      cx: 110,
+      cy: 78,
+      r: 58,
+      tint: ILLO.tintGreen
+    }), /*#__PURE__*/React.createElement("circle", {
       cx: "110",
-      cy: "132",
-      rx: "78",
-      ry: "12",
-      fill: ILLO.tintGreen
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M92 128 q0 -34 20 -36 q22 -2 22 30 l0 6 q0 6 -6 6 l-30 0 q-6 0 -6 -6 Z",
-      fill: ILLO.green
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M96 100 q-12 10 -8 24",
+      cy: "90",
+      r: "34",
       fill: "none",
       stroke: ILLO.green,
-      strokeWidth: "9",
-      strokeLinecap: "round"
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M128 100 q6 10 -8 16",
-      fill: "none",
-      stroke: "#1F8B4D",
-      strokeWidth: "9",
-      strokeLinecap: "round"
+      strokeWidth: "2",
+      opacity: "0.18"
     }), /*#__PURE__*/React.createElement("circle", {
-      cx: "118",
-      cy: "118",
-      r: "5",
-      fill: S.brown
+      cx: "110",
+      cy: "90",
+      r: "44",
+      fill: "none",
+      stroke: ILLO.green,
+      strokeWidth: "2",
+      opacity: "0.1"
+    }), /*#__PURE__*/React.createElement(IGround, {
+      cx: 110,
+      rx: 76,
+      tint: ILLO.tintGreen
+    }), /*#__PURE__*/React.createElement(IContact, {
+      cx: 110,
+      rx: 42
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M 84 122 Q 86 108 110 108 Q 134 108 136 122 Q 136 126 130 126 L 90 126 Q 84 126 84 122 Z",
+      fill: ILLO.greenDeep
+    }), /*#__PURE__*/React.createElement(IShoe, {
+      cx: 95,
+      cy: 123.5,
+      rx: 5.5,
+      ry: 3,
+      rot: -16
+    }), /*#__PURE__*/React.createElement(IShoe, {
+      cx: 125,
+      cy: 123.5,
+      rx: 5.5,
+      ry: 3,
+      rot: 16
+    }), /*#__PURE__*/React.createElement(ITorso, {
+      cx: 110,
+      top: 84,
+      hw: 16,
+      bottom: 112,
+      color: ILLO.green
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 96 92 Q 88 100 90 108",
+      color: ILLO.green,
+      w: 8
+    }), /*#__PURE__*/React.createElement(IHand, {
+      x: 91,
+      y: 110,
+      r: 4.5,
+      skin: S.brown
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 124 92 Q 122 98 114 99",
+      color: ILLO.greenDeep,
+      w: 8
+    }), /*#__PURE__*/React.createElement(IHand, {
+      x: 112,
+      y: 99,
+      r: 4.5,
+      skin: S.brown
     }), /*#__PURE__*/React.createElement(IHead, {
-      cx: "112",
-      cy: "78",
-      r: "15",
+      cx: 110,
+      cy: 66,
+      r: 15,
       skin: S.brown,
       hair: H.black,
       mood: "closed",
       bun: true
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M148 62 c0 -5 8 -5 8 0 c0 5 -8 9 -8 9 c0 0 -8 -4 -8 -9 c0 -5 8 -5 8 0 Z",
-      transform: "translate(-4,-6)",
-      fill: ILLO.green,
-      opacity: "0.85"
-    }), /*#__PURE__*/React.createElement("circle", {
-      cx: "66",
-      cy: "70",
-      r: "3",
-      fill: ILLO.green,
-      opacity: "0.4"
-    }), /*#__PURE__*/React.createElement("circle", {
-      cx: "160",
-      cy: "92",
-      r: "2.5",
-      fill: ILLO.green,
-      opacity: "0.35"
+    }), /*#__PURE__*/React.createElement(IHeart, {
+      cx: 134,
+      cy: 40,
+      s: 4.5,
+      color: ILLO.green,
+      op: 0.85
+    }), /*#__PURE__*/React.createElement(IHeart, {
+      cx: 143,
+      cy: 30,
+      s: 3,
+      color: ILLO.green,
+      op: 0.5
+    }), /*#__PURE__*/React.createElement(ILeaf, {
+      x: 54,
+      y: 110,
+      s: 8,
+      color: ILLO.green,
+      rot: -18,
+      op: 0.45
+    }), /*#__PURE__*/React.createElement(ILeaf, {
+      x: 164,
+      y: 106,
+      s: 8,
+      color: ILLO.green,
+      rot: 18,
+      op: 0.45
     })),
-    /* Tips 2: Fewer words, softer everything — adult crouched to the child's level. */
-    tipSoft: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("ellipse", {
-      cx: "110",
-      cy: "132",
-      rx: "82",
-      ry: "12",
-      fill: ILLO.tintBlue
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M64 128 q-2 -30 18 -32 q20 -2 20 26 l0 2 q0 4 -4 4 l-30 0 q-4 0 -4 0 Z",
-      fill: ILLO.blue
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M98 106 q10 6 16 12",
-      fill: "none",
-      stroke: ILLO.blue,
-      strokeWidth: "8",
-      strokeLinecap: "round"
+    /* Tips 2: Fewer words, softer everything: crouched to their level, one soft word. */
+    tipSoft: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement(IDisc, {
+      cx: 106,
+      cy: 80,
+      r: 58,
+      tint: ILLO.tintBlue
+    }), /*#__PURE__*/React.createElement(IGround, {
+      cx: 108,
+      rx: 78,
+      tint: ILLO.tintBlue
+    }), /*#__PURE__*/React.createElement(IContact, {
+      cx: 78,
+      rx: 34
+    }), /*#__PURE__*/React.createElement(IContact, {
+      cx: 134,
+      rx: 26
+    }), /*#__PURE__*/React.createElement(IBubble, {
+      x: 42,
+      y: 34,
+      w: 38,
+      h: 24,
+      tail: "br",
+      fill: ILLO.white,
+      stroke: ILLO.bright
     }), /*#__PURE__*/React.createElement("circle", {
-      cx: "116",
-      cy: "120",
-      r: "4.5",
-      fill: S.light
+      cx: "54",
+      cy: "46",
+      r: "1.9",
+      fill: ILLO.bright
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "61",
+      cy: "46",
+      r: "1.9",
+      fill: ILLO.bright
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "68",
+      cy: "46",
+      r: "1.9",
+      fill: ILLO.bright
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M 62 120 Q 60 96 78 92 Q 94 89 96 106 L 96 120 Z",
+      fill: ILLO.blue
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "72",
+      cy: "115",
+      r: "8.5",
+      fill: ILLO.deep
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "88",
+      cy: "115",
+      r: "8.5",
+      fill: ILLO.deep
+    }), /*#__PURE__*/React.createElement(IShoe, {
+      cx: 70,
+      cy: 126.5,
+      rx: 6,
+      ry: 3
+    }), /*#__PURE__*/React.createElement(IShoe, {
+      cx: 89,
+      cy: 126.5,
+      rx: 6,
+      ry: 3
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 68 98 Q 63 104 66 110",
+      color: ILLO.blue,
+      w: 7.5
+    }), /*#__PURE__*/React.createElement(IHand, {
+      x: 67,
+      y: 111.5,
+      r: 4.2,
+      skin: S.light
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 92 98 Q 106 100 116 103",
+      color: ILLO.blue,
+      w: 7.5
+    }), /*#__PURE__*/React.createElement(IHand, {
+      x: 118,
+      y: 103.5,
+      r: 4.2,
+      skin: S.light
     }), /*#__PURE__*/React.createElement(IHead, {
-      cx: "82",
-      cy: "82",
-      r: "14",
+      cx: 80,
+      cy: 76,
+      r: 14,
       skin: S.light,
       hair: H.darkgrey,
       mood: "calm"
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M130 128 q-2 -22 14 -23 q16 -1 15 20 l0 3 q0 0 -4 0 l-25 0 Z",
-      fill: ILLO.bright
+    }), /*#__PURE__*/React.createElement(ITorso, {
+      cx: 131,
+      top: 98,
+      hw: 9,
+      bottom: 118,
+      color: ILLO.bright
+    }), /*#__PURE__*/React.createElement(IBand, {
+      cx: 131,
+      top: 116,
+      hw: 9,
+      depth: 7,
+      color: ILLO.deep
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 127 123 L 127 127",
+      color: ILLO.deep,
+      w: 5.5
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 135 123 L 135 127",
+      color: ILLO.deep,
+      w: 5.5
+    }), /*#__PURE__*/React.createElement(IShoe, {
+      cx: 126.5,
+      cy: 129.5,
+      rx: 4.5,
+      ry: 2.6
+    }), /*#__PURE__*/React.createElement(IShoe, {
+      cx: 135.5,
+      cy: 129.5,
+      rx: 4.5,
+      ry: 2.6
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "142.5",
+      cy: "100.5",
+      r: "2.6",
+      fill: ILLO.amber
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "150.5",
+      cy: "100.5",
+      r: "2.6",
+      fill: ILLO.amber
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "146.5",
+      cy: "105",
+      r: "6.2",
+      fill: ILLO.amber
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "146.5",
+      cy: "116",
+      r: "7.8",
+      fill: ILLO.amber
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "146.5",
+      cy: "107.5",
+      r: "3.1",
+      fill: ILLO.butter
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "144",
+      cy: "103.6",
+      r: "1",
+      fill: ILLO.navy
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "149",
+      cy: "103.6",
+      r: "1",
+      fill: ILLO.navy
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "146.5",
+      cy: "106.6",
+      r: "1.1",
+      fill: ILLO.navy
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 138 103 Q 143 106 145 111",
+      color: ILLO.bright,
+      w: 5.5
+    }), /*#__PURE__*/React.createElement(IHand, {
+      x: 146,
+      y: 112.5,
+      r: 3.6,
+      skin: S.tan
     }), /*#__PURE__*/React.createElement(IHead, {
-      cx: "143",
-      cy: "90",
-      r: "11.5",
+      cx: 131,
+      cy: 88,
+      r: 11,
       skin: S.tan,
       hair: H.chestnut,
       mood: "gentle"
-    }), /*#__PURE__*/React.createElement("g", {
-      opacity: "0.9"
-    }, /*#__PURE__*/React.createElement("path", {
-      d: "M60 38 h28 a7 7 0 0 1 7 7 v6 a7 7 0 0 1 -7 7 h-7 l-7 8 v-8 h-14 a7 7 0 0 1 -7 -7 v-6 a7 7 0 0 1 7 -7 Z",
-      fill: "#fff",
-      stroke: ILLO.bright,
-      strokeWidth: "2"
-    }), /*#__PURE__*/React.createElement("circle", {
-      cx: "67",
-      cy: "48",
-      r: "1.8",
-      fill: ILLO.bright
-    }), /*#__PURE__*/React.createElement("circle", {
-      cx: "74",
-      cy: "48",
-      r: "1.8",
-      fill: ILLO.bright
-    }), /*#__PURE__*/React.createElement("circle", {
-      cx: "81",
-      cy: "48",
-      r: "1.8",
-      fill: ILLO.bright
-    }))),
-    /* Tips 3: What makes it worse — why-questions and threats, gently struck out.
-       Object-led on purpose: never a distressed child (imagery lock). */
-    tipAvoid: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("ellipse", {
-      cx: "110",
-      cy: "132",
-      rx: "78",
-      ry: "12",
-      fill: ILLO.tintRed
-    }), /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("path", {
-      d: "M52 44 h44 a9 9 0 0 1 9 9 v16 a9 9 0 0 1 -9 9 h-22 l-10 11 v-11 h-12 a9 9 0 0 1 -9 -9 v-16 a9 9 0 0 1 9 -9 Z",
-      fill: "#fff",
-      stroke: ILLO.navy,
-      strokeWidth: "2.2"
-    }), /*#__PURE__*/React.createElement("text", {
-      x: "74",
-      y: "68",
-      textAnchor: "middle",
-      fontFamily: "'Outfit', system-ui",
-      fontWeight: "600",
-      fontSize: "20",
-      fill: ILLO.navy
-    }, "why?"), /*#__PURE__*/React.createElement("line", {
-      x1: "44",
-      y1: "86",
-      x2: "106",
-      y2: "42",
-      stroke: ILLO.red,
-      strokeWidth: "6",
-      strokeLinecap: "round",
-      opacity: "0.85"
-    })), /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("path", {
-      d: "M124 64 h40 a9 9 0 0 1 9 9 v14 a9 9 0 0 1 -9 9 h-10 l-9 10 v-10 h-21 a9 9 0 0 1 -9 -9 v-14 a9 9 0 0 1 9 -9 Z",
-      fill: "#fff",
-      stroke: ILLO.navy,
-      strokeWidth: "2.2"
-    }), /*#__PURE__*/React.createElement("text", {
-      x: "144",
-      y: "86",
-      textAnchor: "middle",
-      fontFamily: "'Outfit', system-ui",
-      fontWeight: "700",
-      fontSize: "19",
-      fill: ILLO.navy
-    }, "!!"), /*#__PURE__*/React.createElement("line", {
-      x1: "116",
-      y1: "104",
-      x2: "176",
-      y2: "58",
-      stroke: ILLO.red,
-      strokeWidth: "6",
-      strokeLinecap: "round",
-      opacity: "0.85"
-    })), /*#__PURE__*/React.createElement("circle", {
-      cx: "96",
-      cy: "116",
-      r: "3",
-      fill: ILLO.navy,
-      opacity: "0.28"
-    }), /*#__PURE__*/React.createElement("circle", {
-      cx: "110",
-      cy: "116",
-      r: "3",
-      fill: ILLO.navy,
-      opacity: "0.28"
-    }), /*#__PURE__*/React.createElement("circle", {
-      cx: "124",
-      cy: "116",
-      r: "3",
-      fill: ILLO.navy,
-      opacity: "0.28"
+    }), /*#__PURE__*/React.createElement(ILeaf, {
+      x: 168,
+      y: 90,
+      s: 8,
+      color: ILLO.green,
+      rot: 20,
+      op: 0.4
     })),
-    /* Tips 4: Give it room to pass — child settled in a calm corner, lamp low,
-       parent present but a step back. */
-    tipRoom: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("ellipse", {
-      cx: "110",
-      cy: "132",
-      rx: "82",
-      ry: "12",
-      fill: ILLO.tintAmber
+    /* Tips 3: What makes it worse: the why and the threat, gently struck out.
+       Object-led on purpose: never a distressed child (imagery lock). */
+    tipAvoid: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement(IDisc, {
+      cx: 110,
+      cy: 74,
+      r: 56,
+      tint: ILLO.tintRed
+    }), /*#__PURE__*/React.createElement(IGround, {
+      cx: 110,
+      rx: 74,
+      tint: ILLO.tintRed
+    }), /*#__PURE__*/React.createElement(IBubble, {
+      x: 46,
+      y: 38,
+      w: 52,
+      h: 40,
+      tail: "bl",
+      fill: ILLO.white,
+      stroke: ILLO.slate
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M 65 55 Q 65 47 72 47 Q 79 47 79 53 Q 79 58 72 60 L 72 64",
+      fill: "none",
+      stroke: ILLO.slate,
+      strokeWidth: "4.5",
+      strokeLinecap: "round"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "72",
+      cy: "71",
+      r: "2.7",
+      fill: ILLO.slate
     }), /*#__PURE__*/React.createElement("line", {
-      x1: "52",
+      x1: "40",
+      y1: "86",
+      x2: "102",
+      y2: "34",
+      stroke: ILLO.red,
+      strokeWidth: "6",
+      strokeLinecap: "round",
+      opacity: "0.85"
+    }), /*#__PURE__*/React.createElement(IBubble, {
+      x: 124,
+      y: 52,
+      w: 48,
+      h: 38,
+      tail: "bl",
+      fill: ILLO.white,
+      stroke: ILLO.slate
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M 148 60 L 148 74",
+      fill: "none",
+      stroke: ILLO.slate,
+      strokeWidth: "5.5",
+      strokeLinecap: "round"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "148",
+      cy: "82",
+      r: "3",
+      fill: ILLO.slate
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "118",
+      y1: "98",
+      x2: "178",
+      y2: "46",
+      stroke: ILLO.red,
+      strokeWidth: "6",
+      strokeLinecap: "round",
+      opacity: "0.85"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "94",
+      cy: "116",
+      r: "3",
+      fill: ILLO.navy,
+      opacity: "0.28"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "108",
+      cy: "116",
+      r: "3",
+      fill: ILLO.navy,
+      opacity: "0.28"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "122",
+      cy: "116",
+      r: "3",
+      fill: ILLO.navy,
+      opacity: "0.28"
+    }), /*#__PURE__*/React.createElement(ISparkle, {
+      x: 146,
+      y: 112,
+      s: 4,
+      color: ILLO.green,
+      op: 0.75
+    })),
+    /* Tips 4: Give it room to pass: lamp low, child settled on the cushion,
+       parent present but a step back. */
+    tipRoom: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement(IDisc, {
+      cx: 116,
+      cy: 78,
+      r: 58,
+      tint: ILLO.tintAmber
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M 44 30 A 10 10 0 1 0 44 50 A 12.5 12.5 0 0 1 44 30 Z",
+      fill: ILLO.amber,
+      opacity: "0.55"
+    }), /*#__PURE__*/React.createElement(IGround, {
+      cx: 118,
+      rx: 80,
+      tint: ILLO.tintAmber
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M 60 74 L 86 74 L 104 124 L 74 124 Z",
+      fill: "rgba(243,156,18,0.16)"
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "73",
       y1: "128",
-      x2: "52",
-      y2: "76",
-      stroke: ILLO.navy,
+      x2: "73",
+      y2: "72",
+      stroke: ILLO.slate,
       strokeWidth: "3.4",
       strokeLinecap: "round"
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M40 76 h24 l-5 -14 h-14 Z",
-      fill: ILLO.amber
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M52 82 q0 14 10 20",
-      fill: "none",
-      stroke: ILLO.amber,
-      strokeWidth: "2.4",
-      strokeLinecap: "round",
-      opacity: "0.5"
     }), /*#__PURE__*/React.createElement("ellipse", {
-      cx: "52",
-      cy: "129",
+      cx: "73",
+      cy: "128.5",
       rx: "10",
       ry: "3",
-      fill: ILLO.navy,
-      opacity: "0.5"
+      fill: ILLO.slate,
+      opacity: "0.6"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M 59 74 L 87 74 L 80 56 L 66 56 Z",
+      fill: ILLO.amber
+    }), /*#__PURE__*/React.createElement(IContact, {
+      cx: 126,
+      rx: 34
     }), /*#__PURE__*/React.createElement("ellipse", {
-      cx: "118",
+      cx: "126",
+      cy: "121",
+      rx: "27",
+      ry: "9",
+      fill: "#F5D9A6"
+    }), /*#__PURE__*/React.createElement("ellipse", {
+      cx: "126",
       cy: "124",
-      rx: "26",
-      ry: "8",
-      fill: ILLO.amber,
-      opacity: "0.45"
+      rx: "27",
+      ry: "6",
+      fill: "#E8C288"
     }), /*#__PURE__*/React.createElement("path", {
-      d: "M102 122 q-2 -20 16 -21 q18 -1 17 19 l0 2 q-1 3 -5 3 l-24 0 q-4 0 -4 -3 Z",
-      fill: ILLO.bright
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M104 112 q14 -8 28 0 l0 8 q-14 6 -28 0 Z",
-      fill: ILLO.blue
+      d: "M 112 118 Q 113 109 126 109 Q 139 109 140 118 Q 140 122 135 122 L 117 122 Q 112 122 112 118 Z",
+      fill: ILLO.deep
+    }), /*#__PURE__*/React.createElement(IShoe, {
+      cx: 114,
+      cy: 119.5,
+      rx: 4,
+      ry: 2.2,
+      rot: -18
+    }), /*#__PURE__*/React.createElement(IShoe, {
+      cx: 138,
+      cy: 119.5,
+      rx: 4,
+      ry: 2.2,
+      rot: 18
+    }), /*#__PURE__*/React.createElement(ITorso, {
+      cx: 126,
+      top: 90,
+      hw: 10,
+      bottom: 112,
+      color: ILLO.bright
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 118 99 Q 116 105 120 110",
+      color: ILLO.bright,
+      w: 6
+    }), /*#__PURE__*/React.createElement(IHand, {
+      x: 121,
+      y: 111,
+      r: 3.8,
+      skin: S.deep
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 134 99 Q 136 105 132 110",
+      color: ILLO.bright,
+      w: 6
+    }), /*#__PURE__*/React.createElement(IHand, {
+      x: 131,
+      y: 111,
+      r: 3.8,
+      skin: S.deep
     }), /*#__PURE__*/React.createElement(IHead, {
-      cx: "119",
-      cy: "88",
-      r: "12",
+      cx: 126,
+      cy: 79,
+      r: 11.5,
       skin: S.deep,
       hair: H.black,
-      mood: "calm"
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M172 128 q-2 -36 14 -37 q15 -1 14 37 Z",
-      fill: ILLO.green
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M176 100 q-6 10 -4 20",
-      fill: "none",
-      stroke: "#1F8B4D",
-      strokeWidth: "8",
-      strokeLinecap: "round"
+      mood: "calm",
+      tilt: 4
+    }), /*#__PURE__*/React.createElement(IContact, {
+      cx: 186,
+      rx: 22
+    }), /*#__PURE__*/React.createElement(ITorso, {
+      cx: 186,
+      top: 83,
+      hw: 12,
+      bottom: 108,
+      color: ILLO.green
+    }), /*#__PURE__*/React.createElement(IBand, {
+      cx: 186,
+      top: 106,
+      hw: 12,
+      depth: 9,
+      color: ILLO.greenDeep
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 180 115 L 180 124",
+      color: ILLO.greenDeep,
+      w: 6.5
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 192 115 L 192 124",
+      color: ILLO.greenDeep,
+      w: 6.5
+    }), /*#__PURE__*/React.createElement(IShoe, {
+      cx: 179,
+      cy: 127,
+      rx: 5.5,
+      ry: 3
+    }), /*#__PURE__*/React.createElement(IShoe, {
+      cx: 193,
+      cy: 127,
+      rx: 5.5,
+      ry: 3
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 177 91 Q 180 98 184 101",
+      color: ILLO.green,
+      w: 7
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 195 91 Q 192 98 188 101",
+      color: ILLO.green,
+      w: 7
+    }), /*#__PURE__*/React.createElement(IHand, {
+      x: 186,
+      y: 102,
+      r: 4.2,
+      skin: S.tan
     }), /*#__PURE__*/React.createElement(IHead, {
-      cx: "186",
-      cy: "78",
-      r: "12.5",
+      cx: 186,
+      cy: 71,
+      r: 12.5,
       skin: S.tan,
       hair: H.brown,
       mood: "calm",
       bun: true
+    }), /*#__PURE__*/React.createElement(ISparkle, {
+      x: 152,
+      y: 44,
+      s: 3.5,
+      color: ILLO.amber,
+      op: 0.5
     }), /*#__PURE__*/React.createElement("circle", {
-      cx: "86",
-      cy: "58",
+      cx: "96",
+      cy: "42",
       r: "2.6",
-      fill: ILLO.amber,
-      opacity: "0.45"
-    }), /*#__PURE__*/React.createElement("circle", {
-      cx: "150",
-      cy: "48",
-      r: "3",
       fill: ILLO.amber,
       opacity: "0.4"
     })),
-    /* Tips 5: Afterwards, reconnect first — the hug. */
-    tipReconnect: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("ellipse", {
+    /* Tips 5: Afterwards, reconnect first: the hug, heads together. */
+    tipReconnect: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement(IDisc, {
+      cx: 110,
+      cy: 78,
+      r: 58,
+      tint: ILLO.tintGreen
+    }), /*#__PURE__*/React.createElement("circle", {
       cx: "110",
-      cy: "132",
-      rx: "78",
-      ry: "12",
-      fill: ILLO.tintGreen
+      cy: "86",
+      r: "47",
+      fill: "none",
+      stroke: ILLO.green,
+      strokeWidth: "2",
+      opacity: "0.12"
+    }), /*#__PURE__*/React.createElement(IGround, {
+      cx: 110,
+      rx: 76,
+      tint: ILLO.tintGreen
+    }), /*#__PURE__*/React.createElement(IContact, {
+      cx: 110,
+      rx: 44
     }), /*#__PURE__*/React.createElement("path", {
-      d: "M80 128 q-4 -44 24 -45 q16 0 18 22 l2 23 Z",
+      d: "M 70 124 Q 68 92 92 84 Q 108 80 112 96 L 114 124 Z",
       fill: ILLO.green
     }), /*#__PURE__*/React.createElement("path", {
-      d: "M124 128 q0 -30 14 -31 q14 -1 14 31 Z",
+      d: "M 116 124 Q 114 98 130 96 Q 144 96 144 124 Z",
       fill: ILLO.bright
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M96 96 q26 -2 38 14",
-      fill: "none",
-      stroke: "#1F8B4D",
-      strokeWidth: "9",
-      strokeLinecap: "round"
-    }), /*#__PURE__*/React.createElement("circle", {
-      cx: "136",
-      cy: "112",
-      r: "5",
-      fill: S.light
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M140 106 q-10 6 -18 14",
-      fill: "none",
-      stroke: ILLO.blue,
-      strokeWidth: "7",
-      strokeLinecap: "round"
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 102 92 Q 124 96 138 108",
+      color: ILLO.greenDeep,
+      w: 9
+    }), /*#__PURE__*/React.createElement(IHand, {
+      x: 140,
+      y: 110,
+      r: 4.5,
+      skin: S.light
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 128 102 Q 112 106 104 114",
+      color: ILLO.blue,
+      w: 7
+    }), /*#__PURE__*/React.createElement(IHand, {
+      x: 102,
+      y: 115,
+      r: 4,
+      skin: S.light
     }), /*#__PURE__*/React.createElement(IHead, {
-      cx: "102",
-      cy: "72",
-      r: "14",
+      cx: 92,
+      cy: 66,
+      r: 14,
       skin: S.light,
       hair: H.chestnut,
-      mood: "closed"
+      mood: "joy",
+      tilt: 10
     }), /*#__PURE__*/React.createElement(IHead, {
-      cx: "139",
-      cy: "86",
-      r: "11",
+      cx: 128,
+      cy: 84,
+      r: 11,
       skin: S.light,
       hair: H.brown,
-      mood: "warm"
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M124 44 c0 -6 9 -6 9 0 c0 6 -9 10 -9 10 c0 0 -9 -4 -9 -10 c0 -6 9 -6 9 0 Z",
-      fill: ILLO.green
+      mood: "joy",
+      tilt: -10,
+      bun: true
+    }), /*#__PURE__*/React.createElement(IHeart, {
+      cx: 118,
+      cy: 42,
+      s: 6,
+      color: ILLO.red,
+      op: 0.9
+    }), /*#__PURE__*/React.createElement(ISparkle, {
+      x: 84,
+      y: 40,
+      s: 3,
+      color: ILLO.green,
+      op: 0.6
+    }), /*#__PURE__*/React.createElement(ISparkle, {
+      x: 152,
+      y: 58,
+      s: 3.5,
+      color: ILLO.green,
+      op: 0.6
     })),
-    /* Tips 6: Then write it down — settled now, one honest line into the record. */
-    tipWrite: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("ellipse", {
-      cx: "110",
-      cy: "132",
-      rx: "80",
-      ry: "12",
-      fill: ILLO.tintBlue
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M56 128 l0 -22 q0 -8 8 -8 l30 0 q8 0 8 8 l0 22 Z",
-      fill: ILLO.tintBlue
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M70 128 q-2 -30 18 -31 q18 -1 18 31 Z",
-      fill: ILLO.blue
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M96 108 q8 4 12 10",
-      fill: "none",
-      stroke: ILLO.blue,
-      strokeWidth: "8",
+    /* Tips 6: Then write it down: the sofa, the tea, one honest line into the record. */
+    tipWrite: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement(IDisc, {
+      cx: 112,
+      cy: 78,
+      r: 58,
+      tint: ILLO.tintBlue
+    }), /*#__PURE__*/React.createElement(IGround, {
+      cx: 114,
+      rx: 82,
+      tint: ILLO.tintBlue
+    }), /*#__PURE__*/React.createElement(IContact, {
+      cx: 110,
+      rx: 52
+    }), /*#__PURE__*/React.createElement("rect", {
+      x: "58",
+      y: "78",
+      width: "104",
+      height: "28",
+      rx: "12",
+      fill: "#D9E6F8"
+    }), /*#__PURE__*/React.createElement("rect", {
+      x: "58",
+      y: "96",
+      width: "104",
+      height: "22",
+      rx: "10",
+      fill: "#C7D9F3"
+    }), /*#__PURE__*/React.createElement("rect", {
+      x: "52",
+      y: "86",
+      width: "15",
+      height: "34",
+      rx: "7.5",
+      fill: "#D9E6F8"
+    }), /*#__PURE__*/React.createElement("rect", {
+      x: "153",
+      y: "86",
+      width: "15",
+      height: "34",
+      rx: "7.5",
+      fill: "#D9E6F8"
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "70",
+      y1: "120",
+      x2: "70",
+      y2: "127",
+      stroke: ILLO.slate,
+      strokeWidth: "3.4",
       strokeLinecap: "round"
-    }), /*#__PURE__*/React.createElement("circle", {
-      cx: "110",
-      cy: "120",
-      r: "4.5",
-      fill: S.medium
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "150",
+      y1: "120",
+      x2: "150",
+      y2: "127",
+      stroke: ILLO.slate,
+      strokeWidth: "3.4",
+      strokeLinecap: "round"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M 82 108 Q 84 98 100 98 Q 116 98 118 108 Q 118 112 112 112 L 88 112 Q 82 112 82 108 Z",
+      fill: ILLO.deep
+    }), /*#__PURE__*/React.createElement(ITorso, {
+      cx: 100,
+      top: 78,
+      hw: 12,
+      bottom: 102,
+      color: ILLO.blue
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 90 84 Q 84 92 88 98",
+      color: ILLO.blue,
+      w: 7.5
+    }), /*#__PURE__*/React.createElement(IHand, {
+      x: 89,
+      y: 100,
+      r: 4.2,
+      skin: S.medium
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 110 84 Q 118 90 121 95",
+      color: ILLO.blue,
+      w: 7.5
     }), /*#__PURE__*/React.createElement(IHead, {
-      cx: "87",
-      cy: "82",
-      r: "13.5",
+      cx: 100,
+      cy: 64,
+      r: 13.5,
       skin: S.medium,
       hair: H.black,
       mood: "calm"
-    }), /*#__PURE__*/React.createElement(IPhone, {
-      x: "128",
-      y: "70",
-      w: "40",
-      h: "62",
-      lines: 3,
-      accent: ILLO.green
+    }), /*#__PURE__*/React.createElement("g", {
+      transform: "rotate(-8 130 96)"
+    }, /*#__PURE__*/React.createElement("rect", {
+      x: "119",
+      y: "76",
+      width: "22",
+      height: "34",
+      rx: "4.5",
+      fill: ILLO.white,
+      stroke: ILLO.slate,
+      strokeWidth: "2.2"
+    }), /*#__PURE__*/React.createElement("rect", {
+      x: "123",
+      y: "84",
+      width: "14",
+      height: "4",
+      rx: "2",
+      fill: ILLO.green
+    }), /*#__PURE__*/React.createElement("rect", {
+      x: "123",
+      y: "92",
+      width: "10",
+      height: "4",
+      rx: "2",
+      fill: ILLO.faintRow
+    })), /*#__PURE__*/React.createElement(IHand, {
+      x: 122,
+      y: 97,
+      r: 4.2,
+      skin: S.medium
     }), /*#__PURE__*/React.createElement("circle", {
-      cx: "168",
-      cy: "72",
-      r: "11",
+      cx: "152",
+      cy: "60",
+      r: "10",
       fill: ILLO.green
     }), /*#__PURE__*/React.createElement("path", {
-      d: "M163 72 l3.6 3.6 l6 -7",
+      d: "M 147.5 60 l 3.4 3.4 l 6 -6.8",
       fill: "none",
-      stroke: "#fff",
+      stroke: ILLO.white,
       strokeWidth: "2.6",
       strokeLinecap: "round",
       strokeLinejoin: "round"
-    })),
-    /* Tour 1: Welcome — parent and child, side by side, starting out. */
-    tourWelcome: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("ellipse", {
-      cx: "110",
-      cy: "132",
-      rx: "82",
-      ry: "12",
-      fill: ILLO.tintBlue
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M74 128 q-3 -44 20 -45 q22 -1 20 45 Z",
-      fill: ILLO.blue
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M74 96 q-10 -8 -8 -20",
-      fill: "none",
-      stroke: ILLO.blue,
-      strokeWidth: "9",
+    }), /*#__PURE__*/React.createElement("ellipse", {
+      cx: "184",
+      cy: "97",
+      rx: "13",
+      ry: "4",
+      fill: ILLO.wood
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "184",
+      y1: "100",
+      x2: "184",
+      y2: "126",
+      stroke: ILLO.slate,
+      strokeWidth: "3",
       strokeLinecap: "round"
+    }), /*#__PURE__*/React.createElement("rect", {
+      x: "177",
+      y: "84",
+      width: "13",
+      height: "10",
+      rx: "3",
+      fill: ILLO.white,
+      stroke: ILLO.slate,
+      strokeWidth: "2"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M 190 86.5 q 5 1.5 0 5",
+      fill: "none",
+      stroke: ILLO.slate,
+      strokeWidth: "2",
+      strokeLinecap: "round"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M 181 79 q 2.5 -3 0 -6",
+      fill: "none",
+      stroke: ILLO.slate,
+      strokeWidth: "1.8",
+      strokeLinecap: "round",
+      opacity: "0.6"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M 186.5 79 q 2.5 -3 0 -6",
+      fill: "none",
+      stroke: ILLO.slate,
+      strokeWidth: "1.8",
+      strokeLinecap: "round",
+      opacity: "0.6"
+    }), /*#__PURE__*/React.createElement(ISparkle, {
+      x: 64,
+      y: 52,
+      s: 3.5,
+      color: ILLO.bright,
+      op: 0.5
+    })),
+    /* Tour 1: Welcome: parent and child hand in hand, the path ahead just beginning. */
+    tourWelcome: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement(IDisc, {
+      cx: 110,
+      cy: 76,
+      r: 60,
+      tint: ILLO.tintBlue
+    }), /*#__PURE__*/React.createElement(IGround, {
+      cx: 110,
+      rx: 82,
+      tint: ILLO.tintBlue
+    }), /*#__PURE__*/React.createElement(IContact, {
+      cx: 96,
+      rx: 46
     }), /*#__PURE__*/React.createElement("circle", {
-      cx: "66",
-      cy: "74",
-      r: "5",
-      fill: S.deep
+      cx: "168",
+      cy: "123",
+      r: "3",
+      fill: ILLO.bright,
+      opacity: "0.5"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "184",
+      cy: "116",
+      r: "2.6",
+      fill: ILLO.bright,
+      opacity: "0.38"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "197",
+      cy: "108",
+      r: "2.2",
+      fill: ILLO.bright,
+      opacity: "0.26"
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 78 86 Q 66 94 64 102",
+      color: ILLO.blue,
+      w: 8
+    }), /*#__PURE__*/React.createElement(IHand, {
+      x: 64,
+      y: 104,
+      r: 4.5,
+      skin: S.deep
+    }), /*#__PURE__*/React.createElement(ITorso, {
+      cx: 88,
+      top: 77,
+      hw: 15,
+      bottom: 104,
+      color: ILLO.blue
+    }), /*#__PURE__*/React.createElement(IBand, {
+      cx: 88,
+      top: 102,
+      hw: 15,
+      depth: 10,
+      color: ILLO.deep
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 81 112 L 81 124",
+      color: ILLO.deep,
+      w: 7.5
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 95 112 L 95 124",
+      color: ILLO.deep,
+      w: 7.5
+    }), /*#__PURE__*/React.createElement(IShoe, {
+      cx: 80,
+      cy: 128,
+      rx: 6.5,
+      ry: 3.2
+    }), /*#__PURE__*/React.createElement(IShoe, {
+      cx: 96,
+      cy: 128,
+      rx: 6.5,
+      ry: 3.2
     }), /*#__PURE__*/React.createElement(IHead, {
-      cx: "94",
-      cy: "66",
-      r: "15",
+      cx: 88,
+      cy: 64,
+      r: 14,
       skin: S.deep,
       hair: H.black,
       mood: "warm"
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M126 128 q-2 -30 13 -31 q15 -1 14 31 Z",
-      fill: ILLO.green
+    }), /*#__PURE__*/React.createElement(ITorso, {
+      cx: 124,
+      top: 97,
+      hw: 9,
+      bottom: 116,
+      color: ILLO.green
+    }), /*#__PURE__*/React.createElement(IBand, {
+      cx: 124,
+      top: 114,
+      hw: 9,
+      depth: 7,
+      color: ILLO.greenDeep
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 120 121 L 120 126",
+      color: ILLO.greenDeep,
+      w: 6
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 128 121 L 128 126",
+      color: ILLO.greenDeep,
+      w: 6
+    }), /*#__PURE__*/React.createElement(IShoe, {
+      cx: 119.5,
+      cy: 129,
+      rx: 5,
+      ry: 2.8
+    }), /*#__PURE__*/React.createElement(IShoe, {
+      cx: 128.5,
+      cy: 129,
+      rx: 5,
+      ry: 2.8
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 100 84 Q 107 94 108 100",
+      color: ILLO.blue,
+      w: 8
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 118 102 Q 113 103 110 103",
+      color: ILLO.green,
+      w: 6
+    }), /*#__PURE__*/React.createElement(IHand, {
+      x: 108,
+      y: 102,
+      r: 4.5,
+      skin: S.deep
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 131 102 Q 136 106 137 110",
+      color: ILLO.green,
+      w: 6
+    }), /*#__PURE__*/React.createElement(IHand, {
+      x: 137.5,
+      y: 111,
+      r: 3.8,
+      skin: S.brown
     }), /*#__PURE__*/React.createElement(IHead, {
-      cx: "139",
-      cy: "84",
-      r: "11.5",
+      cx: 124,
+      cy: 86,
+      r: 11,
       skin: S.brown,
       hair: H.black,
       mood: "warm",
       bun: true
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M112 102 q8 8 16 10",
-      fill: "none",
-      stroke: ILLO.blue,
-      strokeWidth: "8",
-      strokeLinecap: "round"
-    }), /*#__PURE__*/React.createElement("circle", {
-      cx: "128",
-      cy: "112",
-      r: "4.5",
-      fill: S.deep
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M166 52 c0 -6 9 -6 9 0 c0 6 -9 10 -9 10 c0 0 -9 -4 -9 -10 c0 -6 9 -6 9 0 Z",
-      fill: ILLO.red,
-      opacity: "0.7"
+    }), /*#__PURE__*/React.createElement(IHeart, {
+      cx: 164,
+      cy: 50,
+      s: 5,
+      color: ILLO.red,
+      op: 0.75
+    }), /*#__PURE__*/React.createElement(ISparkle, {
+      x: 56,
+      y: 50,
+      s: 4,
+      color: ILLO.bright,
+      op: 0.55
     })),
-    /* Tour 2: Today is home — the day on one screen, morning light. */
-    tourToday: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("ellipse", {
-      cx: "110",
-      cy: "132",
-      rx: "78",
-      ry: "12",
-      fill: ILLO.tintBlue
-    }), /*#__PURE__*/React.createElement("circle", {
-      cx: "62",
-      cy: "56",
-      r: "16",
-      fill: ILLO.amber,
-      opacity: "0.85"
+    /* Tour 2: Today is home: morning sun, the day on one screen, a plant by its side. */
+    tourToday: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement(IDisc, {
+      cx: 118,
+      cy: 82,
+      r: 56,
+      tint: ILLO.tintBlue
+    }), /*#__PURE__*/React.createElement(IGround, {
+      cx: 112,
+      rx: 78,
+      tint: ILLO.tintBlue
+    }), /*#__PURE__*/React.createElement(ISun, {
+      cx: 50,
+      cy: 46,
+      r: 12
     }), /*#__PURE__*/React.createElement("g", {
-      stroke: ILLO.amber,
-      strokeWidth: "3",
-      strokeLinecap: "round",
-      opacity: "0.7"
-    }, /*#__PURE__*/React.createElement("line", {
-      x1: "62",
-      y1: "30",
-      x2: "62",
-      y2: "36"
-    }), /*#__PURE__*/React.createElement("line", {
-      x1: "38",
-      y1: "56",
-      x2: "44",
-      y2: "56"
-    }), /*#__PURE__*/React.createElement("line", {
-      x1: "45",
-      y1: "39",
-      x2: "49",
-      y2: "43"
-    }), /*#__PURE__*/React.createElement("line", {
-      x1: "79",
-      y1: "43",
-      x2: "75",
-      y2: "39",
-      transform: "translate(4,-4)"
-    })), /*#__PURE__*/React.createElement(IPhone, {
-      x: "92",
-      y: "52",
-      w: "46",
-      h: "76",
-      lines: 4,
-      accent: ILLO.bright
+      opacity: "0.9"
+    }, /*#__PURE__*/React.createElement("path", {
+      d: "M 156 40 q 4 -9 13 -8 q 3 -7 11 -5 q 8 2 8 9 q 7 1 6 8 q -1 6 -8 6 l -26 0 q -7 -1 -4 -10 Z",
+      fill: ILLO.cream,
+      stroke: ILLO.slate,
+      strokeWidth: "2",
+      opacity: "0.85"
+    })), /*#__PURE__*/React.createElement(IContact, {
+      cx: 118,
+      rx: 34
+    }), /*#__PURE__*/React.createElement(IPhone, {
+      x: 94,
+      y: 50,
+      w: 50,
+      h: 80,
+      lines: 3,
+      accent: ILLO.bright,
+      moodRow: true
     }), /*#__PURE__*/React.createElement("circle", {
-      cx: "150",
-      cy: "112",
-      r: "12",
-      fill: ILLO.green,
-      opacity: "0.16"
+      cx: "147",
+      cy: "60",
+      r: "11",
+      fill: ILLO.green
     }), /*#__PURE__*/React.createElement("path", {
-      d: "M145 112 l3.6 3.6 l6.5 -7.5",
+      d: "M 142 60 l 3.6 3.6 l 6.5 -7.2",
       fill: "none",
-      stroke: ILLO.green,
+      stroke: ILLO.white,
       strokeWidth: "2.8",
       strokeLinecap: "round",
       strokeLinejoin: "round"
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "160",
+      y1: "118",
+      x2: "160",
+      y2: "105",
+      stroke: ILLO.greenDeep,
+      strokeWidth: "2.4",
+      strokeLinecap: "round"
+    }), /*#__PURE__*/React.createElement(ILeaf, {
+      x: 160,
+      y: 105,
+      s: 10,
+      color: ILLO.green,
+      rot: -148,
+      op: 0.95
+    }), /*#__PURE__*/React.createElement(ILeaf, {
+      x: 160,
+      y: 109,
+      s: 9,
+      color: ILLO.green,
+      rot: -28,
+      op: 0.9
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M 152 118 L 168 118 L 165.5 129 Q 160 131 154.5 129 Z",
+      fill: ILLO.amberDeep
+    }), /*#__PURE__*/React.createElement(ISparkle, {
+      x: 70,
+      y: 78,
+      s: 3.5,
+      color: ILLO.bright,
+      op: 0.5
     })),
-    /* Tour 3: A line is plenty — the plus button and one written line. */
-    tourLog: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("ellipse", {
-      cx: "110",
-      cy: "132",
-      rx: "76",
-      ry: "12",
-      fill: ILLO.tintBlue
+    /* Tour 3: A line is plenty: the plus button, one honest line, a crayon finishing it. */
+    tourLog: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement(IDisc, {
+      cx: 104,
+      cy: 82,
+      r: 58,
+      tint: ILLO.tintBlue
+    }), /*#__PURE__*/React.createElement(IGround, {
+      cx: 110,
+      rx: 78,
+      tint: ILLO.tintBlue
+    }), /*#__PURE__*/React.createElement(IContact, {
+      cx: 114,
+      rx: 62
     }), /*#__PURE__*/React.createElement("circle", {
-      cx: "86",
-      cy: "82",
-      r: "26",
+      cx: "74",
+      cy: "84",
+      r: "31",
+      fill: "none",
+      stroke: "rgba(58,123,212,0.3)",
+      strokeWidth: "3"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "74",
+      cy: "84",
+      r: "25",
       fill: ILLO.blue
     }), /*#__PURE__*/React.createElement("g", {
-      stroke: "#fff",
+      stroke: ILLO.white,
       strokeWidth: "5.5",
       strokeLinecap: "round"
     }, /*#__PURE__*/React.createElement("line", {
-      x1: "86",
-      y1: "70",
-      x2: "86",
-      y2: "94"
-    }), /*#__PURE__*/React.createElement("line", {
       x1: "74",
-      y1: "82",
-      x2: "98",
-      y2: "82"
+      y1: "72",
+      x2: "74",
+      y2: "96"
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "62",
+      y1: "84",
+      x2: "86",
+      y2: "84"
     })), /*#__PURE__*/React.createElement("rect", {
-      x: "122",
-      y: "78",
-      width: "52",
-      height: "9",
-      rx: "4.5",
-      fill: "rgba(34,52,79,0.22)"
+      x: "114",
+      y: "56",
+      width: "72",
+      height: "56",
+      rx: "10",
+      fill: ILLO.white,
+      stroke: ILLO.slate,
+      strokeWidth: "2.4"
     }), /*#__PURE__*/React.createElement("rect", {
       x: "122",
-      y: "78",
-      width: "34",
-      height: "9",
-      rx: "4.5",
+      y: "68",
+      width: "50",
+      height: "7",
+      rx: "3.5",
+      fill: ILLO.faintRow
+    }), /*#__PURE__*/React.createElement("rect", {
+      x: "122",
+      y: "81",
+      width: "40",
+      height: "7",
+      rx: "3.5",
+      fill: ILLO.faintRow
+    }), /*#__PURE__*/React.createElement("rect", {
+      x: "122",
+      y: "94",
+      width: "32",
+      height: "7",
+      rx: "3.5",
       fill: ILLO.bright
     }), /*#__PURE__*/React.createElement("path", {
-      d: "M158 84 l14 -20 l6 4 l-14 20 l-7 3 Z",
-      fill: ILLO.amber
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M172 64 l6 4 l3 -4 q1 -2 -1 -3.5 q-2 -1.5 -3.5 0 Z",
+      d: "M 152 100.5 L 158.5 97.5 L 155 91 Z",
       fill: ILLO.navy
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 158 92.5 L 172 78",
+      color: ILLO.amber,
+      w: 7
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "174.5",
+      cy: "75.5",
+      r: "3.6",
+      fill: ILLO.amberDeep
+    }), /*#__PURE__*/React.createElement(ISparkle, {
+      x: 148,
+      y: 46,
+      s: 4.5,
+      color: ILLO.amber,
+      op: 0.85
     }), /*#__PURE__*/React.createElement("circle", {
       cx: "130",
-      cy: "52",
-      r: "2.6",
+      cy: "42",
+      r: "2.4",
       fill: ILLO.bright,
-      opacity: "0.5"
-    }), /*#__PURE__*/React.createElement("circle", {
-      cx: "60",
-      cy: "118",
-      r: "3",
-      fill: ILLO.blue,
-      opacity: "0.3"
+      opacity: "0.45"
     })),
-    /* Tour 4: At the gate — the school gate, parent and child, hand in hand. */
-    tourGate: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("ellipse", {
-      cx: "110",
-      cy: "132",
-      rx: "84",
-      ry: "12",
-      fill: ILLO.tintGreen
+    /* Tour 4: At the gate: the railed school gate, the hedge, the school and
+       its flag beyond, parent and child arriving hand in hand. */
+    tourGate: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement(IDisc, {
+      cx: 120,
+      cy: 74,
+      r: 60,
+      tint: ILLO.tintGreen
+    }), /*#__PURE__*/React.createElement(IGround, {
+      cx: 118,
+      rx: 84,
+      tint: ILLO.tintGreen
+    }), /*#__PURE__*/React.createElement(IContact, {
+      cx: 140,
+      rx: 40
     }), /*#__PURE__*/React.createElement("rect", {
-      x: "128",
-      y: "52",
-      width: "7",
-      height: "76",
+      x: "146",
+      y: "46",
+      width: "46",
+      height: "44",
       rx: "3",
-      fill: ILLO.navy
-    }), /*#__PURE__*/React.createElement("rect", {
-      x: "186",
-      y: "52",
-      width: "7",
-      height: "76",
-      rx: "3",
-      fill: ILLO.navy
+      fill: ILLO.cream,
+      stroke: ILLO.slate,
+      strokeWidth: "2.2"
     }), /*#__PURE__*/React.createElement("path", {
-      d: "M128 56 q30 -16 65 0",
-      fill: "none",
-      stroke: ILLO.navy,
-      strokeWidth: "5",
+      d: "M 142 46 L 169 28 L 196 46 Z",
+      fill: ILLO.bright
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "169",
+      y1: "28",
+      x2: "169",
+      y2: "18",
+      stroke: ILLO.slate,
+      strokeWidth: "2.2",
       strokeLinecap: "round"
-    }), [144, 158, 172].map(x => /*#__PURE__*/React.createElement("line", {
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M 169 18 L 180 21 L 169 24 Z",
+      fill: ILLO.green
+    }), /*#__PURE__*/React.createElement("rect", {
+      x: "153",
+      y: "56",
+      width: "9",
+      height: "10",
+      rx: "2",
+      fill: ILLO.white,
+      stroke: ILLO.slate,
+      strokeWidth: "1.8"
+    }), /*#__PURE__*/React.createElement("rect", {
+      x: "176",
+      y: "56",
+      width: "9",
+      height: "10",
+      rx: "2",
+      fill: ILLO.white,
+      stroke: ILLO.slate,
+      strokeWidth: "1.8"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "150",
+      cy: "94",
+      r: "15",
+      fill: ILLO.green,
+      opacity: "0.85"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "174",
+      cy: "95",
+      r: "14",
+      fill: ILLO.green,
+      opacity: "0.7"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "196",
+      cy: "97",
+      r: "12",
+      fill: ILLO.green,
+      opacity: "0.85"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "130",
+      cy: "97",
+      r: "12",
+      fill: ILLO.green,
+      opacity: "0.7"
+    }), [121, 130, 139, 148].map(x => /*#__PURE__*/React.createElement("line", {
       key: x,
       x1: x,
-      y1: "64",
+      y1: "80",
       x2: x,
-      y2: "126",
-      stroke: ILLO.navy,
-      strokeWidth: "3.4",
+      y2: "124",
+      stroke: ILLO.slate,
+      strokeWidth: "3",
       strokeLinecap: "round",
-      opacity: "0.75"
-    })), /*#__PURE__*/React.createElement("path", {
-      d: "M46 128 q-3 -40 18 -41 q20 -1 18 41 Z",
-      fill: ILLO.green
-    }), /*#__PURE__*/React.createElement(IHead, {
-      cx: "64",
-      cy: "70",
+      opacity: "0.85"
+    })), /*#__PURE__*/React.createElement("rect", {
+      x: "109",
+      y: "70",
+      width: "6",
+      height: "56",
+      rx: "3",
+      fill: ILLO.slate
+    }), /*#__PURE__*/React.createElement("rect", {
+      x: "153",
+      y: "70",
+      width: "6",
+      height: "56",
+      rx: "3",
+      fill: ILLO.slate
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "112",
+      cy: "68",
+      r: "3.5",
+      fill: ILLO.slate
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "156",
+      cy: "68",
+      r: "3.5",
+      fill: ILLO.slate
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M 112 72 Q 134 62 156 72",
+      fill: "none",
+      stroke: ILLO.slate,
+      strokeWidth: "4",
+      strokeLinecap: "round"
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "26",
+      y1: "88",
+      x2: "26",
+      y2: "116",
+      stroke: ILLO.wood,
+      strokeWidth: "4",
+      strokeLinecap: "round"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "26",
+      cy: "72",
       r: "14",
+      fill: ILLO.green,
+      opacity: "0.9"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "17",
+      cy: "81",
+      r: "9.5",
+      fill: ILLO.green,
+      opacity: "0.75"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "35",
+      cy: "81",
+      r: "9.5",
+      fill: ILLO.green,
+      opacity: "0.75"
+    }), /*#__PURE__*/React.createElement(IContact, {
+      cx: 68,
+      rx: 36
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 44 84 Q 36 92 38 100",
+      color: ILLO.green,
+      w: 8
+    }), /*#__PURE__*/React.createElement(IHand, {
+      x: 38,
+      y: 102,
+      r: 4.5,
+      skin: S.tan
+    }), /*#__PURE__*/React.createElement(ITorso, {
+      cx: 54,
+      top: 77,
+      hw: 14,
+      bottom: 104,
+      color: ILLO.green
+    }), /*#__PURE__*/React.createElement(IBand, {
+      cx: 54,
+      top: 102,
+      hw: 14,
+      depth: 10,
+      color: ILLO.greenDeep
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 47 112 L 45 124",
+      color: ILLO.greenDeep,
+      w: 7.5
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 61 112 L 63 124",
+      color: ILLO.greenDeep,
+      w: 7.5
+    }), /*#__PURE__*/React.createElement(IShoe, {
+      cx: 44,
+      cy: 127.5,
+      rx: 6.5,
+      ry: 3.2,
+      rot: -8
+    }), /*#__PURE__*/React.createElement(IShoe, {
+      cx: 64,
+      cy: 127.5,
+      rx: 6.5,
+      ry: 3.2,
+      rot: 8
+    }), /*#__PURE__*/React.createElement(IHead, {
+      cx: 54,
+      cy: 64,
+      r: 14,
       skin: S.tan,
       hair: H.brown,
       mood: "calm",
       bun: true
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M92 128 q-2 -26 12 -27 q13 -1 12 27 Z",
-      fill: ILLO.bright
+    }), /*#__PURE__*/React.createElement(ITorso, {
+      cx: 84,
+      top: 98,
+      hw: 10,
+      bottom: 116,
+      color: ILLO.bright
+    }), /*#__PURE__*/React.createElement(IBand, {
+      cx: 84,
+      top: 114,
+      hw: 10,
+      depth: 7,
+      color: ILLO.deep
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 79 121 L 79 126",
+      color: ILLO.deep,
+      w: 5.5
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 89 121 L 89 126",
+      color: ILLO.deep,
+      w: 5.5
+    }), /*#__PURE__*/React.createElement(IShoe, {
+      cx: 78.5,
+      cy: 128.5,
+      rx: 4.5,
+      ry: 2.6
+    }), /*#__PURE__*/React.createElement(IShoe, {
+      cx: 89.5,
+      cy: 128.5,
+      rx: 4.5,
+      ry: 2.6
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 64 86 Q 70 96 72 100",
+      color: ILLO.green,
+      w: 8
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 78 102 Q 76 102 74 102",
+      color: ILLO.bright,
+      w: 5.5
+    }), /*#__PURE__*/React.createElement(IHand, {
+      x: 73,
+      y: 102,
+      r: 4,
+      skin: S.tan
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 92 102 Q 99 96 103 89",
+      color: ILLO.bright,
+      w: 5.5
+    }), /*#__PURE__*/React.createElement(IHand, {
+      x: 104,
+      y: 87,
+      r: 3.6,
+      skin: S.tan
     }), /*#__PURE__*/React.createElement(IHead, {
-      cx: "104",
-      cy: "88",
-      r: "10.5",
+      cx: 84,
+      cy: 86,
+      r: 10.5,
       skin: S.tan,
       hair: H.chestnut,
       mood: "warm"
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M80 102 q7 8 14 10",
-      fill: "none",
-      stroke: "#1F8B4D",
-      strokeWidth: "8",
-      strokeLinecap: "round"
-    }), /*#__PURE__*/React.createElement("circle", {
-      cx: "94",
-      cy: "112",
-      r: "4",
-      fill: S.tan
+    }), /*#__PURE__*/React.createElement(ISparkle, {
+      x: 196,
+      y: 38,
+      s: 4,
+      color: ILLO.amber,
+      op: 0.6
     })),
-    /* Tour 5: Their day, in their words — the child holds the phone, happy face up. */
-    tourChild: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("ellipse", {
-      cx: "110",
-      cy: "132",
-      rx: "78",
-      ry: "12",
-      fill: ILLO.tintGreen
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M84 128 q-3 -34 20 -35 q22 -1 20 35 Z",
-      fill: ILLO.bright
+    /* Tour 5: Their day, in their words: the child proudly holds the phone, happy face up. */
+    tourChild: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement(IDisc, {
+      cx: 110,
+      cy: 78,
+      r: 58,
+      tint: ILLO.tintGreen
+    }), /*#__PURE__*/React.createElement(IGround, {
+      cx: 110,
+      rx: 74,
+      tint: ILLO.tintGreen
+    }), /*#__PURE__*/React.createElement(IContact, {
+      cx: 110,
+      rx: 38
+    }), /*#__PURE__*/React.createElement(ITorso, {
+      cx: 110,
+      top: 80,
+      hw: 16,
+      bottom: 112,
+      color: ILLO.bright
+    }), /*#__PURE__*/React.createElement(IBand, {
+      cx: 110,
+      top: 110,
+      hw: 16,
+      depth: 9,
+      color: ILLO.deep
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 101 119 L 101 125",
+      color: ILLO.deep,
+      w: 7
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 119 119 L 119 125",
+      color: ILLO.deep,
+      w: 7
+    }), /*#__PURE__*/React.createElement(IShoe, {
+      cx: 100,
+      cy: 128.5,
+      rx: 6,
+      ry: 3
+    }), /*#__PURE__*/React.createElement(IShoe, {
+      cx: 120,
+      cy: 128.5,
+      rx: 6,
+      ry: 3
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 97 84 Q 87 92 92 100",
+      color: ILLO.bright,
+      w: 8
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 123 84 Q 133 92 128 100",
+      color: ILLO.bright,
+      w: 8
     }), /*#__PURE__*/React.createElement(IHead, {
-      cx: "104",
-      cy: "74",
-      r: "14.5",
+      cx: 110,
+      cy: 62,
+      r: 15,
       skin: S.light,
       hair: H.chestnut,
       mood: "warm"
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M88 100 q10 12 22 14",
-      fill: "none",
-      stroke: ILLO.bright,
-      strokeWidth: "8",
-      strokeLinecap: "round"
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M122 100 q-4 10 -10 14",
-      fill: "none",
-      stroke: ILLO.blue,
-      strokeWidth: "8",
-      strokeLinecap: "round"
-    }), /*#__PURE__*/React.createElement("rect", {
-      x: "100",
-      y: "106",
-      width: "30",
-      height: "44",
-      rx: "7",
-      fill: "#fff",
-      stroke: ILLO.navy,
-      strokeWidth: "2.2",
-      transform: "rotate(-6 115 128)"
     }), /*#__PURE__*/React.createElement("g", {
-      transform: "rotate(-6 115 128)"
-    }, /*#__PURE__*/React.createElement("circle", {
-      cx: "115",
-      cy: "124",
-      r: "9",
-      fill: "#F4C95D"
+      transform: "rotate(-5 110 111)"
+    }, /*#__PURE__*/React.createElement("rect", {
+      x: "94",
+      y: "90",
+      width: "32",
+      height: "42",
+      rx: "6.5",
+      fill: ILLO.white,
+      stroke: ILLO.slate,
+      strokeWidth: "2.4"
+    }), /*#__PURE__*/React.createElement("rect", {
+      x: "97",
+      y: "93",
+      width: "26",
+      height: "36",
+      rx: "4.5",
+      fill: ILLO.screen
     }), /*#__PURE__*/React.createElement("circle", {
-      cx: "112",
-      cy: "122.5",
-      r: "1.2",
-      fill: "#4A3D1E"
+      cx: "110",
+      cy: "105",
+      r: "8.5",
+      fill: ILLO.butter
     }), /*#__PURE__*/React.createElement("circle", {
-      cx: "118",
-      cy: "122.5",
-      r: "1.2",
-      fill: "#4A3D1E"
+      cx: "107",
+      cy: "103.5",
+      r: "1.15",
+      fill: ILLO.butterInk
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "113",
+      cy: "103.5",
+      r: "1.15",
+      fill: ILLO.butterInk
     }), /*#__PURE__*/React.createElement("path", {
-      d: "M111 126 q4 4 8 0",
+      d: "M 106.5 107 q 3.5 3.6 7 0",
       fill: "none",
-      stroke: "#4A3D1E",
+      stroke: ILLO.butterInk,
       strokeWidth: "1.5",
       strokeLinecap: "round"
-    })), /*#__PURE__*/React.createElement("circle", {
-      cx: "152",
-      cy: "66",
-      r: "3",
+    }), /*#__PURE__*/React.createElement("rect", {
+      x: "101",
+      y: "118",
+      width: "18",
+      height: "4.5",
+      rx: "2.25",
+      fill: ILLO.green
+    })), /*#__PURE__*/React.createElement(IHand, {
+      x: 93.5,
+      y: 100,
+      r: 4.5,
+      skin: S.light
+    }), /*#__PURE__*/React.createElement(IHand, {
+      x: 126.5,
+      y: 100,
+      r: 4.5,
+      skin: S.light
+    }), /*#__PURE__*/React.createElement(ISparkle, {
+      x: 76,
+      y: 46,
+      s: 4.5,
+      color: ILLO.amber,
+      op: 0.85
+    }), /*#__PURE__*/React.createElement(ISparkle, {
+      x: 146,
+      y: 40,
+      s: 5,
+      color: ILLO.bright,
+      op: 0.7
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "62",
+      cy: "70",
+      r: "2.6",
       fill: ILLO.green,
       opacity: "0.45"
     }), /*#__PURE__*/React.createElement("circle", {
-      cx: "66",
-      cy: "58",
-      r: "2.6",
-      fill: ILLO.bright,
+      cx: "156",
+      cy: "66",
+      r: "3",
+      fill: ILLO.green,
       opacity: "0.4"
     })),
-    /* Tour 6: See the shape of it — the month grid becoming a pattern. */
-    tourPattern: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("ellipse", {
-      cx: "110",
-      cy: "132",
-      rx: "78",
-      ry: "12",
-      fill: ILLO.tintBlue
+    /* Tour 6: See the shape of it: the month grid under the glass, the pattern rising out. */
+    tourPattern: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement(IDisc, {
+      cx: 106,
+      cy: 80,
+      r: 58,
+      tint: ILLO.tintBlue
+    }), /*#__PURE__*/React.createElement(IGround, {
+      cx: 108,
+      rx: 76,
+      tint: ILLO.tintBlue
+    }), /*#__PURE__*/React.createElement(IContact, {
+      cx: 104,
+      rx: 44
     }), /*#__PURE__*/React.createElement("rect", {
-      x: "56",
-      y: "46",
-      width: "82",
-      height: "72",
+      x: "58",
+      y: "44",
+      width: "92",
+      height: "76",
       rx: "10",
-      fill: "#fff",
-      stroke: ILLO.navy,
+      fill: ILLO.white,
+      stroke: ILLO.slate,
       strokeWidth: "2.4"
-    }), /*#__PURE__*/React.createElement("rect", {
-      x: "56",
-      y: "46",
-      width: "82",
-      height: "16",
-      rx: "10",
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M 58 54 Q 58 44 68 44 L 140 44 Q 150 44 150 54 L 150 60 L 58 60 Z",
       fill: ILLO.blue
-    }), /*#__PURE__*/React.createElement("rect", {
-      x: "56",
-      y: "54",
-      width: "82",
-      height: "8",
-      fill: ILLO.blue
-    }), [['#27AE60', '#27AE60', '#F39C12', '#27AE60'], ['#27AE60', '#E74C3C', '#F39C12', '#27AE60'], ['#F39C12', '#E74C3C', '#27AE60', '#27AE60']].map((row, r) => row.map((c, i) => /*#__PURE__*/React.createElement("circle", {
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "80",
+      cy: "44",
+      r: "4.5",
+      fill: ILLO.white,
+      stroke: ILLO.slate,
+      strokeWidth: "2.2"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "128",
+      cy: "44",
+      r: "4.5",
+      fill: ILLO.white,
+      stroke: ILLO.slate,
+      strokeWidth: "2.2"
+    }), patternColours.map((row, r) => row.map((c, i) => /*#__PURE__*/React.createElement("circle", {
       key: r + '-' + i,
-      cx: 70 + i * 18,
-      cy: 76 + r * 16,
+      cx: 74 + i * 18,
+      cy: 72 + r * 16,
       r: "4.5",
       fill: c,
-      opacity: "0.9"
+      opacity: "0.92"
     }))), /*#__PURE__*/React.createElement("circle", {
-      cx: "146",
-      cy: "98",
+      cx: "126",
+      cy: "94",
+      r: "15.5",
+      fill: ILLO.white
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "121",
+      cy: "89",
+      r: "6",
+      fill: ILLO.red
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "132",
+      cy: "100",
+      r: "6",
+      fill: ILLO.red
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "133",
+      cy: "87",
+      r: "4",
+      fill: ILLO.amber
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "126",
+      cy: "94",
       r: "17",
       fill: "rgba(58,123,212,0.12)",
       stroke: ILLO.bright,
       strokeWidth: "3.4"
     }), /*#__PURE__*/React.createElement("line", {
-      x1: "158",
-      y1: "110",
-      x2: "170",
-      y2: "122",
+      x1: "138",
+      y1: "106",
+      x2: "152",
+      y2: "120",
       stroke: ILLO.bright,
-      strokeWidth: "5",
+      strokeWidth: "5.5",
       strokeLinecap: "round"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "158",
+      cy: "72",
+      r: "2.4",
+      fill: ILLO.bright,
+      opacity: "0.5"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "166",
+      cy: "62",
+      r: "2.8",
+      fill: ILLO.bright,
+      opacity: "0.65"
+    }), /*#__PURE__*/React.createElement(ISparkle, {
+      x: 176,
+      y: 50,
+      s: 5,
+      color: ILLO.amber,
+      op: 0.9
     })),
-    /* Tour 7: Private by default — the record stays on the phone, behind the shield. */
-    tourPrivate: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("ellipse", {
+    /* Tour 7: Private by default: the record on its phone, inside the shield's quiet orbit. */
+    tourPrivate: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement(IDisc, {
+      cx: 108,
+      cy: 80,
+      r: 58,
+      tint: ILLO.tintBlue
+    }), /*#__PURE__*/React.createElement(IGround, {
+      cx: 110,
+      rx: 72,
+      tint: ILLO.tintBlue
+    }), /*#__PURE__*/React.createElement(IContact, {
+      cx: 106,
+      rx: 40
+    }), /*#__PURE__*/React.createElement("g", {
+      transform: "rotate(-12 110 88)"
+    }, /*#__PURE__*/React.createElement("ellipse", {
       cx: "110",
-      cy: "132",
-      rx: "76",
-      ry: "12",
-      fill: ILLO.tintBlue
-    }), /*#__PURE__*/React.createElement(IPhone, {
-      x: "78",
-      y: "48",
-      w: "46",
-      h: "78",
+      cy: "88",
+      rx: "60",
+      ry: "36",
+      fill: "none",
+      stroke: ILLO.bright,
+      strokeWidth: "2.2",
+      strokeLinecap: "round",
+      strokeDasharray: "0.5 9",
+      opacity: "0.55"
+    })), /*#__PURE__*/React.createElement(IPhone, {
+      x: 76,
+      y: 48,
+      w: 44,
+      h: 74,
       lines: 3,
       accent: ILLO.bright
     }), /*#__PURE__*/React.createElement("path", {
-      d: "M138 66 q14 -7 28 0 q2 22 -14 32 q-16 -10 -14 -32 Z",
+      d: "M 137 64 C 145 68 152 69 158 68 C 160 88 153 102 137 110 C 121 102 114 88 116 68 C 122 69 129 68 137 64 Z",
       fill: ILLO.blue
     }), /*#__PURE__*/React.createElement("path", {
-      d: "M146 80 l4.5 4.5 l8 -9",
+      d: "M 137 64 C 145 68 152 69 158 68 C 160 88 153 102 137 110 Z",
+      fill: ILLO.bright
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M 128.5 86 l 5.5 5.5 l 10.5 -11.5",
       fill: "none",
-      stroke: "#fff",
-      strokeWidth: "3.2",
+      stroke: ILLO.white,
+      strokeWidth: "3.4",
       strokeLinecap: "round",
       strokeLinejoin: "round"
+    }), /*#__PURE__*/React.createElement(ISparkle, {
+      x: 58,
+      y: 44,
+      s: 3.5,
+      color: ILLO.bright,
+      op: 0.5
     }), /*#__PURE__*/React.createElement("circle", {
-      cx: "60",
-      cy: "62",
-      r: "2.6",
-      fill: ILLO.bright,
-      opacity: "0.4"
-    }), /*#__PURE__*/React.createElement("circle", {
-      cx: "152",
-      cy: "116",
+      cx: "160",
+      cy: "120",
       r: "3",
       fill: ILLO.blue,
       opacity: "0.3"
     })),
-    /* Tour 8: You are ready — off they go, together, forward. */
-    tourReady: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("ellipse", {
-      cx: "110",
-      cy: "132",
-      rx: "82",
-      ry: "12",
-      fill: ILLO.tintGreen
+    /* Tour 8: You are ready: off they go together, sun up, a bird ahead. */
+    tourReady: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement(IDisc, {
+      cx: 112,
+      cy: 76,
+      r: 60,
+      tint: ILLO.tintGreen
+    }), /*#__PURE__*/React.createElement(IGround, {
+      cx: 112,
+      rx: 80,
+      tint: ILLO.tintGreen
+    }), /*#__PURE__*/React.createElement(ISun, {
+      cx: 174,
+      cy: 42,
+      r: 10
     }), /*#__PURE__*/React.createElement("circle", {
-      cx: "168",
-      cy: "52",
-      r: "14",
-      fill: ILLO.amber,
-      opacity: "0.8"
+      cx: "150",
+      cy: "120",
+      r: "2.8",
+      fill: ILLO.green,
+      opacity: "0.5"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "166",
+      cy: "113",
+      r: "2.5",
+      fill: ILLO.green,
+      opacity: "0.4"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "180",
+      cy: "105",
+      r: "2.2",
+      fill: ILLO.green,
+      opacity: "0.3"
     }), /*#__PURE__*/React.createElement("path", {
-      d: "M74 128 q-2 -42 20 -43 q21 -1 19 43 Z",
+      d: "M 134.5 58 L 128 61.5 L 133.5 60.5 Z",
       fill: ILLO.blue
+    }), /*#__PURE__*/React.createElement("ellipse", {
+      cx: "139",
+      cy: "57",
+      rx: "5.5",
+      ry: "4.5",
+      fill: ILLO.bright
+    }), /*#__PURE__*/React.createElement(ILeaf, {
+      x: 134,
+      y: 55.5,
+      s: 7,
+      color: ILLO.blue,
+      rot: -32
     }), /*#__PURE__*/React.createElement("path", {
-      d: "M112 96 q12 -6 16 -16",
-      fill: "none",
-      stroke: ILLO.blue,
-      strokeWidth: "9",
-      strokeLinecap: "round"
+      d: "M 144.5 56 L 149.5 57.5 L 144.5 59 Z",
+      fill: ILLO.amber
     }), /*#__PURE__*/React.createElement("circle", {
-      cx: "129",
-      cy: "79",
-      r: "5",
-      fill: S.medium
+      cx: "141.5",
+      cy: "55.5",
+      r: "0.95",
+      fill: ILLO.navy
+    }), /*#__PURE__*/React.createElement(IContact, {
+      cx: 84,
+      rx: 34
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 70 86 Q 63 94 66 102",
+      color: ILLO.blue,
+      w: 8
+    }), /*#__PURE__*/React.createElement(IHand, {
+      x: 66.5,
+      y: 104,
+      r: 4.5,
+      skin: S.medium
+    }), /*#__PURE__*/React.createElement(ITorso, {
+      cx: 84,
+      top: 77,
+      hw: 14,
+      bottom: 104,
+      color: ILLO.blue
+    }), /*#__PURE__*/React.createElement(IBand, {
+      cx: 84,
+      top: 102,
+      hw: 14,
+      depth: 10,
+      color: ILLO.deep
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 77 112 L 72 124",
+      color: ILLO.deep,
+      w: 7.5
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 91 112 L 96 124",
+      color: ILLO.deep,
+      w: 7.5
+    }), /*#__PURE__*/React.createElement(IShoe, {
+      cx: 71,
+      cy: 127.5,
+      rx: 6.5,
+      ry: 3.2,
+      rot: -10
+    }), /*#__PURE__*/React.createElement(IShoe, {
+      cx: 97,
+      cy: 127.5,
+      rx: 6.5,
+      ry: 3.2,
+      rot: 10
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 96 84 Q 106 90 110 96",
+      color: ILLO.blue,
+      w: 8
+    }), /*#__PURE__*/React.createElement(IHand, {
+      x: 111,
+      y: 97.5,
+      r: 4.5,
+      skin: S.medium
     }), /*#__PURE__*/React.createElement(IHead, {
-      cx: "93",
-      cy: "68",
-      r: "14.5",
+      cx: 84,
+      cy: 64,
+      r: 14,
       skin: S.medium,
       hair: H.darkgrey,
       mood: "warm"
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M134 124 q0 -28 13 -29 q13 -1 13 29 Z",
-      fill: ILLO.green
+    }), /*#__PURE__*/React.createElement(IContact, {
+      cx: 128,
+      rx: 24
+    }), /*#__PURE__*/React.createElement(ITorso, {
+      cx: 127,
+      top: 96,
+      hw: 10,
+      bottom: 114,
+      color: ILLO.green
+    }), /*#__PURE__*/React.createElement(IBand, {
+      cx: 127,
+      top: 112,
+      hw: 10,
+      depth: 7,
+      color: ILLO.greenDeep
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 123 119 L 121 126",
+      color: ILLO.greenDeep,
+      w: 6
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 131 119 L 135 125",
+      color: ILLO.greenDeep,
+      w: 6
+    }), /*#__PURE__*/React.createElement(IShoe, {
+      cx: 120.5,
+      cy: 129,
+      rx: 5,
+      ry: 2.8
+    }), /*#__PURE__*/React.createElement(IShoe, {
+      cx: 137,
+      cy: 127.5,
+      rx: 5,
+      ry: 2.8,
+      rot: 14
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 133 99 Q 143 90 143.5 78",
+      color: ILLO.green,
+      w: 6
+    }), /*#__PURE__*/React.createElement(IHand, {
+      x: 143.5,
+      y: 75.5,
+      r: 3.8,
+      skin: S.medium
+    }), /*#__PURE__*/React.createElement(ILimb, {
+      d: "M 120 100 Q 115 104 114 108",
+      color: ILLO.green,
+      w: 6
+    }), /*#__PURE__*/React.createElement(IHand, {
+      x: 113.5,
+      y: 109,
+      r: 3.8,
+      skin: S.medium
     }), /*#__PURE__*/React.createElement(IHead, {
-      cx: "146",
-      cy: "80",
-      r: "11",
+      cx: 127,
+      cy: 84,
+      r: 11,
       skin: S.medium,
       hair: H.black,
       mood: "warm"
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M52 66 q10 -4 16 4",
-      fill: "none",
-      stroke: ILLO.green,
-      strokeWidth: "3",
-      strokeLinecap: "round",
-      opacity: "0.4"
+    }), /*#__PURE__*/React.createElement(ILeaf, {
+      x: 52,
+      y: 62,
+      s: 8,
+      color: ILLO.green,
+      rot: -30,
+      op: 0.5
+    }), /*#__PURE__*/React.createElement(ILeaf, {
+      x: 60,
+      y: 74,
+      s: 7,
+      color: ILLO.green,
+      rot: 24,
+      op: 0.4
     }))
   };
   return /*#__PURE__*/React.createElement("svg", {

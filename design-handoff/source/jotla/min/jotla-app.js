@@ -1503,7 +1503,28 @@ function App({
     case 'quicklog':
       screen = /*#__PURE__*/React.createElement(QuickLogScreen, {
         nav: nav,
-        today: today
+        today: today,
+        view: view
+      });
+      break;
+    case 'infomission':
+      screen = /*#__PURE__*/React.createElement(InfoMissionScreen, {
+        nav: nav
+      });
+      break;
+    case 'infoprivacy':
+      screen = /*#__PURE__*/React.createElement(InfoPrivacyScreen, {
+        nav: nav
+      });
+      break;
+    case 'infodata':
+      screen = /*#__PURE__*/React.createElement(InfoDataScreen, {
+        nav: nav
+      });
+      break;
+    case 'infoabout':
+      screen = /*#__PURE__*/React.createElement(InfoAboutScreen, {
+        nav: nav
       });
       break;
     case 'gateintro':

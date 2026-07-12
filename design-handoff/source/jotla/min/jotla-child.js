@@ -1,10 +1,147 @@
-// jotla-child.jsx — Child mode (screens 9-10). Softer, warmer, bigger, fewer words.
+function _extends() { return _extends = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends.apply(null, arguments); }
+// jotla-child.jsx: Child mode (screens 9-10). Softer, warmer, bigger, fewer words.
 // No path back into parent notes. Sells nothing. Leaving needs a held parent action.
+//
+// On Plus the check-in is dynamic (12 Jul 2026): a More button under Next once
+// a face is picked opens one swipeable card per question (chips + a type box,
+// every card skippable), an "Anywhere else?" step follows the walk, and the
+// child's answers land in the day's record in their own words. On Free the
+// flow is exactly the walk, no More button, and never any selling in here.
 const {
   useState: useStateC,
   useRef: useRefC,
   useEffect: useEffectC
 } = React;
+
+/* ---- "Your day" question sets (Plus), plain data on purpose ----
+   A later AI tier will read the day's gate note and generate smarter
+   follow-up questions; it slots in by producing more question values in this
+   same shape, nothing else. No question is ever required: a card with no
+   chips picked and no words typed saves nothing at all. Copy rules: reading
+   age about 6 to 8, UK plain English, short words. The {feeling} token is
+   replaced with the exact emotion word the child picked for that place.
+   Kept here (not jotla-data.jsx) on purpose: the private-edition build swaps
+   the data file wholesale, and these questions are app logic, not seed data. */
+const FEELING_TOKEN = '{feeling}';
+const PEOPLE_CHIPS = ['Teachers', 'Friends', 'Peers'];
+const FEELING_CHIPS = ['Happy', 'Ok', 'Sad', 'Worried', 'Angry'];
+const WRITE_HERE = 'You can write it here';
+const TYPE_A_NAME = 'Type a name';
+
+// The three places of the walk. Ids match the CHILD_SCENES keys so a scene
+// maps straight to its question set.
+const WALK_PLACES = [{
+  id: 'classroom',
+  label: 'Classroom',
+  questions: [{
+    id: 'who',
+    prompt: 'Who was there?',
+    chips: PEOPLE_CHIPS,
+    placeholder: TYPE_A_NAME
+  }, {
+    id: 'did',
+    prompt: 'What did you do or learn?',
+    placeholder: WRITE_HERE
+  }, {
+    id: 'feeling-why',
+    prompt: 'What made you feel ' + FEELING_TOKEN + '?',
+    placeholder: WRITE_HERE
+  }, {
+    id: 'else',
+    prompt: 'Anything else?',
+    placeholder: WRITE_HERE
+  }]
+}, {
+  id: 'lunch',
+  label: 'Lunch hall',
+  questions: [{
+    id: 'ate',
+    prompt: 'What did you eat?',
+    placeholder: WRITE_HERE
+  }, {
+    id: 'sat-with',
+    prompt: 'Who did you sit with?',
+    chips: ['Friends', 'Peers', 'By myself'],
+    placeholder: TYPE_A_NAME
+  }]
+}, {
+  id: 'playground',
+  label: 'Playground',
+  questions: [{
+    id: 'played-with',
+    prompt: 'Who did you play with?',
+    chips: ['Friends', 'Peers', 'By myself'],
+    placeholder: TYPE_A_NAME
+  }, {
+    id: 'grown-ups',
+    prompt: 'Which grown-ups were around?',
+    chips: ['Teachers', 'Helpers', 'Nobody'],
+    placeholder: TYPE_A_NAME
+  }, {
+    id: 'trouble',
+    prompt: 'Any pushing or trouble from other children?',
+    chips: ['No', 'Yes'],
+    placeholder: 'What happened?'
+  }]
+}];
+
+// The short generic set every extra place opens.
+const GENERIC_QUESTIONS = [{
+  id: 'who',
+  prompt: 'Who was there?',
+  chips: PEOPLE_CHIPS,
+  placeholder: TYPE_A_NAME
+}, {
+  id: 'what',
+  prompt: 'What happened?',
+  placeholder: WRITE_HERE
+}, {
+  id: 'felt',
+  prompt: 'How did it feel?',
+  chips: FEELING_CHIPS,
+  placeholder: WRITE_HERE
+}];
+
+// The "Anywhere else?" options after the walk.
+const EXTRA_PLACES = [{
+  id: 'library',
+  label: 'Library',
+  questions: GENERIC_QUESTIONS
+}, {
+  id: 'pe',
+  label: 'PE',
+  questions: GENERIC_QUESTIONS
+}, {
+  id: 'assembly',
+  label: 'Assembly',
+  questions: GENERIC_QUESTIONS
+}, {
+  id: 'trip',
+  label: 'Trip',
+  questions: GENERIC_QUESTIONS
+}, {
+  id: 'music',
+  label: 'Music',
+  questions: GENERIC_QUESTIONS
+}, {
+  id: 'club',
+  label: 'Club',
+  questions: GENERIC_QUESTIONS
+}];
+
+// A place's questions with the child's own feeling word substituted. A
+// question that needs the feeling word is dropped when there is none (it
+// cannot be asked honestly without the child's own word), which never happens
+// on the walk because More only appears after a face is picked.
+function questionsFor(place, feelingWord) {
+  return place.questions.filter(q => feelingWord !== undefined || q.prompt.indexOf(FEELING_TOKEN) === -1).map(q => ({
+    ...q,
+    prompt: q.prompt.split(FEELING_TOKEN).join(feelingWord || '')
+  }));
+}
+function isAnswered(a) {
+  return !!a && (a.chips.length > 0 || a.text.trim().length > 0);
+}
 
 // Press-and-hold control. Calls onComplete after ~1.1s of holding.
 function HoldButton({
@@ -105,6 +242,8 @@ function HoldButton({
   }, sublabel));
 }
 const CHILD_BG = '#FFF6EC';
+const HEAD_INK = '#5a4326';
+const SUB_INK = '#8a6f4e';
 function ChildScreen({
   nav,
   profile
@@ -112,46 +251,88 @@ function ChildScreen({
   const J = window.JOTLA;
   const childName = profile && profile.name || 'Sam';
   // A fixed little journey through the day, staged like a story: meet each
-  // place, pick a face, the face comes alive in the middle, walk on.
+  // place, pick a face, the face comes alive in the middle, walk on. On Plus
+  // the More button and the "Anywhere else?" step hang extra words off it.
   const scenes = J.CHILD_SCENES;
-  const [step, setStep] = useStateC('intro'); // intro | scene | pick | confirm | done
+  const plus = !!nav.plus;
+  const [step, setStep] = useStateC('intro'); // intro | scene | pick | confirm | questions | addAnother | done
   const [idx, setIdx] = useStateC(0); // which scene of the journey
   const [sel, setSel] = useStateC(null); // emotion picked on the current scene
   const [picks, setPicks] = useStateC([]);
-  const savedRef = useRefC(false);
-  const exit = () => nav.home();
+  // The More answers, keyed "placeId.questionId". Only what the child
+  // actually gave is ever saved; a skipped card never earns an entry here.
+  const [answers, setAnswers] = useStateC({});
+  const [qPlace, setQPlace] = useStateC(null); // More is open for this place
+  const [qIdx, setQIdx] = useStateC(0); // which question card is showing
+  const savedRef = useRefC(false); // the day saves once, however the walk ends
 
-  // The child's picks become a real entry in the record (previously they were discarded).
-  const finishDone = finalPicks => {
+  const emoLabel = k => {
+    const em = J.CHILD_EMOTIONS.find(x => x.key === k);
+    return em ? em.label : k;
+  };
+  const sceneLabel = k => {
+    const s = J.CHILD_SCENES.find(x => x.key === k);
+    return s ? s.label : 'school';
+  };
+  const feelingWordFor = placeId => {
+    const pick = picks.find(p => p.scene === placeId);
+    return pick ? emoLabel(pick.emotion).toLowerCase() : undefined;
+  };
+
+  // Save the day once, for every tier, and only when the child actually gave
+  // something. Free banks the one-line summary of the face picks; Plus adds
+  // the More answers on top, each answered question its own line, so a parent
+  // can read the child's own account against the gate note (Day view, Find,
+  // Evidence and the export all read the same plain summary).
+  const saveWalk = finalPicks => {
     const picksNow = finalPicks || picks;
-    if (!savedRef.current && picksNow.length) {
-      savedRef.current = true;
-      const sceneLabel = k => {
-        const s = J.CHILD_SCENES.find(x => x.key === k);
-        return s ? s.label.toLowerCase() : 'school';
-      };
-      const emoLabel = k => {
-        const em = J.CHILD_EMOTIONS.find(x => x.key === k);
-        return em ? em.label.toLowerCase() : k;
-      };
-      const keys = picksNow.map(p => p.emotion);
-      const mood = keys.some(k => ['sad', 'worried', 'angry'].includes(k)) ? 'hard' : keys.every(k => k === 'happy') ? 'good' : 'ok';
-      const now = new Date();
-      nav.addEntry({
-        id: 'cm' + Date.now(),
-        date: J.TODAY_ISO,
-        time: now.getHours() < 12 ? 'Morning' : now.getHours() < 17 ? 'Afternoon' : 'Evening',
-        clock: String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0'),
-        setting: 'School',
-        category: 'Other',
-        mood,
-        kind: 'contemporaneous',
-        type: 'quick',
-        childMode: true,
-        summary: childName + ' shared their day in child mode: ' + picksNow.map(p => 'felt ' + emoLabel(p.emotion) + ' in the ' + sceneLabel(p.scene)).join('; ') + '.'
-      });
+    const answered = [];
+    for (const place of [...WALK_PLACES, ...EXTRA_PLACES]) {
+      for (const q of questionsFor(place, feelingWordFor(place.id))) {
+        const a = answers[place.id + '.' + q.id];
+        if (isAnswered(a)) answered.push({
+          placeLabel: place.label,
+          prompt: q.prompt,
+          answer: a
+        });
+      }
     }
+    if (savedRef.current || picksNow.length === 0 && answered.length === 0) return;
+    savedRef.current = true; // one attempt, never a duplicate entry
+    const lines = [];
+    lines.push(picksNow.length ? childName + ' shared their day in child mode: ' + picksNow.map(p => 'felt ' + emoLabel(p.emotion).toLowerCase() + ' in the ' + sceneLabel(p.scene).toLowerCase()).join('; ') + '.' : childName + ' shared their day in child mode.');
+    for (const item of answered) {
+      const bits = [...item.answer.chips];
+      const typed = item.answer.text.trim();
+      if (typed) bits.push(typed);
+      lines.push(item.placeLabel + ': ' + item.prompt + ' ' + bits.join(', '));
+    }
+    const keys = picksNow.map(p => p.emotion);
+    const mood = keys.some(k => ['sad', 'worried', 'angry'].includes(k)) ? 'hard' : keys.length > 0 && keys.every(k => k === 'happy') ? 'good' : 'ok';
+    const now = new Date();
+    nav.addEntry({
+      id: 'cm' + Date.now(),
+      date: J.TODAY_ISO,
+      time: now.getHours() < 12 ? 'Morning' : now.getHours() < 17 ? 'Afternoon' : 'Evening',
+      clock: String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0'),
+      setting: 'School',
+      category: 'Other',
+      mood,
+      kind: 'contemporaneous',
+      type: 'quick',
+      childMode: true,
+      summary: lines.join('\n')
+    });
+  };
+  const finishDone = finalPicks => {
+    saveWalk(finalPicks);
     setStep('done');
+  };
+  // The grown-up exits also bank whatever the child already gave, so handing
+  // the phone back mid-walk never loses the child's words.
+  const exit = () => {
+    saveWalk();
+    nav.home();
   };
 
   // pick a face -> it takes centre stage; Next walks on to the following place
@@ -165,7 +346,9 @@ function ChildScreen({
   };
   const confirmNext = () => {
     if (idx >= scenes.length - 1) {
-      finishDone();
+      // Plus gets the "Anywhere else?" step after the walk; Free finishes
+      // here, exactly as it always has.
+      if (plus) setStep('addAnother');else finishDone();
       return;
     }
     setIdx(idx + 1);
@@ -179,6 +362,73 @@ function ChildScreen({
     playground: '#FBEFE6'
   };
 
+  // ---- More: the "Your day" question cards (Plus only) ----
+  const qPagerRef = useRefC(null);
+  const qList = qPlace ? questionsFor(qPlace, feelingWordFor(qPlace.id)) : [];
+  const openQuestions = place => {
+    setQPlace(place);
+    setQIdx(0);
+    setStep('questions');
+  };
+  // Done goes back to where More was opened from: a walk place returns to its
+  // confirm screen, an extra place returns to the "Anywhere else?" menu.
+  const closeQuestions = () => {
+    const fromWalk = qPlace ? WALK_PLACES.some(p => p.id === qPlace.id) : false;
+    setQPlace(null);
+    setStep(fromWalk ? 'confirm' : 'addAnother');
+  };
+  // Next and Skip both simply move on: answers stay exactly as given, and an
+  // empty card saves nothing, so a child is never forced to answer. The
+  // buttons are the primary path; swiping the cards is the bonus.
+  const qAdvance = () => {
+    const next = qIdx + 1;
+    if (next >= qList.length) {
+      closeQuestions();
+      return;
+    }
+    setQIdx(next);
+    const el = qPagerRef.current;
+    if (el) el.scrollTo({
+      left: next * el.clientWidth,
+      behavior: 'smooth'
+    });
+  };
+  const onQPagerScroll = () => {
+    const el = qPagerRef.current;
+    if (!el || !el.clientWidth) return;
+    const i = Math.round(el.scrollLeft / el.clientWidth);
+    if (i !== qIdx && i >= 0 && i < qList.length) setQIdx(i);
+  };
+  const toggleChip = (key, chip) => {
+    setAnswers(prev => {
+      const cur = prev[key] || {
+        chips: [],
+        text: ''
+      };
+      const on = cur.chips.includes(chip);
+      return {
+        ...prev,
+        [key]: {
+          ...cur,
+          chips: on ? cur.chips.filter(c => c !== chip) : [...cur.chips, chip]
+        }
+      };
+    });
+  };
+  const setAnswerText = (key, text) => {
+    setAnswers(prev => ({
+      ...prev,
+      [key]: {
+        ...(prev[key] || {
+          chips: [],
+          text: ''
+        }),
+        text
+      }
+    }));
+  };
+  const placeAnswered = place => place.questions.some(q => isAnswered(answers[place.id + '.' + q.id]));
+
   // shared big-question header
   const Q = ({
     children
@@ -187,7 +437,7 @@ function ChildScreen({
       fontFamily: "'Cal Sans', system-ui",
       fontWeight: 500,
       fontSize: 'calc(32px * var(--tscale, 1))',
-      color: '#5a4326',
+      color: HEAD_INK,
       textAlign: 'center',
       margin: '0 0 28px',
       lineHeight: 1.1
@@ -215,24 +465,30 @@ function ChildScreen({
       padding: '0 36px'
     }
   }, children);
-  // where we are on the walk
-  const Dots = () => /*#__PURE__*/React.createElement("div", {
+  // where we are on the walk (or through a place's questions)
+  const Dots = ({
+    count,
+    at
+  }) => /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       justifyContent: 'center',
       gap: 7,
       marginBottom: 22
     }
-  }, scenes.map((x, i) => /*#__PURE__*/React.createElement("span", {
-    key: x.key,
+  }, Array.from({
+    length: count
+  }, (x, i) => /*#__PURE__*/React.createElement("span", {
+    key: i,
     style: {
-      width: i === idx ? 20 : 8,
+      width: i === at ? 20 : 8,
       height: 8,
       borderRadius: 99,
       transition: 'all .2s ease',
-      background: i < idx ? '#27AE60' : i === idx ? '#E5A93D' : '#EAD9B8'
+      background: i < at ? '#27AE60' : i === at ? '#E5A93D' : '#EAD9B8'
     }
   })));
+  const showSkip = step === 'scene' || step === 'pick' || step === 'confirm';
   return /*#__PURE__*/React.createElement("div", {
     className: "j-screen",
     style: {
@@ -283,13 +539,13 @@ function ChildScreen({
       fontFamily: "'Cal Sans', system-ui",
       fontWeight: 500,
       fontSize: 'calc(36px * var(--tscale, 1))',
-      color: '#5a4326',
+      color: HEAD_INK,
       margin: '0 0 8px'
     }
   }, "Hi ", childName), /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 'calc(20px * var(--tscale, 1))',
-      color: '#8a6f4e',
+      color: SUB_INK,
       margin: '0 0 34px'
     }
   }, "How was your day?"), /*#__PURE__*/React.createElement(PillBtn, {
@@ -303,7 +559,10 @@ function ChildScreen({
     style: {
       textAlign: 'center'
     }
-  }, /*#__PURE__*/React.createElement(Dots, null), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(Dots, {
+    count: scenes.length,
+    at: idx
+  }), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       justifyContent: 'center',
@@ -327,13 +586,13 @@ function ChildScreen({
       fontFamily: "'Cal Sans', system-ui",
       fontWeight: 500,
       fontSize: 'calc(34px * var(--tscale, 1))',
-      color: '#5a4326',
+      color: HEAD_INK,
       margin: '0 0 8px'
     }
   }, scenes[idx].label), /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 'calc(19px * var(--tscale, 1))',
-      color: '#8a6f4e',
+      color: SUB_INK,
       margin: '0 0 32px'
     }
   }, SCENE_LINES[idx]), /*#__PURE__*/React.createElement(PillBtn, {
@@ -344,7 +603,10 @@ function ChildScreen({
     style: {
       textAlign: 'center'
     }
-  }, /*#__PURE__*/React.createElement(Dots, null), /*#__PURE__*/React.createElement(Q, null, "How did you feel in the ", scenes[idx].label.toLowerCase(), "?"), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(Dots, {
+    count: scenes.length,
+    at: idx
+  }), /*#__PURE__*/React.createElement(Q, null, "How did you feel in the ", scenes[idx].label.toLowerCase(), "?"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       flexWrap: 'wrap',
@@ -375,7 +637,7 @@ function ChildScreen({
       fontFamily: "'Cal Sans', system-ui",
       fontWeight: 500,
       fontSize: 'calc(19px * var(--tscale, 1))',
-      color: '#5a4326'
+      color: HEAD_INK
     }
   }, em.label))))), step === 'confirm' && sel && /*#__PURE__*/React.createElement("div", {
     className: "j-fade",
@@ -383,7 +645,10 @@ function ChildScreen({
     style: {
       textAlign: 'center'
     }
-  }, /*#__PURE__*/React.createElement(Dots, null), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(Dots, {
+    count: scenes.length,
+    at: idx
+  }), /*#__PURE__*/React.createElement("div", {
     style: {
       position: 'relative',
       display: 'flex',
@@ -404,19 +669,224 @@ function ChildScreen({
       fontFamily: "'Cal Sans', system-ui",
       fontWeight: 500,
       fontSize: 'calc(32px * var(--tscale, 1))',
-      color: '#5a4326',
+      color: HEAD_INK,
       margin: '0 0 8px',
       lineHeight: 1.1
     }
   }, idx >= scenes.length - 1 ? "That's everything!" : idx === scenes.length - 2 ? 'Ready for the last one?' : 'Ready for the next one?'), /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 'calc(18px * var(--tscale, 1))',
-      color: '#8a6f4e',
+      color: SUB_INK,
       margin: '0 0 32px'
     }
-  }, (J.CHILD_EMOTIONS.find(e => e.key === sel) || {}).label, " in the ", scenes[idx].label.toLowerCase(), "."), /*#__PURE__*/React.createElement(PillBtn, {
+  }, emoLabel(sel), " in the ", scenes[idx].label.toLowerCase(), "."), /*#__PURE__*/React.createElement(PillBtn, {
     onClick: confirmNext
-  }, idx >= scenes.length - 1 ? 'Finish' : 'Next')), step === 'done' && /*#__PURE__*/React.createElement("div", {
+  }, idx >= scenes.length - 1 && !plus ? 'Finish' : 'Next'), plus && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 14
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "j-press",
+    "aria-label": 'More questions about the ' + scenes[idx].label.toLowerCase(),
+    onClick: () => {
+      const place = WALK_PLACES.find(p => p.id === scenes[idx].key);
+      if (place) openQuestions(place);
+    },
+    style: {
+      minWidth: 220,
+      minHeight: 54,
+      borderRadius: 999,
+      border: '2px solid #ECD9B6',
+      background: 'rgba(255,255,255,0.8)',
+      cursor: 'pointer',
+      padding: '0 32px',
+      fontFamily: "'Cal Sans', system-ui",
+      fontWeight: 500,
+      fontSize: 'calc(19px * var(--tscale, 1))',
+      color: '#7a5a3a'
+    }
+  }, "More"))), step === 'questions' && qPlace && /*#__PURE__*/React.createElement("div", {
+    className: "j-fade",
+    key: 'q' + qPlace.id,
+    style: {
+      textAlign: 'center'
+    }
+  }, /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontFamily: "'Cal Sans', system-ui",
+      fontWeight: 500,
+      fontSize: 'calc(22px * var(--tscale, 1))',
+      color: HEAD_INK,
+      margin: '0 0 12px'
+    }
+  }, qPlace.label), /*#__PURE__*/React.createElement(Dots, {
+    count: qList.length,
+    at: qIdx
+  }), /*#__PURE__*/React.createElement("div", _extends({
+    ref: qPagerRef,
+    onScroll: onQPagerScroll,
+    className: "j-pager"
+  }, pagerKeyProps(qPagerRef, qPlace.label + ' questions'), {
+    style: {
+      display: 'flex',
+      overflowX: 'auto',
+      overflowY: 'hidden',
+      WebkitOverflowScrolling: 'touch',
+      outline: 'none',
+      margin: '0 -4px 24px'
+    }
+  }), qList.map((q, i) => {
+    const key = qPlace.id + '.' + q.id;
+    const a = answers[key] || {
+      chips: [],
+      text: ''
+    };
+    return /*#__PURE__*/React.createElement("div", {
+      key: q.id,
+      style: {
+        flex: '0 0 100%',
+        width: '100%',
+        scrollSnapAlign: 'start',
+        padding: '0 4px'
+      },
+      "aria-hidden": i !== qIdx
+    }, /*#__PURE__*/React.createElement("p", {
+      "aria-label": 'Question ' + (i + 1) + ' of ' + qList.length + '. ' + q.prompt,
+      style: {
+        fontFamily: "'Cal Sans', system-ui",
+        fontWeight: 500,
+        fontSize: 'calc(28px * var(--tscale, 1))',
+        lineHeight: 1.15,
+        color: HEAD_INK,
+        textAlign: 'center',
+        margin: '0 0 18px'
+      }
+    }, q.prompt), q.chips && /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        gap: 10,
+        marginBottom: 16
+      }
+    }, q.chips.map(chip => {
+      const on = a.chips.includes(chip);
+      return /*#__PURE__*/React.createElement("button", {
+        key: chip,
+        onClick: () => toggleChip(key, chip),
+        "aria-pressed": on,
+        className: "j-press",
+        style: {
+          minHeight: 52,
+          padding: '0 20px',
+          borderRadius: 999,
+          cursor: 'pointer',
+          border: on ? '2px solid #E5A93D' : '2px solid #ECD9B6',
+          background: on ? '#FFE6B8' : 'rgba(255,255,255,0.75)',
+          fontFamily: "'Cal Sans', system-ui",
+          fontWeight: 500,
+          fontSize: 'calc(18px * var(--tscale, 1))',
+          color: on ? HEAD_INK : SUB_INK
+        }
+      }, chip);
+    })), /*#__PURE__*/React.createElement("textarea", {
+      value: a.text,
+      onChange: e => setAnswerText(key, e.target.value),
+      rows: 3,
+      placeholder: q.placeholder || WRITE_HERE,
+      "aria-label": 'Type your answer. ' + q.prompt,
+      style: {
+        width: '100%',
+        minHeight: 96,
+        borderRadius: 20,
+        border: '2px solid #ECD9B6',
+        background: '#fff',
+        padding: '14px 16px',
+        fontFamily: "'Outfit', system-ui",
+        fontSize: 'calc(18px * var(--tscale, 1))',
+        color: HEAD_INK,
+        outline: 'none',
+        resize: 'none',
+        boxSizing: 'border-box'
+      }
+    }));
+  })), /*#__PURE__*/React.createElement(PillBtn, {
+    onClick: qAdvance
+  }, qIdx >= qList.length - 1 ? 'Done' : 'Next'), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 16
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: qAdvance,
+    "aria-label": "Skip this question",
+    style: {
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      fontFamily: "'Outfit', system-ui",
+      fontSize: 'calc(15px * var(--tscale, 1))',
+      color: '#b79a72',
+      fontWeight: 500
+    }
+  }, "Skip"))), step === 'addAnother' && /*#__PURE__*/React.createElement("div", {
+    className: "j-fade",
+    style: {
+      textAlign: 'center'
+    }
+  }, /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontFamily: "'Cal Sans', system-ui",
+      fontWeight: 500,
+      fontSize: 'calc(34px * var(--tscale, 1))',
+      color: HEAD_INK,
+      margin: '0 0 8px'
+    }
+  }, "Anywhere else?"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 'calc(19px * var(--tscale, 1))',
+      color: SUB_INK,
+      margin: '0 0 26px'
+    }
+  }, "Tap a place to say more, or finish."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexWrap: 'wrap',
+      justifyContent: 'center',
+      gap: 12,
+      marginBottom: 30
+    }
+  }, EXTRA_PLACES.map(p => {
+    const done = placeAnswered(p);
+    return /*#__PURE__*/React.createElement("button", {
+      key: p.id,
+      onClick: () => openQuestions(p),
+      className: "j-press",
+      "aria-label": done ? p.label + ', answered. Open again' : 'Add ' + p.label,
+      style: {
+        width: '44%',
+        minHeight: 56,
+        borderRadius: 18,
+        cursor: 'pointer',
+        border: done ? '2px solid #27AE60' : '2px solid #ECD9B6',
+        background: done ? 'rgba(231,246,238,0.9)' : 'rgba(255,255,255,0.75)',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        fontFamily: "'Cal Sans', system-ui",
+        fontWeight: 500,
+        fontSize: 'calc(19px * var(--tscale, 1))',
+        color: HEAD_INK
+      }
+    }, done && /*#__PURE__*/React.createElement(Icon, {
+      name: "check",
+      size: 17,
+      color: "#27AE60",
+      stroke: 2.6
+    }), p.label);
+  })), /*#__PURE__*/React.createElement(PillBtn, {
+    onClick: () => finishDone()
+  }, "Finish")), step === 'done' && /*#__PURE__*/React.createElement("div", {
     className: "j-fade",
     style: {
       textAlign: 'center'
@@ -468,20 +938,20 @@ function ChildScreen({
       fontFamily: "'Cal Sans', system-ui",
       fontWeight: 500,
       fontSize: 'calc(34px * var(--tscale, 1))',
-      color: '#5a4326',
+      color: HEAD_INK,
       margin: '0 0 8px'
     }
   }, "All done"), /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 'calc(19px * var(--tscale, 1))',
-      color: '#8a6f4e',
+      color: SUB_INK,
       margin: '0 0 40px'
     }
   }, "Thank you, ", childName, "."), /*#__PURE__*/React.createElement(HoldButton, {
     label: "Give the phone back",
     sublabel: "Press and hold",
     onComplete: exit
-  }))), step !== 'done' && step !== 'intro' && /*#__PURE__*/React.createElement("div", {
+  }))), showSkip && /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: 'center',
       paddingBottom: 22
