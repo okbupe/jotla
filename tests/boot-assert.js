@@ -97,7 +97,7 @@ function ok(name, cond) {
   ok('saved Wins entry appears on Today', (await page.locator('#root').innerText()).includes('Boot-assert win: tried a new food'));
   await page.getByText('Settings', { exact: true }).last().click();
   await page.waitForTimeout(450);
-  ok('footer shows the bumped build', (await page.locator('#root').innerText()).includes('Test build 1.9.1'));
+  ok('footer shows the bumped build', (await page.locator('#root').innerText()).includes('Test build 1.9.2'));
   await ctx.close();
 
   // ---- 6. app boundary: poisoned storage never blanks the app ----
@@ -237,7 +237,7 @@ function ok(name, cond) {
   await page4.getByText('About Jotla', { exact: true }).first().click();
   await page4.waitForTimeout(500);
   const aboutText = await page4.locator('#root').innerText();
-  ok('About carries the live build number', aboutText.includes('Early test build 1.9.1'));
+  ok('About carries the live build number', aboutText.includes('Early test build 1.9.2'));
   ok('About drops the fonts credit line', !aboutText.includes('Typefaces'));
   ok('no uncaught page errors across suite 8', errors4.length === 0);
   await ctx4.close();
@@ -380,6 +380,63 @@ function ok(name, cond) {
   ok('the document page shows the kept file with a live open row', docText.includes('EHC-plan-draft.v2.pdf') && docText.includes('Tap to open'));
   ok('no uncaught page errors across suite 10', errors6.length === 0 && errors7.length === 0);
   await ctx7.close();
+
+  // ---- 11. build 1.9.2: justified graph columns (native parity) ----
+  console.log('Suite 11: justified graph columns (1.9.2)');
+  // One Plus context covers both graphs: the Today "This month" strip (every
+  // tier) and the Plus-only month graph. Geometry is measured on the real
+  // rendered rows, per the iron rule: shrink-wrapped columns (no flex
+  // weighting), space-between spread, first column flush left, last flush
+  // right, even gaps, and the bars keeping one slim shared width.
+  const ctx8 = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  const page8 = await ctx8.newPage();
+  const errors8 = [];
+  page8.on('pageerror', e => errors8.push(String(e)));
+  await page8.addInitScript(() => {
+    try {
+      localStorage.setItem('jotla_prefs_v2', JSON.stringify({
+        dark: false, tscale: 1, profileId: 'sam', plus: true, childCfg: {}, customProfiles: [], deletedIds: [],
+      }));
+    } catch (e) {}
+  });
+  await page8.goto(URL_APP, { waitUntil: 'networkidle' });
+  await page8.waitForTimeout(1200);
+  const graphGeom = () => {
+    // The five-column row is found by its own shape: exactly five children
+    // whose labels read Good / Mixed / Hard / Gate / Dysregulation.
+    const rows = Array.from(document.querySelectorAll('div')).filter(d =>
+      d.children.length === 5 &&
+      Array.from(d.children).map(c => c.lastElementChild && c.lastElementChild.textContent).join(',') === 'Good,Mixed,Hard,Gate,Dysregulation');
+    const row = rows[0];
+    if (!row) return null;
+    const rect = row.getBoundingClientRect();
+    const kids = Array.from(row.children);
+    const boxes = kids.map(k => k.getBoundingClientRect());
+    const gaps = [];
+    for (let i = 1; i < boxes.length; i++) gaps.push(boxes[i].left - boxes[i - 1].right);
+    const bars = kids.map(k => k.children[1].getBoundingClientRect().width);
+    return {
+      justify: getComputedStyle(row).justifyContent,
+      grow: kids.map(k => getComputedStyle(k).flexGrow).join(','),
+      flushLeft: Math.abs(boxes[0].left - rect.left),
+      flushRight: Math.abs(rect.right - boxes[4].right),
+      gapSpread: Math.max(...gaps) - Math.min(...gaps),
+      barSpread: Math.max(...bars) - Math.min(...bars),
+    };
+  };
+  const gToday = await page8.evaluate(graphGeom);
+  ok('Today strip row is justified space-between', !!gToday && gToday.justify === 'space-between');
+  ok('Today strip columns carry no flex weighting', !!gToday && gToday.grow === '0,0,0,0,0');
+  ok('Today strip: first column flush left, last flush right', !!gToday && gToday.flushLeft < 1 && gToday.flushRight < 1);
+  ok('Today strip gaps are even (spread ' + (gToday ? gToday.gapSpread.toFixed(2) : '?') + 'px)', !!gToday && gToday.gapSpread < 1.5);
+  ok('Today strip bars share one slim width', !!gToday && gToday.barSpread < 0.5);
+  await page8.getByText('Month', { exact: true }).last().click();
+  await page8.waitForTimeout(500);
+  const gMonth = await page8.evaluate(graphGeom);
+  ok('Plus month graph row is justified space-between', !!gMonth && gMonth.justify === 'space-between');
+  ok('Plus month graph: flush edges and even gaps', !!gMonth && gMonth.flushLeft < 1 && gMonth.flushRight < 1 && gMonth.gapSpread < 1.5);
+  ok('no uncaught page errors across suite 11', errors8.length === 0);
+  await ctx8.close();
 
   await browser.close();
   server.kill();

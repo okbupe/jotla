@@ -7,7 +7,7 @@ const {
 
 // The single source of the visible build number. Bump this every release
 // (and keep sw.js VERSION in step) so the Settings footer can never lie.
-window.JOTLA_BUILD = '1.9.1';
+window.JOTLA_BUILD = '1.9.2';
 
 // The app's data epoch: the earliest day a log can land on (Quick log's own
 // minimum day, and how far back the Month calendar pages). One home here, on
@@ -809,12 +809,16 @@ function SectionLabel({
 
 // The five count blocks shared by the Today strip and the Month graph
 // (12 Jul 2026): Good / Mixed / Hard days, then Gate and Dysregulation
-// moments in their own colours. Dysregulation sits LAST with its label
-// tucked to the right edge (the long word hugs the card edge instead of
-// isolating the middle columns; its column is wider so the full label keeps
-// its line, while the bars share one slim width so the counts compare
-// honestly). The Gate label stays "Gate": "Gate notes" cannot hold one line
-// in a flex-1 column at the larger text dials.
+// moments in their own colours. Dysregulation sits LAST, and the row is
+// JUSTIFIED (founder, 12 Jul 2026 fourth pass, native parity): every column
+// shrink-wraps its content (no flex weighting; the old 2.2 on Dysregulation
+// is gone) and the row spreads them space-between, so the gaps are even, the
+// first column sits flush left and the last flush right (which keeps the
+// long Dysregulation label tucked to the card edge, labelEnd). The bars
+// share one slim width so the counts compare honestly. Columns keep
+// minWidth: 0 so the nowrap labels can still ellipsize rather than overflow
+// on the tightest dial-and-width mixes. The Gate label stays "Gate": "Gate
+// notes" would clip on narrow screens at the larger text dials.
 //
 // Counting rule (stated once, applied to both graphs): the three mood bars
 // count DAYS, dayMood folding every entry's mood in, so a gate note's hard
@@ -834,32 +838,27 @@ function kindBarBlocks({
     key: 'good',
     label: 'Good',
     n: good,
-    color: window.MOOD_COLOURS.good,
-    flex: 1
+    color: window.MOOD_COLOURS.good
   }, {
     key: 'ok',
     label: 'Mixed',
     n: ok,
-    color: window.MOOD_COLOURS.ok,
-    flex: 1
+    color: window.MOOD_COLOURS.ok
   }, {
     key: 'hard',
     label: 'Hard',
     n: hard,
-    color: window.MOOD_COLOURS.hard,
-    flex: 1
+    color: window.MOOD_COLOURS.hard
   }, {
     key: 'gate',
     label: 'Gate',
     n: gate,
-    color: 'var(--blue)',
-    flex: 1
+    color: 'var(--blue)'
   }, {
     key: 'dysreg',
     label: 'Dysregulation',
     n: dys,
     color: 'var(--dysreg)',
-    flex: 2.2,
     labelEnd: true
   }];
 }
@@ -871,6 +870,7 @@ function KindBars({
     style: {
       display: 'flex',
       gap: 8,
+      justifyContent: 'space-between',
       alignItems: 'flex-end',
       minHeight: 92
     }
@@ -879,7 +879,6 @@ function KindBars({
     return /*#__PURE__*/React.createElement("div", {
       key: b.key,
       style: {
-        flex: b.flex,
         minWidth: 0,
         display: 'flex',
         flexDirection: 'column',

@@ -386,6 +386,10 @@ To run the reference: open `source/jotla/Jotla.html` in a browser.
 
 ---
 
+## Build 1.9.2 (12 July 2026): justified graph columns, native parity
+
+The sync-law top-up for the native fourth device pass (punch item 24): the five graph columns (Good, Mixed, Hard, Gate, Dysregulation) are now justified on both graphs, the Today "This month" strip and the Plus month graph. Each column shrink-wraps its content (the old flex weighting, including 2.2 on Dysregulation, is gone) and the row spreads them space-between, so the gaps are even, the first column sits flush left and the last flush right, which keeps the long Dysregulation label tucked to the card's right edge. The bars keep their one slim shared width; counts, colours, order and the trend line under the bars are untouched. Suite grows Suite 11: the justified geometry measured on the real rendered rows of both graphs.
+
 ## Build 1.9.1 (12 July 2026): vault document upload parity
 
 Vault document upload parity with the native Round 7 build (the sync-law top-up): the vault can keep the document itself as part of Plus (capture, attach, or pick a file such as a PDF, on Add and Edit; the honest locked card on Free; viewing and removing never gate), with the mechanical title/date prefill from the picked file's own name and date (a typed value always wins, no content reading), paperclip counts on document rows, tap-to-open kept files, and the info pages saying the web truth: photos and kept files live in browser storage and travel inside the export, videos are never copied, and a file over 2 MB is refused kindly at pick time.

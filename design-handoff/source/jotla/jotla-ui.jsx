@@ -3,7 +3,7 @@ const { useState, useRef, useEffect } = React;
 
 // The single source of the visible build number. Bump this every release
 // (and keep sw.js VERSION in step) so the Settings footer can never lie.
-window.JOTLA_BUILD = '1.9.1';
+window.JOTLA_BUILD = '1.9.2';
 
 // The app's data epoch: the earliest day a log can land on (Quick log's own
 // minimum day, and how far back the Month calendar pages). One home here, on
@@ -393,12 +393,16 @@ function SectionLabel({ children, right }) {
 
 // The five count blocks shared by the Today strip and the Month graph
 // (12 Jul 2026): Good / Mixed / Hard days, then Gate and Dysregulation
-// moments in their own colours. Dysregulation sits LAST with its label
-// tucked to the right edge (the long word hugs the card edge instead of
-// isolating the middle columns; its column is wider so the full label keeps
-// its line, while the bars share one slim width so the counts compare
-// honestly). The Gate label stays "Gate": "Gate notes" cannot hold one line
-// in a flex-1 column at the larger text dials.
+// moments in their own colours. Dysregulation sits LAST, and the row is
+// JUSTIFIED (founder, 12 Jul 2026 fourth pass, native parity): every column
+// shrink-wraps its content (no flex weighting; the old 2.2 on Dysregulation
+// is gone) and the row spreads them space-between, so the gaps are even, the
+// first column sits flush left and the last flush right (which keeps the
+// long Dysregulation label tucked to the card edge, labelEnd). The bars
+// share one slim width so the counts compare honestly. Columns keep
+// minWidth: 0 so the nowrap labels can still ellipsize rather than overflow
+// on the tightest dial-and-width mixes. The Gate label stays "Gate": "Gate
+// notes" would clip on narrow screens at the larger text dials.
 //
 // Counting rule (stated once, applied to both graphs): the three mood bars
 // count DAYS, dayMood folding every entry's mood in, so a gate note's hard
@@ -409,20 +413,20 @@ function SectionLabel({ children, right }) {
 // two moment bars, and no moment is ever counted twice across them.
 function kindBarBlocks({ good, ok, hard, gate, dys }) {
   return [
-    { key: 'good', label: 'Good', n: good, color: window.MOOD_COLOURS.good, flex: 1 },
-    { key: 'ok', label: 'Mixed', n: ok, color: window.MOOD_COLOURS.ok, flex: 1 },
-    { key: 'hard', label: 'Hard', n: hard, color: window.MOOD_COLOURS.hard, flex: 1 },
-    { key: 'gate', label: 'Gate', n: gate, color: 'var(--blue)', flex: 1 },
-    { key: 'dysreg', label: 'Dysregulation', n: dys, color: 'var(--dysreg)', flex: 2.2, labelEnd: true },
+    { key: 'good', label: 'Good', n: good, color: window.MOOD_COLOURS.good },
+    { key: 'ok', label: 'Mixed', n: ok, color: window.MOOD_COLOURS.ok },
+    { key: 'hard', label: 'Hard', n: hard, color: window.MOOD_COLOURS.hard },
+    { key: 'gate', label: 'Gate', n: gate, color: 'var(--blue)' },
+    { key: 'dysreg', label: 'Dysregulation', n: dys, color: 'var(--dysreg)', labelEnd: true },
   ];
 }
 function KindBars({ blocks, maxN }) {
   return (
-    <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', minHeight: 92 }}>
+    <div style={{ display: 'flex', gap: 8, justifyContent: 'space-between', alignItems: 'flex-end', minHeight: 92 }}>
       {blocks.map(b => {
         const h = 22 + (b.n / maxN) * 54; // taller bar for a higher count
         return (
-          <div key={b.key} style={{ flex: b.flex, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+          <div key={b.key} style={{ minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
             <span style={{ fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 'calc(16px * var(--tscale, 1))', color: b.color, lineHeight: 1 }}>{b.n}</span>
             <div style={{ width: 26, height: h, borderRadius: 13, background: b.color }} />
             <span style={{ fontSize: 'calc(12.5px * var(--tscale, 1))', fontWeight: 500, color: 'var(--muted)',
