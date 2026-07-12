@@ -386,6 +386,17 @@ To run the reference: open `source/jotla/Jotla.html` in a browser.
 
 ---
 
+## Build 1.11.0 (13 July 2026): child photos, lifted Today tiles, Google Drive flagged
+
+The sync-law top-up for the native seventh device pass (punch items 35-39), adapted to this build's own storage and honest claims.
+
+- **A real photo for a child (item 36).** A parent can use a cropped photo for a child's avatar instead of the coloured glyph. The photo is picked from the Add-child form or the child editor (a file input, then a square crop step where you drag to move and slide to zoom), and it fills every avatar that shows that child: the header, the profile switcher, the Settings profile card and the editor preview. Clearing the photo falls straight back to the glyph, and deleting a child drops the photo with them. On this build the photo is kept as a compact data URL on the child object, so it lives in this browser's own storage and, unlike native (where media never leaves the phone in an export), it rides inside the export file and comes back on restore. That is the honest web reality, and the About copy already says photos travel inside the export. (The picker, cropper and photo-aware avatar were already in the prototype; this pass verifies the whole path and covers it with tests.)
+- **The two Today tiles lifted (item 39).** "Your day" and "At the gate?" now wear the same 1px border and drop shadow as the cards, so they read as raised siblings of the cards below rather than flat coloured patches.
+- **Import stays live (item 37).** Restore from an export already carries the whole child (words, the adults circle and the avatar photo), dedupes by id and never overwrites a record already here; verified, no change needed this pass.
+- **Cloud backup to Google Drive, flagged not built (item 38).** One honest "Coming soon" row joins About's coming board, worded like native: it moves a copy off the phone, so it is being built carefully and is not switched on yet. There is no working Drive button anywhere.
+- **Keyboard avoidance (item 35) was native-only.** It fixed a mobile soft-keyboard covering an input on Android; the browser handles that itself, so there was nothing to port.
+- Suite grows Suite 13 and 13b (a photo picked through the real crop UI, shown in the header and Settings, surviving an export then import round-trip, and clearing to the glyph; the lifted tiles' computed border and shadow); 127/127 green.
+
 ## Build 1.10.0 (12 July 2026): the adults circle, one About page, calmer Settings
 
 The sync-law top-up for the native sixth device pass (punch items 30-34), adapted to this build's own storage and honest claims.

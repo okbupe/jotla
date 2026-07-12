@@ -1513,6 +1513,7 @@ function InfoAboutScreen({ nav }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <PlanRow title="Encrypted export" note="Your own locked copy, only you hold the key. Until then, keep exports somewhere private, like your own cloud drive." />
           <PlanRow title="Lock the app" note="A fingerprint, face, or PIN on this device. Until then, your device's own lock protects the record, and phones can also lock or pin individual apps." />
+          <PlanRow title="Cloud backup to Google Drive" note="Part of Jotla Plus: save a copy to your own Google Drive on its own. It moves a copy off the phone, so it is being built carefully and is not switched on yet." pill="Coming soon" />
           <PlanRow title="Family Sync" note="Part of Jotla Plus: the record on every grown-up's phone." pill="Coming soon" />
           <InfoP last>Planned means exactly that: none of the above is switched on yet, and nothing in this app pretends to be.</InfoP>
         </div>

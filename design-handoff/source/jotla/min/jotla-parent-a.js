@@ -11,7 +11,10 @@ function greeting() {
   return 'Good evening';
 }
 
-// soft tappable tile used on Today
+// soft tappable tile used on Today. It wears the same border and drop shadow as
+// the cards (var(--line) + var(--card-shadow)) so the two tiles lift off the page
+// and read as siblings of the cards below them, not flat patches (founder's
+// seventh pass, item 39, 13 Jul 2026).
 function ActionTile({
   icon,
   title,
@@ -26,7 +29,7 @@ function ActionTile({
     style: {
       flex: 1,
       textAlign: 'left',
-      border: 'none',
+      border: '1px solid var(--line)',
       cursor: 'pointer',
       background: tint,
       borderRadius: 16,
@@ -34,7 +37,8 @@ function ActionTile({
       display: 'flex',
       flexDirection: 'column',
       gap: 8,
-      minHeight: 56
+      minHeight: 56,
+      boxShadow: 'var(--card-shadow)'
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {

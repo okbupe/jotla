@@ -97,7 +97,7 @@ function ok(name, cond) {
   ok('saved Wins entry appears on Today', (await page.locator('#root').innerText()).includes('Boot-assert win: tried a new food'));
   await page.getByText('Settings', { exact: true }).last().click();
   await page.waitForTimeout(450);
-  ok('footer shows the bumped build', (await page.locator('#root').innerText()).includes('Test build 1.10.0'));
+  ok('footer shows the bumped build', (await page.locator('#root').innerText()).includes('Test build 1.11.0'));
   await ctx.close();
 
   // ---- 6. app boundary: poisoned storage never blanks the app ----
@@ -250,7 +250,7 @@ function ok(name, cond) {
   await page4.getByText('About Jotla', { exact: true }).first().click();
   await page4.waitForTimeout(500);
   const aboutText = await page4.locator('#root').innerText();
-  ok('About carries the live build number', aboutText.includes('Early test build 1.10.0'));
+  ok('About carries the live build number', aboutText.includes('Early test build 1.11.0'));
   ok('About drops the fonts credit line', !aboutText.includes('Typefaces'));
   ok('About owns the mission story', aboutText.includes('Nobody gives them the tool'));
   ok('About says the privacy promise exactly once', (aboutText.match(/We never send your record anywhere/g) || []).length === 1);
@@ -578,6 +578,116 @@ function ok(name, cond) {
     playgroundChips.filter(c => c === 'Mr Okafor').length === 1 && playgroundChips.includes('By myself'));
   ok('no uncaught page errors across suite 12', errors9.length === 0);
   await ctx9.close();
+
+  // ---- 13. seventh pass (1.11.0): child photo + crop, tile lift, Drive row ----
+  console.log('Suite 13: child photo, tile lift, Google Drive coming-soon (1.11.0)');
+  const ctx10 = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, acceptDownloads: true });
+  const page10 = await ctx10.newPage();
+  const errors10 = [];
+  page10.on('pageerror', e => errors10.push(String(e)));
+  page10.on('dialog', d => d.accept().catch(() => {}));
+  await page10.goto(URL_APP, { waitUntil: 'networkidle' });
+  await page10.waitForTimeout(1200);
+
+  // item 39: the two Today action tiles now wear the card border + drop shadow
+  const tileCss = await page10.locator('button.j-press:has-text("At the gate?")').first().evaluate(el => {
+    const s = getComputedStyle(el);
+    return { shadow: s.boxShadow, borderW: parseFloat(s.borderTopWidth), borderStyle: s.borderTopStyle };
+  });
+  ok('Today tiles carry a non-empty drop shadow', !!tileCss && !!tileCss.shadow && tileCss.shadow !== 'none');
+  ok('Today tiles carry a real card border (' + tileCss.borderW + 'px ' + tileCss.borderStyle + ')',
+    !!tileCss && tileCss.borderW >= 1 && tileCss.borderStyle === 'solid');
+
+  // item 36: pick a real photo for a NEW child through the actual UI (file input
+  // -> crop step -> Use photo), then prove it renders as an <img> everywhere a
+  // child is shown, rides an export, and clears back to the glyph.
+  await page10.locator('button[aria-label="Switch child, or hold to edit"]').click();
+  await page10.waitForTimeout(400);
+  await page10.locator('button:has-text("Add a child")').click({ position: { x: 60, y: 14 } });
+  await page10.waitForTimeout(500);
+  ok('Add child starts on the glyph (no photo <img> yet)', (await page10.locator('.j-screen img[src^="data:image"]').count()) === 0);
+  // drive the hidden photo file input with a real PNG built in the page
+  await page10.evaluate(async () => {
+    const c = document.createElement('canvas'); c.width = 24; c.height = 24;
+    const cx = c.getContext('2d'); cx.fillStyle = '#4488ff'; cx.fillRect(0, 0, 24, 24);
+    cx.fillStyle = '#ffd34e'; cx.fillRect(6, 6, 12, 12);
+    const blob = await new Promise(res => c.toBlob(res, 'image/png'));
+    const f = new File([blob], 'pip.png', { type: 'image/png' });
+    const input = document.querySelector('input[type="file"][accept="image/*"]');
+    const dt = new DataTransfer(); dt.items.add(f);
+    input.files = dt.files;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  await page10.waitForTimeout(500);
+  ok('picking a file opens the square crop step', await page10.getByText('Position the photo').first().isVisible());
+  await page10.waitForTimeout(600); // let the cropper load the image before confirming
+  await page10.getByText('Use photo').click();
+  await page10.waitForTimeout(500);
+  ok('the cropped photo shows in the live preview as an <img>', (await page10.locator('.j-screen img[src^="data:image"]').count()) >= 1);
+  await page10.locator('input[placeholder="First name or nickname"]').fill('Pip');
+  await page10.getByText("Create Pip's record").click();
+  await page10.waitForTimeout(600);
+  await page10.getByText('Skip', { exact: true }).first().click();
+  await page10.waitForTimeout(500);
+  ok('the photo shows in the header avatar', (await page10.locator('.j-appheader img[src^="data:image"]').count()) === 1);
+  await page10.getByText('Settings', { exact: true }).last().click();
+  await page10.waitForTimeout(450);
+  ok('the photo shows on the Settings profile card', (await page10.locator('img[src^="data:image"]').count()) >= 1);
+
+  // the export carries the photo (web reality: the data URL rides inside the
+  // export file, unlike native, where media never leaves the phone)
+  const [download] = await Promise.all([
+    page10.waitForEvent('download'),
+    page10.getByText('Export my data', { exact: false }).first().click(),
+  ]);
+  const exportJson = require('fs').readFileSync(await download.path(), 'utf8');
+  let exported = null; try { exported = JSON.parse(exportJson); } catch (e) {}
+  ok('the export carries the child photo as a data URL',
+    !!exported && !!exported.child && typeof exported.child.photo === 'string' && exported.child.photo.startsWith('data:image'));
+
+  // clearing the photo falls back to the coloured glyph
+  await page10.getByText('Edit name, school, colour and avatar').click();
+  await page10.waitForTimeout(450);
+  ok('the edit sheet offers Remove while a photo is set', await page10.getByText('Remove', { exact: true }).first().isVisible());
+  await page10.getByText('Remove', { exact: true }).first().click();
+  await page10.waitForTimeout(300);
+  ok('removing the photo clears every <img> (glyph fallback)', (await page10.locator('img[src^="data:image"]').count()) === 0);
+  await page10.getByText('Done', { exact: true }).click();
+  await page10.waitForTimeout(400);
+
+  // item 38: the About coming board carries the honest Google Drive row
+  await page10.getByText('About Jotla', { exact: true }).first().click();
+  await page10.waitForTimeout(500);
+  const aboutText13 = await page10.locator('#root').innerText();
+  ok('About coming board carries Cloud backup to Google Drive', aboutText13.includes('Cloud backup to Google Drive'));
+  ok('the Drive row is honestly not switched on yet', aboutText13.includes('is not switched on yet'));
+  ok('no uncaught page errors across suite 13', errors10.length === 0);
+  await ctx10.close();
+
+  // ---- 13b. the exported photo restores on a fresh device (import round-trip) ----
+  console.log('Suite 13b: photo survives export -> import');
+  const ctx11 = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  const page11 = await ctx11.newPage();
+  const errors11 = [];
+  page11.on('pageerror', e => errors11.push(String(e)));
+  page11.on('dialog', d => d.accept().catch(() => {}));
+  await page11.goto(URL_APP, { waitUntil: 'networkidle' });
+  await page11.waitForTimeout(1200);
+  await page11.getByText('Settings', { exact: true }).last().click();
+  await page11.waitForTimeout(450);
+  ok('a fresh device starts with no imported photo', (await page11.locator('.j-appheader img[src^="data:image"]').count()) === 0);
+  // feed the captured export straight into the live Restore file input
+  await page11.evaluate((jsonStr) => {
+    const f = new File([jsonStr], 'jotla-pip-export.json', { type: 'application/json' });
+    const input = document.querySelector('input[accept="application/json,.json"]');
+    const dt = new DataTransfer(); dt.items.add(f);
+    input.files = dt.files;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  }, exportJson);
+  await page11.waitForTimeout(800);
+  ok('the imported child brings its photo back as an <img>', (await page11.locator('.j-appheader img[src^="data:image"]').count()) === 1);
+  ok('no uncaught page errors across suite 13b', errors11.length === 0);
+  await ctx11.close();
 
   await browser.close();
   server.kill();
