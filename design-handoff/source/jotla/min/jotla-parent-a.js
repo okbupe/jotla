@@ -1,5 +1,5 @@
 function _extends() { return _extends = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends.apply(null, arguments); }
-// jotla-parent-a.jsx — Today, Quick log, Handover (Dysregulation).
+// jotla-parent-a.jsx: Today, Quick log, Handover (Dysregulation).
 const {
   useState: useStateA,
   useRef: useRefA
@@ -116,7 +116,7 @@ function TodayScreen({
       color: "var(--green)"
     }),
     title: "Your day",
-    sub: 'Hand the phone to ' + childName,
+    sub: nav.plus ? 'Do it together with ' + childName : 'Hand the phone to ' + childName,
     tint: "var(--tint-green)",
     ink: "var(--green-ink)",
     onClick: () => nav.go('child')

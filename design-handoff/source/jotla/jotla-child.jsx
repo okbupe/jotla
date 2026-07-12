@@ -25,9 +25,13 @@ const TYPE_A_NAME = 'Type a name';
 
 // The three places of the walk. Ids match the CHILD_SCENES keys so a scene
 // maps straight to its question set.
+// adultChips: adult-flavoured questions offer the child's own named adults
+// (the circle: teachers, TAs, helpers, founder spec 12 Jul 2026) as chips in
+// front of the generic words, so "who was with you" is one tap, not typing.
+// The friends questions (sat with / played with) never carry it.
 const WALK_PLACES = [
   { id: 'classroom', label: 'Classroom', questions: [
-    { id: 'who', prompt: 'Who was there?', chips: PEOPLE_CHIPS, placeholder: TYPE_A_NAME },
+    { id: 'who', prompt: 'Who was there?', chips: PEOPLE_CHIPS, placeholder: TYPE_A_NAME, adultChips: true },
     { id: 'did', prompt: 'What did you do or learn?', placeholder: WRITE_HERE },
     { id: 'feeling-why', prompt: 'What made you feel ' + FEELING_TOKEN + '?', placeholder: WRITE_HERE },
     { id: 'else', prompt: 'Anything else?', placeholder: WRITE_HERE },
@@ -38,14 +42,14 @@ const WALK_PLACES = [
   ] },
   { id: 'playground', label: 'Playground', questions: [
     { id: 'played-with', prompt: 'Who did you play with?', chips: ['Friends', 'Peers', 'By myself'], placeholder: TYPE_A_NAME },
-    { id: 'grown-ups', prompt: 'Which grown-ups were around?', chips: ['Teachers', 'Helpers', 'Nobody'], placeholder: TYPE_A_NAME },
+    { id: 'grown-ups', prompt: 'Which grown-ups were around?', chips: ['Teachers', 'Helpers', 'Nobody'], placeholder: TYPE_A_NAME, adultChips: true },
     { id: 'trouble', prompt: 'Any pushing or trouble from other children?', chips: ['No', 'Yes'], placeholder: 'What happened?' },
   ] },
 ];
 
 // The short generic set every extra place opens.
 const GENERIC_QUESTIONS = [
-  { id: 'who', prompt: 'Who was there?', chips: PEOPLE_CHIPS, placeholder: TYPE_A_NAME },
+  { id: 'who', prompt: 'Who was there?', chips: PEOPLE_CHIPS, placeholder: TYPE_A_NAME, adultChips: true },
   { id: 'what', prompt: 'What happened?', placeholder: WRITE_HERE },
   { id: 'felt', prompt: 'How did it feel?', chips: FEELING_CHIPS, placeholder: WRITE_HERE },
 ];
@@ -63,11 +67,19 @@ const EXTRA_PLACES = [
 // A place's questions with the child's own feeling word substituted. A
 // question that needs the feeling word is dropped when there is none (it
 // cannot be asked honestly without the child's own word), which never happens
-// on the walk because More only appears after a face is picked.
-function questionsFor(place, feelingWord) {
+// on the walk because More only appears after a face is picked. adultNames
+// (the child's own circle, duplicates against the generic words removed) lead
+// the chips on adult-flavoured questions so a named teacher is one tap.
+function questionsFor(place, feelingWord, adultNames) {
   return place.questions
     .filter(q => feelingWord !== undefined || q.prompt.indexOf(FEELING_TOKEN) === -1)
-    .map(q => ({ ...q, prompt: q.prompt.split(FEELING_TOKEN).join(feelingWord || '') }));
+    .map(q => {
+      const prompt = q.prompt.split(FEELING_TOKEN).join(feelingWord || '');
+      if (!q.adultChips || !adultNames || adultNames.length === 0) return { ...q, prompt };
+      const generic = q.chips || [];
+      const named = adultNames.filter(n => n.trim().length > 0 && !generic.some(g => g.toLowerCase() === n.trim().toLowerCase()));
+      return { ...q, prompt, chips: [...named, ...generic] };
+    });
 }
 function isAnswered(a) { return !!a && (a.chips.length > 0 || a.text.trim().length > 0); }
 
@@ -211,8 +223,12 @@ function ChildScreen({ nav, profile }) {
   };
 
   // ---- More: the "Your day" question cards (Plus only) ----
+  // The child's own named adults (the circle, added at onboarding or in the
+  // child editor) lead the who-chips on adult-flavoured cards, so "who was
+  // with you" is one tap for the child (founder spec, 12 Jul 2026 sixth pass).
+  const adultNames = (profile && profile.adults) || [];
   const qPagerRef = useRefC(null);
-  const qList = qPlace ? questionsFor(qPlace, feelingWordFor(qPlace.id)) : [];
+  const qList = qPlace ? questionsFor(qPlace, feelingWordFor(qPlace.id), adultNames) : [];
   const openQuestions = (place) => { setQPlace(place); setQIdx(0); setStep('questions'); };
   // Done goes back to where More was opened from: a walk place returns to its
   // confirm screen, an extra place returns to the "Anywhere else?" menu.

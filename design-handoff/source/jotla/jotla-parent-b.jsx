@@ -1,4 +1,4 @@
-// jotla-parent-b.jsx — Find, Evidence (records + document vault), Add document, Doc detail, Unlock, Settings.
+// jotla-parent-b.jsx: Find, Evidence (records + document vault), Add document, Doc detail, Unlock, Settings.
 const { useState: useStateB, useRef: useRefB, useEffect: useEffectB } = React;
 
 const THEME_TO_CAT = new Proxy({}, { get: (_, k) => k });
@@ -998,7 +998,7 @@ function FreePage() {
 }
 
 // ---- Limited-time offer (set SALE.on = true to re-run the £29 promotion) ----
-// Promotion setup preserved below — flip `on` back to true to relaunch it.
+// Promotion setup preserved below: flip `on` back to true to relaunch it.
 const SALE = { on: false, price: '£29', was: '£39', save: '£10', days: 3 };
 
 // Counts down to a deadline kept in localStorage, so the timer survives a refresh.
@@ -1342,14 +1342,18 @@ function UnlockScreen({ nav }) {
   );
 }
 
-// ---------------- Settings info pages (12 Jul 2026) ----------------
-// The informational sheets grew into full pushed screens, so a parent gets
-// the whole story, not a summary over a dimmed background. Every claim below
-// is checked against THIS build's own code (the web prototype), not the
-// native app's: where the two builds genuinely differ (browser storage, a
-// live restore, photos AND vault document files inside the export where the
-// native app keeps files on the phone outside its export) the copy says the
-// web truth.
+// ---------------- The one information page (12 Jul 2026, sixth pass) ----------------
+// The founder read the four info pages together and found them repeating the
+// same promises, some verbatim (the on-device story was told in full four
+// times, and two Settings rows opened the same page). His instruction: all
+// informational content lives in the About section, each fact said once. So
+// the mission, privacy and data-care pages fold into About Jotla below, and
+// the three old pages are deleted (Supersession Law). Every claim stays
+// checked against THIS build's own code (the web prototype), not the native
+// app's: where the two builds genuinely differ (browser storage, a live
+// restore, a live PDF pack, photos AND vault document files inside the export
+// where the native app keeps files on the phone outside its export, videos
+// never copied, the 2 MB pick-time cap) the copy says the web truth.
 
 // The page shell: round blue Back, title and subtitle, then a scrolling
 // column of blocks.
@@ -1408,151 +1412,58 @@ function PlanRow({ title, note, pill = 'Planned' }) {
   );
 }
 
-// What Jotla is for. The first block is the mission copy the sheets carried;
-// the rest expands it with what this build genuinely does.
-function InfoMissionScreen({ nav }) {
-  return (
-    <InfoPage nav={nav} title="What Jotla is for" subtitle="For the parents told to document everything">
-      <InfoBlock icon="heart" title="The tool parents are told to need">
-        <InfoP>Every SEN parent is told to document everything. Nobody gives them the tool. Jotla is that tool.</InfoP>
-        <InfoP>Log the days in seconds, capture what really happened at the school gate, and keep every letter and report in one place.</InfoP>
-        <InfoP last>Owned by you. Not the school, not the Local Authority. You.</InfoP>
-      </InfoBlock>
-
-      <InfoBlock icon="star" title="When the record does its work">
-        <InfoP>When it matters, at an assessment, an annual review or a tribunal, your record is already organised, dated and ready to share.</InfoP>
-        <InfoP>Take it into an EHCP annual review to show the year as it really was, not as memory serves it. Bring dated notes to a school meeting so the conversation starts from what happened. And when you write to the Local Authority, the dates and details are already in one place.</InfoP>
-        <InfoP last>One honest line: Jotla keeps the record, it does not give legal advice. What you can control is walking in with the facts ready.</InfoP>
-      </InfoBlock>
-
-      <InfoBlock icon="clock" title="Why the dates can be trusted">
-        <InfoP>Every note carries an honest label: <span className="j-strong">Same day</span> when it was logged on the day it happened, <span className="j-strong">Added later</span> when it was not.</InfoP>
-        <InfoP>The label is decided once, when the note is first saved, and it never changes. Editing the wording later does not rewrite it, and the note keeps its history of earlier wordings.</InfoP>
-        <InfoP last>Hours later is fine; the record keeps its timing honest. A record that is straight about when things were written is worth more when someone else reads it.</InfoP>
-      </InfoBlock>
-
-      <InfoBlock icon="edit" title="What makes a strong record">
-        <InfoP>Log facts: what happened, when, and who was there. Keep other children out of what you write where you can.</InfoP>
-        <InfoP>Little and often beats perfect. The quick log takes seconds, and a plain sentence written today is worth more than a polished page written next month.</InfoP>
-        <InfoP last>After a hard handover, open a gate note. It asks you the right questions in the right order while everything is still fresh.</InfoP>
-      </InfoBlock>
-
-      <button className="j-btn j-btn-soft" onClick={() => nav.go('infoprivacy')}>
-        <Icon name="lock" size={18} color="var(--blue)" /> How your record stays private
-      </button>
-    </InfoPage>
-  );
-}
-
-// Privacy, in plain words. Claims verified against this build: there is no
-// upload anywhere in the source; the only record-content exits are the ones
-// named below, and every one is user-driven.
-function InfoPrivacyScreen({ nav }) {
-  return (
-    <InfoPage nav={nav} title="Privacy, in plain words" subtitle="What we can see, and what leaves this device">
-      <InfoBlock icon="shield" title="The promise">
-        <InfoP><span className="j-strong">We never send your record anywhere.</span> Jotla works without an account, a login or a cloud. Everything you write about your child stays on this device, and so does every photo you keep with a note and every document file you keep in the vault (adding them is part of Jotla Plus).</InfoP>
-        <InfoP>We never receive or access your data. There is nothing for us to read, lose or sell.</InfoP>
-        <InfoP last>This is not a policy we promise to follow; it is how the app is built. There is no upload in Jotla, so your record has nowhere to go except where you choose to send it.</InfoP>
-      </InfoBlock>
-
-      <InfoBlock icon="arrowRight" title="What leaves this device">
-        <InfoP>Nothing leaves this device unless you send it yourself. The app has exactly three doors out, and you open every one:</InfoP>
-        <InfoP><span className="j-strong">Export my data</span> (in Settings, and offered again before you delete a child's record) saves a file of the whole record to your device. You choose where that file goes. Photos you kept with notes, and the document files you kept in the vault, travel inside it; videos never do, because Jotla never copies the video file in the first place.</InfoP>
-        <InfoP><span className="j-strong">Create PDF</span> (the day record, part of Plus) opens a printable page in a new tab. It carries your words, never your photos, and it goes nowhere until you print or save it yourself.</InfoP>
-        <InfoP><span className="j-strong">Email this to the teacher</span> (after a gate note) opens your own email app with the note typed in for you. Nothing goes anywhere until you press send.</InfoP>
-        <InfoP last>Those are the only places in the app that move what you have written. Everything else stays put.</InfoP>
-      </InfoBlock>
-
-      <InfoBlock icon="lock" title="Who can see the record">
-        <InfoP>On this device: anyone you hand it to unlocked, in this browser. Jotla does not have a lock of its own yet, so your device's own lock is the front door.</InfoP>
-        <InfoP>Once you share a copy, that copy is out of your hands. Whoever you send it to can read it, keep it and pass it on. Share with people you trust, when it serves your child.</InfoP>
-        <InfoP last>And us? We can never see your record. There is no account and no cloud, so there is nothing on our side to look at.</InfoP>
-      </InfoBlock>
-
-      <InfoBlock icon="lock" title="Lock the app" pill={<PlannedPill />}>
-        <InfoP>In the full app you will be able to lock Jotla behind your fingerprint, face or a PIN. It is not in this early test build yet.</InfoP>
-        <InfoP last>Until then, your device's own screen lock protects the record, and phones can also lock or pin individual apps if you share the device.</InfoP>
-      </InfoBlock>
-
-      <InfoBlock icon="play" title="Handing the phone to your child">
-        <InfoP>The Today screen has a child-safe flow for the moments you pass the phone over: Your day.</InfoP>
-        <InfoP last>It is a calm screen with no way back into your notes. The system back button is swallowed while it is open, and leaving it takes a deliberate grown-up press-and-hold, never a stray tap, so a curious child cannot land in the record.</InfoP>
-      </InfoBlock>
-
-      <InfoBlock icon="edit" title="Write with sharing in mind">
-        <InfoP>What you write can end up in front of other people when you choose to share it. That is the record doing its job.</InfoP>
-        <InfoP last>So log facts, keep other children out of what you write and what you photograph where you can, and your record will serve you well.</InfoP>
-      </InfoBlock>
-
-      <button className="j-btn j-btn-soft" onClick={() => nav.go('infodata')}>
-        <Icon name="shield" size={18} color="var(--blue)" /> Where your record is kept
-      </button>
-    </InfoPage>
-  );
-}
-
-// Where your record is kept. This is the web build, so the honest story is
-// browser storage: no phone-backup claim is made here (that story belongs to
-// the native app).
-function InfoDataScreen({ nav }) {
-  return (
-    <InfoPage nav={nav} title="Where your record is kept" subtitle="On this device, in your hands">
-      <InfoBlock icon="shield" title="On this device">
-        <InfoP>Everything you write lives on this device, in this browser's own storage for Jotla, and so does every photo you keep with a note and every document file you keep in the vault (adding them is part of Jotla Plus). Nothing is sent to us, ever.</InfoP>
-        <InfoP>Once it has loaded, Jotla works offline: no account, no login, and no internet connection needed.</InfoP>
-        <InfoP last>It also means this browser holds the record. The copies that exist are the ones you make with Export my data.</InfoP>
-      </InfoBlock>
-
-      <InfoBlock icon="bell" title="One honest limit">
-        <InfoP>Browser storage is not for ever: clearing this site's data in the browser's settings removes the record with it, and a browser can clear site data itself if the device runs very low on space.</InfoP>
-        <InfoP>Storage also has a size limit, and photos and document files grow the record fastest. A very large file is refused kindly the moment you pick it, and if a save ever cannot fit, Jotla warns you the moment it happens rather than losing anything quietly.</InfoP>
-        <InfoP last>That is the honest trade of a record that never leaves your hands, and it is why a saved copy every few weeks is good insurance.</InfoP>
-      </InfoBlock>
-
-      <InfoBlock icon="download" title="Export my data: your own copy">
-        <InfoP><span className="j-strong">What is in it.</span> One file holding the whole of a child's record: every note with its date, its mood and what you wrote, the photos you kept with notes, the document files you kept in the vault, and the details of every letter and report you have logged, in a form the app can read straight back in.</InfoP>
-        <InfoP><span className="j-strong">What is not.</span> Videos are never inside it: Jotla notes that a video exists but never copies the file, so the video itself stays in your own photo library. The printable day record carries your words only.</InfoP>
-        <InfoP><span className="j-strong">Where it goes.</span> The export saves as a file on your device, and you choose where it lives from there: your files, your own cloud drive, an email to yourself. It is free, and it stays free.</InfoP>
-        <InfoP last><span className="j-strong">Who can see it.</span> Only the people you give it to. Jotla can only know an export was run; keeping that copy safe is in your hands too.</InfoP>
-      </InfoBlock>
-
-      <InfoBlock icon="attach" title="Restore from an export">
-        <InfoP>Live in this build: Settings has Restore from an export. Pick a Jotla export file and the record in it comes back, the child included.</InfoP>
-        <InfoP last>Anything already on this device stays: the restore adds what the file holds and never doubles up a note it already has.</InfoP>
-      </InfoBlock>
-
-      <InfoBlock icon="lock" title="Encrypted export" pill={<PlannedPill />}>
-        <InfoP>A locked export protects the file with a passphrase only you know. It is planned for the full app, and is not in this early test build yet.</InfoP>
-        <InfoP last>For now, Export my data gives you a plain copy. Keep it somewhere private, like your own cloud drive.</InfoP>
-      </InfoBlock>
-
-      <InfoBlock icon="close" title="If this device is lost or broken">
-        <InfoP>If you have an export file saved somewhere safe, Restore from an export brings the record back on a new device.</InfoP>
-        <InfoP last>If there is no export, the record is gone with the device. Exports are the safety net in this build; make them often.</InfoP>
-      </InfoBlock>
-
-      <InfoBlock icon="edit" title="Deleting things">
-        <InfoP>Delete a note or a document from its own page. Every delete sits behind a confirm, and cannot be undone.</InfoP>
-        <InfoP>Remove a whole child's record from their details sheet (hold the avatar, or tap the child's card in Settings). It is deliberately hard to do by accident: you confirm what will go, you are offered a backup file first, and you type DELETE to finish. The last child cannot be removed: the app always keeps at least one record.</InfoP>
-        <InfoP last>Deleting in Jotla deletes from this device. There is no copy on our side to linger, because there never was one. Copies you exported earlier stay wherever you put them.</InfoP>
-      </InfoBlock>
-    </InfoPage>
-  );
-}
-
-// About Jotla: version, what the app is, an honest live-now against planned
-// board, the Plus summary, and the feedback door. No typeface credit line
-// (dropped 12 Jul 2026, founder instruction).
+// About Jotla: THE information page. Structure mirrors the native
+// InfoAboutScreen (4ca5829); the copy is this build's own, merged and deduped
+// from the three folded pages. Every claim traces to this build's code:
+//  - Version: window.JOTLA_BUILD (jotla-ui.jsx), the same number the Settings
+//    footer prints. No typeface credit line (dropped 12 Jul 2026, founder).
+//  - Mission and dates blocks: the folded mission page's copy. "Same day" and
+//    "Added later" are the exact rendered labels (EntryScreen, Day view, the
+//    PDF pack legend); the kind is decided once at save and edits keep a
+//    wording history (nav.updateEntry). No legal-advice claim is made
+//    anywhere; the honest line says so plainly instead.
+//  - "We never send your record anywhere": there is no upload in this source
+//    (no fetch, no XMLHttpRequest, no sendBeacon, no sockets; verified before
+//    this copy was written). The promise is about what WE do: the doors below
+//    move copies only when the parent opens them.
+//  - Where the record lives: localStorage under jotla_* keys (jotla-app.jsx
+//    load/saveJSON); photos and vault files are data URLs inside it, so they
+//    ride the export too. Clearing site data taking the record, the storage
+//    limit, the 2 MB pick-time refusal (DOC_FILE_CAP) and the quota alert
+//    (saveJSON) are all real code paths. No phone-backup claim: that story is
+//    the native app's, not this browser build's.
+//  - Exactly three record-content doors exist, all user-driven: the export
+//    download (SettingsScreen exportData + the DeleteChildSheet backup), the
+//    printable day record (openPrintPack, Plus), and the gate-note teacher
+//    email (mailto draft). Videos are never copied in (the picker keeps a
+//    caption, never the file); "Jotla can only know an export was run" is the
+//    backup health line's own honesty.
+//  - Restore from an export is LIVE in this build (nav.importBackup), so it
+//    sits under Where the record lives, not on the coming board.
+//  - Child mode: leaving it takes a deliberate grown-up press-and-hold
+//    (HoldButton / ChildExitPill) and the system Back is swallowed while it
+//    is open (the popstate handler re-arms), so "safe by design" is code truth.
+//  - Deleting: entry and document deletes sit behind confirms and cannot be
+//    undone; removing a child is the guarded backup-first type-DELETE flow,
+//    and the last child can never be removed (nav.deleteChild).
+//  - The live-now list names only what this build really contains; the
+//    Planned rows mirror the Unlock screen honestly. Plus copy: the Unlock
+//    screen's own hero line and price note, verbatim fragments.
 function InfoAboutScreen({ nav }) {
   const FEEDBACK_HREF = 'mailto:hello@sen.help?subject=' + encodeURIComponent('Jotla prototype feedback')
     + '&body=' + encodeURIComponent('What I was trying to do:\n\nWhat I think, or what happened:\n\nWhich screen:\n\nMy phone / browser:\n');
   return (
-    <InfoPage nav={nav} title="About Jotla" subtitle="The build, what is live, and what is next">
+    <InfoPage nav={nav} title="About Jotla" subtitle="What it is, how it protects you, what is coming">
       <InfoBlock icon="star" title="Jotla">
         <InfoP><span className="j-strong">Jotla by SEN Help.</span> Early test build {window.JOTLA_BUILD} (July 2026).</InfoP>
         <InfoP>Designed and built by SEN Help (sen.help).</InfoP>
         <InfoP last>Jotla is a private, on-device record for parents of children with special educational needs: log the moments, the moods and the school handoffs, keep the details of every letter and report, and export the record when someone needs to see it.</InfoP>
+      </InfoBlock>
+
+      <InfoBlock icon="heart" title="What Jotla is for">
+        <InfoP>Every SEN parent is told to document everything. Nobody gives them the tool. Jotla is that tool.</InfoP>
+        <InfoP>When it matters, at an EHCP assessment, an annual review or a tribunal, your record is already organised, dated and ready to share. Take it into a review to show the year as it really was, not as memory serves it. Bring dated notes to a school meeting so the conversation starts from what happened. And when you write to the Local Authority, the dates and details are already in one place.</InfoP>
+        <InfoP last>One honest line: Jotla keeps the record, it does not give legal advice. What you can control is walking in with the facts ready.</InfoP>
       </InfoBlock>
 
       <InfoBlock icon="check" title="What is live now">
@@ -1560,10 +1471,48 @@ function InfoAboutScreen({ nav }) {
         <InfoP last>Around that: the month calendar (its mood patterns are part of Plus), the printable day record (part of Plus), the tips deck for hard moments, the child check-in with its follow-up questions (the questions are part of Plus), dark mode, larger text sizes, a free export of the whole record, and restore from an export.</InfoP>
       </InfoBlock>
 
+      <InfoBlock icon="clock" title="Why the dates can be trusted">
+        <InfoP>Every note carries an honest label: <span className="j-strong">Same day</span> when it was logged on the day it happened, <span className="j-strong">Added later</span> when it was not.</InfoP>
+        <InfoP last>The label is decided once, when the note is first saved, and it never changes. Editing the wording later does not rewrite it, and the note keeps its history of earlier wordings. Hours later is fine; a record that is straight about when things were written is worth more when someone else reads it.</InfoP>
+      </InfoBlock>
+
+      <InfoBlock icon="edit" title="What makes a strong record">
+        <InfoP>Log facts: what happened, when, and who was there. What you write can end up in front of other people when you choose to share it; that is the record doing its job. So keep other children out of what you write and what you photograph where you can.</InfoP>
+        <InfoP>Little and often beats perfect. The quick log takes seconds, and a plain sentence written today is worth more than a polished page written next month.</InfoP>
+        <InfoP last>After a hard handover, open a gate note. It asks you the right questions in the right order while everything is still fresh.</InfoP>
+      </InfoBlock>
+
+      <InfoBlock icon="shield" title="Private by how it is built">
+        <InfoP><span className="j-strong">We never send your record anywhere.</span> Jotla works without an account, a login or a cloud. Everything you write about your child stays on this device, and so does every photo you keep with a note and every document file you keep in the vault (adding them is part of Jotla Plus).</InfoP>
+        <InfoP last>We never receive or access your data; there is nothing for us to read, lose or sell. This is not a policy we promise to follow, it is how the app is built: there is no upload in Jotla, so your record has nowhere to go except where you choose to send it.</InfoP>
+      </InfoBlock>
+
+      <InfoBlock icon="clock" title="Where the record lives">
+        <InfoP>On this device, in this browser's own storage for Jotla. That is why the app works anywhere once it has loaded: no account, no login and no internet connection needed. It also means this browser holds the record, so the copies that exist are the ones you make with Export my data.</InfoP>
+        <InfoP>One honest limit: browser storage is not for ever. Clearing this site's data in the browser's settings removes the record with it, and a browser can clear site data itself if the device runs very low on space. Storage also has a size limit, and photos and document files grow the record fastest: a very large file is refused kindly the moment you pick it (over 2 MB), and if a save ever cannot fit, Jotla warns you the moment it happens rather than losing anything quietly.</InfoP>
+        <InfoP>If this device is lost or broken and you have an export file saved somewhere safe, <span className="j-strong">Restore from an export</span> (live in this build, in Settings) brings the record back on a new device, the child included. Anything already on the device stays: the restore adds what the file holds and never doubles up a note it already has.</InfoP>
+        <InfoP last>If there is no export, the record is gone with the device. That is the honest trade of a record that never leaves your hands, and why a saved copy every few weeks is good insurance.</InfoP>
+      </InfoBlock>
+
+      <InfoBlock icon="arrowRight" title="What leaves this device">
+        <InfoP>Nothing leaves this device unless you send it yourself. The app has exactly three doors out, and you open every one:</InfoP>
+        <InfoP><span className="j-strong">Export my data</span> (in Settings, and offered again before you delete a child's record) saves one file to your device holding the whole of a child's record: every note with its date, its mood and what you wrote, the photos you kept with notes, the document files you kept in the vault, and the details of every letter and report, in a form the app can read straight back in. You choose where that file lives from there: your files, your own cloud drive, an email to yourself. It is free, and it stays free. Videos are never inside it: Jotla notes that a video exists but never copies the file, so the video itself stays in your own photo library.</InfoP>
+        <InfoP><span className="j-strong">Create PDF</span> (the day record, part of Plus) opens a printable page in a new tab. It carries your words, never your photos, and it goes nowhere until you print or save it yourself.</InfoP>
+        <InfoP><span className="j-strong">Email this to the teacher</span> (after a gate note) opens your own email app with the note typed in for you. Nothing goes anywhere until you press send.</InfoP>
+        <InfoP>Who can see the record? On this device: anyone you hand it to unlocked, in this browser, so your device's own lock is the front door. The child check-in screen is safe by design: leaving it takes a deliberate grown-up press-and-hold, never a stray tap, so a curious child cannot land in your notes. And once you share a copy, that copy is out of your hands: whoever you send it to can read it, keep it and pass it on. Share with people you trust, when it serves your child.</InfoP>
+        <InfoP last>One honest detail: Jotla can only know that an export was run. It cannot see whether the file was saved or sent, or where it ended up. Keeping that copy safe is in your hands too.</InfoP>
+      </InfoBlock>
+
+      <InfoBlock icon="edit" title="Deleting things">
+        <InfoP>Delete a note or a document from its own page. Every delete sits behind a confirm, and cannot be undone.</InfoP>
+        <InfoP>Remove a whole child's record from their details sheet (hold the avatar, or tap the child's card in Settings). It is deliberately hard to do by accident: you confirm what will go, you are offered a backup file first, and you type DELETE to finish. The last child cannot be removed: the app always keeps at least one record.</InfoP>
+        <InfoP last>Deleting in Jotla deletes from this device. There is no copy on our side to linger, because there never was one. Copies you exported earlier stay wherever you put them.</InfoP>
+      </InfoBlock>
+
       <InfoBlock icon="clock" title="What is coming">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <PlanRow title="Encrypted export" note="Your own locked copy, only you hold the key." />
-          <PlanRow title="Lock the app" note="A fingerprint, face, or PIN on this device." />
+          <PlanRow title="Encrypted export" note="Your own locked copy, only you hold the key. Until then, keep exports somewhere private, like your own cloud drive." />
+          <PlanRow title="Lock the app" note="A fingerprint, face, or PIN on this device. Until then, your device's own lock protects the record, and phones can also lock or pin individual apps." />
           <PlanRow title="Family Sync" note="Part of Jotla Plus: the record on every grown-up's phone." pill="Coming soon" />
           <InfoP last>Planned means exactly that: none of the above is switched on yet, and nothing in this app pretends to be.</InfoP>
         </div>
@@ -1589,6 +1538,17 @@ function InfoAboutScreen({ nav }) {
 }
 
 // ---------------- Settings ----------------
+// The founder's sixth pass (12 Jul 2026) consolidated ALL informational
+// content into the one About page: the old "Where your record is kept",
+// "How your data is kept", "Privacy, in plain words" and "What Jotla is for"
+// rows repeated the same promises (two of them even opened the same page),
+// so they are gone and About Jotla is the single door. The planned-feature
+// rows (Encrypted export, Lock the app) explain themselves on About's coming
+// board instead of sitting here as dead rows. "Add another child" left too
+// (the header avatar's profile sheet owns it); this build never had a
+// hand-the-phone row, so there was nothing to remove there. Interactive
+// things stay: export runs, Restore from an export really restores (live in
+// this build, unlike native), the child editor opens, the feedback mail sends.
 function SettingsRow({ icon, title, sub, onClick, right, last }) {
   return (
     <button onClick={onClick} className={onClick ? 'j-press' : ''} style={{ width: '100%', textAlign: 'left', border: 'none',
@@ -1745,14 +1705,15 @@ function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
                   : ''}
               </span>
             </div>
-            <SettingsRow icon={<Icon name="shield" size={20} color="var(--blue)" />} title="Where your record is kept"
-              sub="On this device, in this browser's own storage. We never see it." onClick={() => nav.go('infodata')} />
+            {/* Where the record lives and the planned encrypted export both
+                explain themselves on the About page now (founder consolidation,
+                12 Jul 2026): this card keeps only the real actions. */}
             <SettingsRow icon={<Icon name="download" size={20} color="var(--blue)" />} title="Export my data"
               sub={'A plain copy of ' + childName + "'s whole record. Always free."} onClick={exportData}
               right={<span className="j-pillbadge" style={{ background: 'var(--tint-green)', color: 'var(--green-ink)' }}>Free</span>} />
             <label className="j-press" style={{ width: '100%', textAlign: 'left', border: 'none',
               background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14,
-              padding: '14px 16px', borderBottom: '1px solid var(--line)' }}>
+              padding: '14px 16px' }}>
               <span style={{ width: 38, height: 38, borderRadius: 11, background: 'var(--tint-blue)', flexShrink: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="attach" size={20} color="var(--blue)" /></span>
               <span style={{ flex: 1 }}>
@@ -1762,9 +1723,6 @@ function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
               <Icon name="chevronRight" size={18} color="var(--faint)" />
               <input type="file" accept="application/json,.json" style={{ display: 'none' }} onChange={onImportFile} />
             </label>
-            <SettingsRow icon={<Icon name="lock" size={20} color="var(--blue)" />} title="Encrypted export"
-              sub="Your own locked copy, only you hold the key." onClick={() => nav.go('infodata')}
-              right={<span className="j-pillbadge" style={{ background: 'var(--tag-grey-bg)', color: 'var(--muted)' }}>Planned</span>} last />
           </div>
 
           <SectionLabel>Appearance</SectionLabel>
@@ -1804,15 +1762,6 @@ function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
             </div>
           </div>
 
-          <SectionLabel>Privacy</SectionLabel>
-          <div className="j-card" style={{ marginBottom: 20, overflow: 'hidden' }}>
-            <SettingsRow icon={<Icon name="lock" size={20} color="var(--blue)" />} title="Lock the app"
-              sub="A fingerprint, face, or PIN on this device." onClick={() => nav.go('infoprivacy')}
-              right={<span className="j-pillbadge" style={{ background: 'var(--tag-grey-bg)', color: 'var(--muted)' }}>Planned</span>} />
-            <SettingsRow icon={<Icon name="note" size={20} color="var(--blue)" />} title="How your data is kept"
-              sub="The whole privacy promise, in plain words." onClick={() => nav.go('infoprivacy')} last />
-          </div>
-
           {feedbackCard}
 
           {/* privacy reassurance: no account, local lock, plain trust copy */}
@@ -1826,11 +1775,8 @@ function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
           <div className="j-card" style={{ marginBottom: 20, overflow: 'hidden' }}>
             <SettingsRow icon={<Icon name="hand" size={20} color="var(--blue)" />} title="Take the tour"
               sub="A one-minute walkthrough of the whole app." onClick={() => nav.go('tour')} />
-            <SettingsRow icon={<Icon name="plus" size={20} color="var(--blue)" />} title="Add another child"
-              sub="Start a fresh, blank record." onClick={() => nav.go('addchild')} />
-            <SettingsRow icon={<Icon name="heart" size={20} color="var(--blue)" />} title="What Jotla is for" onClick={() => nav.go('infomission')} />
-            <SettingsRow icon={<Icon name="note" size={20} color="var(--blue)" />} title="Privacy, in plain words" onClick={() => nav.go('infoprivacy')} />
-            <SettingsRow icon={<Icon name="star" size={20} color="var(--blue)" />} title="About Jotla" onClick={() => nav.go('infoabout')} last />
+            <SettingsRow icon={<Icon name="star" size={20} color="var(--blue)" />} title="About Jotla"
+              sub="What it is, your privacy, where the record lives, what is coming." onClick={() => nav.go('infoabout')} last />
           </div>
 
           {nav.plus && plusCard}
@@ -1842,5 +1788,4 @@ function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
   );
 }
 
-Object.assign(window, { FindScreen, EvidenceScreen, AddDocScreen, DocScreen, UnlockScreen, SettingsScreen,
-  InfoMissionScreen, InfoPrivacyScreen, InfoDataScreen, InfoAboutScreen });
+Object.assign(window, { FindScreen, EvidenceScreen, AddDocScreen, DocScreen, UnlockScreen, SettingsScreen, InfoAboutScreen });

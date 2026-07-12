@@ -1,4 +1,4 @@
-// jotla-onboard.jsx — Add a child (blank-record onboarding) + a guided app tour.
+// jotla-onboard.jsx: Add a child (blank-record onboarding) + a guided app tour.
 const {
   useState: useStateO
 } = React;
@@ -17,7 +17,19 @@ function AddChildScreen({
   const [figure, setFigure] = useStateO('#3A7BD4');
   const [photo, setPhoto] = useStateO(null);
   const [cropSrc, setCropSrc] = useStateO(null);
+  // The adults around the child (teachers, TAs, helpers), gathered here so the
+  // record knows the care circle from day one and the child's own question
+  // cards can offer these names as one-tap chips (founder spec, 12 Jul 2026).
+  const [adults, setAdults] = useStateO([]);
+  const [adultDraft, setAdultDraft] = useStateO('');
   const Cropper = window.PhotoCropper;
+  const addAdult = () => {
+    const n = adultDraft.trim();
+    if (!n) return;
+    if (!adults.some(a => a.toLowerCase() === n.toLowerCase())) setAdults([...adults, n]);
+    setAdultDraft('');
+  };
+  const removeAdult = n => setAdults(adults.filter(a => a !== n));
   const preview = {
     name: name.trim() || 'New child',
     glyph,
@@ -27,13 +39,17 @@ function AddChildScreen({
   const canSave = name.trim().length > 0;
   const create = () => {
     if (!canSave) return;
+    // A name still sitting in the box counts: parents tap Create expecting it.
+    const pendingAdult = adultDraft.trim();
+    const allAdults = pendingAdult && !adults.some(a => a.toLowerCase() === pendingAdult.toLowerCase()) ? [...adults, pendingAdult] : adults;
     nav.addChild({
       name: name.trim(),
       school: school.trim(),
       year: year.trim(),
       glyph,
       figure,
-      photo
+      photo,
+      adults: allAdults
     });
     nav.go('tour');
   };
@@ -168,7 +184,79 @@ function AddChildScreen({
     style: {
       marginBottom: 22
     }
-  }), /*#__PURE__*/React.createElement(FieldLabel, null, "Pick an avatar"), /*#__PURE__*/React.createElement("p", {
+  }), /*#__PURE__*/React.createElement(FieldLabel, null, "The adults around them"), /*#__PURE__*/React.createElement("p", {
+    className: "j-sm",
+    style: {
+      marginTop: -4,
+      marginBottom: 10
+    }
+  }, "Optional. Their teacher, TA or club leader. When ", preview.name === 'New child' ? 'your child' : preview.name, " is asked who was with them, these names become one-tap answers."), adults.length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginBottom: 10
+    }
+  }, adults.map(a => /*#__PURE__*/React.createElement("button", {
+    key: a,
+    className: "j-press",
+    onClick: () => removeAdult(a),
+    "aria-label": 'Remove ' + a,
+    style: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 6,
+      border: '1.5px solid var(--chip-border)',
+      background: 'var(--card)',
+      borderRadius: 999,
+      padding: '8px 14px',
+      cursor: 'pointer',
+      fontFamily: "'Outfit', system-ui",
+      fontWeight: 500,
+      fontSize: 'calc(14.5px * var(--tscale, 1))',
+      color: 'var(--ink)'
+    }
+  }, a, " ", /*#__PURE__*/React.createElement(Icon, {
+    name: "close",
+    size: 14,
+    color: "var(--faint)"
+  })))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 10,
+      marginBottom: 22,
+      alignItems: 'stretch'
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    className: "j-input",
+    value: adultDraft,
+    onChange: e => setAdultDraft(e.target.value),
+    onKeyDown: e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addAdult();
+      }
+    },
+    placeholder: "Mrs Price, Mr Okafor the TA...",
+    "aria-label": "Add an adult",
+    style: {
+      flex: 1,
+      minWidth: 0
+    }
+  }), /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-soft",
+    onClick: addAdult,
+    disabled: !adultDraft.trim(),
+    style: {
+      width: 'auto',
+      flexShrink: 0,
+      padding: '0 22px',
+      ...(adultDraft.trim() ? {} : {
+        opacity: 0.5,
+        cursor: 'default'
+      })
+    }
+  }, "Add")), /*#__PURE__*/React.createElement(FieldLabel, null, "Pick an avatar"), /*#__PURE__*/React.createElement("p", {
     className: "j-sm",
     style: {
       marginTop: -4,
@@ -277,7 +365,7 @@ const TOUR_STEPS = name => [{
   icon: 'today',
   illo: 'tourToday',
   title: 'Today is home',
-  body: 'The Today screen is where you land. It shows how the day is going and gives you two calm shortcuts: hand the phone to your child, or capture what happened at the gate.'
+  body: "The Today screen is where you land. It shows how the day is going and gives you two calm shortcuts: your child's own check-in, or capture what happened at the gate."
 }, {
   tint: 'var(--tint-green)',
   color: 'var(--green)',
@@ -299,7 +387,7 @@ const TOUR_STEPS = name => [{
   face: true,
   illo: 'tourChild',
   title: 'Their day, in their words',
-  body: `Tap "Your day" to hand the phone to ${name}. Friendly faces and simple scenes let them show how school felt, with no typing.`
+  body: `Tap "Your day" and ${name} can show how school felt: friendly faces and simple scenes, no typing. Do it together, or hand the phone over.`
 }, {
   tint: 'var(--tint-blue)',
   color: 'var(--blue)',

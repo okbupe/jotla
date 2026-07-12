@@ -1,4 +1,4 @@
-// jotla-app.jsx — shell: router, persistent header, tab bar, dark mode, profiles, persistence, scaling.
+// jotla-app.jsx: shell: router, persistent header, tab bar, dark mode, profiles, persistence, scaling.
 const {
   useState: useStateApp,
   useEffect: useEffectApp,
@@ -444,6 +444,26 @@ function ChildOptionsSheet({
   const J = window.JOTLA;
   const [delOpen, setDelOpen] = useStateApp(false);
   const [cropSrc, setCropSrc] = useStateApp(null);
+  // The adults around the child (the circle): chips edit live like every other
+  // field in this sheet, deduped case-insensitively. Done counts a name still
+  // sitting in the box (parents tap Done expecting it), like onboarding's Create.
+  const [adultDraft, setAdultDraft] = useStateApp('');
+  const adults = profile.adults || [];
+  const addAdult = () => {
+    const n = adultDraft.trim();
+    if (!n) return;
+    if (!adults.some(a => a.toLowerCase() === n.toLowerCase())) onChange({
+      adults: [...adults, n]
+    });
+    setAdultDraft('');
+  };
+  const done = () => {
+    const pending = adultDraft.trim();
+    if (pending && !adults.some(a => a.toLowerCase() === pending.toLowerCase())) onChange({
+      adults: [...adults, pending]
+    });
+    onClose();
+  };
   const Cropper = window.PhotoCropper;
   return /*#__PURE__*/React.createElement("div", {
     className: "j-sheet-scrim",
@@ -639,11 +659,84 @@ function ChildOptionsSheet({
       year: e.target.value
     }),
     style: {
-      marginBottom: 22
+      marginBottom: 16
+    }
+  }), /*#__PURE__*/React.createElement(FieldLabel, null, "The adults around ", (profile.name || '').trim() || 'them'), /*#__PURE__*/React.createElement("p", {
+    className: "j-sm",
+    style: {
+      marginBottom: 10
+    }
+  }, "Their teacher, TA or club leader. One-tap answers when ", (profile.name || '').trim() || 'your child', " is asked who was with them."), adults.length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginBottom: 10
+    }
+  }, adults.map(a => /*#__PURE__*/React.createElement("button", {
+    key: a,
+    className: "j-press",
+    onClick: () => onChange({
+      adults: adults.filter(x => x !== a)
+    }),
+    "aria-label": 'Remove ' + a,
+    style: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 6,
+      border: '1.5px solid var(--chip-border)',
+      background: 'var(--card)',
+      borderRadius: 999,
+      padding: '8px 14px',
+      cursor: 'pointer',
+      fontFamily: "'Outfit', system-ui",
+      fontWeight: 500,
+      fontSize: 'calc(14.5px * var(--tscale, 1))',
+      color: 'var(--ink)'
+    }
+  }, a, " ", /*#__PURE__*/React.createElement(Icon, {
+    name: "close",
+    size: 14,
+    color: "var(--faint)"
+  })))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 10,
+      marginBottom: 22,
+      alignItems: 'stretch'
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    className: "j-input",
+    value: adultDraft,
+    onChange: e => setAdultDraft(e.target.value),
+    onKeyDown: e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addAdult();
+      }
+    },
+    placeholder: "Mrs Price, Mr Okafor the TA...",
+    "aria-label": "Add an adult",
+    style: {
+      flex: 1,
+      minWidth: 0
     }
   }), /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-soft",
+    onClick: addAdult,
+    disabled: !adultDraft.trim(),
+    style: {
+      width: 'auto',
+      flexShrink: 0,
+      padding: '0 22px',
+      ...(adultDraft.trim() ? {} : {
+        opacity: 0.5,
+        cursor: 'default'
+      })
+    }
+  }, "Add")), /*#__PURE__*/React.createElement("button", {
     className: "j-btn j-btn-primary",
-    onClick: onClose
+    onClick: done
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "check",
     size: 20,
@@ -1327,6 +1420,9 @@ function App({
     addChild: data => {
       const id = 'c' + Date.now();
       const fig = data.figure || '#3A7BD4';
+      // adults: the circle around the child (teachers, TAs, helpers), named at
+      // onboarding or in the child editor. It lives on the child object, so it
+      // rides the export and restore like everything else about them.
       const np = {
         id,
         name: data.name || 'New child',
@@ -1337,7 +1433,8 @@ function App({
         faceBg: '#EAF1FB',
         figure: fig,
         glyph: data.glyph || 'person',
-        photo: data.photo || null
+        photo: data.photo || null,
+        adults: data.adults || []
       };
       setCustomProfiles(list => [...list, np]);
       setProfileId(id);
@@ -1529,21 +1626,12 @@ function App({
         view: view
       });
       break;
+    // The old infomission/infoprivacy/infodata pages are gone: About is the one
+    // information page (founder consolidation, 12 Jul 2026 sixth pass). The old
+    // route names still land there so a saved navigation state never strands.
     case 'infomission':
-      screen = /*#__PURE__*/React.createElement(InfoMissionScreen, {
-        nav: nav
-      });
-      break;
     case 'infoprivacy':
-      screen = /*#__PURE__*/React.createElement(InfoPrivacyScreen, {
-        nav: nav
-      });
-      break;
     case 'infodata':
-      screen = /*#__PURE__*/React.createElement(InfoDataScreen, {
-        nav: nav
-      });
-      break;
     case 'infoabout':
       screen = /*#__PURE__*/React.createElement(InfoAboutScreen, {
         nav: nav

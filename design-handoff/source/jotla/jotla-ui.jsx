@@ -1,9 +1,9 @@
-// jotla-ui.jsx — shared layout atoms used across screens.
+// jotla-ui.jsx: shared layout atoms used across screens.
 const { useState, useRef, useEffect } = React;
 
 // The single source of the visible build number. Bump this every release
 // (and keep sw.js VERSION in step) so the Settings footer can never lie.
-window.JOTLA_BUILD = '1.9.2';
+window.JOTLA_BUILD = '1.10.0';
 
 // The app's data epoch: the earliest day a log can land on (Quick log's own
 // minimum day, and how far back the Month calendar pages). One home here, on

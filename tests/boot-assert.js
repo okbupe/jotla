@@ -97,7 +97,7 @@ function ok(name, cond) {
   ok('saved Wins entry appears on Today', (await page.locator('#root').innerText()).includes('Boot-assert win: tried a new food'));
   await page.getByText('Settings', { exact: true }).last().click();
   await page.waitForTimeout(450);
-  ok('footer shows the bumped build', (await page.locator('#root').innerText()).includes('Test build 1.9.2'));
+  ok('footer shows the bumped build', (await page.locator('#root').innerText()).includes('Test build 1.10.0'));
   await ctx.close();
 
   // ---- 6. app boundary: poisoned storage never blanks the app ----
@@ -160,6 +160,11 @@ function ok(name, cond) {
   await page3.waitForTimeout(400);
   ok('tour dots are buttons that navigate', (await page3.locator('#root').innerText()).includes('Today is home'));
   ok('step 2 carries its own illustrated scene', (await page3.locator('svg[viewBox="0 0 220 150"]').count()) >= 1);
+  // tour copy is tier-neutral (1.10.0, sixth-pass item 34)
+  ok('tour Today slide reads check-in, not hand-the-phone', (await page3.locator('#root').innerText()).includes("your child's own check-in"));
+  await page3.locator('button[aria-label^="Step 5 of"]').click();
+  await page3.waitForTimeout(400);
+  ok('tour child slide offers together or hand over', (await page3.locator('#root').innerText()).includes('Do it together, or hand the phone over.'));
   await ctx3.close();
 
   // ---- 8. build 1.9.0 (12 Jul native parity), free tier ----
@@ -175,6 +180,8 @@ function ok(name, cond) {
   const todayText = await page4.locator('#root').innerText();
   ok('Today strip carries the Gate bar', todayText.includes('Gate'));
   ok('Today strip carries the Dysregulation bar', todayText.includes('Dysregulation'));
+  // item 34 (1.10.0): Free keeps the hand-the-phone framing on the tile
+  ok("free Your day tile keeps 'Hand the phone'", todayText.includes('Hand the phone to Sam'));
 
   // month view: visible month chevrons, fixed-height flash-free paging,
   // any past day tappable, and the Day view offering "Add a note"
@@ -225,20 +232,32 @@ function ok(name, cond) {
   await page4.locator('button[aria-label="Close"]').first().click();
   await page4.waitForTimeout(400);
 
-  // settings info sheets became full pushed pages, About drops the fonts line
+  // Settings after the sixth-pass consolidation (1.10.0): the info rows fold
+  // into the one About page, the planned rows live on its coming board, and
+  // adding a child belongs to the header avatar's profile sheet.
   await page4.getByText('Settings', { exact: true }).last().click();
   await page4.waitForTimeout(450);
-  await page4.getByText('What Jotla is for', { exact: true }).first().click();
-  await page4.waitForTimeout(500);
-  const missionText = await page4.locator('#root').innerText();
-  ok('mission opens as a full page with the whole story', missionText.includes('The tool parents are told to need'));
-  await page4.locator('button[aria-label="Back"]').first().click();
-  await page4.waitForTimeout(400);
+  const settingsNow = await page4.locator('#root').innerText();
+  ok('Settings drops the Add another child row', !settingsNow.includes('Add another child'));
+  ok('Settings drops the duplicated info rows', !settingsNow.includes('What Jotla is for')
+    && !settingsNow.includes('Privacy, in plain words') && !settingsNow.includes('Where your record is kept')
+    && !settingsNow.includes('How your data is kept'));
+  ok('Settings drops the planned-feature rows', !settingsNow.includes('Encrypted export') && !settingsNow.includes('Lock the app'));
+  ok('Settings keeps the live Restore action', settingsNow.includes('Restore from an export'));
+  ok('Settings keeps the privacy banner and feedback card', settingsNow.includes('Nothing leaves the phone') && settingsNow.includes('Tell us what you think'));
+  ok('the three old info pages are out of the bundle', await page4.evaluate(() =>
+    typeof window.InfoMissionScreen === 'undefined' && typeof window.InfoPrivacyScreen === 'undefined' && typeof window.InfoDataScreen === 'undefined'));
   await page4.getByText('About Jotla', { exact: true }).first().click();
   await page4.waitForTimeout(500);
   const aboutText = await page4.locator('#root').innerText();
-  ok('About carries the live build number', aboutText.includes('Early test build 1.9.2'));
+  ok('About carries the live build number', aboutText.includes('Early test build 1.10.0'));
   ok('About drops the fonts credit line', !aboutText.includes('Typefaces'));
+  ok('About owns the mission story', aboutText.includes('Nobody gives them the tool'));
+  ok('About says the privacy promise exactly once', (aboutText.match(/We never send your record anywhere/g) || []).length === 1);
+  ok('About owns the record home story, browser truth', aboutText.includes('Where the record lives') && aboutText.includes("this browser's own storage"));
+  ok('About owns the doors-out story', aboutText.includes('What leaves this device') && aboutText.includes('Email this to the teacher'));
+  ok('About keeps the web-true export claims', aboutText.includes('Videos are never inside it') && aboutText.includes('over 2 MB'));
+  ok('About carries the coming board', aboutText.includes('What is coming') && aboutText.includes('Family Sync'));
   ok('no uncaught page errors across suite 8', errors4.length === 0);
   await ctx4.close();
 
@@ -259,6 +278,8 @@ function ok(name, cond) {
   await page5.waitForTimeout(1200);
 
   ok('header wordmark wears the +PLUS pill', (await page5.locator('.j-appheader').innerText()).includes('+PLUS'));
+  // item 34 (1.10.0): Plus frames the check-in as a two-of-you thing
+  ok("Plus Your day tile reads 'Do it together'", (await page5.locator('#root').innerText()).includes('Do it together with Sam'));
 
   // Plus quick log: the media tiles are live
   await page5.getByText('Log', { exact: true }).last().click();
@@ -437,6 +458,126 @@ function ok(name, cond) {
   ok('Plus month graph: flush edges and even gaps', !!gMonth && gMonth.flushLeft < 1 && gMonth.flushRight < 1 && gMonth.gapSpread < 1.5);
   ok('no uncaught page errors across suite 11', errors8.length === 0);
   await ctx8.close();
+
+  // ---- 12. build 1.10.0: the adults around a child (the circle) ----
+  console.log('Suite 12: the adults circle (1.10.0)');
+  // One Plus context walks the whole feature end to end: name adults at
+  // onboarding (dedupe, pending-name-counts), round-trip them in the child
+  // editor, then prove the child's own question cards lead with them.
+  const ctx9 = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  const page9 = await ctx9.newPage();
+  const errors9 = [];
+  page9.on('pageerror', e => errors9.push(String(e)));
+  await page9.addInitScript(() => {
+    try {
+      localStorage.setItem('jotla_prefs_v2', JSON.stringify({
+        dark: false, tscale: 1, profileId: 'sam', plus: true, childCfg: {}, customProfiles: [], deletedIds: [],
+      }));
+    } catch (e) {}
+  });
+  await page9.goto(URL_APP, { waitUntil: 'networkidle' });
+  await page9.waitForTimeout(1200);
+
+  // onboarding gathers the circle
+  await page9.locator('button[aria-label="Switch child, or hold to edit"]').click();
+  await page9.waitForTimeout(400);
+  // The tab bar overlays the bottom sliver of the profile sheet (z 40 over 30),
+  // so tap the upper half of the row, exactly where a thumb lands.
+  await page9.locator('button:has-text("Add a child")').click({ position: { x: 60, y: 14 } });
+  await page9.waitForTimeout(500);
+  const addChildText = await page9.locator('#root').innerText();
+  ok('onboarding offers the optional adults section', addChildText.includes('The adults around them') && addChildText.includes('one-tap answers'));
+  await page9.locator('input[placeholder="First name or nickname"]').fill('Nia');
+  await page9.locator('input[aria-label="Add an adult"]').fill('Mrs Price');
+  await page9.getByText('Add', { exact: true }).first().click();
+  await page9.waitForTimeout(250);
+  ok('an added adult becomes a removable chip', (await page9.locator('button[aria-label="Remove Mrs Price"]').count()) === 1);
+  await page9.locator('input[aria-label="Add an adult"]').fill('mrs price');
+  await page9.getByText('Add', { exact: true }).first().click();
+  await page9.waitForTimeout(250);
+  ok('a duplicate name is deduped case-insensitively', (await page9.locator('button[aria-label^="Remove"]').count()) === 1);
+  await page9.locator('input[aria-label="Add an adult"]').fill('Mr Okafor'); // left in the box: Create must count it
+  await page9.getByText("Create Nia's record").click();
+  await page9.waitForTimeout(600);
+  await page9.getByText('Skip', { exact: true }).first().click(); // leave the tour
+  await page9.waitForTimeout(500);
+
+  // the child editor round-trips the circle
+  await page9.getByText('Settings', { exact: true }).last().click();
+  await page9.waitForTimeout(450);
+  await page9.getByText('Edit name, school, colour and avatar').click();
+  await page9.waitForTimeout(450);
+  // Bring the sheet's lower fields clear of the tab bar overlay before acting.
+  await page9.locator('.j-sheet').evaluate(el => { el.scrollTop = el.scrollHeight; });
+  await page9.waitForTimeout(250);
+  ok('edit sheet grows the adults section', (await page9.locator('#root').innerText()).includes('The adults around Nia'));
+  ok('a name still in the box counted on Create', (await page9.locator('button[aria-label="Remove Mr Okafor"]').count()) === 1);
+  ok('the onboarding chip round-tripped', (await page9.locator('button[aria-label="Remove Mrs Price"]').count()) === 1);
+  await page9.locator('button[aria-label="Remove Mrs Price"]').click();
+  await page9.waitForTimeout(250);
+  await page9.locator('input[aria-label="Add an adult"]').fill('Miss Bell');
+  await page9.getByText('Add', { exact: true }).first().click();
+  await page9.waitForTimeout(250);
+  // 'teachers' stays in the box (Done must count it) AND collides with a
+  // generic chip word, so child mode must never show it twice.
+  await page9.locator('input[aria-label="Add an adult"]').fill('teachers');
+  await page9.getByText('Done', { exact: true }).click();
+  await page9.waitForTimeout(450);
+  await page9.getByText('Edit name, school, colour and avatar').click();
+  await page9.waitForTimeout(450);
+  await page9.locator('.j-sheet').evaluate(el => { el.scrollTop = el.scrollHeight; });
+  await page9.waitForTimeout(250);
+  ok('removing a chip sticks', (await page9.locator('button[aria-label="Remove Mrs Price"]').count()) === 0);
+  ok('an add in the edit sheet sticks', (await page9.locator('button[aria-label="Remove Miss Bell"]').count()) === 1);
+  ok('a name still in the box counts on Done', (await page9.locator('button[aria-label="Remove teachers"]').count()) === 1);
+  await page9.getByText('Done', { exact: true }).click();
+  await page9.waitForTimeout(400);
+
+  // child mode: the named adults lead the who-chips, deduped against the generics
+  await page9.getByText('Today', { exact: true }).last().click();
+  await page9.waitForTimeout(450);
+  ok("Plus Your day tile reads 'Do it together' for the new child", (await page9.locator('#root').innerText()).includes('Do it together with Nia'));
+  await page9.getByText('Your day', { exact: true }).first().click();
+  await page9.waitForTimeout(500);
+  await page9.getByText('Start', { exact: true }).first().click();
+  await page9.waitForTimeout(400);
+  await page9.getByText('Next', { exact: true }).first().click();
+  await page9.waitForTimeout(400);
+  await page9.getByText('Happy', { exact: true }).first().click();
+  await page9.waitForTimeout(500);
+  await page9.getByText('More', { exact: true }).first().click();
+  await page9.waitForTimeout(500);
+  const classroomChips = await page9.evaluate(() =>
+    Array.from(document.querySelectorAll('button[aria-pressed]')).map(b => b.textContent.trim()));
+  ok('classroom who-chips lead with the named adults (' + classroomChips.slice(0, 3).join(', ') + ')',
+    classroomChips.indexOf('Mr Okafor') === 0 && classroomChips.indexOf('Miss Bell') === 1
+    && classroomChips.indexOf('Mr Okafor') < classroomChips.indexOf('Teachers'));
+  ok('an adult named after a generic word never doubles',
+    classroomChips.filter(c => c.toLowerCase() === 'teachers').length === 1);
+  // walk the classroom cards closed, then on to the playground
+  for (let k = 0; k < 4; k++) { await page9.getByText(/^(Next|Done)$/).first().click(); await page9.waitForTimeout(350); }
+  await page9.getByText('Next', { exact: true }).first().click(); // lunch scene
+  await page9.waitForTimeout(400);
+  await page9.getByText('Next', { exact: true }).first().click(); // lunch faces
+  await page9.waitForTimeout(400);
+  await page9.getByText('Ok', { exact: true }).first().click();
+  await page9.waitForTimeout(450);
+  await page9.getByText('Next', { exact: true }).first().click(); // playground scene
+  await page9.waitForTimeout(400);
+  await page9.getByText('Next', { exact: true }).first().click(); // playground faces
+  await page9.waitForTimeout(400);
+  await page9.getByText('Happy', { exact: true }).first().click();
+  await page9.waitForTimeout(500);
+  await page9.getByText('More', { exact: true }).first().click();
+  await page9.waitForTimeout(500);
+  const playgroundChips = await page9.evaluate(() =>
+    Array.from(document.querySelectorAll('button[aria-pressed]')).map(b => b.textContent.trim()));
+  ok('playground grown-ups chips lead with the named adults',
+    playgroundChips.indexOf('Mr Okafor') >= 0 && playgroundChips.indexOf('Mr Okafor') < playgroundChips.indexOf('Helpers'));
+  ok('the friends questions never carry the adults',
+    playgroundChips.filter(c => c === 'Mr Okafor').length === 1 && playgroundChips.includes('By myself'));
+  ok('no uncaught page errors across suite 12', errors9.length === 0);
+  await ctx9.close();
 
   await browser.close();
   server.kill();

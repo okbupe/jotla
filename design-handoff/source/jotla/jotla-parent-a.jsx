@@ -1,4 +1,4 @@
-// jotla-parent-a.jsx — Today, Quick log, Handover (Dysregulation).
+// jotla-parent-a.jsx: Today, Quick log, Handover (Dysregulation).
 const { useState: useStateA, useRef: useRefA } = React;
 
 function greeting() {
@@ -46,9 +46,13 @@ function TodayScreen({ nav, entries, today, profile }) {
 
           {/* two tiles first, then the graph below */}
           <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+            {/* Founder call, 12 Jul 2026 (sixth pass): the check-in reads as
+                working together on Plus (the guided questions are a two-of-you
+                thing), hand-the-phone on Free. His confirm is batched. */}
             <ActionTile
               icon={<Icon name="heart" size={20} color="var(--green)" />}
-              title="Your day" sub={'Hand the phone to ' + childName} tint="var(--tint-green)" ink="var(--green-ink)"
+              title="Your day" sub={nav.plus ? 'Do it together with ' + childName : 'Hand the phone to ' + childName}
+              tint="var(--tint-green)" ink="var(--green-ink)"
               onClick={() => nav.go('child')} />
             <ActionTile
               icon={<Icon name="note" size={20} color="var(--blue)" />}
