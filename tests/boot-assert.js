@@ -97,7 +97,7 @@ function ok(name, cond) {
   ok('saved Wins entry appears on Today', (await page.locator('#root').innerText()).includes('Boot-assert win: tried a new food'));
   await page.getByText('Settings', { exact: true }).last().click();
   await page.waitForTimeout(450);
-  ok('footer shows the bumped build', (await page.locator('#root').innerText()).includes('Test build 1.11.0'));
+  ok('footer shows the bumped build', (await page.locator('#root').innerText()).includes('Test build 1.11.1'));
   await ctx.close();
 
   // ---- 6. app boundary: poisoned storage never blanks the app ----
@@ -213,7 +213,7 @@ function ok(name, cond) {
   await page4.waitForTimeout(250);
   await page4.locator('button[aria-label*="opens a calendar"]').first().click();
   await page4.waitForTimeout(400);
-  ok('calendar sheet opens with a full six-week grid', (await page4.locator('.j-sheet button[aria-pressed]').count()) === 42);
+  ok('calendar sheet opens with a full six-week grid', (await page4.locator('.j-sheet .j-pager > div:not([aria-hidden="true"]) > button[aria-pressed]').count()) === 42);
   ok('no typed date input remains in Quick log', (await page4.locator('input[type="date"]').count()) === 0);
   await page4.locator('.j-sheet .j-btn-ghost:has-text("Cancel")').click();
   await page4.waitForTimeout(300);
@@ -250,7 +250,7 @@ function ok(name, cond) {
   await page4.getByText('About Jotla', { exact: true }).first().click();
   await page4.waitForTimeout(500);
   const aboutText = await page4.locator('#root').innerText();
-  ok('About carries the live build number', aboutText.includes('Early test build 1.11.0'));
+  ok('About carries the live build number', aboutText.includes('Early test build 1.11.1'));
   ok('About drops the fonts credit line', !aboutText.includes('Typefaces'));
   ok('About owns the mission story', aboutText.includes('Nobody gives them the tool'));
   ok('About says the privacy promise exactly once', (aboutText.match(/We never send your record anywhere/g) || []).length === 1);
@@ -688,6 +688,77 @@ function ok(name, cond) {
   ok('the imported child brings its photo back as an <img>', (await page11.locator('.j-appheader img[src^="data:image"]').count()) === 1);
   ok('no uncaught page errors across suite 13b', errors11.length === 0);
   await ctx11.close();
+
+  // ---- 14. ninth pass web port (1.11.1): calendar sheets follow the finger ----
+  console.log('Suite 14: calendar sheet swipe pager (1.11.1) + photo buttons row (item 44)');
+  const ctx12 = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  const page12 = await ctx12.newPage();
+  const errors12 = [];
+  page12.on('pageerror', e => errors12.push(String(e)));
+  await page12.goto(URL_APP, { waitUntil: 'networkidle' });
+  await page12.waitForTimeout(1200);
+  // open Quick log -> Another day -> the calendar sheet
+  await page12.getByText('Log', { exact: true }).last().click();
+  await page12.waitForTimeout(500);
+  await page12.locator('button.j-chip:has-text("Another day")').first().click();
+  await page12.waitForTimeout(250);
+  await page12.locator('button[aria-label*="opens a calendar"]').first().click();
+  await page12.waitForTimeout(400);
+  const sheetPager = page12.locator('.j-sheet .j-pager');
+  ok('the calendar sheet day grid is a swipe pager', await sheetPager.count() === 1);
+  const sheetTitle = async () => (await page12.locator('.j-sheet h2').first().innerText()).trim();
+  const t0 = await sheetTitle();
+  const box1 = await sheetPager.boundingBox();
+  // a finger-drag is a scroll: move the pager one page back and let it settle
+  await sheetPager.evaluate(el => { el.scrollLeft -= el.clientWidth; });
+  await page12.waitForTimeout(500);
+  const t1 = await sheetTitle();
+  ok('swiping the grid pages to the previous month (' + t0 + ' -> ' + t1 + ')', t1 !== t0);
+  const box2 = await sheetPager.boundingBox();
+  ok('the sheet grid keeps one fixed height across months', !!box1 && !!box2 && Math.abs(box1.height - box2.height) < 1);
+  // the timeline ends at the bound months, so a hard swipe cannot pass today
+  await sheetPager.evaluate(el => { el.scrollLeft += el.clientWidth * 5; });
+  await page12.waitForTimeout(500);
+  ok('swiping clamps at the max bound month like the chevrons', (await sheetTitle()) === t0);
+  ok('the next chevron sits disabled at the bound', !(await page12.locator('.j-sheet button[aria-label="Next month"]').isEnabled()));
+  // keyboard parity: the sheet pager takes arrow keys like every other pager
+  await sheetPager.focus();
+  await page12.keyboard.press('ArrowLeft');
+  await page12.waitForTimeout(700);
+  ok('ArrowLeft pages the sheet back a month', (await sheetTitle()) === t1);
+  // tap-pick still works after a swipe: pick the 15th of the shown month
+  const pickLabel = '15 ' + t1;
+  await page12.locator('.j-sheet button[aria-label="' + pickLabel + '"]').click();
+  await page12.waitForTimeout(400);
+  ok('picking a day after a swipe closes the sheet', (await page12.locator('.j-sheet-scrim').count()) === 0);
+  const fieldText = await page12.locator('button[aria-label*="opens a calendar"]').first().innerText();
+  ok('the picked day lands in the date field (' + fieldText.trim() + ')', fieldText.includes('15'));
+  await page12.locator('button[aria-label="Close"]').first().click();
+  await page12.waitForTimeout(400);
+
+  // item 44 verify-only: with a photo in place, Change photo + Remove share one row
+  await page12.locator('button[aria-label="Switch child, or hold to edit"]').click();
+  await page12.waitForTimeout(400);
+  await page12.locator('button:has-text("Add a child")').click({ position: { x: 60, y: 14 } });
+  await page12.waitForTimeout(500);
+  await page12.evaluate(async () => {
+    const c = document.createElement('canvas'); c.width = 24; c.height = 24;
+    const cx = c.getContext('2d'); cx.fillStyle = '#4488ff'; cx.fillRect(0, 0, 24, 24);
+    const blob = await new Promise(res => c.toBlob(res, 'image/png'));
+    const f = new File([blob], 'row.png', { type: 'image/png' });
+    const input = document.querySelector('input[type="file"][accept="image/*"]');
+    const dt = new DataTransfer(); dt.items.add(f);
+    input.files = dt.files;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  await page12.waitForTimeout(1100); // crop step opens and loads the image
+  await page12.getByText('Use photo').click();
+  await page12.waitForTimeout(500);
+  const bChange = await page12.locator('label:has-text("Change photo")').first().boundingBox();
+  const bRemove = await page12.locator('button:has-text("Remove")').first().boundingBox();
+  ok('item 44: Change photo and Remove sit on one row', !!bChange && !!bRemove && Math.abs(bChange.y - bRemove.y) < 2);
+  ok('no uncaught page errors across suite 14', errors12.length === 0);
+  await ctx12.close();
 
   await browser.close();
   server.kill();

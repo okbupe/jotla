@@ -1,9 +1,9 @@
 // jotla-ui.jsx: shared layout atoms used across screens.
-const { useState, useRef, useEffect } = React;
+const { useState, useRef, useEffect, useLayoutEffect } = React;
 
 // The single source of the visible build number. Bump this every release
 // (and keep sw.js VERSION in step) so the Settings footer can never lie.
-window.JOTLA_BUILD = '1.11.0';
+window.JOTLA_BUILD = '1.11.1';
 
 // The app's data epoch: the earliest day a log can land on (Quick log's own
 // minimum day, and how far back the Month calendar pages). One home here, on
@@ -62,23 +62,72 @@ function CalendarSheet({ onClose, value, onSelect, minDate, maxDate, onClear, cl
   const J = window.JOTLA;
   const today = J.TODAY_ISO;
   const anchor = value && ISO_RE.test(value) ? value : today;
-  const [shown, setShown] = useState(() => monthIndexOf(anchor));
-  const year = Math.floor(shown / 12), month = shown % 12;
 
-  // Paging past the bounds would show a fully-disabled month, so the chevrons
-  // clamp at the bound months.
+  // Item 43 (13 Jul 2026): the day grid swipes between months and follows the
+  // finger, exactly like the Month tab. Same flash-free technique: one fixed
+  // timeline of same-size month panels, so a settled swipe never rebuilds or
+  // recentres anything. The timeline simply ENDS at the bound months, so a
+  // swipe clamps exactly where the chevrons do; an open-ended bound gets a
+  // ten-year timeline end. Only the shown month's near neighbours materialise
+  // their cells; the rest are empty same-size panels.
   const minIdx = minDate ? monthIndexOf(minDate) : null;
   const maxIdx = maxDate ? monthIndexOf(maxDate) : null;
-  const canPrev = minIdx === null || shown > minIdx;
-  const canNext = maxIdx === null || shown < maxIdx;
+  const anchorIdx = monthIndexOf(anchor);
+  const startIdx = minIdx !== null ? minIdx : anchorIdx - 120;
+  const endIdx = maxIdx !== null ? maxIdx : anchorIdx + 120;
+  const [shown, setShown] = useState(() => Math.max(startIdx, Math.min(endIdx, anchorIdx)));
+  const year = Math.floor(shown / 12), month = shown % 12;
+  const canPrev = shown > startIdx;
+  const canNext = shown < endIdx;
 
-  const cells = calCellsFor(year, month);
+  const monthIdxs = [];
+  for (let i = startIdx; i <= endIdx; i++) monthIdxs.push(i);
+  const pagerRef = useRef(null);
+  const settleRef = useRef(null);
+  const targetRef = useRef(shown); // where the pager is headed, for rapid chevrons
+  useLayoutEffect(() => {
+    // Park the pager on the anchor month before the first paint; never again
+    // from a render (a live gesture must never have the grid moved under it).
+    const el = pagerRef.current;
+    if (el && el.clientWidth) el.scrollLeft = (targetRef.current - startIdx) * el.clientWidth;
+    // Re-align on a real resize: a paging scroller holds its pixel offset
+    // across a resize, which would otherwise wedge it between two months.
+    const realign = () => {
+      const el2 = pagerRef.current;
+      if (el2 && el2.clientWidth) el2.scrollLeft = (targetRef.current - startIdx) * el2.clientWidth;
+    };
+    window.addEventListener('resize', realign);
+    return () => window.removeEventListener('resize', realign);
+  }, []);
+  const adopt = (target) => {
+    targetRef.current = target;
+    setShown(s => (target === s ? s : target));
+  };
+  // Title and chevrons follow the settle; the scroll is the single source of
+  // movement.
+  const onPagerScroll = () => {
+    clearTimeout(settleRef.current);
+    settleRef.current = setTimeout(() => {
+      const el = pagerRef.current;
+      if (!el || !el.clientWidth) return;
+      const i = Math.round(el.scrollLeft / el.clientWidth);
+      adopt(Math.max(startIdx, Math.min(endIdx, startIdx + i)));
+    }, 90);
+  };
+  const move = (delta) => {
+    const el = pagerRef.current;
+    const next = Math.max(startIdx, Math.min(endIdx, targetRef.current + delta));
+    if (next === targetRef.current || !el || !el.clientWidth) return;
+    targetRef.current = next;
+    el.scrollTo({ left: (next - startIdx) * el.clientWidth, behavior: 'smooth' });
+  };
+
   const pick = (iso) => { onSelect(iso); onClose(); };
 
   const chevron = (dir) => {
     const enabled = dir === 'prev' ? canPrev : canNext;
     return (
-      <button onClick={() => enabled && setShown(s => s + (dir === 'prev' ? -1 : 1))} disabled={!enabled}
+      <button onClick={() => enabled && move(dir === 'prev' ? -1 : 1)} disabled={!enabled}
         aria-label={dir === 'prev' ? 'Previous month' : 'Next month'} className="j-press"
         style={{ width: 44, height: 44, borderRadius: 14, border: 'none', background: 'var(--chip-bg)',
           boxShadow: 'var(--card-shadow)', cursor: enabled ? 'pointer' : 'default', opacity: enabled ? 1 : 0.4,
@@ -102,27 +151,44 @@ function CalendarSheet({ onClose, value, onSelect, minDate, maxDate, onClear, cl
             <div key={d} style={{ textAlign: 'center', fontSize: 'calc(12px * var(--tscale, 1))', fontWeight: 500, color: 'var(--faint)' }}>{d}</div>
           ))}
         </div>
-        {/* day grid: today ringed, the chosen day filled blue, out-of-rule days
-            greyed and untappable, neighbour-month days dimmed */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 }}>
-          {cells.map(c => {
-            const disabled = (minDate !== undefined && c.iso < minDate) || (maxDate !== undefined && c.iso > maxDate);
-            const selected = value !== null && value !== undefined && c.iso === value;
-            const isToday = c.iso === today;
-            const ink = selected ? '#fff' : disabled ? 'var(--line)' : isToday ? 'var(--blue)' : c.inMonth ? 'var(--ink)' : 'var(--faint)';
-            const [cy, cm] = c.iso.split('-').map(Number);
+        {/* day grid pager: today ringed, the chosen day filled blue, out-of-rule
+            days greyed and untappable, neighbour-month days dimmed; always
+            exactly six week rows, so the sheet never resizes while paging */}
+        <div ref={pagerRef} onScroll={onPagerScroll} className="j-pager" {...pagerKeyProps(pagerRef, 'Calendar months')}
+          style={{ display: 'flex', overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch', outline: 'none' }}>
+          {monthIdxs.map(idx => {
+            if (Math.abs(idx - shown) > 2) {
+              return <div key={idx} aria-hidden="true" style={{ flex: '0 0 100%', width: '100%', scrollSnapAlign: 'start' }} />;
+            }
+            const py = Math.floor(idx / 12), pm = idx % 12;
+            // Only the settled month is exposed to assistive tech and the tab
+            // order; the materialised neighbours are visual-only until adopted.
+            const hot = idx === shown;
             return (
-              <button key={c.iso} onClick={() => !disabled && pick(c.iso)} disabled={disabled}
-                aria-label={`${c.d} ${J.MONTH_NAMES[cm - 1]} ${cy}`} aria-pressed={selected}
-                className={disabled ? '' : 'j-press'}
-                style={{ aspectRatio: '1 / 1', borderRadius: 12, border: 'none', cursor: disabled ? 'default' : 'pointer',
-                  background: selected ? 'var(--blue)' : 'transparent',
-                  boxShadow: isToday && !selected ? 'inset 0 0 0 2px var(--blue)' : 'none',
-                  opacity: disabled ? 0.55 : c.inMonth ? 1 : 0.5,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ fontFamily: "'Outfit', system-ui", fontWeight: selected || isToday ? 600 : 500,
-                  fontSize: 'calc(15px * var(--tscale, 1))', color: ink }}>{c.d}</span>
-              </button>
+              <div key={idx} aria-hidden={hot ? undefined : 'true'} style={{ flex: '0 0 100%', width: '100%', scrollSnapAlign: 'start',
+                display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6, alignContent: 'start' }}>
+                {calCellsFor(py, pm).map(c => {
+                  const disabled = (minDate !== undefined && c.iso < minDate) || (maxDate !== undefined && c.iso > maxDate);
+                  const selected = value !== null && value !== undefined && c.iso === value;
+                  const isToday = c.iso === today;
+                  const ink = selected ? '#fff' : disabled ? 'var(--line)' : isToday ? 'var(--blue)' : c.inMonth ? 'var(--ink)' : 'var(--faint)';
+                  const [cy, cm] = c.iso.split('-').map(Number);
+                  return (
+                    <button key={c.iso} onClick={() => !disabled && pick(c.iso)} disabled={disabled}
+                      tabIndex={hot ? undefined : -1}
+                      aria-label={`${c.d} ${J.MONTH_NAMES[cm - 1]} ${cy}`} aria-pressed={selected}
+                      className={disabled ? '' : 'j-press'}
+                      style={{ aspectRatio: '1 / 1', borderRadius: 12, border: 'none', cursor: disabled ? 'default' : 'pointer',
+                        background: selected ? 'var(--blue)' : 'transparent',
+                        boxShadow: isToday && !selected ? 'inset 0 0 0 2px var(--blue)' : 'none',
+                        opacity: disabled ? 0.55 : c.inMonth ? 1 : 0.5,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span style={{ fontFamily: "'Outfit', system-ui", fontWeight: selected || isToday ? 600 : 500,
+                        fontSize: 'calc(15px * var(--tscale, 1))', color: ink }}>{c.d}</span>
+                    </button>
+                  );
+                })}
+              </div>
             );
           })}
         </div>
