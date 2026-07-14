@@ -1835,15 +1835,28 @@ function DocScreen({
 
 // ---------------- Jotla Plus (the three-layer money model) ----------------
 
-// Free is a calm, flat darker blue. Plus has its own purple identity. The coming-soon
-// tier now wears the premium navy + gold look (and the sparkle) that Plus used to have.
+// The money model (decisions/log.md, 2026-07-14, Bupe's money gate):
+//   Free      £0 forever.
+//   Plus      £49 a year. Annual only, never monthly. Family Sync is inside it.
+//   Jotla AI  £79 a year, coming 2027, and it INCLUDES Plus (£79 in total,
+//             not £49 + £79). It replaces the old "Living Companion" tier.
+// There is no one-time price and no lifetime buyout of any kind. The old
+// buy-once copy (pay once, yours to keep, no subscription, no timers) is
+// retired with it and must not come back.
+const PLUS_PRICE = '£49';
+const PLUS_PERIOD = 'a year';
+const AI_PRICE = '£79';
+
+// Free is a calm, flat darker blue. Plus has its own purple identity. The premium
+// navy + gold look (and the sparkle) dresses Jotla AI, the Settings upsell card and
+// the dormant promotion kit.
 const FREE_BLUE = '#1A56A8';
 const PLUS_GRAD = 'linear-gradient(135deg, #3C2A72 0%, #6E54D6 100%)';
 const PLUS_ACCENT = '#CDBBF7';
 const PLUS_ACCENT_DEEP = '#6E54D6';
-const LIVING_GRAD = 'linear-gradient(135deg, #14294A 0%, #1E5099 100%)';
-const LIVING_GOLD = '#E6B85C';
-const LIVING_GOLD_DEEP = '#C9912F';
+const PREMIUM_GRAD = 'linear-gradient(135deg, #14294A 0%, #1E5099 100%)';
+const PREMIUM_GOLD = '#E6B85C';
+const PREMIUM_GOLD_DEEP = '#C9912F';
 
 // A simple check list used on each tier page.
 function CheckList({
@@ -1955,7 +1968,19 @@ function PlusFeature({
   }, plain)));
 }
 const FREE_ITEMS = ['Daily logging and the quick log', 'The child walkthrough', 'Your basic timeline', 'Plain keyword search of your own notes', 'Raw data export', 'Appeal-deadline safety reminders'];
-const LIVING_ITEMS = ['EHCP and SEND deadline tracker', 'What to do about a gap', 'Rights kept current', 'Current letter templates', 'On-device AI help', 'Fresh scene and symbol packs', 'A document vault', 'Voice capture', 'Multiple children'];
+// Jotla AI (2027) carries what the old third tier carried: the statutory
+// content that has to be kept current, plus the on-device help.
+// HONESTY (14 Jul 2026): "A document vault" and "Multiple children" were struck
+// from this list. Both already ship today, so advertising them as a future paid
+// feature would sell a parent something she already has. Nothing goes on this
+// list that a parent can already use. Check that before adding to it.
+const AI_ITEMS = ['EHCP and SEND deadline tracker', 'What to do about a gap', 'Rights kept current', 'Current letter templates', 'On-device AI help', 'Fresh scene and symbol packs', 'Voice capture'];
+
+// The no-ransom promise, in the parent's own words. Plus is now a yearly
+// subscription, so this matters MORE, not less: a year ending must never cost
+// a parent a single line of what they wrote. This list is what survives a
+// lapse, always, and it is shown at the same weight as the price.
+const NO_RANSOM_ITEMS = ['Every entry you have written', 'Your full timeline', 'Plain keyword search', 'Raw export of everything', 'The PDF of everything you have already logged', 'Appeal-deadline safety reminders, with or without a subscription'];
 const PAGE_STYLE = {
   flex: '0 0 100%',
   width: '100%',
@@ -2036,38 +2061,80 @@ function FreePage() {
   }, "Your record is yours."), " Logging and export stay free forever, and anything you have saved stays yours even if you cancel."))));
 }
 
-// ---- Limited-time offer (set SALE.on = true to re-run the £29 promotion) ----
-// Promotion setup preserved below: flip `on` back to true to relaunch it.
+// ---- The promotion kit (parked, not live) ----
+// Kept ready for a real campaign. Flip `on` to true and it runs itself.
+//
+// THE RULE (decisions/log.md, 2026-06-19, still binding under the 2026-07-14
+// repricing): a promotion is only ever a REAL campaign with ONE shared
+// deadline, the same instant for every parent, whoever they are and whenever
+// they installed. A per-install timer that starts on first view, or resets, is
+// banned discount theatre.
+//
+// The old code broke that rule. It set the deadline to `now + SALE.days` the
+// first time a parent opened the page and saved it in that browser's
+// localStorage, so every parent got their own private clock. That is exactly
+// the banned mechanic, and it is gone: no deadline is stored anywhere now.
+// `endsAt` is a single fixed instant (ISO 8601, UTC). The sale expires by
+// itself and the price returns to normal with no code change and no deploy.
+//
+// Two honesty rules before flipping `on`:
+//  1. A struck-through "was" price is only honest once the normal price has
+//     genuinely been the selling price for a decent period. So no promotion in
+//     launch week, and never a "was" number Jotla has not actually charged.
+//  2. Plus is an annual price, so a promotion discounts the FIRST YEAR only.
+//     The copy must say what it renews at, in the same breath as the offer.
+//
+// The values below are a dormant placeholder, not a scheduled campaign.
 const SALE = {
   on: false,
+  name: 'Back-to-school offer',
+  // name the occasion, so it reads as a real sale
   price: '£29',
-  was: '£39',
-  save: '£10',
-  days: 3
+  // the discounted FIRST YEAR
+  was: PLUS_PRICE,
+  // the normal annual price
+  save: '£20',
+  renews: PLUS_PRICE,
+  // what it renews at, every year after the first
+  endsAt: '2026-09-07T23:59:59Z' // ONE shared deadline for every parent (UTC)
 };
 
-// Counts down to a deadline kept in localStorage, so the timer survives a refresh.
+// The offer is live only while the shared campaign window is open. Once the
+// instant passes, this returns false on its own and the normal price is shown.
+// A malformed endsAt reads as "not live", so a typo fails closed rather than
+// showing a broken offer.
+const SALE_ENDS_AT = Date.parse(SALE.endsAt);
+function saleOn() {
+  return SALE.on && Number.isFinite(SALE_ENDS_AT) && Date.now() < SALE_ENDS_AT;
+}
+
+// The deadline in plain words, derived from endsAt itself, never typed twice:
+// a hand-kept second copy of the date is a bug waiting to happen.
+const SALE_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+function saleEndLabel() {
+  if (!Number.isFinite(SALE_ENDS_AT)) return '';
+  const d = new Date(SALE_ENDS_AT);
+  return d.getDate() + ' ' + SALE_MONTHS[d.getMonth()] + ' ' + d.getFullYear();
+}
+
+// Counts down to the campaign's single shared deadline. Nothing is written to
+// localStorage: there is no per-browser deadline to write. Days and hours are
+// enough (no ticking seconds, per the same decision), so it ticks once a
+// minute.
 function useSaleCountdown() {
   const [left, setLeft] = useStateB(null);
   useEffectB(() => {
-    if (!SALE.on) return;
-    const KEY = 'jotla_sale_deadline';
-    let dl = parseInt(localStorage.getItem(KEY) || '0', 10);
-    if (!dl || dl < Date.now()) {
-      dl = Date.now() + SALE.days * 86400000;
-      localStorage.setItem(KEY, String(dl));
-    }
+    if (!saleOn()) return;
     const tick = () => {
-      const ms = Math.max(0, dl - Date.now());
+      const ms = Math.max(0, SALE_ENDS_AT - Date.now());
       setLeft({
         d: Math.floor(ms / 86400000),
         h: Math.floor(ms % 86400000 / 3600000),
-        m: Math.floor(ms % 3600000 / 60000),
-        s: Math.floor(ms % 60000 / 1000)
+        m: Math.floor(ms % 3600000 / 60000)
       });
     };
     tick();
-    const id = setInterval(tick, 1000);
+    const id = setInterval(tick, 30000);
     return () => clearInterval(id);
   }, []);
   return left;
@@ -2076,7 +2143,7 @@ function SaleCountdown({
   left
 }) {
   const pad = n => String(n).padStart(2, '0');
-  const units = [['Days', left && left.d], ['Hrs', left && left.h], ['Min', left && left.m], ['Sec', left && left.s]];
+  const units = [['Days', left && left.d], ['Hrs', left && left.h], ['Min', left && left.m]];
   return /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
@@ -2099,7 +2166,7 @@ function SaleCountdown({
       fontWeight: 500,
       fontSize: 'calc(26px * var(--tscale, 1))',
       lineHeight: 1,
-      color: LIVING_GOLD
+      color: PREMIUM_GOLD
     }
   }, left ? pad(val) : '--'), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -2113,9 +2180,12 @@ function SaleCountdown({
 }
 
 // ---- Page 2: Jotla Plus (premium) ----
+// The no-ransom promise sits directly under the price, at the same visual
+// weight, because it is the other half of the price. A parent has to be able
+// to see, before they pay, that a year ending never costs them their record.
 function PlusPage() {
   const left = useSaleCountdown();
-  const sale = SALE.on;
+  const sale = saleOn();
   return /*#__PURE__*/React.createElement("div", {
     style: PAGE_STYLE
   }, /*#__PURE__*/React.createElement("div", {
@@ -2165,7 +2235,7 @@ function PlusPage() {
       gap: 6,
       padding: '5px 12px',
       borderRadius: 999,
-      background: LIVING_GOLD,
+      background: PREMIUM_GOLD,
       color: '#3A2A0C',
       fontSize: 'calc(12px * var(--tscale, 1))',
       fontWeight: 700,
@@ -2175,7 +2245,7 @@ function PlusPage() {
     name: "clock",
     size: 13,
     color: "#3A2A0C"
-  }), " 3 DAYS ONLY")), /*#__PURE__*/React.createElement("p", {
+  }), " ", SALE.name)), /*#__PURE__*/React.createElement("p", {
     style: {
       fontFamily: "'Cal Sans', system-ui",
       fontWeight: 500,
@@ -2196,7 +2266,7 @@ function PlusPage() {
       fontFamily: "'Cal Sans', system-ui",
       fontWeight: 500,
       fontSize: 'calc(40px * var(--tscale, 1))',
-      color: LIVING_GOLD
+      color: PREMIUM_GOLD
     }
   }, SALE.price), /*#__PURE__*/React.createElement("span", {
     style: {
@@ -2209,17 +2279,23 @@ function PlusPage() {
       fontSize: 'calc(14px * var(--tscale, 1))',
       color: 'rgba(255,255,255,0.82)'
     }
-  }, "one-time"), /*#__PURE__*/React.createElement("span", {
+  }, "for the first year"), /*#__PURE__*/React.createElement("span", {
     style: {
       marginLeft: 'auto',
       fontSize: 'calc(12.5px * var(--tscale, 1))',
       fontWeight: 700,
       color: '#3A2A0C',
-      background: LIVING_GOLD,
+      background: PREMIUM_GOLD,
       padding: '4px 10px',
       borderRadius: 999
     }
-  }, "Save ", SALE.save)), /*#__PURE__*/React.createElement(SaleCountdown, {
+  }, "Save ", SALE.save)), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 'calc(13.5px * var(--tscale, 1))',
+      color: 'rgba(255,255,255,0.82)',
+      margin: '6px 0 0'
+    }
+  }, "Then ", SALE.renews, " ", PLUS_PERIOD, ", every year after that."), /*#__PURE__*/React.createElement(SaleCountdown, {
     left: left
   }), /*#__PURE__*/React.createElement("p", {
     style: {
@@ -2234,7 +2310,7 @@ function PlusPage() {
     name: "clock",
     size: 13,
     color: "rgba(255,255,255,0.72)"
-  }), " When the timer runs out the price goes back to ", SALE.was, ".")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+  }), " The ", SALE.name.toLowerCase(), " ends on ", saleEndLabel(), ", the same day for everyone. Then the price goes back to ", SALE.was, " ", PLUS_PERIOD, ".")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       alignItems: 'baseline',
@@ -2248,18 +2324,82 @@ function PlusPage() {
       fontSize: 'calc(40px * var(--tscale, 1))',
       color: PLUS_ACCENT
     }
-  }, "\xA339"), /*#__PURE__*/React.createElement("span", {
+  }, PLUS_PRICE), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 'calc(14px * var(--tscale, 1))',
       color: 'rgba(255,255,255,0.82)'
     }
-  }, "one-time")), /*#__PURE__*/React.createElement("p", {
+  }, PLUS_PERIOD)), /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 'calc(13.5px * var(--tscale, 1))',
       color: 'rgba(255,255,255,0.75)',
       margin: '4px 0 0'
     }
-  }, "Yours to keep. No subscription. No timers."))), /*#__PURE__*/React.createElement("div", {
+  }, "Paid once a year. There is no monthly plan. Cancel any time."))), /*#__PURE__*/React.createElement("div", {
+    className: "j-card",
+    style: {
+      padding: 18,
+      marginBottom: 18,
+      borderColor: 'var(--green)'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 12,
+      alignItems: 'center',
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      background: 'var(--tint-green)',
+      flexShrink: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "shield",
+    size: 22,
+    color: "var(--green-ink)"
+  })), /*#__PURE__*/React.createElement("p", {
+    className: "j-h3"
+  }, "If your year ends, you keep everything")), /*#__PURE__*/React.createElement("p", {
+    className: "j-body",
+    style: {
+      fontSize: 'calc(15.5px * var(--tscale, 1))',
+      marginBottom: 12
+    }
+  }, "Your record is never held to ransom. If Plus ends, for any reason at all, whether you cancel, let it lapse, or a card quietly expires, you lose nothing you have written."), /*#__PURE__*/React.createElement(CheckList, {
+    items: NO_RANSOM_ITEMS,
+    color: "var(--green-ink)",
+    tint: "var(--tint-green)"
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 8,
+      alignItems: 'flex-start',
+      background: 'var(--tint-green)',
+      borderRadius: 12,
+      padding: '10px 12px',
+      marginTop: 12
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "arrowRight",
+    size: 16,
+    color: "var(--green-ink)",
+    style: {
+      marginTop: 2,
+      flexShrink: 0
+    }
+  }), /*#__PURE__*/React.createElement("p", {
+    className: "j-sm",
+    style: {
+      color: 'var(--green-ink)'
+    }
+  }, "A subscription only ever switches off the paid tools. It never touches your history."))), /*#__PURE__*/React.createElement("div", {
     className: "j-card",
     style: {
       padding: 14,
@@ -2334,11 +2474,32 @@ function PlusPage() {
     title: "PDF Evidence Pack",
     formal: "Hand over a clean, dated record when it counts. The evidence pack lays out your chosen entries as a clear, dated document, each with the day it was logged and whether it was written the same day or added later. It is built around the formats tribunals and professionals already use.",
     plain: "Choose your dates and themes, and get a tidy PDF you can email or print for an assessment, review or tribunal."
-  }))));
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "j-card",
+    style: {
+      padding: 14,
+      marginTop: 12,
+      display: 'flex',
+      gap: 10,
+      alignItems: 'flex-start'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "clock",
+    size: 18,
+    color: "var(--muted)",
+    style: {
+      flexShrink: 0,
+      marginTop: 2
+    }
+  }), /*#__PURE__*/React.createElement("p", {
+    className: "j-sm"
+  }, "Family Sync, the record on every grown-up's phone, is part of Plus too. It is not switched on yet, and nothing here pretends it is."))));
 }
 
-// ---- Page 3: Living Companion (coming soon) ----
-function LivingPage() {
+// ---- Page 3: Jotla AI (2027, coming soon) ----
+// This replaces the old "Living Companion" tier. It is £79 a year and it
+// INCLUDES Plus: a parent on Jotla AI pays £79 in total, not £49 plus £79.
+function AiPage() {
   return /*#__PURE__*/React.createElement("div", {
     style: PAGE_STYLE
   }, /*#__PURE__*/React.createElement("div", {
@@ -2351,7 +2512,7 @@ function LivingPage() {
     style: {
       borderRadius: 20,
       padding: '22px 20px',
-      background: LIVING_GRAD,
+      background: PREMIUM_GRAD,
       color: '#fff',
       marginBottom: 18,
       boxShadow: '0 18px 38px -18px rgba(20,40,80,0.7)'
@@ -2364,8 +2525,8 @@ function LivingPage() {
       padding: '5px 12px',
       borderRadius: 999,
       background: 'rgba(230,184,92,0.16)',
-      border: `1px solid ${LIVING_GOLD}`,
-      color: LIVING_GOLD,
+      border: `1px solid ${PREMIUM_GOLD}`,
+      color: PREMIUM_GOLD,
       fontSize: 'calc(12px * var(--tscale, 1))',
       fontWeight: 600,
       letterSpacing: '0.08em'
@@ -2373,8 +2534,8 @@ function LivingPage() {
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "sparkle",
     size: 13,
-    color: LIVING_GOLD
-  }), " Coming soon"), /*#__PURE__*/React.createElement("p", {
+    color: PREMIUM_GOLD
+  }), " Coming in 2027"), /*#__PURE__*/React.createElement("p", {
     style: {
       fontFamily: "'Cal Sans', system-ui",
       fontWeight: 500,
@@ -2383,13 +2544,32 @@ function LivingPage() {
       color: '#fff',
       margin: '14px 0 6px'
     }
-  }, "Living Companion"), /*#__PURE__*/React.createElement("p", {
+  }, "Jotla AI"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 'calc(14.5px * var(--tscale, 1))',
-      color: 'rgba(255,255,255,0.82)',
-      margin: 0
+      display: 'flex',
+      alignItems: 'baseline',
+      gap: 8,
+      marginTop: 12
     }
-  }, "A monthly membership, coming with the membership.")), /*#__PURE__*/React.createElement("p", {
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontFamily: "'Cal Sans', system-ui",
+      fontWeight: 500,
+      fontSize: 'calc(40px * var(--tscale, 1))',
+      color: PREMIUM_GOLD
+    }
+  }, AI_PRICE), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 'calc(14px * var(--tscale, 1))',
+      color: 'rgba(255,255,255,0.82)'
+    }
+  }, PLUS_PERIOD)), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 'calc(13.5px * var(--tscale, 1))',
+      color: 'rgba(255,255,255,0.82)',
+      margin: '4px 0 0'
+    }
+  }, "Jotla Plus is included. ", AI_PRICE, " ", PLUS_PERIOD, " is the whole price, not one price on top of another.")), /*#__PURE__*/React.createElement("p", {
     className: "j-body",
     style: {
       color: 'var(--muted)',
@@ -2400,15 +2580,15 @@ function LivingPage() {
     style: {
       padding: 18,
       marginBottom: 16,
-      borderColor: `${LIVING_GOLD}55`
+      borderColor: `${PREMIUM_GOLD}55`
     }
   }, /*#__PURE__*/React.createElement(CheckList, {
-    items: LIVING_ITEMS,
-    color: LIVING_GOLD_DEEP,
-    tint: `${LIVING_GOLD}26`
+    items: AI_ITEMS,
+    color: PREMIUM_GOLD_DEEP,
+    tint: `${PREMIUM_GOLD}26`
   })), /*#__PURE__*/React.createElement("div", {
     style: {
-      background: `${LIVING_GOLD}1F`,
+      background: `${PREMIUM_GOLD}1F`,
       borderRadius: 16,
       padding: 16,
       display: 'flex',
@@ -2418,7 +2598,7 @@ function LivingPage() {
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "leaf",
     size: 22,
-    color: LIVING_GOLD_DEEP,
+    color: PREMIUM_GOLD_DEEP,
     style: {
       flexShrink: 0,
       marginTop: 2
@@ -2429,7 +2609,7 @@ function LivingPage() {
       fontSize: 'calc(15px * var(--tscale, 1))',
       color: 'var(--body)'
     }
-  }, "We will let you know when it arrives. Your free tools and anything you have bought stay exactly as they are."))));
+  }, "We will let you know when it arrives. Nothing you have to do, nothing changes for you until then, and your free tools stay free."))));
 }
 function UnlockScreen({
   nav
@@ -2465,9 +2645,9 @@ function UnlockScreen({
     onBg: PLUS_GRAD,
     dotOn: PLUS_ACCENT_DEEP
   }, {
-    label: 'Coming soon',
-    onBg: LIVING_GRAD,
-    dotOn: LIVING_GOLD_DEEP
+    label: 'Jotla AI',
+    onBg: PREMIUM_GRAD,
+    dotOn: PREMIUM_GOLD_DEEP
   }];
   return /*#__PURE__*/React.createElement("div", {
     className: "j-screen"
@@ -2506,7 +2686,7 @@ function UnlockScreen({
     }, i === 2 && /*#__PURE__*/React.createElement(Icon, {
       name: "sparkle",
       size: 14,
-      color: on ? LIVING_GOLD : 'var(--faint)'
+      color: on ? PREMIUM_GOLD : 'var(--faint)'
     }), t.label);
   })), /*#__PURE__*/React.createElement("div", _extends({
     ref: pagerRef,
@@ -2523,7 +2703,7 @@ function UnlockScreen({
       WebkitOverflowScrolling: 'touch',
       outline: 'none'
     }
-  }), /*#__PURE__*/React.createElement(FreePage, null), /*#__PURE__*/React.createElement(PlusPage, null), /*#__PURE__*/React.createElement(LivingPage, null)), /*#__PURE__*/React.createElement("div", {
+  }), /*#__PURE__*/React.createElement(FreePage, null), /*#__PURE__*/React.createElement(PlusPage, null), /*#__PURE__*/React.createElement(AiPage, null)), /*#__PURE__*/React.createElement("div", {
     style: {
       position: 'absolute',
       left: 0,
@@ -2602,7 +2782,7 @@ function UnlockScreen({
     name: "star",
     size: 18,
     color: PLUS_ACCENT
-  }), " Get Jotla Plus, ", SALE.on ? SALE.price : '£39', SALE.on && /*#__PURE__*/React.createElement("span", {
+  }), " Get Jotla Plus, ", saleOn() ? SALE.price : PLUS_PRICE, " ", PLUS_PERIOD, saleOn() && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 'calc(14px * var(--tscale, 1))',
       opacity: 0.6,
@@ -2621,7 +2801,7 @@ function UnlockScreen({
     name: "clock",
     size: 18,
     color: "var(--muted)"
-  }), " Coming with the membership")), confirmPlus && /*#__PURE__*/React.createElement("div", {
+  }), " Jotla AI is coming in 2027")), confirmPlus && /*#__PURE__*/React.createElement("div", {
     className: "j-sheet-scrim",
     onClick: () => setConfirmPlus(false)
   }, /*#__PURE__*/React.createElement("div", {
@@ -2662,7 +2842,7 @@ function UnlockScreen({
       color: 'var(--muted)',
       marginBottom: 20
     }
-  }, "This turns on Patterns, the Month view, Deep Filtering, Dysregulation Mode, Photos and Videos on Notes, and the PDF Evidence Pack. Everything you have already saved stays exactly as it is."), /*#__PURE__*/React.createElement("button", {
+  }, PLUS_PRICE, " ", PLUS_PERIOD, ". This turns on Patterns, the Month view, Deep Filtering, Dysregulation Mode, Photos and Videos on Notes, and the PDF Evidence Pack. Everything you have already saved stays exactly as it is, and it stays yours if your year ever ends."), /*#__PURE__*/React.createElement("button", {
     className: "j-btn j-btn-lg",
     style: {
       background: PLUS_GRAD,
@@ -2830,7 +3010,7 @@ function UnlockScreen({
       color: 'var(--muted)',
       marginBottom: 20
     }
-  }, "Thank you. Patterns, Deep Filtering, Dysregulation Mode, Photos and Videos on Notes, and the PDF Evidence Pack are switched on. Your record stays yours, always."), /*#__PURE__*/React.createElement("button", {
+  }, "Thank you. Patterns, Deep Filtering, Dysregulation Mode, Photos and Videos on Notes, and the PDF Evidence Pack are switched on. Your record stays yours, always, whatever happens to your subscription."), /*#__PURE__*/React.createElement("button", {
     className: "j-btn j-btn-primary",
     onClick: () => {
       setBought(false);
@@ -3116,7 +3296,9 @@ function InfoAboutScreen({
   }, "Planned means exactly that: none of the above is switched on yet, and nothing in this app pretends to be."))), /*#__PURE__*/React.createElement(InfoBlock, {
     icon: "sparkle",
     title: "Jotla Plus"
-  }, /*#__PURE__*/React.createElement(InfoP, null, "The record itself is free, forever: logging, your timeline, search and export never cost anything, never expire, and stay yours."), /*#__PURE__*/React.createElement(InfoP, null, "Jotla Plus adds the tools to help you spot patterns and make your case: photos and videos kept with your notes, patterns and the Month view, deep filtering, Dysregulation Mode, and the PDF evidence pack. Pay once and it is yours to keep. No subscription. No timers."), /*#__PURE__*/React.createElement("button", {
+  }, /*#__PURE__*/React.createElement(InfoP, null, "The record itself is free, forever: logging, your timeline, search and export never cost anything, never expire, and stay yours."), /*#__PURE__*/React.createElement(InfoP, null, "Jotla Plus adds the tools to help you spot patterns and make your case: photos and videos kept with your notes, patterns and the Month view, deep filtering, Dysregulation Mode, and the PDF evidence pack. Family Sync, when it arrives, is part of Plus too. Plus is ", PLUS_PRICE, " ", PLUS_PERIOD, ". It is paid once a year, and there is no monthly plan."), /*#__PURE__*/React.createElement(InfoP, null, /*#__PURE__*/React.createElement("span", {
+    className: "j-strong"
+  }, "If your year ends, you keep everything."), " Your record is never held to ransom. If Plus ends, for any reason at all, whether you cancel, let it lapse, or a card quietly expires, you lose nothing you have written. Every entry stays. Your full timeline stays. Plain keyword search stays. Raw export stays. You can still make the PDF of everything you have already logged. Appeal-deadline safety reminders keep coming, with or without a subscription. A subscription only ever switches off the paid tools. It never touches your history."), /*#__PURE__*/React.createElement(InfoP, null, "Jotla AI is coming in 2027: ", AI_PRICE, " ", PLUS_PERIOD, ", with Jotla Plus included, so it is ", AI_PRICE, " in total and not one price on top of another."), /*#__PURE__*/React.createElement("button", {
     className: "j-btn j-btn-soft",
     onClick: () => nav.go('unlock')
   }, /*#__PURE__*/React.createElement(Icon, {
@@ -3359,7 +3541,7 @@ function SettingsScreen({
       textAlign: 'left',
       border: 'none',
       cursor: 'pointer',
-      background: LIVING_GRAD,
+      background: PREMIUM_GRAD,
       borderRadius: 18,
       padding: 18,
       marginBottom: 20,
@@ -3383,7 +3565,7 @@ function SettingsScreen({
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "sparkle",
     size: 22,
-    color: LIVING_GOLD
+    color: PREMIUM_GOLD
   })), /*#__PURE__*/React.createElement("span", {
     style: {
       flex: 1
@@ -3404,11 +3586,11 @@ function SettingsScreen({
       color: 'rgba(255,255,255,0.78)',
       marginTop: 2
     }
-  }, nav.plus ? 'Active. Yours to keep.' : 'See what Plus adds. Pay once.')), nav.plus ? /*#__PURE__*/React.createElement("span", {
+  }, nav.plus ? 'Active. Your record is always yours.' : 'See what Plus adds. ' + PLUS_PRICE + ' ' + PLUS_PERIOD + '.')), nav.plus ? /*#__PURE__*/React.createElement("span", {
     className: "j-pillbadge",
     style: {
       background: 'rgba(230,184,92,0.22)',
-      color: LIVING_GOLD
+      color: PREMIUM_GOLD
     }
   }, "Active") : /*#__PURE__*/React.createElement(Icon, {
     name: "chevronRight",

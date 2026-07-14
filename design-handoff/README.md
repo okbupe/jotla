@@ -3,7 +3,7 @@
 ## Overview
 **Jotla** (by SEN Help) is a calm, mobile-first app that lets a parent/carer keep a running, time-stamped record of how a child with SEND (Special Educational Needs and Disabilities) is doing across the day — at school, at home, at a club. Parents log short "moments" (good / up-and-down / hard), capture a structured "handover note" at the school gate, browse a month overview, search/filter past entries, and store official documents (EHCP letters, OT reports, support plans). The records build into evidence that can be used in meetings and assessments.
 
-The product is warm and low-pressure by design: plain UK-English parent language, soft colours, friendly faces, big tap targets, "a line is plenty" framing. It is a single-child-at-a-time view with a profile switcher — parents can **add children** (a blank-record onboarding + an 8-step app tour), **edit** each child (name/school/year, a glyph+colour avatar from 10 glyphs / 12 colours, **or a real cropped photo**), and **delete** a child behind a guarded, backup-first flow. The app also has a **Free / Jotla Plus** monetisation model: Plus is a one-time £39 unlock that the parent switches into (and back out of) via confirm dialogs, with a gradient "plus" lockup shown in the header while active.
+The product is warm and low-pressure by design: plain UK-English parent language, soft colours, friendly faces, big tap targets, "a line is plenty" framing. It is a single-child-at-a-time view with a profile switcher — parents can **add children** (a blank-record onboarding + an 8-step app tour), **edit** each child (name/school/year, a glyph+colour avatar from 10 glyphs / 12 colours, **or a real cropped photo**), and **delete** a child behind a guarded, backup-first flow. The app also has a **Free / Jotla Plus / Jotla AI** monetisation model (repriced 2026-07-14): Free is £0 forever, **Jotla Plus is £49 a year** (annual only, never monthly), and **Jotla AI is £79 a year** (2027, coming soon, and it includes Plus). There is no one-time price and no lifetime buyout. In the prototype the parent switches into Plus (and back out of it) via confirm dialogs, with a gradient "plus" lockup shown in the header while active. The **no-ransom promise** is carried at the same visual weight as the price: if a Plus year ends for any reason, the parent loses nothing they have written.
 
 ## About the Design Files
 The files in `source/` are a **design reference, built as an HTML + React-via-Babel prototype**. They are *not* production code to ship as-is — they run entirely in the browser off CDN React and in-browser Babel transpilation, use `localStorage` for persistence, and render inside a fake iOS device bezel for preview.
@@ -140,14 +140,14 @@ A separate, warmer full-screen mode (background `#FFF6EC`, no app header) where 
 - Header `PushHeader` "Jotla Plus" / "Swipe to compare the three tiers." + close.
 - **Three pill tabs** (`Free` · `Plus` · `Coming soon`) above a scroll-snap pager of three pages:
   - **Free** (`FreePage`) — flat blue identity. "Free, forever" badge, a `CheckList` of free features (daily logging, child walkthrough, basic timeline, keyword search, raw export, appeal-deadline reminders), and a "Your record is yours" reassurance.
-  - **Plus** (`PlusPage`) — premium purple identity (`PLUS_GRAD = linear-gradient(135deg,#3C2A72,#6E54D6)`, accent `#CDBBF7`/`#6E54D6`). Hero with price **£39 one-time**, "Everything in Free is included", then `PlusFeature` cards (Patterns & Month View, Deep Filtering, Dysregulation Mode, PDF Evidence Pack). (A `SALE` object + `useSaleCountdown` can switch on a limited-time £29 promo — off by default.)
-  - **Coming soon** (`LivingPage`) — premium navy + gold "membership" tier, disabled CTA "Coming with the membership".
+  - **Plus** (`PlusPage`): premium purple identity (`PLUS_GRAD = linear-gradient(135deg,#3C2A72,#6E54D6)`, accent `#CDBBF7`/`#6E54D6`). Hero with price **£49 a year** ("Paid once a year. There is no monthly plan. Cancel any time."), then the **no-ransom promise card** at the same visual weight as the price ("If your year ends, you keep everything", a green `CheckList` of what survives a lapse), "Everything in Free is included", then `PlusFeature` cards (Patterns & Month View, Deep Filtering, Dysregulation Mode, Photos and Videos on Notes, PDF Evidence Pack), then an honest Family Sync note (part of Plus, not switched on yet). (A dormant `SALE` object + `useSaleCountdown` can run a real campaign: one shared `endsAt` instant for every parent, a discounted first year, and the renewal price stated. Off by default. Never a per-install timer.)
+  - **Jotla AI** (`AiPage`): premium navy + gold tier, **£79 a year, Plus included**, coming 2027. Disabled CTA "Jotla AI is coming in 2027".
 - **Bottom CTA** is contextual to the visible page + ownership (`nav.plus`):
   - Free page, not owned → "See Jotla Plus →" (advances pager).
   - Free page, **owned** → outlined **"← Switch back to Free"**.
-  - Plus page, not owned → **"Get Jotla Plus, £39"** (purple gradient).
+  - Plus page, not owned → **"Get Jotla Plus, £49 a year"** (purple gradient).
   - Plus page, owned → disabled "You have Jotla Plus".
-  - Coming soon → disabled.
+  - Jotla AI → disabled.
 - **Confirm dialogs (both are guarded bottom sheets):**
   - **Switch up to Plus** — tapping "Get Jotla Plus" opens a sheet "You are about to switch to Jotla Plus" listing what turns on, with **Confirm** / **Cancel**. Confirm calls `nav.buyPlus()` and shows a "You have Jotla Plus" success sheet.
   - **Switch down to Free** — tapping "Switch back to Free" opens "Switch back to Free? Are you sure?" with **Yes, switch to Free** / **Keep Jotla Plus**. Confirm calls `nav.dropPlus()` and shows a gentle "You are on Free" sheet.
@@ -353,7 +353,7 @@ Reference renders of the key screens (captured in the preview iOS bezel — the 
 | `09-entry-detail.png` | Entry detail — single moment read-back |
 | `10-today-empty.png` | Today empty state (new blank child) — "A fresh, blank record" card + friendly smiley `Face` |
 | `11-tiers-free.png` | Jotla Plus / Tiers — **Free** page (flat blue, "Free, forever") |
-| `12-tiers-plus.png` | Tiers — **Plus** page tab selected, "Get Jotla Plus, £39" CTA (purple) |
+| `12-tiers-plus.png` | Tiers, **Plus** page tab selected, "Get Jotla Plus, £49 a year" CTA (purple). NOTE: the checked-in screenshot still shows the retired £39 one-time hero and needs re-shooting. |
 | `13-confirm-switch-plus.png` | "You are about to switch to Jotla Plus" confirm sheet (Confirm / Cancel) |
 | `14-header-plus.png` | Header with the gradient "**plus**" lockup active (Today screen, Plus mode) |
 | `15-add-child.png` | Add a child — blank-record onboarding (name filled, "Create Leo's record") |
