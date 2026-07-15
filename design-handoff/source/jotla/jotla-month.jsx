@@ -443,7 +443,7 @@ function EntryScreen({ nav, entries, id }) {
               <Icon name="note" size={18} color="var(--blue)" /> Edit
             </button>
             <button className="j-btn j-btn-ghost" style={{ flex: 1, color: '#C0392B' }}
-              onClick={() => { if (window.confirm('Delete this note from the record? This cannot be undone.')) { nav.deleteEntry(e.id); nav.back(); } }}>
+              onClick={() => { if (window.confirm('Move this note to the Bin? You can restore it for 30 days from Settings.')) { nav.deleteEntry(e.id); nav.back(); } }}>
               <Icon name="close" size={18} color="#C0392B" /> Delete
             </button>
           </div>

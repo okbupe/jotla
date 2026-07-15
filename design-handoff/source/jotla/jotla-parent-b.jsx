@@ -902,7 +902,7 @@ function DocScreen({ nav, docs, id }) {
               <Icon name="note" size={18} color="var(--blue)" /> Edit
             </button>
             <button className="j-btn j-btn-ghost" style={{ flex: 1, color: '#C0392B' }} onClick={() => {
-              if (window.confirm('Delete this document from the vault? This cannot be undone.')) { nav.deleteDoc(d.id); nav.back(); }
+              if (window.confirm('Move this document to the Bin? You can restore it for 30 days from Settings.')) { nav.deleteDoc(d.id); nav.back(); }
             }}><Icon name="close" size={18} color="#C0392B" /> Delete</button>
           </div>
         </div>
@@ -1714,7 +1714,7 @@ function recordSizeBytes() {
   return n;
 }
 
-function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
+function SettingsScreen({ nav, profile, entries = [], docs = [], binCount = 0 }) {
   const J = window.JOTLA;
   const childName = (profile && profile.name) || 'your child';
   const [backupMeta, setBackupMeta] = useStateB(() => {
@@ -1892,6 +1892,15 @@ function SettingsScreen({ nav, profile, entries = [], docs = [] }) {
               sub="A one-minute walkthrough of the whole app." onClick={() => nav.go('tour')} />
             <SettingsRow icon={<Icon name="star" size={20} color="var(--blue)" />} title="About Jotla"
               sub="What it is, your privacy, where the record lives, what is coming." onClick={() => nav.go('infoabout')} last />
+          </div>
+
+          {/* The Bin sits right at the bottom (founder ask, 15 Jul 2026): a deleted
+              log or document waits here 30 days before it clears itself. */}
+          <SectionLabel>Bin</SectionLabel>
+          <div className="j-card" style={{ marginBottom: 20, overflow: 'hidden' }}>
+            <SettingsRow icon={<Icon name="close" size={20} color="var(--blue)" />} title="Recently deleted"
+              sub="Restore a deleted log or document, or empty the Bin." onClick={() => nav.go('bin')}
+              right={binCount > 0 ? <span className="j-pillbadge" style={{ background: 'var(--tag-grey-bg)', color: 'var(--muted)' }}>{binCount}</span> : undefined} last />
           </div>
 
           {nav.plus && plusCard}

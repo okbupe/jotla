@@ -439,10 +439,12 @@ function ChildOptionsSheet({
   canDelete = true,
   onChange,
   onDelete,
+  onReset,
+  onResetAll,
   onClose
 }) {
   const J = window.JOTLA;
-  const [delOpen, setDelOpen] = useStateApp(false);
+  const [dangerMode, setDangerMode] = useStateApp(null); // null | 'delete' | 'reset' | 'resetAll'
   const [cropSrc, setCropSrc] = useStateApp(null);
   // The adults around the child (the circle): chips edit live like every other
   // field in this sheet, deduped case-insensitively. Done counts a name still
@@ -757,73 +759,82 @@ function ChildOptionsSheet({
       color: '#C0392B',
       margin: '0 0 10px'
     }
-  }, "Danger zone"), canDelete ? /*#__PURE__*/React.createElement("button", {
-    className: "j-press",
-    onClick: () => setDelOpen(true),
-    style: {
-      width: '100%',
-      textAlign: 'left',
-      cursor: 'pointer',
-      border: '1.5px solid rgba(231,76,60,0.4)',
-      background: 'rgba(231,76,60,0.06)',
-      borderRadius: 14,
-      padding: '13px 14px',
-      display: 'flex',
-      alignItems: 'center',
-      gap: 12
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      width: 36,
-      height: 36,
-      borderRadius: 10,
-      background: 'rgba(231,76,60,0.12)',
-      flexShrink: 0,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "close",
-    size: 18,
-    color: "#E74C3C"
-  })), /*#__PURE__*/React.createElement("span", {
-    style: {
-      flex: 1
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      display: 'block',
-      fontFamily: "'Outfit', system-ui",
-      fontSize: 'calc(15.5px * var(--tscale, 1))',
-      fontWeight: 500,
-      color: '#C0392B'
-    }
-  }, "Delete this child"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      display: 'block',
-      fontSize: 'calc(12.5px * var(--tscale, 1))',
-      color: 'var(--faint)',
-      marginTop: 1
-    }
-  }, "Permanently remove ", profile.name, "'s record")), /*#__PURE__*/React.createElement(Icon, {
-    name: "chevronRight",
-    size: 18,
-    color: "#E74C3C"
-  })) : /*#__PURE__*/React.createElement("p", {
-    className: "j-sm",
-    style: {
-      color: 'var(--faint)'
-    }
-  }, "This is your only child record, so it cannot be deleted. Add another child first if you want to remove this one."))), delOpen && /*#__PURE__*/React.createElement(DeleteChildSheet, {
+  }, "Danger zone"), (() => {
+    const dangerBtn = (title, sub, onClick) => /*#__PURE__*/React.createElement("button", {
+      key: title,
+      className: "j-press",
+      onClick: onClick,
+      style: {
+        width: '100%',
+        textAlign: 'left',
+        cursor: 'pointer',
+        border: '1.5px solid rgba(231,76,60,0.4)',
+        background: 'rgba(231,76,60,0.06)',
+        borderRadius: 14,
+        padding: '13px 14px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        marginBottom: 10
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        width: 36,
+        height: 36,
+        borderRadius: 10,
+        background: 'rgba(231,76,60,0.12)',
+        flexShrink: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }
+    }, /*#__PURE__*/React.createElement(Icon, {
+      name: "close",
+      size: 18,
+      color: "#E74C3C"
+    })), /*#__PURE__*/React.createElement("span", {
+      style: {
+        flex: 1
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        display: 'block',
+        fontFamily: "'Outfit', system-ui",
+        fontSize: 'calc(15.5px * var(--tscale, 1))',
+        fontWeight: 500,
+        color: '#C0392B'
+      }
+    }, title), /*#__PURE__*/React.createElement("span", {
+      style: {
+        display: 'block',
+        fontSize: 'calc(12.5px * var(--tscale, 1))',
+        color: 'var(--faint)',
+        marginTop: 1
+      }
+    }, sub)), /*#__PURE__*/React.createElement(Icon, {
+      name: "chevronRight",
+      size: 18,
+      color: "#E74C3C"
+    }));
+    return canDelete ? [dangerBtn('Reset this child', 'Clear all logs and documents, keep ' + profile.name + "'s profile", () => setDangerMode('reset')), dangerBtn('Delete this child', 'Permanently remove ' + profile.name + "'s record", () => setDangerMode('delete'))] : [dangerBtn('Reset all data', 'Erase everything and start over from a blank app', () => setDangerMode('resetAll')), /*#__PURE__*/React.createElement("p", {
+      key: "note",
+      className: "j-sm",
+      style: {
+        color: 'var(--faint)',
+        marginTop: 2
+      }
+    }, "This is your only child, so there is nothing else to switch to. Reset all data wipes the whole app back to the start.")];
+  })())), dangerMode && /*#__PURE__*/React.createElement(DeleteChildSheet, {
+    mode: dangerMode,
     profile: profile,
     entries: entries,
     docs: docs,
-    onClose: () => setDelOpen(false),
+    onClose: () => setDangerMode(null),
     onConfirm: () => {
-      setDelOpen(false);
+      const m = dangerMode;
+      setDangerMode(null);
       onClose();
-      onDelete && onDelete();
+      if (m === 'reset') onReset && onReset();else if (m === 'resetAll') onResetAll && onResetAll();else onDelete && onDelete();
     }
   }), cropSrc && /*#__PURE__*/React.createElement(Cropper, {
     src: cropSrc,
@@ -843,7 +854,8 @@ function DeleteChildSheet({
   entries,
   docs,
   onConfirm,
-  onClose
+  onClose,
+  mode = 'delete'
 }) {
   const [stage, setStage] = useStateApp('warn'); // warn | confirm
   const [backedUp, setBackedUp] = useStateApp(false);
@@ -855,7 +867,19 @@ function DeleteChildSheet({
   const name = profile.name;
   const nEntries = entries.length,
     nDocs = docs.length;
-  const ready = ack && typed.trim().toUpperCase() === 'DELETE';
+  // One guarded journey, three modes (founder ask, 15 Jul 2026): delete a child,
+  // reset a child (keep the profile, clear the data), or reset all data (full
+  // wipe). Reset confirms on the word RESET; delete on DELETE.
+  const isReset = mode === 'reset' || mode === 'resetAll';
+  const keepsProfile = mode === 'reset';
+  const WORD = isReset ? 'RESET' : 'DELETE';
+  const ready = ack && typed.trim().toUpperCase() === WORD;
+  const titleWarn = mode === 'reset' ? 'Reset ' + name + "'s record?" : mode === 'resetAll' ? 'Reset all data?' : 'Delete ' + name + "'s record?";
+  const leadWarn = keepsProfile ? 'This erases everything logged for ' + name + ', but keeps their profile so you can start their record fresh. It cannot be undone, and there is no copy we can restore for you.' : 'This permanently erases everything below. It cannot be undone, and because nothing leaves this phone there is no copy we can restore for you.';
+  const continueLabel = isReset ? 'Continue to reset' : 'Continue to delete';
+  const cancelLabel = isReset ? 'Cancel, keep everything' : 'Keep this record';
+  const ackLabel = keepsProfile ? 'I understand this permanently erases every log and document for ' + name + '.' : mode === 'resetAll' ? 'I understand this permanently erases every child, log and document in the app.' : 'I understand this permanently deletes ' + name + "'s record and everything in it.";
+  const confirmLabel = mode === 'reset' ? 'Reset ' + name + "'s record" : mode === 'resetAll' ? 'Erase everything and start over' : 'Delete ' + name + "'s record permanently";
   const backup = () => {
     try {
       const payload = {
@@ -879,7 +903,7 @@ function DeleteChildSheet({
     } catch (e) {}
     setBackedUp(true);
   };
-  const consequences = [[nEntries + (nEntries === 1 ? ' logged moment' : ' logged moments'), 'Every quick log and gate note you have written.'], [nDocs + (nDocs === 1 ? ' saved document' : ' saved documents'), 'Letters, reports and plans kept in the vault.'], [name + "'s profile", 'Their name, avatar, colour and settings.']];
+  const consequences = [[nEntries + (nEntries === 1 ? ' logged moment' : ' logged moments'), 'Every quick log and gate note you have written.'], [nDocs + (nDocs === 1 ? ' saved document' : ' saved documents'), 'Letters, reports and plans kept in the vault.'], ...(keepsProfile ? [] : [[name + "'s profile", 'Their name, avatar, colour and settings.']])];
   return /*#__PURE__*/React.createElement("div", {
     className: "j-sheet-scrim",
     onClick: onClose,
@@ -921,14 +945,14 @@ function DeleteChildSheet({
       textAlign: 'center',
       marginBottom: 6
     }
-  }, "Delete ", name, "'s record?"), /*#__PURE__*/React.createElement("p", {
+  }, titleWarn), /*#__PURE__*/React.createElement("p", {
     className: "j-body",
     style: {
       textAlign: 'center',
       color: 'var(--muted)',
       marginBottom: 18
     }
-  }, "This permanently erases everything below. It cannot be undone, and because nothing leaves this phone there is no copy we can restore for you."), /*#__PURE__*/React.createElement("div", {
+  }, leadWarn), /*#__PURE__*/React.createElement("div", {
     style: {
       border: '1px solid rgba(231,76,60,0.3)',
       borderRadius: 16,
@@ -998,7 +1022,7 @@ function DeleteChildSheet({
     style: {
       fontWeight: 600
     }
-  }, "Back up first."), " Save a copy of ", name, "'s record to your phone before you delete. You can keep it, or reimport it later.")), backedUp ? /*#__PURE__*/React.createElement("div", {
+  }, "Back up first."), " Save a copy of ", name, "'s record to your phone before you continue. You can keep it, or reimport it later.")), backedUp ? /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       alignItems: 'center',
@@ -1047,10 +1071,10 @@ function DeleteChildSheet({
     name: "arrowRight",
     size: 20,
     color: "#fff"
-  }), " Continue to delete"), /*#__PURE__*/React.createElement("button", {
+  }), " ", continueLabel), /*#__PURE__*/React.createElement("button", {
     className: "j-btn j-btn-ghost",
     onClick: onClose
-  }, "Keep this record")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", {
+  }, cancelLabel)) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", {
     className: "j-h2",
     style: {
       textAlign: 'center',
@@ -1063,7 +1087,7 @@ function DeleteChildSheet({
       color: 'var(--muted)',
       marginBottom: 18
     }
-  }, backedUp ? 'Your backup is saved. ' : 'You have not made a backup. ', "To finish, confirm you understand and type DELETE."), /*#__PURE__*/React.createElement("button", {
+  }, backedUp ? 'Your backup is saved. ' : 'You have not made a backup. ', "To finish, confirm you understand and type ", WORD, "."), /*#__PURE__*/React.createElement("button", {
     className: "j-press",
     onClick: () => setAck(a => !a),
     style: {
@@ -1101,11 +1125,11 @@ function DeleteChildSheet({
       color: 'var(--ink)',
       fontWeight: 500
     }
-  }, "I understand this permanently deletes ", name, "'s record and everything in it.")), /*#__PURE__*/React.createElement("input", {
+  }, ackLabel)), /*#__PURE__*/React.createElement("input", {
     className: "j-input",
     value: typed,
     onChange: e => setTyped(e.target.value),
-    placeholder: "Type DELETE to confirm",
+    placeholder: 'Type ' + WORD + ' to confirm',
     autoCapitalize: "characters",
     style: {
       marginBottom: 18,
@@ -1129,10 +1153,249 @@ function DeleteChildSheet({
     name: "close",
     size: 20,
     color: "#fff"
-  }), " ", 'Delete ' + name + "'s record permanently"), /*#__PURE__*/React.createElement("button", {
+  }), " ", confirmLabel), /*#__PURE__*/React.createElement("button", {
     className: "j-btn j-btn-ghost",
     onClick: () => setStage('warn')
   }, "Back"))));
+}
+
+// The Bin (founder ask, 15 Jul 2026): deleted logs and documents wait here for
+// 30 days. Restore puts one back, Delete forever removes it now, Empty the Bin
+// clears the lot. Deleting or resetting a CHILD never lands here: that stays a
+// permanent erase, exactly as the danger zone warns.
+function BinScreen({
+  nav,
+  entries = [],
+  docs = [],
+  today
+}) {
+  const J = window.JOTLA;
+  const daysLeft = deletedAt => {
+    try {
+      const used = Math.floor((J.parseISO(today) - J.parseISO(deletedAt)) / 86400000);
+      return Math.max(0, 30 - used);
+    } catch (e) {
+      return 30;
+    }
+  };
+  const empty = entries.length === 0 && docs.length === 0;
+  const rowStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 10
+  };
+  const titleStyle = {
+    display: 'block',
+    fontFamily: "'Outfit', system-ui",
+    fontWeight: 500,
+    fontSize: 'calc(15px * var(--tscale, 1))',
+    color: 'var(--ink)'
+  };
+  const subStyle = {
+    display: 'block',
+    fontSize: 'calc(12.5px * var(--tscale, 1))',
+    color: 'var(--faint)',
+    marginTop: 1
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "j-screen"
+  }, /*#__PURE__*/React.createElement(PushHeader, {
+    title: "Bin",
+    subtitle: "Deleted logs and documents, kept for 30 days",
+    onBack: () => nav.back()
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "j-scroll j-fade"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-pad",
+    style: {
+      paddingTop: 4,
+      paddingBottom: 120
+    }
+  }, empty ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: 'center',
+      padding: '40px 20px'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "shield",
+    size: 30,
+    color: "var(--faint)"
+  }), /*#__PURE__*/React.createElement("p", {
+    className: "j-body",
+    style: {
+      marginTop: 10,
+      color: 'var(--muted)'
+    }
+  }, "The Bin is empty."), /*#__PURE__*/React.createElement("p", {
+    className: "j-sm",
+    style: {
+      marginTop: 4
+    }
+  }, "A log or document you delete waits here for 30 days, so a mis-tap is never the end of it.")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", {
+    className: "j-sm",
+    style: {
+      marginBottom: 12
+    }
+  }, "Anything here is restored with one tap. After 30 days it clears itself."), entries.map(e => /*#__PURE__*/React.createElement("div", {
+    key: e.id,
+    className: "j-card j-card-pad",
+    style: rowStyle
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      flex: 1,
+      minWidth: 0
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: titleStyle
+  }, e.summary ? e.summary.length > 58 ? e.summary.slice(0, 56) + '...' : e.summary : 'A logged moment'), /*#__PURE__*/React.createElement("span", {
+    style: subStyle
+  }, J.fmtShort(e.date), " \xB7 note \xB7 ", daysLeft(e.deletedAt), " ", daysLeft(e.deletedAt) === 1 ? 'day' : 'days', " left")), /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-soft",
+    style: {
+      width: 'auto',
+      flexShrink: 0,
+      minHeight: 40,
+      padding: '0 14px'
+    },
+    onClick: () => nav.restoreEntry(e.id)
+  }, "Restore"), /*#__PURE__*/React.createElement("button", {
+    className: "j-press",
+    "aria-label": "Delete forever",
+    onClick: () => {
+      if (window.confirm('Delete this note for good? This cannot be undone.')) nav.purgeEntry(e.id);
+    },
+    style: {
+      flexShrink: 0,
+      border: 'none',
+      background: 'none',
+      cursor: 'pointer',
+      padding: 6
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "close",
+    size: 18,
+    color: "#E74C3C"
+  })))), docs.map(d => /*#__PURE__*/React.createElement("div", {
+    key: d.id,
+    className: "j-card j-card-pad",
+    style: rowStyle
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      flex: 1,
+      minWidth: 0
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: titleStyle
+  }, d.title || 'A document'), /*#__PURE__*/React.createElement("span", {
+    style: subStyle
+  }, d.type || 'Document', " \xB7 document \xB7 ", daysLeft(d.deletedAt), " ", daysLeft(d.deletedAt) === 1 ? 'day' : 'days', " left")), /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-soft",
+    style: {
+      width: 'auto',
+      flexShrink: 0,
+      minHeight: 40,
+      padding: '0 14px'
+    },
+    onClick: () => nav.restoreDoc(d.id)
+  }, "Restore"), /*#__PURE__*/React.createElement("button", {
+    className: "j-press",
+    "aria-label": "Delete forever",
+    onClick: () => {
+      if (window.confirm('Delete this document for good? This cannot be undone.')) nav.purgeDoc(d.id);
+    },
+    style: {
+      flexShrink: 0,
+      border: 'none',
+      background: 'none',
+      cursor: 'pointer',
+      padding: 6
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "close",
+    size: 18,
+    color: "#E74C3C"
+  })))), /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-ghost",
+    style: {
+      marginTop: 10,
+      color: '#C0392B'
+    },
+    onClick: () => {
+      if (window.confirm('Empty the Bin? Everything in it is deleted for good. This cannot be undone.')) nav.emptyBin();
+    }
+  }, "Empty the Bin")))));
+}
+
+// The monthly backup nudge (founder ask, 15 Jul 2026): shown on the first open
+// of a new month. Local and honest: it saves a copy to the phone and reminds
+// the parent to keep their own device backup on. Jotla stays account-free.
+function BackupReminder({
+  childName,
+  onExport,
+  onClose
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    className: "j-sheet-scrim",
+    onClick: onClose,
+    style: {
+      zIndex: 45
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-sheet",
+    onClick: e => e.stopPropagation()
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-sheet-grab"
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      justifyContent: 'center',
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 52,
+      height: 52,
+      borderRadius: '50%',
+      background: 'var(--tint-blue)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "download",
+    size: 26,
+    color: "var(--blue)"
+  }))), /*#__PURE__*/React.createElement("h2", {
+    className: "j-h2",
+    style: {
+      textAlign: 'center',
+      marginBottom: 6
+    }
+  }, "Time for a backup?"), /*#__PURE__*/React.createElement("p", {
+    className: "j-body",
+    style: {
+      textAlign: 'center',
+      color: 'var(--muted)',
+      marginBottom: 18
+    }
+  }, "A quick monthly habit keeps ", childName, "'s record safe. Save a copy to your phone, and check your phone's own backup (Google or iCloud) is switched on. Jotla has no account and never sends your data anywhere."), /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-primary",
+    onClick: () => {
+      onExport();
+      onClose();
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "download",
+    size: 20,
+    color: "#fff"
+  }), " Save a copy now"), /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-ghost",
+    style: {
+      marginTop: 10
+    },
+    onClick: onClose
+  }, "Maybe later")));
 }
 function App({
   appMode
@@ -1156,6 +1419,7 @@ function App({
   const [childCfg, setChildCfg] = useStateApp(prefs0.childCfg || prefs0.avatarCols || {});
   const [customProfiles, setCustomProfiles] = useStateApp(prefs0.customProfiles || []);
   const [deletedIds, setDeletedIds] = useStateApp(prefs0.deletedIds || []);
+  const [backupReminderMonth, setBackupReminderMonth] = useStateApp(prefs0.backupReminderMonth || '');
   const [profileId, setProfileId] = useStateApp(prefs0.profileId || J.CHILD.id);
   const [profileOpen, setProfileOpen] = useStateApp(false);
   const [childOptOpen, setChildOptOpen] = useStateApp(false);
@@ -1195,9 +1459,26 @@ function App({
       plus,
       childCfg,
       customProfiles,
-      deletedIds
+      deletedIds,
+      backupReminderMonth
     });
-  }, [dark, tscale, profileId, plus, childCfg, customProfiles, deletedIds]);
+  }, [dark, tscale, profileId, plus, childCfg, customProfiles, deletedIds, backupReminderMonth]);
+
+  // On open: purge Bin items past 30 days, and once a month nudge a backup
+  // (founder ask, 15 Jul 2026). The nudge shows on the first open of a new month;
+  // a true 1st-of-the-month push arrives with the native build's notifications.
+  const currentMonth = J.TODAY_ISO.slice(0, 7);
+  const [reminderOpen, setReminderOpen] = useStateApp(false);
+  useEffectApp(() => {
+    const cd = J.parseISO(J.TODAY_ISO);
+    cd.setDate(cd.getDate() - 30);
+    const cutoff = cd.getFullYear() + '-' + String(cd.getMonth() + 1).padStart(2, '0') + '-' + String(cd.getDate()).padStart(2, '0');
+    setEntries(es => es.filter(e => !(e.deletedAt && e.deletedAt < cutoff)));
+    setDocs(ds => ds.filter(d => !(d.deletedAt && d.deletedAt < cutoff)));
+    // First ever launch just sets the baseline month (no nudge on a brand-new,
+    // empty record); the reminder then fires on the first open of the NEXT month.
+    if (!backupReminderMonth) setBackupReminderMonth(currentMonth);else if (backupReminderMonth !== currentMonth) setReminderOpen(true);
+  }, []);
   const profiles = [...J.PROFILES, ...customProfiles].filter(p => !deletedIds.includes(p.id)).map(p => ({
     ...p,
     ...(childCfg[p.id] || {})
@@ -1323,8 +1604,41 @@ function App({
       ...doc,
       childId: profileId
     }, ...ds]),
-    deleteEntry: id => setEntries(es => es.filter(e => e.id !== id)),
-    deleteDoc: id => setDocs(ds => ds.filter(d => d.id !== id)),
+    // The Bin (founder ask, 15 Jul 2026): deleting a log or document no longer
+    // erases it. It carries a deletedAt stamp and moves to the Bin, where it can
+    // be restored for 30 days, deleted for good, or cleared with Empty bin. Only
+    // logs and documents go to the Bin; deleting or resetting a CHILD stays a
+    // permanent, immediate erase.
+    deleteEntry: id => setEntries(es => es.map(e => e.id === id ? {
+      ...e,
+      deletedAt: J.TODAY_ISO
+    } : e)),
+    deleteDoc: id => setDocs(ds => ds.map(d => d.id === id ? {
+      ...d,
+      deletedAt: J.TODAY_ISO
+    } : d)),
+    restoreEntry: id => setEntries(es => es.map(e => {
+      if (e.id !== id) return e;
+      const n = {
+        ...e
+      };
+      delete n.deletedAt;
+      return n;
+    })),
+    restoreDoc: id => setDocs(ds => ds.map(d => {
+      if (d.id !== id) return d;
+      const n = {
+        ...d
+      };
+      delete n.deletedAt;
+      return n;
+    })),
+    purgeEntry: id => setEntries(es => es.filter(e => e.id !== id)),
+    purgeDoc: id => setDocs(ds => ds.filter(d => d.id !== id)),
+    emptyBin: () => {
+      setEntries(es => es.filter(e => !(e.deletedAt && e.childId === profileId)));
+      setDocs(ds => ds.filter(d => !(d.deletedAt && d.childId === profileId)));
+    },
     // Honest editing: the change is applied, the original creation date/time is
     // never touched, and the previous wording is kept on the record (visible in
     // the app), so an edit can never quietly rewrite history.
@@ -1448,6 +1762,33 @@ function App({
       }
     })),
     editChild: () => setChildOptOpen(true),
+    // Reset a child: clear all their logs and documents but KEEP the profile,
+    // so the record starts fresh (founder ask, 15 Jul 2026). Offered when there
+    // are two or more children. A child's data never goes to the Bin.
+    resetChild: id => {
+      setEntries(es => es.filter(e => e.childId !== id));
+      setDocs(ds => ds.filter(d => d.childId !== id));
+      setTab('today');
+      setView({
+        name: 'today'
+      });
+      setHistory([]);
+    },
+    // Reset all data: the single-child danger option. A full wipe back to the
+    // create-your-first-child screen (Bupe's choice, 15 Jul 2026): every log,
+    // document, profile and setting goes, and the onboarding gate takes over.
+    resetAll: () => {
+      setEntries([]);
+      setDocs([]);
+      setCustomProfiles([]);
+      setChildCfg({});
+      setDeletedIds(J.PROFILES.map(p => p.id));
+      setTab('today');
+      setView({
+        name: 'today'
+      });
+      setHistory([]);
+    },
     deleteChild: id => {
       const remaining = [...J.PROFILES, ...customProfiles].filter(p => p.id !== id && !deletedIds.includes(p.id));
       if (!remaining.length) return; // never delete the last record
@@ -1569,9 +1910,42 @@ function App({
   const isFullscreen = isChild || view.name === 'addchild' || view.name === 'tour';
   const today = J.TODAY_ISO;
 
-  // scope to active child
-  const myEntries = [...entries].filter(e => e.childId === profileId).sort((a, b) => a.date === b.date ? a.clock < b.clock ? 1 : -1 : a.date < b.date ? 1 : -1);
-  const myDocs = docs.filter(d => d.childId === profileId);
+  // scope to active child, and hide anything in the Bin (deletedAt set)
+  const myEntries = [...entries].filter(e => e.childId === profileId && !e.deletedAt).sort((a, b) => a.date === b.date ? a.clock < b.clock ? 1 : -1 : a.date < b.date ? 1 : -1);
+  const myDocs = docs.filter(d => d.childId === profileId && !d.deletedAt);
+  // the Bin, scoped to the active child: logs and docs waiting out their 30 days
+  const binEntries = entries.filter(e => e.childId === profileId && e.deletedAt).sort((a, b) => a.deletedAt < b.deletedAt ? 1 : -1);
+  const binDocs = docs.filter(d => d.childId === profileId && d.deletedAt);
+  const noChild = profiles.length === 0; // after a full reset: the onboarding gate takes over
+  const appExport = () => {
+    try {
+      const payload = {
+        app: 'Jotla',
+        exportedAt: new Date().toISOString(),
+        child: profile,
+        entries: myEntries,
+        documents: myDocs
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {
+        type: 'application/json'
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'jotla-' + (profile && profile.name || 'record').replace(/\s+/g, '-').toLowerCase() + '-export.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+      try {
+        localStorage.setItem('jotla_backup_v1', JSON.stringify({
+          lastExportAt: new Date().toISOString()
+        }));
+      } catch (e) {}
+    } catch (e) {
+      alert('Sorry, the export could not be created on this device.');
+    }
+  };
   let screen = null;
   switch (view.name) {
     case 'today':
@@ -1616,7 +1990,8 @@ function App({
         nav: nav,
         profile: profile,
         entries: myEntries,
-        docs: myDocs
+        docs: myDocs,
+        binCount: binEntries.length + binDocs.length
       });
       break;
     case 'quicklog':
@@ -1698,6 +2073,14 @@ function App({
         id: view.id
       });
       break;
+    case 'bin':
+      screen = /*#__PURE__*/React.createElement(BinScreen, {
+        nav: nav,
+        entries: binEntries,
+        docs: binDocs,
+        today: today
+      });
+      break;
     default:
       screen = /*#__PURE__*/React.createElement(TodayScreen, {
         nav: nav,
@@ -1706,6 +2089,11 @@ function App({
         profile: profile
       });
   }
+  // After a full reset there is no child left: the only screen is create-your-
+  // first-child, and the header, tabs and sheets below all step aside for it.
+  if (noChild) screen = /*#__PURE__*/React.createElement(AddChildScreen, {
+    nav: nav
+  });
   return /*#__PURE__*/React.createElement("div", {
     className: 'jotla-root' + (dark ? ' j-dark' : '') + (appMode ? ' j-app' : ''),
     style: {
@@ -1717,7 +2105,7 @@ function App({
       background: isChild ? '#FFF6EC' : 'var(--bg)',
       '--tscale': tscale
     }
-  }, !isFullscreen && /*#__PURE__*/React.createElement(AppHeader, {
+  }, !isFullscreen && !noChild && /*#__PURE__*/React.createElement(AppHeader, {
     profile: profile,
     plus: plus,
     onProfile: () => setProfileOpen(true),
@@ -1735,7 +2123,7 @@ function App({
       position: 'absolute',
       inset: 0
     }
-  }, /*#__PURE__*/React.createElement(ScreenBoundary, null, window.__JOTLA_TEST_THROW ? /*#__PURE__*/React.createElement(CrashProbe, null) : screen))), isTab && /*#__PURE__*/React.createElement(TabBar, {
+  }, /*#__PURE__*/React.createElement(ScreenBoundary, null, window.__JOTLA_TEST_THROW ? /*#__PURE__*/React.createElement(CrashProbe, null) : screen))), isTab && !noChild && /*#__PURE__*/React.createElement(TabBar, {
     active: tab,
     onTab: nav.setTab,
     onLog: () => nav.go('quicklog')
@@ -1761,7 +2149,7 @@ function App({
       borderRadius: 999,
       boxShadow: '0 10px 24px -10px rgba(10,20,40,0.5)'
     }
-  }, "Swipe back again to close Jotla")), profileOpen && /*#__PURE__*/React.createElement(ProfileSheet, {
+  }, "Swipe back again to close Jotla")), profileOpen && !noChild && /*#__PURE__*/React.createElement(ProfileSheet, {
     profiles: profiles,
     activeId: profileId,
     onPick: id => {
@@ -1774,14 +2162,23 @@ function App({
       nav.go('addchild');
     },
     onClose: () => setProfileOpen(false)
-  }), childOptOpen && /*#__PURE__*/React.createElement(ChildOptionsSheet, {
+  }), childOptOpen && !noChild && /*#__PURE__*/React.createElement(ChildOptionsSheet, {
     profile: profile,
     entries: myEntries,
     docs: myDocs,
     canDelete: profiles.length > 1,
     onChange: nav.setChild,
     onDelete: () => nav.deleteChild(profileId),
+    onReset: () => nav.resetChild(profileId),
+    onResetAll: () => nav.resetAll(),
     onClose: () => setChildOptOpen(false)
+  }), reminderOpen && !noChild && /*#__PURE__*/React.createElement(BackupReminder, {
+    childName: profile && profile.name || 'your child',
+    onExport: appExport,
+    onClose: () => {
+      setReminderOpen(false);
+      setBackupReminderMonth(currentMonth);
+    }
   }));
 }
 

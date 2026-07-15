@@ -1811,7 +1811,7 @@ function DocScreen({
       color: '#C0392B'
     },
     onClick: () => {
-      if (window.confirm('Delete this document from the vault? This cannot be undone.')) {
+      if (window.confirm('Move this document to the Bin? You can restore it for 30 days from Settings.')) {
         nav.deleteDoc(d.id);
         nav.back();
       }
@@ -3461,7 +3461,8 @@ function SettingsScreen({
   nav,
   profile,
   entries = [],
-  docs = []
+  docs = [],
+  binCount = 0
 }) {
   const J = window.JOTLA;
   const childName = profile && profile.name || 'your child';
@@ -3993,6 +3994,29 @@ function SettingsScreen({
     title: "About Jotla",
     sub: "What it is, your privacy, where the record lives, what is coming.",
     onClick: () => nav.go('infoabout'),
+    last: true
+  })), /*#__PURE__*/React.createElement(SectionLabel, null, "Bin"), /*#__PURE__*/React.createElement("div", {
+    className: "j-card",
+    style: {
+      marginBottom: 20,
+      overflow: 'hidden'
+    }
+  }, /*#__PURE__*/React.createElement(SettingsRow, {
+    icon: /*#__PURE__*/React.createElement(Icon, {
+      name: "close",
+      size: 20,
+      color: "var(--blue)"
+    }),
+    title: "Recently deleted",
+    sub: "Restore a deleted log or document, or empty the Bin.",
+    onClick: () => nav.go('bin'),
+    right: binCount > 0 ? /*#__PURE__*/React.createElement("span", {
+      className: "j-pillbadge",
+      style: {
+        background: 'var(--tag-grey-bg)',
+        color: 'var(--muted)'
+      }
+    }, binCount) : undefined,
     last: true
   })), nav.plus && plusCard, /*#__PURE__*/React.createElement("p", {
     className: "j-meta",

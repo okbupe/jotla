@@ -858,7 +858,7 @@ function EntryScreen({
       color: '#C0392B'
     },
     onClick: () => {
-      if (window.confirm('Delete this note from the record? This cannot be undone.')) {
+      if (window.confirm('Move this note to the Bin? You can restore it for 30 days from Settings.')) {
         nav.deleteEntry(e.id);
         nav.back();
       }
