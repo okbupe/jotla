@@ -602,6 +602,17 @@ function MediaPicker({
     }
   }, tile('Capture', 'Photo or video', 'camera', true), tile('Attach media', 'From your photos', 'attach', false));
 }
+
+// The quick log is dynamic (founder + wife's insight, 15 Jul 2026): a real day
+// holds several moments, each with its own time, place, kind and mood (a morning
+// wobble in transition, a new word at lunch, an incident while eating). Rather
+// than force a separate log per moment, the day and place are set once at the
+// top, then each category pill is an "add" button: tap it, write the moment,
+// Okay, and it banks with a count badge. Change When and the next tap stamps the
+// new time. One Save writes every banked moment as its own dated entry, so each
+// stays individually findable, filterable and printable, the way evidence must.
+// Incidents opens the same pattern with a richer before/during/after box and
+// saves as a gate note (type 'handover').
 function QuickLogScreen({
   nav,
   today,
@@ -610,10 +621,6 @@ function QuickLogScreen({
   const J = window.JOTLA;
   const [setting, setSetting] = useStateA('School');
   const [time, setTime] = useStateA('Afternoon');
-  const [cat, setCat] = useStateA('Transitions');
-  const [text, setText] = useStateA('');
-  const [mood, setMood] = useStateA('good');
-  const [media, setMedia] = useStateA(null);
   const minus1 = iso => {
     const d = J.parseISO(iso);
     d.setDate(d.getDate() - 1);
@@ -626,44 +633,114 @@ function QuickLogScreen({
   const [customDate, setCustomDate] = useStateA(preset && preset !== today && preset !== minus1(today) ? preset : minus1(minus1(today)));
   const [dayPickerOpen, setDayPickerOpen] = useStateA(false);
   const logDate = dayMode === 'today' ? today : dayMode === 'yesterday' ? minus1(today) : customDate;
+
+  // the day's banked moments, and the one category whose editor is open
+  const [moments, setMoments] = useStateA([]);
+  const [openCat, setOpenCat] = useStateA(null);
+  const [eText, setEText] = useStateA('');
+  const [eMood, setEMood] = useStateA('good');
+  const [eBefore, setEBefore] = useStateA('');
+  const [eDuring, setEDuring] = useStateA('');
+  const [eAfter, setEAfter] = useStateA('');
+  const [eMedia, setEMedia] = useStateA(null);
+  const isInc = openCat === 'Incidents';
+  const openEditor = c => {
+    setOpenCat(c);
+    setEText('');
+    setEMood(c === 'Incidents' ? 'hard' : 'good');
+    setEBefore('');
+    setEDuring('');
+    setEAfter('');
+    setEMedia(null);
+  };
+  const bankMoment = () => {
+    setMoments(ms => [...ms, {
+      key: 'm' + Date.now() + '_' + ms.length,
+      category: openCat,
+      time,
+      setting,
+      mood: eMood,
+      isIncident: openCat === 'Incidents',
+      text: eText.trim(),
+      before: eBefore.trim(),
+      during: eDuring.trim(),
+      after: eAfter.trim(),
+      media: eMedia
+    }]);
+    setOpenCat(null);
+  };
+  const removeMoment = key => setMoments(ms => ms.filter(m => m.key !== key));
+  const countFor = c => moments.filter(m => m.category === c).length;
   const nowClock = () => {
     const d = new Date();
     return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
   };
   const save = () => {
-    const entry = {
-      id: 'n' + Date.now(),
-      date: logDate,
-      time,
-      clock: nowClock(),
-      setting,
-      category: cat,
-      mood,
-      kind: dayMode === 'today' ? 'contemporaneous' : 'recalled',
-      type: 'quick',
-      summary: text.trim() || `${cat} at ${setting.toLowerCase()}. ${time} went ${mood === 'good' ? 'well' : mood === 'ok' ? 'up and down' : 'hard'}.`
-    };
-    if (media && media.dataUrl) {
-      entry.photoData = media.dataUrl;
-      entry.photo = 'Photo from the day';
-    } else if (media && media.kind === 'video') {
-      entry.photo = 'Video noted (kept in your photo library)';
-    }
-    nav.addEntry(entry);
+    if (!moments.length) return;
+    const kind = dayMode === 'today' ? 'contemporaneous' : 'recalled';
+    // addEntry prepends, so add in reverse to keep the order they were written
+    [...moments].reverse().forEach(m => {
+      const base = {
+        id: (m.isIncident ? 'h' : 'n') + m.key,
+        date: logDate,
+        time: m.time,
+        clock: nowClock(),
+        setting: m.setting,
+        category: m.category,
+        mood: m.mood,
+        kind
+      };
+      const entry = m.isIncident ? {
+        ...base,
+        type: 'handover',
+        summary: m.during || m.text || 'Hard moment captured.',
+        handover: {
+          behaviours: [],
+          before: m.before,
+          during: m.during || m.text,
+          after: m.after,
+          duration: '',
+          helped: '',
+          who: [],
+          where: ''
+        }
+      } : {
+        ...base,
+        type: 'quick',
+        summary: m.text || `${m.category} at ${m.setting.toLowerCase()}. ${m.time} went ${m.mood === 'good' ? 'well' : m.mood === 'ok' ? 'up and down' : 'hard'}.`
+      };
+      if (m.media && m.media.dataUrl) {
+        entry.photoData = m.media.dataUrl;
+        entry.photo = 'Photo from the day';
+      } else if (m.media && m.media.kind === 'video') {
+        entry.photo = 'Video noted (kept in your photo library)';
+      }
+      nav.addEntry(entry);
+    });
     nav.back();
   };
+  const moodDot = mk => /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 9,
+      height: 9,
+      borderRadius: '50%',
+      background: window.MOOD_COLOURS[mk],
+      flexShrink: 0,
+      marginTop: 6
+    }
+  });
   return /*#__PURE__*/React.createElement("div", {
     className: "j-screen"
   }, /*#__PURE__*/React.createElement(PushHeader, {
     title: "Quick log",
-    subtitle: "Takes under 30 seconds",
+    subtitle: "Log the whole day, one moment at a time",
     onClose: () => nav.back()
   }), /*#__PURE__*/React.createElement("div", {
     className: "j-scroll j-fade"
   }, /*#__PURE__*/React.createElement("div", {
     className: "j-pad",
     style: {
-      paddingBottom: 120,
+      paddingBottom: 130,
       paddingTop: 4,
       display: 'flex',
       flexDirection: 'column',
@@ -711,27 +788,163 @@ function QuickLogScreen({
     options: J.TIMES,
     value: time,
     onChange: setTime
-  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "What kind of moment?"), /*#__PURE__*/React.createElement(ChipGroup, {
-    options: J.CATEGORIES,
-    value: cat,
-    onChange: setCat
-  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "What happened?"), /*#__PURE__*/React.createElement("textarea", {
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "What happened?"), /*#__PURE__*/React.createElement("p", {
+    className: "j-sm",
+    style: {
+      margin: '-4px 0 12px',
+      color: 'var(--faint)'
+    }
+  }, "Tap what happened. Add as many as you like, then Save once."), /*#__PURE__*/React.createElement("div", {
+    className: "j-chiprow"
+  }, J.CATEGORIES.map(c => {
+    const n = countFor(c);
+    return /*#__PURE__*/React.createElement("button", {
+      key: c,
+      className: 'j-chip' + (n > 0 || openCat === c ? ' j-chip-on' : ''),
+      onClick: () => openEditor(c)
+    }, c, n > 0 && /*#__PURE__*/React.createElement("span", {
+      style: {
+        minWidth: 20,
+        height: 20,
+        padding: '0 5px',
+        borderRadius: 999,
+        background: 'var(--blue)',
+        color: '#fff',
+        fontSize: 'calc(12px * var(--tscale, 1))',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }
+    }, n));
+  }))), openCat && /*#__PURE__*/React.createElement("div", {
+    className: "j-card j-card-pad",
+    style: {
+      border: '1.5px solid var(--blue)',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 14
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontFamily: "'Cal Sans', system-ui",
+      fontWeight: 500,
+      fontSize: 'calc(17px * var(--tscale, 1))',
+      color: 'var(--ink)',
+      margin: 0
+    }
+  }, openCat), /*#__PURE__*/React.createElement("p", {
+    className: "j-meta",
+    style: {
+      marginTop: 2
+    }
+  }, time, " \xB7 ", setting, " \xB7 ", J.fmtLong(logDate))), isInc ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 12
+    }
+  }, /*#__PURE__*/React.createElement(PhaseField, {
+    label: "Before",
+    hint: "What led up to it",
+    value: eBefore,
+    onChange: setEBefore
+  }), /*#__PURE__*/React.createElement(PhaseField, {
+    label: "During",
+    hint: "What actually happened",
+    value: eDuring,
+    onChange: setEDuring
+  }), /*#__PURE__*/React.createElement(PhaseField, {
+    label: "After",
+    hint: "How it ended",
+    value: eAfter,
+    onChange: setEAfter
+  })) : /*#__PURE__*/React.createElement("textarea", {
     className: "j-input",
-    value: text,
-    onChange: e => setText(e.target.value),
+    value: eText,
+    onChange: e => setEText(e.target.value),
     rows: 3,
     placeholder: "A line is plenty. Their exact words, in quotes, are gold."
-  })), nav.plus ? /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "Add a photo or video"), /*#__PURE__*/React.createElement(MediaPicker, {
-    value: media,
-    onChange: setMedia
+  }), nav.plus ? /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "Add a photo or video"), /*#__PURE__*/React.createElement(MediaPicker, {
+    value: eMedia,
+    onChange: setEMedia
   })) : /*#__PURE__*/React.createElement(PlusLockedCard, {
     title: "Add photos and videos",
     text: "Keep a photo or video with the note. Sometimes the picture is the evidence. Part of Plus.",
     onClick: () => nav.go('unlock')
   }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "How did it feel?"), /*#__PURE__*/React.createElement(MoodFacePicker, {
-    value: mood,
-    onChange: setMood
-  })))), /*#__PURE__*/React.createElement("div", {
+    value: eMood,
+    onChange: setEMood
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-ghost",
+    style: {
+      flex: '0 0 38%',
+      minHeight: 52
+    },
+    onClick: () => setOpenCat(null)
+  }, "Cancel"), /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-primary",
+    style: {
+      flex: 1,
+      minHeight: 52
+    },
+    onClick: bankMoment
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "check",
+    size: 20,
+    color: "#fff"
+  }), " Okay"))), moments.length > 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(SectionLabel, null, "Moments so far"), /*#__PURE__*/React.createElement("div", {
+    className: "j-card",
+    style: {
+      padding: '4px 16px'
+    }
+  }, moments.map(m => /*#__PURE__*/React.createElement("div", {
+    key: m.key,
+    style: {
+      display: 'flex',
+      gap: 10,
+      alignItems: 'flex-start',
+      padding: '12px 0',
+      borderTop: moments[0].key === m.key ? 'none' : '1px solid var(--line)'
+    }
+  }, moodDot(m.mood), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      minWidth: 0
+    }
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "j-meta"
+  }, m.time, " \xB7 ", m.setting, " \xB7 ", m.category), /*#__PURE__*/React.createElement("p", {
+    className: "j-body",
+    style: {
+      fontSize: 'calc(15px * var(--tscale, 1))',
+      marginTop: 1
+    }
+  }, m.isIncident ? m.during || m.text || 'Incident noted' : m.text || 'Noted')), /*#__PURE__*/React.createElement("button", {
+    onClick: () => removeMoment(m.key),
+    "aria-label": "Remove moment",
+    className: "j-press",
+    style: {
+      width: 34,
+      height: 34,
+      borderRadius: 10,
+      border: 'none',
+      background: 'var(--tag-grey-bg)',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "close",
+    size: 16,
+    color: "var(--muted)"
+  })))))))), /*#__PURE__*/React.createElement("div", {
     style: {
       position: 'absolute',
       left: 0,
@@ -740,9 +953,18 @@ function QuickLogScreen({
       padding: '12px 20px calc(16px + env(safe-area-inset-bottom))',
       background: 'var(--fade-grad)'
     }
-  }, /*#__PURE__*/React.createElement("button", {
+  }, moments.length > 0 && /*#__PURE__*/React.createElement("p", {
+    className: "j-meta",
+    style: {
+      textAlign: 'center',
+      marginBottom: 8
+    }
+  }, moments.length, " moment", moments.length === 1 ? '' : 's', " ready. Each saves as its own dated note."), /*#__PURE__*/React.createElement("button", {
     className: "j-btn j-btn-primary j-btn-lg",
-    onClick: save
+    onClick: save,
+    style: moments.length ? {} : {
+      opacity: 0.5
+    }
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "check",
     size: 22,

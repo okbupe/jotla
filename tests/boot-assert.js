@@ -82,15 +82,19 @@ function ok(name, cond) {
   const nowPressed = await page.locator('button[aria-pressed="true"]', { hasText: chipText }).count();
   ok('aria-pressed tracks selection (' + chipText + ')', nowPressed >= 1);
 
-  // ---- 5b. whole-day capture chips (build 1.7.1) + a real save ----
-  console.log('Suite 5b: whole-day chips');
+  // ---- 5b. dynamic day log (build 1.12.0): pill -> moment editor -> bank -> save ----
+  console.log('Suite 5b: dynamic day log');
   const logText = await page.locator('#root').innerText();
   for (const c of ['School feedback', 'New words', 'Wins']) ok('chip present: ' + c, logText.includes(c));
-  ok('placeholder nudges exact words', await page.locator('textarea[placeholder*="exact words"]').count() >= 1);
   await page.locator('button.j-chip:has-text("Today")').first().click(); // suite 5 toggled "Yesterday"; save to today
-  await page.getByText('Wins', { exact: true }).first().click();
+  await page.getByText('Wins', { exact: true }).first().click(); // tap the pill to open its moment editor
+  await page.waitForTimeout(300);
+  ok('placeholder nudges exact words', await page.locator('textarea[placeholder*="exact words"]').count() >= 1);
   await page.locator('textarea').first().fill('Boot-assert win: tried a new food at dinner');
-  await page.getByText('Save', { exact: true }).last().click();
+  await page.getByText('Okay', { exact: true }).first().click(); // bank the moment
+  await page.waitForTimeout(300);
+  ok('a banked moment lands in the day list', (await page.locator('#root').innerText()).includes('Boot-assert win: tried a new food'));
+  await page.getByText('Save', { exact: true }).last().click(); // one Save writes every banked moment
   await page.waitForTimeout(700);
   await page.getByText('Today', { exact: true }).last().click();
   await page.waitForTimeout(500);
@@ -223,12 +227,15 @@ function ok(name, cond) {
   await page4.locator('button[aria-label="Back"]').first().click();
   await page4.waitForTimeout(400);
 
-  // adding media is Plus-gated on the free tier (viewing never gates)
+  // adding media is Plus-gated on the free tier (viewing never gates). Media now
+  // rides the specific moment, so it lives inside the moment editor.
   await page4.getByText('Log', { exact: true }).last().click();
   await page4.waitForTimeout(500);
+  await page4.getByText('Wins', { exact: true }).first().click(); // open a moment editor
+  await page4.waitForTimeout(300);
   const qlFree = await page4.locator('#root').innerText();
-  ok('free Quick log shows the honest locked media card', qlFree.includes('Add photos and videos') && qlFree.includes('Part of Plus'));
-  ok('free Quick log has no live media tiles', !qlFree.includes('Attach media'));
+  ok('free moment editor shows the honest locked media card', qlFree.includes('Add photos and videos') && qlFree.includes('Part of Plus'));
+  ok('free moment editor has no live media tiles', !qlFree.includes('Attach media'));
   await page4.locator('button[aria-label="Close"]').first().click();
   await page4.waitForTimeout(400);
 
@@ -281,11 +288,13 @@ function ok(name, cond) {
   // item 34 (1.10.0): Plus frames the check-in as a two-of-you thing
   ok("Plus Your day tile reads 'Do it together'", (await page5.locator('#root').innerText()).includes('Do it together with Sam'));
 
-  // Plus quick log: the media tiles are live
+  // Plus quick log: the media tiles are live inside the moment editor
   await page5.getByText('Log', { exact: true }).last().click();
   await page5.waitForTimeout(500);
+  await page5.getByText('Wins', { exact: true }).first().click(); // open a moment editor
+  await page5.waitForTimeout(300);
   const qlPlus = await page5.locator('#root').innerText();
-  ok('Plus Quick log offers Capture and Attach media', qlPlus.includes('Capture') && qlPlus.includes('Attach media'));
+  ok('Plus moment editor offers Capture and Attach media', qlPlus.includes('Capture') && qlPlus.includes('Attach media'));
   await page5.locator('button[aria-label="Close"]').first().click();
   await page5.waitForTimeout(400);
 

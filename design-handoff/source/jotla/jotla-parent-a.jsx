@@ -246,14 +246,20 @@ function MediaPicker({ value = null, onChange = () => {} }) {
   );
 }
 
+// The quick log is dynamic (founder + wife's insight, 15 Jul 2026): a real day
+// holds several moments, each with its own time, place, kind and mood (a morning
+// wobble in transition, a new word at lunch, an incident while eating). Rather
+// than force a separate log per moment, the day and place are set once at the
+// top, then each category pill is an "add" button: tap it, write the moment,
+// Okay, and it banks with a count badge. Change When and the next tap stamps the
+// new time. One Save writes every banked moment as its own dated entry, so each
+// stays individually findable, filterable and printable, the way evidence must.
+// Incidents opens the same pattern with a richer before/during/after box and
+// saves as a gate note (type 'handover').
 function QuickLogScreen({ nav, today, view }) {
   const J = window.JOTLA;
   const [setting, setSetting] = useStateA('School');
   const [time, setTime] = useStateA('Afternoon');
-  const [cat, setCat] = useStateA('Transitions');
-  const [text, setText] = useStateA('');
-  const [mood, setMood] = useStateA('good');
-  const [media, setMedia] = useStateA(null);
   const minus1 = (iso) => { const d = J.parseISO(iso); d.setDate(d.getDate() - 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
   // A date can arrive on the view (the Day view's "Add a note", 12 Jul 2026),
   // pre-setting the day chips so nothing needs re-picking.
@@ -264,24 +270,63 @@ function QuickLogScreen({ nav, today, view }) {
   const [dayPickerOpen, setDayPickerOpen] = useStateA(false);
   const logDate = dayMode === 'today' ? today : dayMode === 'yesterday' ? minus1(today) : customDate;
 
+  // the day's banked moments, and the one category whose editor is open
+  const [moments, setMoments] = useStateA([]);
+  const [openCat, setOpenCat] = useStateA(null);
+  const [eText, setEText] = useStateA('');
+  const [eMood, setEMood] = useStateA('good');
+  const [eBefore, setEBefore] = useStateA('');
+  const [eDuring, setEDuring] = useStateA('');
+  const [eAfter, setEAfter] = useStateA('');
+  const [eMedia, setEMedia] = useStateA(null);
+  const isInc = openCat === 'Incidents';
+
+  const openEditor = (c) => {
+    setOpenCat(c);
+    setEText(''); setEMood(c === 'Incidents' ? 'hard' : 'good');
+    setEBefore(''); setEDuring(''); setEAfter(''); setEMedia(null);
+  };
+  const bankMoment = () => {
+    setMoments(ms => [...ms, {
+      key: 'm' + Date.now() + '_' + ms.length, category: openCat, time, setting, mood: eMood,
+      isIncident: openCat === 'Incidents',
+      text: eText.trim(), before: eBefore.trim(), during: eDuring.trim(), after: eAfter.trim(),
+      media: eMedia,
+    }]);
+    setOpenCat(null);
+  };
+  const removeMoment = (key) => setMoments(ms => ms.filter(m => m.key !== key));
+  const countFor = (c) => moments.filter(m => m.category === c).length;
+
   const nowClock = () => { const d = new Date(); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
   const save = () => {
-    const entry = {
-      id: 'n' + Date.now(), date: logDate, time, clock: nowClock(), setting, category: cat, mood,
-      kind: dayMode === 'today' ? 'contemporaneous' : 'recalled', type: 'quick',
-      summary: text.trim() || `${cat} at ${setting.toLowerCase()}. ${time} went ${mood === 'good' ? 'well' : mood === 'ok' ? 'up and down' : 'hard'}.`,
-    };
-    if (media && media.dataUrl) { entry.photoData = media.dataUrl; entry.photo = 'Photo from the day'; }
-    else if (media && media.kind === 'video') { entry.photo = 'Video noted (kept in your photo library)'; }
-    nav.addEntry(entry);
+    if (!moments.length) return;
+    const kind = dayMode === 'today' ? 'contemporaneous' : 'recalled';
+    // addEntry prepends, so add in reverse to keep the order they were written
+    [...moments].reverse().forEach(m => {
+      const base = {
+        id: (m.isIncident ? 'h' : 'n') + m.key, date: logDate, time: m.time, clock: nowClock(),
+        setting: m.setting, category: m.category, mood: m.mood, kind,
+      };
+      const entry = m.isIncident
+        ? { ...base, type: 'handover', summary: m.during || m.text || 'Hard moment captured.',
+            handover: { behaviours: [], before: m.before, during: m.during || m.text, after: m.after, duration: '', helped: '', who: [], where: '' } }
+        : { ...base, type: 'quick',
+            summary: m.text || `${m.category} at ${m.setting.toLowerCase()}. ${m.time} went ${m.mood === 'good' ? 'well' : m.mood === 'ok' ? 'up and down' : 'hard'}.` };
+      if (m.media && m.media.dataUrl) { entry.photoData = m.media.dataUrl; entry.photo = 'Photo from the day'; }
+      else if (m.media && m.media.kind === 'video') { entry.photo = 'Video noted (kept in your photo library)'; }
+      nav.addEntry(entry);
+    });
     nav.back();
   };
 
+  const moodDot = (mk) => <span style={{ width: 9, height: 9, borderRadius: '50%', background: window.MOOD_COLOURS[mk], flexShrink: 0, marginTop: 6 }} />;
+
   return (
     <div className="j-screen">
-      <PushHeader title="Quick log" subtitle="Takes under 30 seconds" onClose={() => nav.back()} />
+      <PushHeader title="Quick log" subtitle="Log the whole day, one moment at a time" onClose={() => nav.back()} />
       <div className="j-scroll j-fade">
-        <div className="j-pad" style={{ paddingBottom: 120, paddingTop: 4, display: 'flex', flexDirection: 'column', gap: 22 }}>
+        <div className="j-pad" style={{ paddingBottom: 130, paddingTop: 4, display: 'flex', flexDirection: 'column', gap: 22 }}>
           <div>
             <FieldLabel>Which day?</FieldLabel>
             <div className="j-chiprow">
@@ -298,27 +343,86 @@ function QuickLogScreen({ nav, today, view }) {
           </div>
           <div><FieldLabel>Where?</FieldLabel><ChipGroup options={J.SETTINGS} value={setting} onChange={setSetting} /></div>
           <div><FieldLabel>When?</FieldLabel><ChipGroup options={J.TIMES} value={time} onChange={setTime} /></div>
-          <div><FieldLabel>What kind of moment?</FieldLabel><ChipGroup options={J.CATEGORIES} value={cat} onChange={setCat} /></div>
+
+          {/* the category pills are add-buttons. A count badge shows how many
+              moments each holds today; change When above to stamp the next one. */}
           <div>
             <FieldLabel>What happened?</FieldLabel>
-            <textarea className="j-input" value={text} onChange={e => setText(e.target.value)} rows={3}
-              placeholder="A line is plenty. Their exact words, in quotes, are gold." />
+            <p className="j-sm" style={{ margin: '-4px 0 12px', color: 'var(--faint)' }}>Tap what happened. Add as many as you like, then Save once.</p>
+            <div className="j-chiprow">
+              {J.CATEGORIES.map(c => {
+                const n = countFor(c);
+                return (
+                  <button key={c} className={'j-chip' + (n > 0 || openCat === c ? ' j-chip-on' : '')} onClick={() => openEditor(c)}>
+                    {c}
+                    {n > 0 && <span style={{ minWidth: 20, height: 20, padding: '0 5px', borderRadius: 999, background: 'var(--blue)', color: '#fff', fontSize: 'calc(12px * var(--tscale, 1))', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{n}</span>}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-          {/* Adding media is part of Jotla Plus (12 Jul 2026): Free sees the
-              honest locked card in the same spot; viewing saved media never
-              gates anywhere. */}
-          {nav.plus ? (
-            <div><FieldLabel>Add a photo or video</FieldLabel><MediaPicker value={media} onChange={setMedia} /></div>
-          ) : (
-            <PlusLockedCard title="Add photos and videos"
-              text="Keep a photo or video with the note. Sometimes the picture is the evidence. Part of Plus."
-              onClick={() => nav.go('unlock')} />
+
+          {/* the moment editor: one category at a time. Incidents gets the
+              richer before/during/after box and banks as a gate note. */}
+          {openCat && (
+            <div className="j-card j-card-pad" style={{ border: '1.5px solid var(--blue)', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div>
+                <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(17px * var(--tscale, 1))', color: 'var(--ink)', margin: 0 }}>{openCat}</p>
+                <p className="j-meta" style={{ marginTop: 2 }}>{time} · {setting} · {J.fmtLong(logDate)}</p>
+              </div>
+              {isInc ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <PhaseField label="Before" hint="What led up to it" value={eBefore} onChange={setEBefore} />
+                  <PhaseField label="During" hint="What actually happened" value={eDuring} onChange={setEDuring} />
+                  <PhaseField label="After" hint="How it ended" value={eAfter} onChange={setEAfter} />
+                </div>
+              ) : (
+                <textarea className="j-input" value={eText} onChange={e => setEText(e.target.value)} rows={3}
+                  placeholder="A line is plenty. Their exact words, in quotes, are gold." />
+              )}
+              {/* Adding media is part of Jotla Plus (12 Jul 2026): Free sees the
+                  honest locked card in the same spot; viewing saved media never
+                  gates anywhere. Media rides the specific moment. */}
+              {nav.plus ? (
+                <div><FieldLabel>Add a photo or video</FieldLabel><MediaPicker value={eMedia} onChange={setEMedia} /></div>
+              ) : (
+                <PlusLockedCard title="Add photos and videos"
+                  text="Keep a photo or video with the note. Sometimes the picture is the evidence. Part of Plus."
+                  onClick={() => nav.go('unlock')} />
+              )}
+              <div><FieldLabel>How did it feel?</FieldLabel><MoodFacePicker value={eMood} onChange={setEMood} /></div>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button className="j-btn j-btn-ghost" style={{ flex: '0 0 38%', minHeight: 52 }} onClick={() => setOpenCat(null)}>Cancel</button>
+                <button className="j-btn j-btn-primary" style={{ flex: 1, minHeight: 52 }} onClick={bankMoment}><Icon name="check" size={20} color="#fff" /> Okay</button>
+              </div>
+            </div>
           )}
-          <div><FieldLabel>How did it feel?</FieldLabel><MoodFacePicker value={mood} onChange={setMood} /></div>
+
+          {/* the day taking shape: every banked moment, each removable */}
+          {moments.length > 0 && (
+            <div>
+              <SectionLabel>Moments so far</SectionLabel>
+              <div className="j-card" style={{ padding: '4px 16px' }}>
+                {moments.map(m => (
+                  <div key={m.key} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '12px 0', borderTop: moments[0].key === m.key ? 'none' : '1px solid var(--line)' }}>
+                    {moodDot(m.mood)}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p className="j-meta">{m.time} · {m.setting} · {m.category}</p>
+                      <p className="j-body" style={{ fontSize: 'calc(15px * var(--tscale, 1))', marginTop: 1 }}>{m.isIncident ? (m.during || m.text || 'Incident noted') : (m.text || 'Noted')}</p>
+                    </div>
+                    <button onClick={() => removeMoment(m.key)} aria-label="Remove moment" className="j-press" style={{ width: 34, height: 34, borderRadius: 10, border: 'none', background: 'var(--tag-grey-bg)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Icon name="close" size={16} color="var(--muted)" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
       <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '12px 20px calc(16px + env(safe-area-inset-bottom))', background: 'var(--fade-grad)' }}>
-        <button className="j-btn j-btn-primary j-btn-lg" onClick={save}>
+        {moments.length > 0 && <p className="j-meta" style={{ textAlign: 'center', marginBottom: 8 }}>{moments.length} moment{moments.length === 1 ? '' : 's'} ready. Each saves as its own dated note.</p>}
+        <button className="j-btn j-btn-primary j-btn-lg" onClick={save} style={moments.length ? {} : { opacity: 0.5 }}>
           <Icon name="check" size={22} color="#fff" /> Save
         </button>
       </div>
