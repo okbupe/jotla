@@ -39,11 +39,13 @@ const WALK_PLACES = [
   { id: 'lunch', label: 'Lunch hall', questions: [
     { id: 'ate', prompt: 'What did you eat?', placeholder: WRITE_HERE },
     { id: 'sat-with', prompt: 'Who did you sit with?', chips: ['Friends', 'Peers', 'By myself'], placeholder: TYPE_A_NAME },
+    { id: 'feeling-why', prompt: 'What made you feel ' + FEELING_TOKEN + '?', placeholder: WRITE_HERE },
   ] },
   { id: 'playground', label: 'Playground', questions: [
     { id: 'played-with', prompt: 'Who did you play with?', chips: ['Friends', 'Peers', 'By myself'], placeholder: TYPE_A_NAME },
     { id: 'grown-ups', prompt: 'Which grown-ups were around?', chips: ['Teachers', 'Helpers', 'Nobody'], placeholder: TYPE_A_NAME, adultChips: true },
     { id: 'trouble', prompt: 'Any pushing or trouble from other children?', chips: ['No', 'Yes'], placeholder: 'What happened?' },
+    { id: 'feeling-why', prompt: 'What made you feel ' + FEELING_TOKEN + '?', placeholder: WRITE_HERE },
   ] },
 ];
 

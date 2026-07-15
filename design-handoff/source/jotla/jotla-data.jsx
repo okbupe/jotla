@@ -26,6 +26,8 @@ const HAND_ENTRIES = [
     summary: 'Difficult after lunch. Ran off when the bell went.',
     handover: {
       behaviours: ['Running off', 'Refusing', 'Crying'],
+      who: ['Teachers', 'TA', 'Other children'],
+      where: 'Corridor',
       before: 'The line-up bell went straight after lunch.',
       during: 'Ran to the cloakroom, refused to line up, cried for a few minutes.',
       after: 'Calmed down with the teaching assistant near the door.',
@@ -59,6 +61,8 @@ const HAND_ENTRIES = [
     photo: 'Photo from the classroom door',
     handover: {
       behaviours: ['Running off', 'Refusing', 'Crying'],
+      who: ['TA', 'Other children'],
+      where: 'Lunch hall',
       before: 'Line-up bell after lunch.',
       during: 'Ran to the book corner, refused to line up, cried for about 10 minutes.',
       after: 'Settled with the teaching assistant and a quiet job.',

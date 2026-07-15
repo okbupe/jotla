@@ -412,7 +412,9 @@ function EntryScreen({ nav, entries, id }) {
                   <p className="j-body" style={{ fontSize: 'calc(15.5px * var(--tscale, 1))' }}>{v}</p>
                 </div>
               ))}
-              <div style={{ display: 'flex', gap: 20 }}>
+              <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+                {e.handover.who && e.handover.who.length > 0 && <div><p className="j-meta">Who was there</p><p className="j-strong" style={{ fontSize: 'calc(16px * var(--tscale, 1))' }}>{e.handover.who.join(', ')}</p></div>}
+                {e.handover.where && <div><p className="j-meta">Where</p><p className="j-strong" style={{ fontSize: 'calc(16px * var(--tscale, 1))' }}>{e.handover.where}</p></div>}
                 {e.handover.duration && <div><p className="j-meta">Lasted</p><p className="j-strong" style={{ fontSize: 'calc(16px * var(--tscale, 1))' }}>{e.handover.duration}</p></div>}
               </div>
               {e.handover.helped && (

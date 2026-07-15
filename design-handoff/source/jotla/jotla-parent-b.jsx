@@ -135,6 +135,7 @@ function openPrintPack(childLabel, rangeLabel, list) {
       const part = (l, v) => v ? '<p style="margin:4px 0;"><strong>' + esc(l) + ':</strong> ' + esc(v) + '</p>' : '';
       extra = '<div style="margin-top:6px;padding:8px 12px;background:#f5f7fb;border-radius:8px;">'
         + (h.behaviours && h.behaviours.length ? '<p style="margin:4px 0;"><strong>Seen:</strong> ' + esc(h.behaviours.join(', ')) + '</p>' : '')
+        + (h.who && h.who.length ? part('Who was there', h.who.join(', ')) : '') + part('Where', h.where)
         + part('Before', h.before) + part('During', h.during) + part('After', h.after)
         + part('Lasted', h.duration) + part('What helped', h.helped) + '</div>';
     }

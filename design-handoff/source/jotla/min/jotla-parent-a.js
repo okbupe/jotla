@@ -759,6 +759,11 @@ function QuickLogScreen({
 // ---------------- Gate note (guided capture) ----------------
 // Child-centred, supportive questions. Not a witness statement.
 const GATE_QUESTIONS = name => ['What happened?', 'Where and when was this?', `How did ${name} seem?`, 'What seemed to lead up to it?', 'What helped, or what happened next?'];
+
+// Who was with the child, and where it happened (founder ask, 15 Jul 2026): the
+// gate note now captures the scene, not only the behaviours and the ABC phases.
+const WHO_CHIPS = ['Teachers', 'TA', 'Other children', 'Other adults'];
+const WHERE_CHIPS = ['Classroom', 'Playground', 'Corridor', 'Lunch hall', 'Outside', 'Toilets', 'Other'];
 function Stepper({
   value,
   onChange,
@@ -870,6 +875,8 @@ function HandoverScreen({
   const [after, setAfter] = useStateA('');
   const [duration, setDuration] = useStateA(10);
   const [helped, setHelped] = useStateA('');
+  const [who, setWho] = useStateA([]); // who was with the child (multi-select)
+  const [whereAt, setWhereAt] = useStateA(''); // where it happened (single-select)
   const [nudge, setNudge] = useStateA(false);
   const [media, setMedia] = useStateA(null);
   const [extras, setExtras] = useStateA([]);
@@ -895,7 +902,9 @@ function HandoverScreen({
         during,
         after,
         duration: duration + ' mins',
-        helped
+        helped,
+        who,
+        where: whereAt
       }
     };
     if (media && media.dataUrl) {
@@ -1104,7 +1113,21 @@ function HandoverScreen({
       setCustomText('');
       setCustomOpen(false);
     }
-  }, "Add"))), /*#__PURE__*/React.createElement("div", {
+  }, "Add"))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "Who was with ", childName, "?"), /*#__PURE__*/React.createElement("div", {
+    className: "j-chiprow"
+  }, WHO_CHIPS.map(c => /*#__PURE__*/React.createElement("button", {
+    key: c,
+    "aria-pressed": who.includes(c),
+    className: 'j-chip' + (who.includes(c) ? ' j-chip-on' : ''),
+    onClick: () => setWho(v => v.includes(c) ? v.filter(x => x !== c) : [...v, c])
+  }, c)))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "Where did it happen?"), /*#__PURE__*/React.createElement("div", {
+    className: "j-chiprow"
+  }, WHERE_CHIPS.map(c => /*#__PURE__*/React.createElement("button", {
+    key: c,
+    "aria-pressed": whereAt === c,
+    className: 'j-chip' + (whereAt === c ? ' j-chip-on' : ''),
+    onClick: () => setWhereAt(v => v === c ? '' : c)
+  }, c)))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       flexDirection: 'column',
@@ -1177,7 +1200,7 @@ function HandoverScreen({
       flex: '0 0 38%'
     },
     onClick: () => {
-      const touched = behaviours.length || before.trim() || during.trim() || after.trim() || helped.trim() || media;
+      const touched = behaviours.length || who.length || whereAt || before.trim() || during.trim() || after.trim() || helped.trim() || media;
       if (!touched || window.confirm('Leave without saving this note? What you have entered here will be lost.')) nav.back();
     }
   }, "Finish later"), /*#__PURE__*/React.createElement("button", {

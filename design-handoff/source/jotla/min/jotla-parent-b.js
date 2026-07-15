@@ -229,7 +229,7 @@ function openPrintPack(childLabel, rangeLabel, list) {
     if (e.type === 'handover' && e.handover) {
       const h = e.handover;
       const part = (l, v) => v ? '<p style="margin:4px 0;"><strong>' + esc(l) + ':</strong> ' + esc(v) + '</p>' : '';
-      extra = '<div style="margin-top:6px;padding:8px 12px;background:#f5f7fb;border-radius:8px;">' + (h.behaviours && h.behaviours.length ? '<p style="margin:4px 0;"><strong>Seen:</strong> ' + esc(h.behaviours.join(', ')) + '</p>' : '') + part('Before', h.before) + part('During', h.during) + part('After', h.after) + part('Lasted', h.duration) + part('What helped', h.helped) + '</div>';
+      extra = '<div style="margin-top:6px;padding:8px 12px;background:#f5f7fb;border-radius:8px;">' + (h.behaviours && h.behaviours.length ? '<p style="margin:4px 0;"><strong>Seen:</strong> ' + esc(h.behaviours.join(', ')) + '</p>' : '') + (h.who && h.who.length ? part('Who was there', h.who.join(', ')) : '') + part('Where', h.where) + part('Before', h.before) + part('During', h.during) + part('After', h.after) + part('Lasted', h.duration) + part('What helped', h.helped) + '</div>';
     }
     return '<div style="padding:10px 0;border-bottom:1px solid #dde3ee;page-break-inside:avoid;">' + '<p style="margin:0 0 4px;font-size:12px;color:#1A56A8;"><strong>' + esc(J.fmtShort(e.date)) + ' ' + esc(e.date.slice(0, 4)) + ', ' + esc(e.clock || e.time) + '</strong> &nbsp; ' + esc(e.setting) + ' · ' + esc(e.category) + ' &nbsp; ' + badge(e.kind) + (e.editedOn ? ' <span style="color:#8892a6;font-size:10.5px;">edited ' + esc(J.fmtShort(e.editedOn)) + '</span>' : '') + '</p>' + '<p style="margin:0;font-size:13px;line-height:1.45;">' + esc(e.summary) + '</p>' + extra + '</div>';
   }).join('');

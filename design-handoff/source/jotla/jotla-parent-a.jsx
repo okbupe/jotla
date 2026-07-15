@@ -343,6 +343,11 @@ const GATE_QUESTIONS = (name) => [
   'What helped, or what happened next?',
 ];
 
+// Who was with the child, and where it happened (founder ask, 15 Jul 2026): the
+// gate note now captures the scene, not only the behaviours and the ABC phases.
+const WHO_CHIPS = ['Teachers', 'TA', 'Other children', 'Other adults'];
+const WHERE_CHIPS = ['Classroom', 'Playground', 'Corridor', 'Lunch hall', 'Outside', 'Toilets', 'Other'];
+
 function Stepper({ value, onChange, unit = 'mins' }) {
   const dec = () => onChange(Math.max(0, value - 1));
   const inc = () => onChange(value + 1);
@@ -387,6 +392,8 @@ function HandoverScreen({ nav, today, profile }) {
   const [after, setAfter] = useStateA('');
   const [duration, setDuration] = useStateA(10);
   const [helped, setHelped] = useStateA('');
+  const [who, setWho] = useStateA([]);         // who was with the child (multi-select)
+  const [whereAt, setWhereAt] = useStateA(''); // where it happened (single-select)
   const [nudge, setNudge] = useStateA(false);
   const [media, setMedia] = useStateA(null);
   const [extras, setExtras] = useStateA([]);
@@ -405,7 +412,7 @@ function HandoverScreen({ nav, today, profile }) {
       setting: 'School', category: 'Incidents',
       mood: 'hard', kind: 'contemporaneous', type: 'handover',
       summary: during.trim() ? during.trim() : 'Hard moment captured at the gate.',
-      handover: { behaviours, before, during, after, duration: duration + ' mins', helped },
+      handover: { behaviours, before, during, after, duration: duration + ' mins', helped, who, where: whereAt },
     };
     if (media && media.dataUrl) { entry.photoData = media.dataUrl; entry.photo = 'Photo from the gate'; }
     else if (media && media.kind === 'video') { entry.photo = 'Video noted (kept in your photo library)'; }
@@ -474,6 +481,26 @@ function HandoverScreen({ nav, today, profile }) {
             )}
           </div>
 
+          {/* who + where: the scene of the moment (founder ask, 15 Jul 2026) */}
+          <div>
+            <FieldLabel>Who was with {childName}?</FieldLabel>
+            <div className="j-chiprow">
+              {WHO_CHIPS.map(c => (
+                <button key={c} aria-pressed={who.includes(c)} className={'j-chip' + (who.includes(c) ? ' j-chip-on' : '')}
+                  onClick={() => setWho(v => v.includes(c) ? v.filter(x => x !== c) : [...v, c])}>{c}</button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <FieldLabel>Where did it happen?</FieldLabel>
+            <div className="j-chiprow">
+              {WHERE_CHIPS.map(c => (
+                <button key={c} aria-pressed={whereAt === c} className={'j-chip' + (whereAt === c ? ' j-chip-on' : '')}
+                  onClick={() => setWhereAt(v => v === c ? '' : c)}>{c}</button>
+              ))}
+            </div>
+          </div>
+
           {/* before / during / after */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <PhaseField label="Before" hint="What led up to it" value={before} onChange={setBefore} />
@@ -512,7 +539,7 @@ function HandoverScreen({ nav, today, profile }) {
       <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '12px 20px calc(16px + env(safe-area-inset-bottom))',
         background: 'var(--fade-grad)', display: 'flex', gap: 12 }}>
         <button className="j-btn j-btn-ghost" style={{ flex: '0 0 38%' }} onClick={() => {
-          const touched = behaviours.length || before.trim() || during.trim() || after.trim() || helped.trim() || media;
+          const touched = behaviours.length || who.length || whereAt || before.trim() || during.trim() || after.trim() || helped.trim() || media;
           if (!touched || window.confirm('Leave without saving this note? What you have entered here will be lost.')) nav.back();
         }}>Finish later</button>
         <button className="j-btn j-btn-primary" style={{ flex: 1 }} onClick={save}><Icon name="check" size={20} color="#fff" /> Save note</button>

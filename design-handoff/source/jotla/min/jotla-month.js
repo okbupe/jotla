@@ -763,9 +763,24 @@ function EntryScreen({
   }, v))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
-      gap: 20
+      gap: 20,
+      flexWrap: 'wrap'
     }
-  }, e.handover.duration && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
+  }, e.handover.who && e.handover.who.length > 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
+    className: "j-meta"
+  }, "Who was there"), /*#__PURE__*/React.createElement("p", {
+    className: "j-strong",
+    style: {
+      fontSize: 'calc(16px * var(--tscale, 1))'
+    }
+  }, e.handover.who.join(', '))), e.handover.where && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
+    className: "j-meta"
+  }, "Where"), /*#__PURE__*/React.createElement("p", {
+    className: "j-strong",
+    style: {
+      fontSize: 'calc(16px * var(--tscale, 1))'
+    }
+  }, e.handover.where)), e.handover.duration && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
     className: "j-meta"
   }, "Lasted"), /*#__PURE__*/React.createElement("p", {
     className: "j-strong",
