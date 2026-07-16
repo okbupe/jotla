@@ -134,6 +134,27 @@ button, input, select, textarea { font-family: inherit; }
   box-shadow: var(--card-shadow); }
 .j-card-pad { padding: 16px; }
 
+/* ---- context card (quick log: Day / Where / When) ---- */
+/* one card per question (founder, 16 Jul 2026): the question sits above its
+   current answer inside a single tappable card, tinted while its options are open */
+.j-ctx { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  padding: 10px 6px; cursor: pointer; text-align: center; border-color: var(--chip-border);
+  transition: transform .12s ease, background .15s ease, border-color .15s ease;
+  -webkit-tap-highlight-color: transparent; }
+.j-ctx:active { transform: scale(0.97); }
+.j-ctx-q { font-family: var(--f-body); font-weight: 500; font-size: calc(13px * var(--tscale, 1));
+  line-height: 1.2; color: var(--faint); }
+/* an answer takes a second line rather than an ellipsis: "10 Dec 2025" must never
+   truncate to "10 Dec 20..." at the bigger text sizes, or the year is lost again
+   (founder, 16 Jul 2026). Two lines is the ceiling, so a long place a parent typed
+   in themselves cannot stretch the row. */
+.j-ctx-a { font-family: var(--f-body); font-weight: 500; font-size: calc(16px * var(--tscale, 1));
+  line-height: 1.25; color: var(--ink); max-width: 100%; overflow-wrap: break-word;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.j-ctx-on { background: var(--tint-blue); border-color: var(--blue); box-shadow: none; }
+.j-ctx-on .j-ctx-q { color: var(--blue); opacity: 0.72; }
+.j-ctx-on .j-ctx-a { color: var(--blue); }
+
 /* ---- buttons ---- */
 .j-btn { font-family: var(--f-body); font-weight: 500; font-size: calc(17px * var(--tscale, 1)); border: none; cursor: pointer;
   min-height: 56px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center;

@@ -259,24 +259,19 @@ function MediaPicker({ value = null, onChange = () => {} }) {
 // Incidents opens the same pattern with a richer before/during/after box and
 // saves as a gate note (type 'handover').
 // The context row (founder, 16 Jul 2026): Day / Where / When sit side by side,
-// but each keeps the shape the fields always had, a heading with its answer on a
-// pill below it, rather than welding the two into one joined pill. Tapping a pill
-// opens just its own options underneath and blurs the rest of the screen, so a
-// tired parent looks at one question at a time. Picking an answer closes it.
+// each one a card holding its question above its current answer, so the pair reads
+// as a single thing to tap. Tapping a card opens just its own options underneath
+// and blurs the rest of the screen, so a tired parent looks at one question at a
+// time. Picking an answer closes it.
 function ContextField({ label, value, active, onClick }) {
   return (
-    // the heading centres over its own pill (founder, 16 Jul 2026) so each
-    // column reads as one unit, question sitting directly above its answer
-    <div style={{ flex: 1, minWidth: 0, textAlign: 'center' }}>
-      <FieldLabel>{label}</FieldLabel>
-      {/* the pill reads only its answer; the heading above says which question,
-          so the button carries both in its label for a screen reader */}
-      <button onClick={onClick} aria-expanded={active} aria-label={label + ' ' + value}
-        className={'j-chip' + (active ? ' j-chip-on' : '')}
-        style={{ width: '100%', padding: '0 12px', justifyContent: 'center' }}>
-        <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</span>
-      </button>
-    </div>
+    // the card carries the question in its label too, so a screen reader never
+    // reads the answer out as a bare word with no idea which question it answers
+    <button onClick={onClick} aria-expanded={active} aria-label={label + ' ' + value}
+      className={'j-card j-ctx' + (active ? ' j-ctx-on' : '')}>
+      <span className="j-ctx-q">{label}</span>
+      <span className="j-ctx-a">{value}</span>
+    </button>
   );
 }
 
@@ -390,7 +385,7 @@ function QuickLogScreen({ nav, today, view }) {
       <PushHeader title="Quick log" subtitle="Log the whole day, one moment at a time" onClose={() => nav.back()} />
       <div className="j-scroll j-fade">
         <div className="j-pad" style={{ paddingBottom: 130, paddingTop: 6 }}>
-          {/* the three questions side by side, each a heading over its answer */}
+          {/* the three questions side by side, each a card of question + answer */}
           <div style={{ display: 'flex', gap: 8 }}>
             <ContextField label="Day?" value={dayLabel} active={picker === 'day'} onClick={() => setPicker(p => p === 'day' ? null : 'day')} />
             <ContextField label="Where?" value={setting} active={picker === 'where'} onClick={() => setPicker(p => p === 'where' ? null : 'where')} />

@@ -605,10 +605,10 @@ function MediaPicker({
 // Incidents opens the same pattern with a richer before/during/after box and
 // saves as a gate note (type 'handover').
 // The context row (founder, 16 Jul 2026): Day / Where / When sit side by side,
-// but each keeps the shape the fields always had, a heading with its answer on a
-// pill below it, rather than welding the two into one joined pill. Tapping a pill
-// opens just its own options underneath and blurs the rest of the screen, so a
-// tired parent looks at one question at a time. Picking an answer closes it.
+// each one a card holding its question above its current answer, so the pair reads
+// as a single thing to tap. Tapping a card opens just its own options underneath
+// and blurs the rest of the screen, so a tired parent looks at one question at a
+// time. Picking an answer closes it.
 function ContextField({
   label,
   value,
@@ -617,32 +617,18 @@ function ContextField({
 }) {
   return (
     /*#__PURE__*/
-    // the heading centres over its own pill (founder, 16 Jul 2026) so each
-    // column reads as one unit, question sitting directly above its answer
-    React.createElement("div", {
-      style: {
-        flex: 1,
-        minWidth: 0,
-        textAlign: 'center'
-      }
-    }, /*#__PURE__*/React.createElement(FieldLabel, null, label), /*#__PURE__*/React.createElement("button", {
+    // the card carries the question in its label too, so a screen reader never
+    // reads the answer out as a bare word with no idea which question it answers
+    React.createElement("button", {
       onClick: onClick,
       "aria-expanded": active,
       "aria-label": label + ' ' + value,
-      className: 'j-chip' + (active ? ' j-chip-on' : ''),
-      style: {
-        width: '100%',
-        padding: '0 12px',
-        justifyContent: 'center'
-      }
+      className: 'j-card j-ctx' + (active ? ' j-ctx-on' : '')
     }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        minWidth: 0,
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap'
-      }
-    }, value)))
+      className: "j-ctx-q"
+    }, label), /*#__PURE__*/React.createElement("span", {
+      className: "j-ctx-a"
+    }, value))
   );
 }
 function QuickLogScreen({

@@ -81,26 +81,29 @@ function ok(name, cond) {
   ok('the row starts on Today / School / Morning',
     rowText.includes('Today') && rowText.includes('School') && rowText.includes('Morning'));
   ok('the options stay closed until a question is tapped', (await page.locator('button[aria-pressed]').count()) === 0);
-  // each question is a heading sitting centred directly above its own pill, not
-  // welded into one joined pill (founder, 16 Jul 2026). The heading's box spans
-  // the column whatever the alignment, so measure the real text extent.
+  // each question and its answer share ONE tappable card (founder, 16 Jul 2026),
+  // question above answer, both centred. A span's box spans the card whatever the
+  // alignment, so measure the real text extent.
   const rowGeom = await page.evaluate(() => {
-    const pills = Array.from(document.querySelectorAll('button[aria-label]'))
+    const cards = Array.from(document.querySelectorAll('button[aria-label]'))
       .filter(b => /^(Day\?|Where\?|When\?)/.test(b.getAttribute('aria-label')));
-    if (pills.length !== 3) return null;
-    return pills.map(b => {
-      const h = b.parentElement.querySelector('p');
-      const r = document.createRange(); r.selectNodeContents(h);
-      const tb = r.getBoundingClientRect(), pb = b.getBoundingClientRect();
+    if (cards.length !== 3) return null;
+    const textBox = el => { const r = document.createRange(); r.selectNodeContents(el); return r.getBoundingClientRect(); };
+    return cards.map(b => {
+      const q = b.querySelector('.j-ctx-q'), a = b.querySelector('.j-ctx-a');
+      if (!q || !a) return { label: '?', together: false, offset: 999 };
+      const qb = textBox(q), ab = textBox(a), cb = b.getBoundingClientRect();
+      const centre = (cb.left + cb.right) / 2;
       return {
-        label: h.textContent, insidePill: b.contains(h), above: tb.bottom <= pb.top,
-        offset: Math.abs((tb.left + tb.right) / 2 - (pb.left + pb.right) / 2),
+        label: q.textContent, isCard: b.classList.contains('j-card'),
+        together: b.contains(q) && b.contains(a), qAboveA: qb.bottom <= ab.top,
+        offset: Math.max(Math.abs((qb.left + qb.right) / 2 - centre), Math.abs((ab.left + ab.right) / 2 - centre)),
       };
     });
   });
-  ok('each question is a heading above its pill, not welded into it',
-    !!rowGeom && rowGeom.every(c => !c.insidePill && c.above));
-  ok('each heading centres over its own pill (max offset '
+  ok('each question and its answer share one tappable card',
+    !!rowGeom && rowGeom.every(c => c.together && c.isCard && c.qAboveA));
+  ok('question and answer centre in their card (max offset '
     + (rowGeom ? Math.max(...rowGeom.map(c => c.offset)).toFixed(2) : '?') + 'px)',
     !!rowGeom && rowGeom.every(c => c.offset < 2));
   await page.locator('button[aria-label^="Where?"]').first().click();
@@ -114,7 +117,7 @@ function ok(name, cond) {
   await firstChip.click(); // picking an answer closes the picker again
   await page.waitForTimeout(350);
   ok('picking an answer closes the picker', (await page.locator('button[aria-pressed]').count()) === 0);
-  ok('the picked answer rides the Where pill (' + chipText + ')',
+  ok('the picked answer rides the Where card (' + chipText + ')',
     (await page.locator('button[aria-label^="Where?"]').first().innerText()).includes(chipText));
   await page.locator('button[aria-label^="Where?"]').first().click();
   await page.waitForTimeout(300);
@@ -136,7 +139,7 @@ function ok(name, cond) {
   });
   ok('an empty Save rests solid, not see-through (' + restState.bg + ' @ ' + restState.opacity + ')',
     restState.opacity === '1' && restState.bg !== 'rgba(0, 0, 0, 0)' && !restState.primary);
-  await page.locator('button[aria-label^="Day?"]').first().click(); // the day lives behind its own pill now
+  await page.locator('button[aria-label^="Day?"]').first().click(); // the day lives behind its own card now
   await page.waitForTimeout(300);
   await page.locator('button.j-chip:has-text("Today")').first().click();
   await page.waitForTimeout(300);
@@ -822,7 +825,7 @@ function ok(name, cond) {
   await page12.waitForTimeout(400);
   ok('picking a day after a swipe closes the sheet', (await page12.locator('.j-sheet-scrim').count()) === 0);
   const fieldText = await page12.locator('button[aria-label^="Day?"]').first().innerText();
-  ok('the picked day rides the Day pill (' + fieldText.replace(/\n/g, ' ').trim() + ')', fieldText.includes('15'));
+  ok('the picked day rides the Day card (' + fieldText.replace(/\n/g, ' ').trim() + ')', fieldText.includes('15'));
   // a day in THIS year stays short; a day in another year must say which year,
   // or "10 Dec" leaves you guessing (founder, 16 Jul 2026)
   ok('a day in the current year carries no year', !/20\d\d/.test(fieldText));
@@ -844,8 +847,30 @@ function ok(name, cond) {
   await page12.waitForTimeout(400);
   const prevYearPill = (await page12.locator('button[aria-label^="Day?"]').first().innerText()).replace(/\n/g, ' ').trim();
   const prevYearBody = await page12.locator('#root').innerText();
-  ok('a day from another year names its year on the pill (' + backTitle + ' -> ' + prevYearPill + ')', /20\d\d/.test(prevYearPill));
+  ok('a day from another year names its year on the card (' + backTitle + ' -> ' + prevYearPill + ')', /20\d\d/.test(prevYearPill));
   ok('and names it on the Saving to line', /Saving to [^\n]*20\d\d/.test(prevYearBody));
+  // ...and the year has to survive the big text sizes on a narrow phone, or an
+  // ellipsis quietly undoes the fix that put it there (founder, 16 Jul 2026)
+  await page12.setViewportSize({ width: 375, height: 812 });
+  await page12.waitForTimeout(300);
+  const clamp = await page12.evaluate(() => {
+    const root = document.querySelector('.jotla-root');
+    const span = document.querySelector('button[aria-label^="Day?"] .j-ctx-a');
+    const out = [];
+    for (const s of ['1', '1.12', '1.25']) {
+      root.style.setProperty('--tscale', s);
+      const lh = parseFloat(getComputedStyle(span).lineHeight);
+      out.push({ s, text: span.textContent,
+        clipped: Math.ceil(span.scrollWidth) > Math.floor(span.clientWidth) + 1,
+        lines: Math.round(span.getBoundingClientRect().height / lh) });
+    }
+    root.style.removeProperty('--tscale');
+    return out;
+  });
+  ok('the year survives every text size at 375px ('
+    + clamp.map(c => c.s + '=' + (c.clipped ? 'CLIPPED' : c.lines + 'ln')).join(' ') + ')',
+    clamp.every(c => !c.clipped && c.lines <= 2) && clamp.every(c => /20\d\d/.test(c.text)));
+  await page12.setViewportSize({ width: 390, height: 844 });
   await page12.locator('button[aria-label="Close"]').first().click();
   await page12.waitForTimeout(400);
 
