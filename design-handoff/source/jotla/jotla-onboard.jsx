@@ -165,7 +165,7 @@ const TOUR_STEPS = (name) => [
     illo: 'tourLog', title: 'A line is plenty',
     body: 'Tap the round plus button any time to log a moment. Where, when, what kind, how it felt. It takes under thirty seconds, and one line is enough.' },
   { tint: 'var(--tint-blue)',  color: 'var(--blue)',  icon: 'note',
-    illo: 'tourGate', title: 'At the gate',
+    illo: 'tourGate', title: 'Dysregulation',
     body: 'On a hard day, Jotla helps you ask the right things while you are still standing there. Five gentle questions, tapped answers, put in order: what led up to it, what happened, what helped.' },
   { tint: 'var(--tint-green)', color: 'var(--green)', icon: 'heart', face: true,
     illo: 'tourChild', title: 'Their day, in their words',

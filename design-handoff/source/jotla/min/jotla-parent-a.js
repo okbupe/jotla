@@ -130,8 +130,8 @@ function TodayScreen({
       size: 20,
       color: "var(--blue)"
     }),
-    title: "At the gate?",
-    sub: "Capture what happened",
+    title: "Dysregulation",
+    sub: "Capture a hard moment",
     tint: "var(--tint-blue)",
     ink: "var(--blue)",
     onClick: () => nav.go(nav.plus ? 'handover' : 'gateintro')
@@ -208,19 +208,10 @@ function TodayScreen({
     }
   }, "Nothing logged yet today"), /*#__PURE__*/React.createElement("p", {
     className: "j-sm"
-  }, "A single line is plenty.")) : /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 12
-    }
-  }, todays.map(e => /*#__PURE__*/React.createElement(EntryCard, {
-    key: e.id,
-    entry: e,
-    onClick: () => nav.go('entry', {
-      id: e.id
-    })
-  }))), /*#__PURE__*/React.createElement("button", {
+  }, "A single line is plenty.")) : /*#__PURE__*/React.createElement(LogList, {
+    list: todays,
+    nav: nav
+  }), /*#__PURE__*/React.createElement("button", {
     className: "j-btn j-btn-primary j-btn-lg",
     style: {
       marginTop: 16
@@ -613,6 +604,52 @@ function MediaPicker({
 // stays individually findable, filterable and printable, the way evidence must.
 // Incidents opens the same pattern with a richer before/during/after box and
 // saves as a gate note (type 'handover').
+// The context row (founder, 16 Jul 2026): Day / Where / When are three compact
+// pills side by side, each showing its current answer. Tapping one opens just
+// its own options underneath and blurs the rest of the screen, so a tired parent
+// is looking at one question at a time. Picking an answer closes it again.
+function ContextPill({
+  label,
+  value,
+  active,
+  onClick
+}) {
+  return /*#__PURE__*/React.createElement("button", {
+    onClick: onClick,
+    "aria-expanded": active,
+    className: "j-press",
+    style: {
+      flex: 1,
+      minWidth: 0,
+      textAlign: 'left',
+      cursor: 'pointer',
+      borderRadius: 999,
+      padding: '7px 14px',
+      minHeight: 54,
+      border: '1.5px solid ' + (active ? 'var(--blue)' : 'var(--chip-border)'),
+      background: active ? 'var(--tint-blue)' : 'var(--chip-bg)',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      gap: 1
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 'calc(11.5px * var(--tscale, 1))',
+      fontWeight: 500,
+      color: active ? 'var(--blue)' : 'var(--faint)'
+    }
+  }, label), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 'calc(14.5px * var(--tscale, 1))',
+      fontWeight: 500,
+      color: active ? 'var(--blue)' : 'var(--ink)',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis'
+    }
+  }, value));
+}
 function QuickLogScreen({
   nav,
   today,
@@ -620,7 +657,11 @@ function QuickLogScreen({
 }) {
   const J = window.JOTLA;
   const [setting, setSetting] = useStateA('School');
-  const [time, setTime] = useStateA('Afternoon');
+  const [time, setTime] = useStateA('Morning');
+  const [picker, setPicker] = useStateA(null); // null | 'day' | 'where' | 'when'
+  const [places, setPlaces] = useStateA([]); // the parent's own places, added via Other
+  const [placeOpen, setPlaceOpen] = useStateA(false);
+  const [placeText, setPlaceText] = useStateA('');
   const minus1 = iso => {
     const d = J.parseISO(iso);
     d.setDate(d.getDate() - 1);
@@ -637,6 +678,7 @@ function QuickLogScreen({
   // the day's banked moments, and the one category whose editor is open
   const [moments, setMoments] = useStateA([]);
   const [openCat, setOpenCat] = useStateA(null);
+  const [editKey, setEditKey] = useStateA(null); // set when reopening a banked moment
   const [eText, setEText] = useStateA('');
   const [eMood, setEMood] = useStateA('good');
   const [eBefore, setEBefore] = useStateA('');
@@ -645,7 +687,9 @@ function QuickLogScreen({
   const [eMedia, setEMedia] = useStateA(null);
   const isInc = openCat === 'Incidents';
   const openEditor = c => {
+    setPicker(null);
     setOpenCat(c);
+    setEditKey(null);
     setEText('');
     setEMood(c === 'Incidents' ? 'hard' : 'good');
     setEBefore('');
@@ -653,12 +697,23 @@ function QuickLogScreen({
     setEAfter('');
     setEMedia(null);
   };
+  // A banked moment reopens for changing (founder, 16 Jul 2026): something else
+  // often comes back to you while you are still sitting there logging. It keeps
+  // its own time and place; only what happened changes.
+  const editMoment = m => {
+    setPicker(null);
+    setOpenCat(m.category);
+    setEditKey(m.key);
+    setEText(m.text);
+    setEMood(m.mood);
+    setEBefore(m.before);
+    setEDuring(m.during);
+    setEAfter(m.after);
+    setEMedia(m.media);
+  };
   const bankMoment = () => {
-    setMoments(ms => [...ms, {
-      key: 'm' + Date.now() + '_' + ms.length,
+    const body = {
       category: openCat,
-      time,
-      setting,
       mood: eMood,
       isIncident: openCat === 'Incidents',
       text: eText.trim(),
@@ -666,10 +721,26 @@ function QuickLogScreen({
       during: eDuring.trim(),
       after: eAfter.trim(),
       media: eMedia
+    };
+    if (editKey) setMoments(ms => ms.map(m => m.key === editKey ? {
+      ...m,
+      ...body
+    } : m));else setMoments(ms => [...ms, {
+      ...body,
+      key: 'm' + Date.now() + '_' + ms.length,
+      time,
+      setting
     }]);
     setOpenCat(null);
+    setEditKey(null);
   };
-  const removeMoment = key => setMoments(ms => ms.filter(m => m.key !== key));
+  const removeMoment = key => {
+    setMoments(ms => ms.filter(m => m.key !== key));
+    if (editKey === key) {
+      setOpenCat(null);
+      setEditKey(null);
+    }
+  };
   const countFor = c => moments.filter(m => m.category === c).length;
   const nowClock = () => {
     const d = new Date();
@@ -678,13 +749,20 @@ function QuickLogScreen({
   const save = () => {
     if (!moments.length) return;
     const kind = dayMode === 'today' ? 'contemporaneous' : 'recalled';
+    // One Save is one log (founder, 16 Jul 2026): the moments written together
+    // share a logId and a clock, so the record reads back as the single log the
+    // parent wrote. Each moment still lands as its own dated entry underneath,
+    // which is what keeps Find, the month graph and the PDF pack working.
+    const logId = 'L' + Date.now();
+    const clock = nowClock();
     // addEntry prepends, so add in reverse to keep the order they were written
     [...moments].reverse().forEach(m => {
       const base = {
         id: (m.isIncident ? 'h' : 'n') + m.key,
+        logId,
         date: logDate,
         time: m.time,
-        clock: nowClock(),
+        clock,
         setting: m.setting,
         category: m.category,
         mood: m.mood,
@@ -729,6 +807,26 @@ function QuickLogScreen({
       marginTop: 6
     }
   });
+  const dayLabel = dayMode === 'today' ? 'Today' : dayMode === 'yesterday' ? 'Yesterday' : J.fmtShort(logDate);
+  const placeOptions = [...J.SETTINGS, ...places];
+  // a reopened moment keeps its own stamp; a new one takes the row's current answers
+  const editing = editKey ? moments.find(m => m.key === editKey) : null;
+  const eTime = editing ? editing.time : time;
+  const eSetting = editing ? editing.setting : setting;
+  // while a question is open, the rest of the screen softens out of the way
+  const dim = {
+    transition: 'filter .18s ease, opacity .18s ease',
+    ...(picker ? {
+      filter: 'blur(4px)',
+      opacity: 0.4
+    } : {})
+  };
+  const pickerChip = (label, on, onPick) => /*#__PURE__*/React.createElement("button", {
+    key: label,
+    "aria-pressed": on,
+    className: 'j-chip' + (on ? ' j-chip-on' : ''),
+    onClick: onPick
+  }, label);
   return /*#__PURE__*/React.createElement("div", {
     className: "j-screen"
   }, /*#__PURE__*/React.createElement(PushHeader, {
@@ -741,38 +839,105 @@ function QuickLogScreen({
     className: "j-pad",
     style: {
       paddingBottom: 130,
-      paddingTop: 4,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 22
+      paddingTop: 6
     }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "Which day?"), /*#__PURE__*/React.createElement("div", {
-    className: "j-chiprow"
-  }, /*#__PURE__*/React.createElement("button", {
-    "aria-pressed": dayMode === 'today',
-    className: 'j-chip' + (dayMode === 'today' ? ' j-chip-on' : ''),
-    onClick: () => setDayMode('today')
-  }, "Today"), /*#__PURE__*/React.createElement("button", {
-    "aria-pressed": dayMode === 'yesterday',
-    className: 'j-chip' + (dayMode === 'yesterday' ? ' j-chip-on' : ''),
-    onClick: () => setDayMode('yesterday')
-  }, "Yesterday"), /*#__PURE__*/React.createElement("button", {
-    "aria-pressed": dayMode === 'custom',
-    className: 'j-chip' + (dayMode === 'custom' ? ' j-chip-on' : ''),
-    onClick: () => setDayMode('custom')
-  }, "Another day")), dayMode === 'custom' && /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement(ContextPill, {
+    label: "Day?",
+    value: dayLabel,
+    active: picker === 'day',
+    onClick: () => setPicker(p => p === 'day' ? null : 'day')
+  }), /*#__PURE__*/React.createElement(ContextPill, {
+    label: "Where?",
+    value: setting,
+    active: picker === 'where',
+    onClick: () => setPicker(p => p === 'where' ? null : 'where')
+  }), /*#__PURE__*/React.createElement(ContextPill, {
+    label: "When?",
+    value: time,
+    active: picker === 'when',
+    onClick: () => setPicker(p => p === 'when' ? null : 'when')
+  })), picker && /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 12
     }
-  }, /*#__PURE__*/React.createElement(DateField, {
-    compact: true,
-    value: J.fmtLong(customDate),
-    label: "Which day",
-    onClick: () => setDayPickerOpen(true)
-  })), /*#__PURE__*/React.createElement("p", {
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-chiprow"
+  }, picker === 'day' && [pickerChip('Today', dayMode === 'today', () => {
+    setDayMode('today');
+    setPicker(null);
+  }), pickerChip('Yesterday', dayMode === 'yesterday', () => {
+    setDayMode('yesterday');
+    setPicker(null);
+  }), pickerChip('Another day', dayMode === 'custom', () => {
+    setDayMode('custom');
+    setDayPickerOpen(true);
+    setPicker(null);
+  })], picker === 'where' && [...placeOptions.map(s => pickerChip(s, setting === s, () => {
+    setSetting(s);
+    setPicker(null);
+  })), /*#__PURE__*/React.createElement("button", {
+    key: "__other",
+    className: "j-chip",
+    style: {
+      borderStyle: 'dashed'
+    },
+    onClick: () => setPlaceOpen(v => !v)
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "plus",
+    size: 15,
+    color: "var(--faint)"
+  }), " Other")], picker === 'when' && J.TIMES.map(t => pickerChip(t, time === t, () => {
+    setTime(t);
+    setPicker(null);
+  }))), picker === 'where' && placeOpen && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 10,
+      marginTop: 12
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    className: "j-input",
+    style: {
+      flex: 1,
+      minWidth: 0
+    },
+    value: placeText,
+    onChange: e => setPlaceText(e.target.value),
+    "aria-label": "Add a place",
+    placeholder: "Grandma's, the park, soft play..."
+  }), /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-soft",
+    style: {
+      flex: '0 0 auto',
+      width: 'auto',
+      minHeight: 48,
+      padding: '0 22px'
+    },
+    onClick: () => {
+      const t = placeText.trim();
+      if (!t) return;
+      if (!placeOptions.includes(t)) setPlaces(p => [...p, t]);
+      setSetting(t);
+      setPlaceText('');
+      setPlaceOpen(false);
+      setPicker(null);
+    }
+  }, "Add"))), /*#__PURE__*/React.createElement("div", {
+    onClick: picker ? () => setPicker(null) : undefined,
+    style: dim
+  }, /*#__PURE__*/React.createElement("div", {
+    style: picker ? {
+      pointerEvents: 'none'
+    } : undefined
+  }, /*#__PURE__*/React.createElement("p", {
     className: "j-sm",
     style: {
-      marginTop: 8,
+      margin: '12px 0 0',
       color: 'var(--faint)'
     }
   }, "Saving to ", /*#__PURE__*/React.createElement("span", {
@@ -780,15 +945,11 @@ function QuickLogScreen({
     style: {
       color: 'var(--muted)'
     }
-  }, J.fmtLong(logDate)))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "Where?"), /*#__PURE__*/React.createElement(ChipGroup, {
-    options: J.SETTINGS,
-    value: setting,
-    onChange: setSetting
-  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "When?"), /*#__PURE__*/React.createElement(ChipGroup, {
-    options: J.TIMES,
-    value: time,
-    onChange: setTime
-  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "What happened?"), /*#__PURE__*/React.createElement("p", {
+  }, J.fmtLong(logDate))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 22
+    }
+  }, /*#__PURE__*/React.createElement(FieldLabel, null, "What happened?"), /*#__PURE__*/React.createElement("p", {
     className: "j-sm",
     style: {
       margin: '-4px 0 12px',
@@ -819,6 +980,7 @@ function QuickLogScreen({
   }))), openCat && /*#__PURE__*/React.createElement("div", {
     className: "j-card j-card-pad",
     style: {
+      marginTop: 22,
       border: '1.5px solid var(--blue)',
       display: 'flex',
       flexDirection: 'column',
@@ -837,7 +999,7 @@ function QuickLogScreen({
     style: {
       marginTop: 2
     }
-  }, time, " \xB7 ", setting, " \xB7 ", J.fmtLong(logDate))), isInc ? /*#__PURE__*/React.createElement("div", {
+  }, eTime, " \xB7 ", eSetting, " \xB7 ", J.fmtLong(logDate))), isInc ? /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       flexDirection: 'column',
@@ -885,7 +1047,10 @@ function QuickLogScreen({
       flex: '0 0 38%',
       minHeight: 52
     },
-    onClick: () => setOpenCat(null)
+    onClick: () => {
+      setOpenCat(null);
+      setEditKey(null);
+    }
   }, "Cancel"), /*#__PURE__*/React.createElement("button", {
     className: "j-btn j-btn-primary",
     style: {
@@ -897,7 +1062,11 @@ function QuickLogScreen({
     name: "check",
     size: 20,
     color: "#fff"
-  }), " Okay"))), moments.length > 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(SectionLabel, null, "Moments so far"), /*#__PURE__*/React.createElement("div", {
+  }), " Okay"))), moments.length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 22
+    }
+  }, /*#__PURE__*/React.createElement(SectionLabel, null, "Moments so far"), /*#__PURE__*/React.createElement("div", {
     className: "j-card",
     style: {
       padding: '4px 16px'
@@ -911,20 +1080,40 @@ function QuickLogScreen({
       padding: '12px 0',
       borderTop: moments[0].key === m.key ? 'none' : '1px solid var(--line)'
     }
-  }, moodDot(m.mood), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => editMoment(m),
+    "aria-label": 'Edit the ' + m.category + ' moment',
+    className: "j-press",
+    style: {
+      flex: 1,
+      minWidth: 0,
+      display: 'flex',
+      gap: 10,
+      alignItems: 'flex-start',
+      textAlign: 'left',
+      border: 'none',
+      background: 'none',
+      cursor: 'pointer',
+      padding: 0
+    }
+  }, moodDot(m.mood), /*#__PURE__*/React.createElement("span", {
     style: {
       flex: 1,
       minWidth: 0
     }
-  }, /*#__PURE__*/React.createElement("p", {
-    className: "j-meta"
-  }, m.time, " \xB7 ", m.setting, " \xB7 ", m.category), /*#__PURE__*/React.createElement("p", {
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "j-meta",
+    style: {
+      display: 'block'
+    }
+  }, m.time, " \xB7 ", m.setting, " \xB7 ", m.category), /*#__PURE__*/React.createElement("span", {
     className: "j-body",
     style: {
+      display: 'block',
       fontSize: 'calc(15px * var(--tscale, 1))',
       marginTop: 1
     }
-  }, m.isIncident ? m.during || m.text || 'Incident noted' : m.text || 'Noted')), /*#__PURE__*/React.createElement("button", {
+  }, m.isIncident ? m.during || m.text || 'Incident noted' : m.text || 'Noted'))), /*#__PURE__*/React.createElement("button", {
     onClick: () => removeMoment(m.key),
     "aria-label": "Remove moment",
     className: "j-press",
@@ -944,14 +1133,23 @@ function QuickLogScreen({
     name: "close",
     size: 16,
     color: "var(--muted)"
-  })))))))), /*#__PURE__*/React.createElement("div", {
+  }))))), /*#__PURE__*/React.createElement("p", {
+    className: "j-meta",
+    style: {
+      marginTop: 8
+    }
+  }, "Tap a moment to change it. It all saves as one log.")))))), /*#__PURE__*/React.createElement("div", {
     style: {
       position: 'absolute',
       left: 0,
       right: 0,
       bottom: 0,
       padding: '12px 20px calc(16px + env(safe-area-inset-bottom))',
-      background: 'var(--fade-grad)'
+      background: 'var(--fade-grad)',
+      ...dim,
+      ...(picker ? {
+        pointerEvents: 'none'
+      } : {})
     }
   }, moments.length > 0 && /*#__PURE__*/React.createElement("p", {
     className: "j-meta",
@@ -959,7 +1157,7 @@ function QuickLogScreen({
       textAlign: 'center',
       marginBottom: 8
     }
-  }, moments.length, " moment", moments.length === 1 ? '' : 's', " ready. Each saves as its own dated note."), /*#__PURE__*/React.createElement("button", {
+  }, moments.length, " moment", moments.length === 1 ? '' : 's', " ready. Saves as one log."), /*#__PURE__*/React.createElement("button", {
     className: "j-btn j-btn-primary j-btn-lg",
     onClick: save,
     style: moments.length ? {} : {
@@ -1510,7 +1708,7 @@ function HandoverScreen({
   }, "Not now"))));
 }
 
-// ---------------- "At the gate?" explainer (shown before capture when there is no Plus) ----------------
+// ---------------- "Dysregulation" explainer (shown before capture when there is no Plus) ----------------
 // Deliberately uses the word "dysregulation": it is the word SEND parents hear
 // constantly from school, and meeting them in their own vocabulary is the point.
 function GateIntroScreen({
@@ -1522,7 +1720,7 @@ function GateIntroScreen({
   return /*#__PURE__*/React.createElement("div", {
     className: "j-screen"
   }, /*#__PURE__*/React.createElement(PushHeader, {
-    title: "At the gate?",
+    title: "Dysregulation",
     onClose: () => nav.back()
   }), /*#__PURE__*/React.createElement("div", {
     className: "j-scroll j-fade"

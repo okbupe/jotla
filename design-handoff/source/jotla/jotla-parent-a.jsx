@@ -57,9 +57,13 @@ function TodayScreen({ nav, entries, today, profile }) {
               title="Your day" sub={nav.plus ? 'Do it together with ' + childName : 'Hand the phone to ' + childName}
               tint="var(--tint-green)" ink="var(--green-ink)"
               onClick={() => nav.go('child')} />
+            {/* Named "Dysregulation", not "At the gate?" (founder, 16 Jul 2026):
+                the handful of parents shown the app could not tell what "At the
+                gate?" was without guessing, and asked for the mode to say what
+                it is. Dysregulation is the word school uses at them all day. */}
             <ActionTile
               icon={<Icon name="note" size={20} color="var(--blue)" />}
-              title="At the gate?" sub="Capture what happened" tint="var(--tint-blue)" ink="var(--blue)"
+              title="Dysregulation" sub="Capture a hard moment" tint="var(--tint-blue)" ink="var(--blue)"
               onClick={() => nav.go(nav.plus ? 'handover' : 'gateintro')} />
           </div>
 
@@ -87,9 +91,7 @@ function TodayScreen({ nav, entries, today, profile }) {
               <p className="j-sm">A single line is plenty.</p>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {todays.map(e => <EntryCard key={e.id} entry={e} onClick={() => nav.go('entry', { id: e.id })} />)}
-            </div>
+            <LogList list={todays} nav={nav} />
           )}
 
           <button className="j-btn j-btn-primary j-btn-lg" style={{ marginTop: 16 }} onClick={() => nav.go('quicklog')}>
@@ -256,10 +258,33 @@ function MediaPicker({ value = null, onChange = () => {} }) {
 // stays individually findable, filterable and printable, the way evidence must.
 // Incidents opens the same pattern with a richer before/during/after box and
 // saves as a gate note (type 'handover').
+// The context row (founder, 16 Jul 2026): Day / Where / When are three compact
+// pills side by side, each showing its current answer. Tapping one opens just
+// its own options underneath and blurs the rest of the screen, so a tired parent
+// is looking at one question at a time. Picking an answer closes it again.
+function ContextPill({ label, value, active, onClick }) {
+  return (
+    <button onClick={onClick} aria-expanded={active} className="j-press" style={{
+      flex: 1, minWidth: 0, textAlign: 'left', cursor: 'pointer', borderRadius: 999, padding: '7px 14px',
+      minHeight: 54, border: '1.5px solid ' + (active ? 'var(--blue)' : 'var(--chip-border)'),
+      background: active ? 'var(--tint-blue)' : 'var(--chip-bg)',
+      display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 1,
+    }}>
+      <span style={{ fontSize: 'calc(11.5px * var(--tscale, 1))', fontWeight: 500, color: active ? 'var(--blue)' : 'var(--faint)' }}>{label}</span>
+      <span style={{ fontSize: 'calc(14.5px * var(--tscale, 1))', fontWeight: 500, color: active ? 'var(--blue)' : 'var(--ink)',
+        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</span>
+    </button>
+  );
+}
+
 function QuickLogScreen({ nav, today, view }) {
   const J = window.JOTLA;
   const [setting, setSetting] = useStateA('School');
-  const [time, setTime] = useStateA('Afternoon');
+  const [time, setTime] = useStateA('Morning');
+  const [picker, setPicker] = useStateA(null);        // null | 'day' | 'where' | 'when'
+  const [places, setPlaces] = useStateA([]);          // the parent's own places, added via Other
+  const [placeOpen, setPlaceOpen] = useStateA(false);
+  const [placeText, setPlaceText] = useStateA('');
   const minus1 = (iso) => { const d = J.parseISO(iso); d.setDate(d.getDate() - 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
   // A date can arrive on the view (the Day view's "Add a note", 12 Jul 2026),
   // pre-setting the day chips so nothing needs re-picking.
@@ -273,6 +298,7 @@ function QuickLogScreen({ nav, today, view }) {
   // the day's banked moments, and the one category whose editor is open
   const [moments, setMoments] = useStateA([]);
   const [openCat, setOpenCat] = useStateA(null);
+  const [editKey, setEditKey] = useStateA(null); // set when reopening a banked moment
   const [eText, setEText] = useStateA('');
   const [eMood, setEMood] = useStateA('good');
   const [eBefore, setEBefore] = useStateA('');
@@ -282,30 +308,47 @@ function QuickLogScreen({ nav, today, view }) {
   const isInc = openCat === 'Incidents';
 
   const openEditor = (c) => {
-    setOpenCat(c);
+    setPicker(null); setOpenCat(c); setEditKey(null);
     setEText(''); setEMood(c === 'Incidents' ? 'hard' : 'good');
     setEBefore(''); setEDuring(''); setEAfter(''); setEMedia(null);
   };
-  const bankMoment = () => {
-    setMoments(ms => [...ms, {
-      key: 'm' + Date.now() + '_' + ms.length, category: openCat, time, setting, mood: eMood,
-      isIncident: openCat === 'Incidents',
-      text: eText.trim(), before: eBefore.trim(), during: eDuring.trim(), after: eAfter.trim(),
-      media: eMedia,
-    }]);
-    setOpenCat(null);
+  // A banked moment reopens for changing (founder, 16 Jul 2026): something else
+  // often comes back to you while you are still sitting there logging. It keeps
+  // its own time and place; only what happened changes.
+  const editMoment = (m) => {
+    setPicker(null); setOpenCat(m.category); setEditKey(m.key);
+    setEText(m.text); setEMood(m.mood);
+    setEBefore(m.before); setEDuring(m.during); setEAfter(m.after); setEMedia(m.media);
   };
-  const removeMoment = (key) => setMoments(ms => ms.filter(m => m.key !== key));
+  const bankMoment = () => {
+    const body = {
+      category: openCat, mood: eMood, isIncident: openCat === 'Incidents',
+      text: eText.trim(), before: eBefore.trim(), during: eDuring.trim(), after: eAfter.trim(), media: eMedia,
+    };
+    if (editKey) setMoments(ms => ms.map(m => m.key === editKey ? { ...m, ...body } : m));
+    else setMoments(ms => [...ms, { ...body, key: 'm' + Date.now() + '_' + ms.length, time, setting }]);
+    setOpenCat(null); setEditKey(null);
+  };
+  const removeMoment = (key) => {
+    setMoments(ms => ms.filter(m => m.key !== key));
+    if (editKey === key) { setOpenCat(null); setEditKey(null); }
+  };
   const countFor = (c) => moments.filter(m => m.category === c).length;
 
   const nowClock = () => { const d = new Date(); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
   const save = () => {
     if (!moments.length) return;
     const kind = dayMode === 'today' ? 'contemporaneous' : 'recalled';
+    // One Save is one log (founder, 16 Jul 2026): the moments written together
+    // share a logId and a clock, so the record reads back as the single log the
+    // parent wrote. Each moment still lands as its own dated entry underneath,
+    // which is what keeps Find, the month graph and the PDF pack working.
+    const logId = 'L' + Date.now();
+    const clock = nowClock();
     // addEntry prepends, so add in reverse to keep the order they were written
     [...moments].reverse().forEach(m => {
       const base = {
-        id: (m.isIncident ? 'h' : 'n') + m.key, date: logDate, time: m.time, clock: nowClock(),
+        id: (m.isIncident ? 'h' : 'n') + m.key, logId, date: logDate, time: m.time, clock,
         setting: m.setting, category: m.category, mood: m.mood, kind,
       };
       const entry = m.isIncident
@@ -321,32 +364,70 @@ function QuickLogScreen({ nav, today, view }) {
   };
 
   const moodDot = (mk) => <span style={{ width: 9, height: 9, borderRadius: '50%', background: window.MOOD_COLOURS[mk], flexShrink: 0, marginTop: 6 }} />;
+  const dayLabel = dayMode === 'today' ? 'Today' : dayMode === 'yesterday' ? 'Yesterday' : J.fmtShort(logDate);
+  const placeOptions = [...J.SETTINGS, ...places];
+  // a reopened moment keeps its own stamp; a new one takes the row's current answers
+  const editing = editKey ? moments.find(m => m.key === editKey) : null;
+  const eTime = editing ? editing.time : time;
+  const eSetting = editing ? editing.setting : setting;
+  // while a question is open, the rest of the screen softens out of the way
+  const dim = { transition: 'filter .18s ease, opacity .18s ease', ...(picker ? { filter: 'blur(4px)', opacity: 0.4 } : {}) };
+  const pickerChip = (label, on, onPick) => (
+    <button key={label} aria-pressed={on} className={'j-chip' + (on ? ' j-chip-on' : '')} onClick={onPick}>{label}</button>
+  );
 
   return (
     <div className="j-screen">
       <PushHeader title="Quick log" subtitle="Log the whole day, one moment at a time" onClose={() => nav.back()} />
       <div className="j-scroll j-fade">
-        <div className="j-pad" style={{ paddingBottom: 130, paddingTop: 4, display: 'flex', flexDirection: 'column', gap: 22 }}>
-          <div>
-            <FieldLabel>Which day?</FieldLabel>
-            <div className="j-chiprow">
-              <button aria-pressed={dayMode === 'today'} className={'j-chip' + (dayMode === 'today' ? ' j-chip-on' : '')} onClick={() => setDayMode('today')}>Today</button>
-              <button aria-pressed={dayMode === 'yesterday'} className={'j-chip' + (dayMode === 'yesterday' ? ' j-chip-on' : '')} onClick={() => setDayMode('yesterday')}>Yesterday</button>
-              <button aria-pressed={dayMode === 'custom'} className={'j-chip' + (dayMode === 'custom' ? ' j-chip-on' : '')} onClick={() => setDayMode('custom')}>Another day</button>
-            </div>
-            {dayMode === 'custom' && (
-              <div style={{ marginTop: 12 }}>
-                <DateField compact value={J.fmtLong(customDate)} label="Which day" onClick={() => setDayPickerOpen(true)} />
-              </div>
-            )}
-            <p className="j-sm" style={{ marginTop: 8, color: 'var(--faint)' }}>Saving to <span className="j-strong" style={{ color: 'var(--muted)' }}>{J.fmtLong(logDate)}</span></p>
+        <div className="j-pad" style={{ paddingBottom: 130, paddingTop: 6 }}>
+          {/* the three questions side by side, each wearing its own answer */}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <ContextPill label="Day?" value={dayLabel} active={picker === 'day'} onClick={() => setPicker(p => p === 'day' ? null : 'day')} />
+            <ContextPill label="Where?" value={setting} active={picker === 'where'} onClick={() => setPicker(p => p === 'where' ? null : 'where')} />
+            <ContextPill label="When?" value={time} active={picker === 'when'} onClick={() => setPicker(p => p === 'when' ? null : 'when')} />
           </div>
-          <div><FieldLabel>Where?</FieldLabel><ChipGroup options={J.SETTINGS} value={setting} onChange={setSetting} /></div>
-          <div><FieldLabel>When?</FieldLabel><ChipGroup options={J.TIMES} value={time} onChange={setTime} /></div>
+
+          {/* only the open question's options, right underneath it */}
+          {picker && (
+            <div style={{ marginTop: 12 }}>
+              <div className="j-chiprow">
+                {picker === 'day' && [
+                  pickerChip('Today', dayMode === 'today', () => { setDayMode('today'); setPicker(null); }),
+                  pickerChip('Yesterday', dayMode === 'yesterday', () => { setDayMode('yesterday'); setPicker(null); }),
+                  pickerChip('Another day', dayMode === 'custom', () => { setDayMode('custom'); setDayPickerOpen(true); setPicker(null); }),
+                ]}
+                {picker === 'where' && [
+                  ...placeOptions.map(s => pickerChip(s, setting === s, () => { setSetting(s); setPicker(null); })),
+                  <button key="__other" className="j-chip" style={{ borderStyle: 'dashed' }} onClick={() => setPlaceOpen(v => !v)}>
+                    <Icon name="plus" size={15} color="var(--faint)" /> Other
+                  </button>,
+                ]}
+                {picker === 'when' && J.TIMES.map(t => pickerChip(t, time === t, () => { setTime(t); setPicker(null); }))}
+              </div>
+              {/* Other: the parent's own place, kept for the rest of the log */}
+              {picker === 'where' && placeOpen && (
+                <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+                  <input className="j-input" style={{ flex: 1, minWidth: 0 }} value={placeText} onChange={e => setPlaceText(e.target.value)}
+                    aria-label="Add a place" placeholder="Grandma's, the park, soft play..." />
+                  <button className="j-btn j-btn-soft" style={{ flex: '0 0 auto', width: 'auto', minHeight: 48, padding: '0 22px' }} onClick={() => {
+                    const t = placeText.trim(); if (!t) return;
+                    if (!placeOptions.includes(t)) setPlaces(p => [...p, t]);
+                    setSetting(t); setPlaceText(''); setPlaceOpen(false); setPicker(null);
+                  }}>Add</button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* everything else softens, so one question is in focus at a time */}
+          <div onClick={picker ? () => setPicker(null) : undefined} style={dim}>
+           <div style={picker ? { pointerEvents: 'none' } : undefined}>
+            <p className="j-sm" style={{ margin: '12px 0 0', color: 'var(--faint)' }}>Saving to <span className="j-strong" style={{ color: 'var(--muted)' }}>{J.fmtLong(logDate)}</span></p>
 
           {/* the category pills are add-buttons. A count badge shows how many
               moments each holds today; change When above to stamp the next one. */}
-          <div>
+          <div style={{ marginTop: 22 }}>
             <FieldLabel>What happened?</FieldLabel>
             <p className="j-sm" style={{ margin: '-4px 0 12px', color: 'var(--faint)' }}>Tap what happened. Add as many as you like, then Save once.</p>
             <div className="j-chiprow">
@@ -365,10 +446,10 @@ function QuickLogScreen({ nav, today, view }) {
           {/* the moment editor: one category at a time. Incidents gets the
               richer before/during/after box and banks as a gate note. */}
           {openCat && (
-            <div className="j-card j-card-pad" style={{ border: '1.5px solid var(--blue)', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div className="j-card j-card-pad" style={{ marginTop: 22, border: '1.5px solid var(--blue)', display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
                 <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(17px * var(--tscale, 1))', color: 'var(--ink)', margin: 0 }}>{openCat}</p>
-                <p className="j-meta" style={{ marginTop: 2 }}>{time} · {setting} · {J.fmtLong(logDate)}</p>
+                <p className="j-meta" style={{ marginTop: 2 }}>{eTime} · {eSetting} · {J.fmtLong(logDate)}</p>
               </div>
               {isInc ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -392,36 +473,44 @@ function QuickLogScreen({ nav, today, view }) {
               )}
               <div><FieldLabel>How did it feel?</FieldLabel><MoodFacePicker value={eMood} onChange={setEMood} /></div>
               <div style={{ display: 'flex', gap: 10 }}>
-                <button className="j-btn j-btn-ghost" style={{ flex: '0 0 38%', minHeight: 52 }} onClick={() => setOpenCat(null)}>Cancel</button>
+                <button className="j-btn j-btn-ghost" style={{ flex: '0 0 38%', minHeight: 52 }} onClick={() => { setOpenCat(null); setEditKey(null); }}>Cancel</button>
                 <button className="j-btn j-btn-primary" style={{ flex: 1, minHeight: 52 }} onClick={bankMoment}><Icon name="check" size={20} color="#fff" /> Okay</button>
               </div>
             </div>
           )}
 
-          {/* the day taking shape: every banked moment, each removable */}
+          {/* the day taking shape: tap a moment to change it, x to drop it */}
           {moments.length > 0 && (
-            <div>
+            <div style={{ marginTop: 22 }}>
               <SectionLabel>Moments so far</SectionLabel>
               <div className="j-card" style={{ padding: '4px 16px' }}>
                 {moments.map(m => (
                   <div key={m.key} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '12px 0', borderTop: moments[0].key === m.key ? 'none' : '1px solid var(--line)' }}>
-                    {moodDot(m.mood)}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p className="j-meta">{m.time} · {m.setting} · {m.category}</p>
-                      <p className="j-body" style={{ fontSize: 'calc(15px * var(--tscale, 1))', marginTop: 1 }}>{m.isIncident ? (m.during || m.text || 'Incident noted') : (m.text || 'Noted')}</p>
-                    </div>
+                    <button onClick={() => editMoment(m)} aria-label={'Edit the ' + m.category + ' moment'} className="j-press"
+                      style={{ flex: 1, minWidth: 0, display: 'flex', gap: 10, alignItems: 'flex-start', textAlign: 'left',
+                        border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}>
+                      {moodDot(m.mood)}
+                      <span style={{ flex: 1, minWidth: 0 }}>
+                        <span className="j-meta" style={{ display: 'block' }}>{m.time} · {m.setting} · {m.category}</span>
+                        <span className="j-body" style={{ display: 'block', fontSize: 'calc(15px * var(--tscale, 1))', marginTop: 1 }}>{m.isIncident ? (m.during || m.text || 'Incident noted') : (m.text || 'Noted')}</span>
+                      </span>
+                    </button>
                     <button onClick={() => removeMoment(m.key)} aria-label="Remove moment" className="j-press" style={{ width: 34, height: 34, borderRadius: 10, border: 'none', background: 'var(--tag-grey-bg)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <Icon name="close" size={16} color="var(--muted)" />
                     </button>
                   </div>
                 ))}
               </div>
+              <p className="j-meta" style={{ marginTop: 8 }}>Tap a moment to change it. It all saves as one log.</p>
             </div>
           )}
+           </div>
+          </div>
         </div>
       </div>
-      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '12px 20px calc(16px + env(safe-area-inset-bottom))', background: 'var(--fade-grad)' }}>
-        {moments.length > 0 && <p className="j-meta" style={{ textAlign: 'center', marginBottom: 8 }}>{moments.length} moment{moments.length === 1 ? '' : 's'} ready. Each saves as its own dated note.</p>}
+      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '12px 20px calc(16px + env(safe-area-inset-bottom))',
+        background: 'var(--fade-grad)', ...dim, ...(picker ? { pointerEvents: 'none' } : {}) }}>
+        {moments.length > 0 && <p className="j-meta" style={{ textAlign: 'center', marginBottom: 8 }}>{moments.length} moment{moments.length === 1 ? '' : 's'} ready. Saves as one log.</p>}
         <button className="j-btn j-btn-primary j-btn-lg" onClick={save} style={moments.length ? {} : { opacity: 0.5 }}>
           <Icon name="check" size={22} color="#fff" /> Save
         </button>
@@ -679,7 +768,7 @@ function HandoverScreen({ nav, today, profile }) {
   );
 }
 
-// ---------------- "At the gate?" explainer (shown before capture when there is no Plus) ----------------
+// ---------------- "Dysregulation" explainer (shown before capture when there is no Plus) ----------------
 // Deliberately uses the word "dysregulation": it is the word SEND parents hear
 // constantly from school, and meeting them in their own vocabulary is the point.
 function GateIntroScreen({ nav, profile }) {
@@ -691,7 +780,7 @@ function GateIntroScreen({ nav, profile }) {
   ];
   return (
     <div className="j-screen">
-      <PushHeader title="At the gate?" onClose={() => nav.back()} />
+      <PushHeader title="Dysregulation" onClose={() => nav.back()} />
       <div className="j-scroll j-fade">
         <div className="j-pad" style={{ paddingTop: 4, paddingBottom: 150 }}>
           <div style={{ display: 'flex', marginBottom: 16 }}>

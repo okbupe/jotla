@@ -69,24 +69,46 @@ function ok(name, cond) {
   await page.waitForTimeout(450);
   ok('app recovers on next navigation', !(await page.locator('#root').innerText()).includes('hit a problem'));
 
-  // ---- 5. accessibility: quick log chips ----
-  console.log('Suite 5: chip accessibility');
+  // ---- 5. accessibility: the context row and its pickers (build 1.12.0) ----
+  // Day / Where / When are three pills; each opens only its own options and
+  // blurs the rest, so the chips exist once a question is open.
+  console.log('Suite 5: context row + chip accessibility');
   await page.getByText('Log', { exact: true }).last().click();
   await page.waitForTimeout(500);
+  const rowText = await page.locator('#root').innerText();
+  ok('context row asks Day / Where / When side by side',
+    rowText.includes('Day?') && rowText.includes('Where?') && rowText.includes('When?'));
+  ok('the row starts on Today / School / Morning',
+    rowText.includes('Today') && rowText.includes('School') && rowText.includes('Morning'));
+  ok('the options stay closed until a question is tapped', (await page.locator('button[aria-pressed]').count()) === 0);
+  await page.getByText('Where?', { exact: true }).first().click();
+  await page.waitForTimeout(350);
   const chips = await page.locator('button[aria-pressed]').count();
-  ok('quick log chips expose aria-pressed (' + chips + ')', chips >= 5);
+  ok('the open picker exposes aria-pressed chips (' + chips + ')', chips >= 4);
+  ok('the rest of the screen blurs to focus the question', await page.evaluate(() =>
+    Array.from(document.querySelectorAll('div')).some(d => (d.style.filter || '').includes('blur'))));
   const firstChip = page.locator('button[aria-pressed="false"]').first();
   const chipText = (await firstChip.innerText()).trim();
-  await firstChip.click();
-  await page.waitForTimeout(250);
+  await firstChip.click(); // picking an answer closes the picker again
+  await page.waitForTimeout(350);
+  ok('picking an answer closes the picker', (await page.locator('button[aria-pressed]').count()) === 0);
+  ok('the picked answer rides the Where pill (' + chipText + ')',
+    (await page.locator('button:has-text("Where?")').first().innerText()).includes(chipText));
+  await page.getByText('Where?', { exact: true }).first().click();
+  await page.waitForTimeout(300);
   const nowPressed = await page.locator('button[aria-pressed="true"]', { hasText: chipText }).count();
   ok('aria-pressed tracks selection (' + chipText + ')', nowPressed >= 1);
+  await page.getByText('Where?', { exact: true }).first().click(); // close it again
+  await page.waitForTimeout(300);
 
   // ---- 5b. dynamic day log (build 1.12.0): pill -> moment editor -> bank -> save ----
   console.log('Suite 5b: dynamic day log');
   const logText = await page.locator('#root').innerText();
   for (const c of ['School feedback', 'New words', 'Wins']) ok('chip present: ' + c, logText.includes(c));
-  await page.locator('button.j-chip:has-text("Today")').first().click(); // suite 5 toggled "Yesterday"; save to today
+  await page.getByText('Day?', { exact: true }).first().click(); // the day lives behind its own pill now
+  await page.waitForTimeout(300);
+  await page.locator('button.j-chip:has-text("Today")').first().click();
+  await page.waitForTimeout(300);
   await page.getByText('Wins', { exact: true }).first().click(); // tap the pill to open its moment editor
   await page.waitForTimeout(300);
   ok('placeholder nudges exact words', await page.locator('textarea[placeholder*="exact words"]').count() >= 1);
@@ -94,11 +116,38 @@ function ok(name, cond) {
   await page.getByText('Okay', { exact: true }).first().click(); // bank the moment
   await page.waitForTimeout(300);
   ok('a banked moment lands in the day list', (await page.locator('#root').innerText()).includes('Boot-assert win: tried a new food'));
+  // a banked moment reopens for changing, and the change sticks
+  await page.locator('button[aria-label="Edit the Wins moment"]').first().click();
+  await page.waitForTimeout(300);
+  ok('tapping a banked moment reopens it filled in',
+    (await page.locator('textarea').first().inputValue()).includes('tried a new food'));
+  await page.locator('textarea').first().fill('Boot-assert win: tried a new food at dinner, asked for more');
+  await page.getByText('Okay', { exact: true }).first().click();
+  await page.waitForTimeout(300);
+  const afterEdit = await page.locator('#root').innerText();
+  ok('the edit replaces the moment rather than adding a second', afterEdit.includes('asked for more')
+    && (afterEdit.match(/Boot-assert win/g) || []).length === 1);
+  // a second moment in a different part of the day: the two must read back as ONE log
+  await page.getByText('When?', { exact: true }).first().click();
+  await page.waitForTimeout(300);
+  await page.locator('button.j-chip:has-text("Afternoon")').first().click();
+  await page.waitForTimeout(300);
+  await page.getByText('Lunch hall', { exact: true }).first().click();
+  await page.waitForTimeout(300);
+  await page.locator('textarea').first().fill('Boot-assert: ate most of his lunch');
+  await page.getByText('Okay', { exact: true }).first().click();
+  await page.waitForTimeout(300);
+  ok('two moments stage together', (await page.locator('#root').innerText()).includes('2 moments ready'));
   await page.getByText('Save', { exact: true }).last().click(); // one Save writes every banked moment
   await page.waitForTimeout(700);
   await page.getByText('Today', { exact: true }).last().click();
   await page.waitForTimeout(500);
-  ok('saved Wins entry appears on Today', (await page.locator('#root').innerText()).includes('Boot-assert win: tried a new food'));
+  const oneLogText = await page.locator('#root').innerText();
+  ok('saved Wins entry appears on Today', oneLogText.includes('asked for more'));
+  ok('the Save reads back as one log, not scattered cards', oneLogText.includes('2 moments')
+    && (await page.locator('.j-card:has-text("2 moments")').count()) === 1);
+  ok('the log organises its moments by part of day', /morning/i.test(oneLogText) && /afternoon/i.test(oneLogText));
+  ok('both moments sit inside the one log', oneLogText.includes('asked for more') && oneLogText.includes('ate most of his lunch'));
   await page.getByText('Settings', { exact: true }).last().click();
   await page.waitForTimeout(450);
   ok('footer shows the bumped build', (await page.locator('#root').innerText()).includes('Test build 1.11.1'));
@@ -213,9 +262,9 @@ function ok(name, cond) {
   ok('Add a note lands in Quick log preset to that day', qlPreset.includes('Quick log') && qlPreset.includes('Saving to'));
 
   // the custom day is picked from a calendar sheet, never typed
-  await page4.locator('button.j-chip:has-text("Another day")').first().click();
-  await page4.waitForTimeout(250);
-  await page4.locator('button[aria-label*="opens a calendar"]').first().click();
+  await page4.getByText('Day?', { exact: true }).first().click();
+  await page4.waitForTimeout(300);
+  await page4.locator('button.j-chip:has-text("Another day")').first().click(); // opens the calendar straight away
   await page4.waitForTimeout(400);
   ok('calendar sheet opens with a full six-week grid', (await page4.locator('.j-sheet .j-pager > div:not([aria-hidden="true"]) > button[aria-pressed]').count()) === 42);
   ok('no typed date input remains in Quick log', (await page4.locator('input[type="date"]').count()) === 0);
@@ -599,7 +648,7 @@ function ok(name, cond) {
   await page10.waitForTimeout(1200);
 
   // item 39: the two Today action tiles now wear the card border + drop shadow
-  const tileCss = await page10.locator('button.j-press:has-text("At the gate?")').first().evaluate(el => {
+  const tileCss = await page10.locator('button.j-press:has-text("Dysregulation")').first().evaluate(el => {
     const s = getComputedStyle(el);
     return { shadow: s.boxShadow, borderW: parseFloat(s.borderTopWidth), borderStyle: s.borderTopStyle };
   });
@@ -706,12 +755,12 @@ function ok(name, cond) {
   page12.on('pageerror', e => errors12.push(String(e)));
   await page12.goto(URL_APP, { waitUntil: 'networkidle' });
   await page12.waitForTimeout(1200);
-  // open Quick log -> Another day -> the calendar sheet
+  // open Quick log -> Day? -> Another day -> the calendar sheet
   await page12.getByText('Log', { exact: true }).last().click();
   await page12.waitForTimeout(500);
+  await page12.getByText('Day?', { exact: true }).first().click();
+  await page12.waitForTimeout(300);
   await page12.locator('button.j-chip:has-text("Another day")').first().click();
-  await page12.waitForTimeout(250);
-  await page12.locator('button[aria-label*="opens a calendar"]').first().click();
   await page12.waitForTimeout(400);
   const sheetPager = page12.locator('.j-sheet .j-pager');
   ok('the calendar sheet day grid is a swipe pager', await sheetPager.count() === 1);
@@ -740,8 +789,8 @@ function ok(name, cond) {
   await page12.locator('.j-sheet button[aria-label="' + pickLabel + '"]').click();
   await page12.waitForTimeout(400);
   ok('picking a day after a swipe closes the sheet', (await page12.locator('.j-sheet-scrim').count()) === 0);
-  const fieldText = await page12.locator('button[aria-label*="opens a calendar"]').first().innerText();
-  ok('the picked day lands in the date field (' + fieldText.trim() + ')', fieldText.includes('15'));
+  const fieldText = await page12.locator('button:has-text("Day?")').first().innerText();
+  ok('the picked day rides the Day pill (' + fieldText.replace(/\n/g, ' ').trim() + ')', fieldText.includes('15'));
   await page12.locator('button[aria-label="Close"]').first().click();
   await page12.waitForTimeout(400);
 

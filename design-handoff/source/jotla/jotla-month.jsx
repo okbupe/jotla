@@ -297,7 +297,7 @@ function DayScreen({ nav, entries, date }) {
               {canAdd && <p className="j-sm" style={{ color: 'var(--faint)', marginTop: 4 }}>You can still add one now.</p>}
             </div>
           ) : (
-            list.map(e => <EntryCard key={e.id} entry={e} onClick={() => nav.go('entry', { id: e.id })} />)
+            <LogList list={list} nav={nav} />
           )}
           {canAdd && (
             <button className="j-btn j-btn-primary" aria-label={'Add a note for ' + J.fmtLong(date)}

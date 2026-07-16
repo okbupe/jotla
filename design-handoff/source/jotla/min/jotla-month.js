@@ -505,13 +505,10 @@ function DayScreen({
       color: 'var(--faint)',
       marginTop: 4
     }
-  }, "You can still add one now.")) : list.map(e => /*#__PURE__*/React.createElement(EntryCard, {
-    key: e.id,
-    entry: e,
-    onClick: () => nav.go('entry', {
-      id: e.id
-    })
-  })), canAdd && /*#__PURE__*/React.createElement("button", {
+  }, "You can still add one now.")) : /*#__PURE__*/React.createElement(LogList, {
+    list: list,
+    nav: nav
+  }), canAdd && /*#__PURE__*/React.createElement("button", {
     className: "j-btn j-btn-primary",
     "aria-label": 'Add a note for ' + J.fmtLong(date),
     style: {

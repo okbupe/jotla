@@ -873,6 +873,172 @@ function EntryCard({
   }))));
 }
 
+// One saved log (founder call, 16 Jul 2026): a Save session banks several
+// moments at once, and the parent wants to read back the thing they just saved
+// as ONE tidy log, not as scattered cards. The moments stay atomic underneath
+// (each its own dated entry, so Find, the graph and the PDF pack still work);
+// this is purely how a log is READ. Entries written in one Save share a logId.
+function groupByLog(list) {
+  const out = [];
+  const at = {}; // logId -> index in out
+  list.forEach(e => {
+    if (!e.logId) {
+      out.push([e]);
+      return;
+    }
+    if (at[e.logId] === undefined) {
+      at[e.logId] = out.length;
+      out.push([e]);
+    } else out[at[e.logId]].push(e);
+  });
+  return out;
+}
+
+// A log, organised by the part of day it happened in.
+function LogCard({
+  group,
+  onOpen,
+  showDate = false
+}) {
+  const J = window.JOTLA;
+  const byTime = J.TIMES.map(t => [t, group.filter(e => e.time === t)]).filter(([, l]) => l.length > 0);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "j-card",
+    style: {
+      padding: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'baseline',
+      justifyContent: 'space-between',
+      gap: 10,
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontFamily: "'Cal Sans', system-ui",
+      fontWeight: 500,
+      fontSize: 'calc(16px * var(--tscale, 1))',
+      color: 'var(--ink)'
+    }
+  }, group.length, " moments"), /*#__PURE__*/React.createElement("span", {
+    className: "j-meta"
+  }, showDate ? J.fmtShort(group[0].date) + ' · ' : '', "logged ", group[0].clock)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 12
+    }
+  }, byTime.map(([t, list]) => /*#__PURE__*/React.createElement("div", {
+    key: t
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "j-meta",
+    style: {
+      textTransform: 'uppercase',
+      letterSpacing: '0.06em',
+      marginBottom: 7
+    }
+  }, t), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 8
+    }
+  }, list.map(e => {
+    const isH = e.type === 'handover';
+    const isDys = !isH && e.category === 'Incidents';
+    return /*#__PURE__*/React.createElement("button", {
+      key: e.id,
+      onClick: () => onOpen(e),
+      className: "j-press",
+      style: {
+        display: 'flex',
+        gap: 10,
+        alignItems: 'flex-start',
+        textAlign: 'left',
+        width: '100%',
+        border: 'none',
+        cursor: 'pointer',
+        background: 'var(--card-2)',
+        borderRadius: 12,
+        padding: '10px 12px'
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        paddingTop: 3,
+        flexShrink: 0
+      }
+    }, /*#__PURE__*/React.createElement(MoodDot, {
+      mood: e.mood,
+      size: 11
+    })), /*#__PURE__*/React.createElement("span", {
+      style: {
+        flex: 1,
+        minWidth: 0
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "j-chiprow",
+      style: {
+        gap: 6,
+        marginBottom: 4
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "j-tag j-tag-grey"
+    }, e.setting), !isDys && /*#__PURE__*/React.createElement("span", {
+      className: "j-tag j-tag-blue"
+    }, e.category), isDys && /*#__PURE__*/React.createElement(KindPill, {
+      label: "Dysregulation",
+      color: "var(--dysreg)"
+    }), isH && /*#__PURE__*/React.createElement(KindPill, {
+      label: "Gate note",
+      color: "var(--blue)",
+      icon: /*#__PURE__*/React.createElement(Icon, {
+        name: "note",
+        size: 13,
+        color: "var(--bg)"
+      })
+    })), /*#__PURE__*/React.createElement("span", {
+      style: {
+        display: 'block',
+        fontSize: 'calc(15px * var(--tscale, 1))',
+        color: 'var(--body)',
+        lineHeight: 1.4
+      }
+    }, e.summary)));
+  }))))));
+}
+
+// A day's entries, read as logs: a multi-moment Save becomes one LogCard, a
+// lone note stays the plain card it always was.
+function LogList({
+  list,
+  nav,
+  showDate = false
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 12
+    }
+  }, groupByLog(list).map((group, i) => group.length > 1 ? /*#__PURE__*/React.createElement(LogCard, {
+    key: group[0].logId || i,
+    group: group,
+    showDate: showDate,
+    onOpen: e => nav.go('entry', {
+      id: e.id
+    })
+  }) : /*#__PURE__*/React.createElement(EntryCard, {
+    key: group[0].id,
+    entry: group[0],
+    showDate: showDate,
+    onClick: () => nav.go('entry', {
+      id: group[0].id
+    })
+  })));
+}
+
 // labelled section heading inside scroll areas
 function SectionLabel({
   children,
@@ -1090,6 +1256,9 @@ function MiniMonthStrip({
 Object.assign(window, {
   PushHeader,
   EntryCard,
+  LogCard,
+  LogList,
+  groupByLog,
   KindPill,
   SectionLabel,
   MiniMonthStrip,

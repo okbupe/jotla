@@ -2455,7 +2455,7 @@ function PlusPage() {
     }),
     title: "Dysregulation Mode",
     formal: "Capture a hard moment as fact, while you are still standing there. It gives you the five questions to ask, takes the answers as plain notes, and puts them in order: what led up to it, what happened, and what helped. You walk away with a usable record, not just 'a hard afternoon'.",
-    plain: "Teacher mentions a tough afternoon. You tap 'At the gate?', read the questions, tap the answers. Done in under two minutes."
+    plain: "Teacher mentions a tough afternoon. You tap 'Dysregulation', read the questions, tap the answers. Done in under two minutes."
   }), /*#__PURE__*/React.createElement(PlusFeature, {
     icon: /*#__PURE__*/React.createElement(Icon, {
       name: "attach",
