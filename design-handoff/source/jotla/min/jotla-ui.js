@@ -760,14 +760,13 @@ function KindPill({
 
 // Entry card: clock time left, mood dot, setting chip, category chip, summary, optional photo.
 //
-// Kind colours (12 Jul 2026): a dysregulation log and a gate note must each
-// read as their own kind at a glance. A dysregulation log is a quick log in
-// the Incidents category (the record's only dysregulation marker); a gate
-// note is type 'handover' (the guided Dysregulation Mode capture, always
-// blue-family). Each kinded card carries a left accent stripe and a solid
-// kind pill in its colour: plum for dysregulation, blue for the gate. The two
-// kinds are mutually exclusive, exactly as they are on the This month bars,
-// and standard day logs keep their mood colours untouched.
+// Kind colour (rewritten 16 Jul 2026): a dysregulation capture reads as its own
+// kind at a glance. It is either a guided note (type 'handover') or a quick log
+// in the Incidents category; both are the same thing to a parent, so both carry
+// the left accent stripe and one solid plum kind pill reading "Dysregulation".
+// It was two kinds in two colours (plum vs gate blue) until the tile was renamed
+// to Dysregulation, which left the blue one wearing a name no screen used.
+// Standard day logs keep their mood colours untouched.
 function EntryCard({
   entry,
   onClick,
@@ -776,7 +775,12 @@ function EntryCard({
   const J = window.JOTLA;
   const isHandover = entry.type === 'handover';
   const isDysreg = !isHandover && entry.category === 'Incidents';
-  const kindColor = isHandover ? 'var(--blue)' : isDysreg ? 'var(--dysreg)' : null;
+  // Both are dysregulation captures and now read as one kind (founder, 16 Jul
+  // 2026): a guided record and a quick Incidents note differ only in how much
+  // was typed, which is Jotla's business, not something a parent should have to
+  // decode. They wear the palette's own --dysreg plum, not the gate blue.
+  const isDysregKind = isHandover || isDysreg;
+  const kindColor = isDysregKind ? 'var(--dysreg)' : null;
   const timeLabel = entry.clock || entry.time;
   return /*#__PURE__*/React.createElement("div", {
     className: "j-card j-press",
@@ -847,14 +851,11 @@ function EntryCard({
     }
   }, /*#__PURE__*/React.createElement("span", {
     className: "j-tag j-tag-grey"
-  }, entry.setting), !isDysreg && /*#__PURE__*/React.createElement("span", {
+  }, entry.setting), !isDysregKind && /*#__PURE__*/React.createElement("span", {
     className: "j-tag j-tag-blue"
-  }, entry.category), isDysreg && /*#__PURE__*/React.createElement(KindPill, {
+  }, entry.category), isDysregKind && /*#__PURE__*/React.createElement(KindPill, {
     label: "Dysregulation",
-    color: "var(--dysreg)"
-  }), isHandover && /*#__PURE__*/React.createElement(KindPill, {
-    label: "Gate note",
-    color: "var(--blue)",
+    color: "var(--dysreg)",
     icon: /*#__PURE__*/React.createElement(Icon, {
       name: "note",
       size: 13,
@@ -947,7 +948,7 @@ function LogCard({
     }
   }, list.map(e => {
     const isH = e.type === 'handover';
-    const isDys = !isH && e.category === 'Incidents';
+    const isDysKind = isH || !isH && e.category === 'Incidents';
     return /*#__PURE__*/React.createElement("button", {
       key: e.id,
       onClick: () => onOpen(e),
@@ -985,14 +986,11 @@ function LogCard({
       }
     }, /*#__PURE__*/React.createElement("span", {
       className: "j-tag j-tag-grey"
-    }, e.setting), !isDys && /*#__PURE__*/React.createElement("span", {
+    }, e.setting), !isDysKind && /*#__PURE__*/React.createElement("span", {
       className: "j-tag j-tag-blue"
-    }, e.category), isDys && /*#__PURE__*/React.createElement(KindPill, {
+    }, e.category), isDysKind && /*#__PURE__*/React.createElement(KindPill, {
       label: "Dysregulation",
-      color: "var(--dysreg)"
-    }), isH && /*#__PURE__*/React.createElement(KindPill, {
-      label: "Gate note",
-      color: "var(--blue)",
+      color: "var(--dysreg)",
       icon: /*#__PURE__*/React.createElement(Icon, {
         name: "note",
         size: 13,
@@ -1077,18 +1075,21 @@ function SectionLabel({
 // notes" would clip on narrow screens at the larger text dials.
 //
 // Counting rule (stated once, applied to both graphs): the three mood bars
-// count DAYS, dayMood folding every entry's mood in, so a gate note's hard
-// mood still colours its day. The two new bars count MOMENTS: Gate = guided
-// gate notes (type 'handover'), Dysregulation = quick logs in the Incidents
-// category. A gate note is itself a dysregulation capture, so the pair is
-// kept mutually exclusive by type: each entry lands in exactly one of the
-// two moment bars, and no moment is ever counted twice across them.
+// count DAYS, dayMood folding every entry's mood in, so a dysregulation
+// capture's hard mood still colours its day. The fourth bar counts MOMENTS:
+// every dysregulation capture, however it was recorded.
+//
+// ONE Dysregulation bar since 16 Jul 2026 (founder). It was two, Gate (guided,
+// type 'handover') beside Dysregulation (a quick Incidents log), which left two
+// bars meaning the same thing to a parent and, after the tile was renamed to
+// Dysregulation, two different names for one feature. They are summed here, so
+// no moment is lost or double counted, and the split by how-it-was-typed stays
+// where it belongs: inside the entry.
 function kindBarBlocks({
   good,
   ok,
   hard,
-  gate,
-  dys
+  dysreg
 }) {
   return [{
     key: 'good',
@@ -1106,14 +1107,9 @@ function kindBarBlocks({
     n: hard,
     color: window.MOOD_COLOURS.hard
   }, {
-    key: 'gate',
-    label: 'Gate',
-    n: gate,
-    color: 'var(--blue)'
-  }, {
     key: 'dysreg',
     label: 'Dysregulation',
-    n: dys,
+    n: dysreg,
     color: 'var(--dysreg)',
     labelEnd: true
   }];
@@ -1174,7 +1170,7 @@ function KindBars({
   }));
 }
 
-// Month summary: the five count blocks + a plain trend line.
+// Month summary: the four count blocks + a plain trend line.
 function MiniMonthStrip({
   entries,
   onOpen
@@ -1192,16 +1188,14 @@ function MiniMonthStrip({
     if (m === 'good') good++;else if (m === 'ok') ok++;else if (m === 'hard') hard++;
   }
   const monthEntries = entries.filter(e => e.date.startsWith(`${_my}-${_mm}-`));
-  const dys = monthEntries.filter(e => e.type !== 'handover' && e.category === 'Incidents').length;
-  const gate = monthEntries.filter(e => e.type === 'handover').length;
+  const dysreg = monthEntries.filter(e => e.type === 'handover' || e.category === 'Incidents').length;
   const blocks = kindBarBlocks({
     good,
     ok,
     hard,
-    gate,
-    dys
+    dysreg
   });
-  const maxN = Math.max(good, ok, hard, gate, dys, 1);
+  const maxN = Math.max(good, ok, hard, dysreg, 1);
   const _hc = {};
   entries.forEach(e => {
     if (e.mood === 'hard') _hc[e.category] = (_hc[e.category] || 0) + 1;

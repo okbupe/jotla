@@ -365,7 +365,7 @@ const TOUR_STEPS = name => [{
   icon: 'today',
   illo: 'tourToday',
   title: 'Today is home',
-  body: "The Today screen is where you land. It shows how the day is going and gives you two calm shortcuts: your child's own check-in, or capture what happened at the gate."
+  body: "The Today screen is where you land. It shows how the day is going and gives you two calm shortcuts: your child's own check-in, or capture what happened on a hard day."
 }, {
   tint: 'var(--tint-green)',
   color: 'var(--green)',

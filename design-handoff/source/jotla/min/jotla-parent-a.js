@@ -603,7 +603,7 @@ function MediaPicker({
 // new time. One Save writes every banked moment as its own dated entry, so each
 // stays individually findable, filterable and printable, the way evidence must.
 // Incidents opens the same pattern with a richer before/during/after box and
-// saves as a gate note (type 'handover').
+// saves as a dysregulation note (type 'handover').
 // The context row (founder, 16 Jul 2026): Day / Where / When sit side by side,
 // each one a tinted card holding its label above its current answer, so the pair
 // reads as a single thing to tap. Tapping a card opens just its own options
@@ -1165,12 +1165,12 @@ function QuickLogScreen({
   }));
 }
 
-// ---------------- Gate note (guided capture) ----------------
+// ---------------- Dysregulation (guided capture) ----------------
 // Child-centred, supportive questions. Not a witness statement.
 const GATE_QUESTIONS = name => ['What happened?', 'Where and when was this?', `How did ${name} seem?`, 'What seemed to lead up to it?', 'What helped, or what happened next?'];
 
 // Who was with the child, and where it happened (founder ask, 15 Jul 2026): the
-// gate note now captures the scene, not only the behaviours and the ABC phases.
+// the guided note now captures the scene, not only the behaviours and the ABC phases.
 const WHO_CHIPS = ['Teachers', 'TA', 'Other children', 'Other adults'];
 const WHERE_CHIPS = ['Classroom', 'Playground', 'Corridor', 'Lunch hall', 'Outside', 'Toilets', 'Other'];
 function Stepper({
@@ -1304,7 +1304,7 @@ function HandoverScreen({
       mood: 'hard',
       kind: 'contemporaneous',
       type: 'handover',
-      summary: during.trim() ? during.trim() : 'Hard moment captured at the gate.',
+      summary: during.trim() ? during.trim() : 'Hard moment captured.',
       handover: {
         behaviours,
         before,
@@ -1318,7 +1318,7 @@ function HandoverScreen({
     };
     if (media && media.dataUrl) {
       entry.photoData = media.dataUrl;
-      entry.photo = 'Photo from the gate';
+      entry.photo = 'Photo from the moment';
     } else if (media && media.kind === 'video') {
       entry.photo = 'Video noted (kept in your photo library)';
     }
@@ -1335,8 +1335,8 @@ function HandoverScreen({
       background: 'var(--bg)'
     }
   }, /*#__PURE__*/React.createElement(PushHeader, {
-    title: "Gate note",
-    subtitle: "Dysregulation Mode. One calm screen, minimal typing.",
+    title: "Dysregulation",
+    subtitle: "One calm screen, minimal typing.",
     onBack: () => nav.back()
   }), /*#__PURE__*/React.createElement("div", {
     className: "j-scroll j-fade"
@@ -1755,7 +1755,7 @@ function GateIntroScreen({
       color: 'var(--muted)',
       marginBottom: 14
     }
-  }, "A gate note is for the harder days. The teacher meets you at the gate, or the message home says ", childName, " was dysregulated, and you are left holding one word instead of a picture of what actually happened."), /*#__PURE__*/React.createElement("p", {
+  }, "A dysregulation note is for the harder days. The teacher meets you at the gate, or the message home says ", childName, " was dysregulated, and you are left holding one word instead of a picture of what actually happened."), /*#__PURE__*/React.createElement("p", {
     className: "j-body",
     style: {
       color: 'var(--muted)',
@@ -1904,7 +1904,7 @@ const DYSREG_TIPS = [{
   tint: 'var(--tint-blue)',
   ink: 'var(--blue)',
   title: 'Then write it down',
-  body: 'Once things are settled, open a gate note. It asks you the right questions in the right order while everything is still fresh. Hours later is fine; the record keeps its timing honest.',
+  body: 'Once things are settled, write it down. It asks you the right questions in the right order while everything is still fresh. Hours later is fine; the record keeps its timing honest.',
   cta: true
 }];
 function DysregTipsScreen({
@@ -2017,7 +2017,7 @@ function DysregTipsScreen({
     name: "note",
     size: 18,
     color: "#fff"
-  }), " Open a gate note"))))), /*#__PURE__*/React.createElement("div", {
+  }), " Open Dysregulation"))))), /*#__PURE__*/React.createElement("div", {
     style: {
       position: 'absolute',
       left: 0,

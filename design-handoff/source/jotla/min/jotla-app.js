@@ -903,7 +903,7 @@ function DeleteChildSheet({
     } catch (e) {}
     setBackedUp(true);
   };
-  const consequences = [[nEntries + (nEntries === 1 ? ' logged moment' : ' logged moments'), 'Every quick log and gate note you have written.'], [nDocs + (nDocs === 1 ? ' saved document' : ' saved documents'), 'Letters, reports and plans kept in the vault.'], ...(keepsProfile ? [] : [[name + "'s profile", 'Their name, avatar, colour and settings.']])];
+  const consequences = [[nEntries + (nEntries === 1 ? ' logged moment' : ' logged moments'), 'Every quick log and dysregulation note you have written.'], [nDocs + (nDocs === 1 ? ' saved document' : ' saved documents'), 'Letters, reports and plans kept in the vault.'], ...(keepsProfile ? [] : [[name + "'s profile", 'Their name, avatar, colour and settings.']])];
   return /*#__PURE__*/React.createElement("div", {
     className: "j-sheet-scrim",
     onClick: onClose,

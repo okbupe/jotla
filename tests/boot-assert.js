@@ -203,14 +203,27 @@ function ok(name, cond) {
   await page.getByText('Okay', { exact: true }).first().click();
   await page.waitForTimeout(300);
   ok('two moments stage together', (await page.locator('#root').innerText()).includes('2 moments ready'));
+  // a hard moment rides the same log: Incidents opens the before/during/after box
+  await page.getByText('Incidents', { exact: true }).first().click();
+  await page.waitForTimeout(300);
+  const phaseBoxes = await page.locator('textarea').count();
+  ok('Incidents opens the before/during/after box', phaseBoxes === 3);
+  await page.locator('textarea').nth(1).fill('Boot-assert: hard moment in the corridor');
+  await page.getByText('Okay', { exact: true }).first().click();
+  await page.waitForTimeout(300);
+  ok('three moments stage together', (await page.locator('#root').innerText()).includes('3 moments ready'));
   await page.getByText('Save', { exact: true }).last().click(); // one Save writes every banked moment
   await page.waitForTimeout(700);
   await page.getByText('Today', { exact: true }).last().click();
   await page.waitForTimeout(500);
   const oneLogText = await page.locator('#root').innerText();
   ok('saved Wins entry appears on Today', oneLogText.includes('asked for more'));
-  ok('the Save reads back as one log, not scattered cards', oneLogText.includes('2 moments')
-    && (await page.locator('.j-card:has-text("2 moments")').count()) === 1);
+  ok('the Save reads back as one log, not scattered cards', oneLogText.includes('3 moments')
+    && (await page.locator('.j-card:has-text("3 moments")').count()) === 1);
+  // the hard moment wears ONE pill, named Dysregulation, never "Gate note"
+  // (founder, 16 Jul 2026)
+  ok('a saved hard moment wears the Dysregulation pill', oneLogText.includes('Dysregulation'));
+  ok('no gate-note wording survives on a saved moment', !/Gate note/i.test(oneLogText));
   ok('the log organises its moments by part of day', /morning/i.test(oneLogText) && /afternoon/i.test(oneLogText));
   ok('both moments sit inside the one log', oneLogText.includes('asked for more') && oneLogText.includes('ate most of his lunch'));
   await page.getByText('Settings', { exact: true }).last().click();
@@ -294,10 +307,12 @@ function ok(name, cond) {
   await page4.goto(URL_APP, { waitUntil: 'networkidle' });
   await page4.waitForTimeout(1200);
 
-  // five-bar This month strip: Gate + Dysregulation join the mood trio
+  // four-bar This month strip: one Dysregulation bar joins the mood trio
   const todayText = await page4.locator('#root').innerText();
-  ok('Today strip carries the Gate bar', todayText.includes('Gate'));
   ok('Today strip carries the Dysregulation bar', todayText.includes('Dysregulation'));
+  // the gate name is gone from the parent's view (founder, 16 Jul 2026); "at the
+  // gate" survives only in a log's own words, where it means the actual gate
+  ok('no Gate bar or gate-note wording remains on Today', !/Gate\b|gate note/.test(todayText));
   // item 34 (1.10.0): Free keeps the hand-the-phone framing on the tile
   ok("free Your day tile keeps 'Hand the phone'", todayText.includes('Hand the phone to Sam'));
 
@@ -416,7 +431,8 @@ function ok(name, cond) {
   await page5.getByText('Month', { exact: true }).last().click();
   await page5.waitForTimeout(500);
   const monthPlus = await page5.locator('#root').innerText();
-  ok('Plus month graph shows the five-bar story', /How .+ looked/.test(monthPlus) && monthPlus.includes('Dysregulation') && monthPlus.includes('Gate'));
+  ok('Plus month graph shows the four-bar story', /How .+ looked/.test(monthPlus)
+    && monthPlus.includes('Dysregulation') && !/\bGate\b/.test(monthPlus));
 
   // the Plus feature list gains Photos and Videos on Notes
   await page5.getByText('Settings', { exact: true }).last().click();
@@ -546,11 +562,11 @@ function ok(name, cond) {
   await page8.goto(URL_APP, { waitUntil: 'networkidle' });
   await page8.waitForTimeout(1200);
   const graphGeom = () => {
-    // The five-column row is found by its own shape: exactly five children
-    // whose labels read Good / Mixed / Hard / Gate / Dysregulation.
+    // The column row is found by its own shape: exactly four children whose
+    // labels read Good / Mixed / Hard / Dysregulation (one bar since 16 Jul 2026).
     const rows = Array.from(document.querySelectorAll('div')).filter(d =>
-      d.children.length === 5 &&
-      Array.from(d.children).map(c => c.lastElementChild && c.lastElementChild.textContent).join(',') === 'Good,Mixed,Hard,Gate,Dysregulation');
+      d.children.length === 4 &&
+      Array.from(d.children).map(c => c.lastElementChild && c.lastElementChild.textContent).join(',') === 'Good,Mixed,Hard,Dysregulation');
     const row = rows[0];
     if (!row) return null;
     const rect = row.getBoundingClientRect();
@@ -563,14 +579,14 @@ function ok(name, cond) {
       justify: getComputedStyle(row).justifyContent,
       grow: kids.map(k => getComputedStyle(k).flexGrow).join(','),
       flushLeft: Math.abs(boxes[0].left - rect.left),
-      flushRight: Math.abs(rect.right - boxes[4].right),
+      flushRight: Math.abs(rect.right - boxes[boxes.length - 1].right),
       gapSpread: Math.max(...gaps) - Math.min(...gaps),
       barSpread: Math.max(...bars) - Math.min(...bars),
     };
   };
   const gToday = await page8.evaluate(graphGeom);
   ok('Today strip row is justified space-between', !!gToday && gToday.justify === 'space-between');
-  ok('Today strip columns carry no flex weighting', !!gToday && gToday.grow === '0,0,0,0,0');
+  ok('Today strip columns carry no flex weighting', !!gToday && gToday.grow === '0,0,0,0');
   ok('Today strip: first column flush left, last flush right', !!gToday && gToday.flushLeft < 1 && gToday.flushRight < 1);
   ok('Today strip gaps are even (spread ' + (gToday ? gToday.gapSpread.toFixed(2) : '?') + 'px)', !!gToday && gToday.gapSpread < 1.5);
   ok('Today strip bars share one slim width', !!gToday && gToday.barSpread < 0.5);

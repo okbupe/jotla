@@ -9,7 +9,7 @@
 const { useState: useStateC, useRef: useRefC, useEffect: useEffectC } = React;
 
 /* ---- "Your day" question sets (Plus), plain data on purpose ----
-   A later AI tier will read the day's gate note and generate smarter
+   A later AI tier will read the day's dysregulation note and generate smarter
    follow-up questions; it slots in by producing more question values in this
    same shape, nothing else. No question is ever required: a card with no
    chips picked and no words typed saves nothing at all. Copy rules: reading
@@ -161,7 +161,7 @@ function ChildScreen({ nav, profile }) {
   // Save the day once, for every tier, and only when the child actually gave
   // something. Free banks the one-line summary of the face picks; Plus adds
   // the More answers on top, each answered question its own line, so a parent
-  // can read the child's own account against the gate note (Day view, Find,
+  // can read the child's own account against the dysregulation note (Day view, Find,
   // Evidence and the export all read the same plain summary).
   const saveWalk = (finalPicks) => {
     const picksNow = finalPicks || picks;

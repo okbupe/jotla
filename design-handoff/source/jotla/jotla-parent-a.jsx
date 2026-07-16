@@ -257,7 +257,7 @@ function MediaPicker({ value = null, onChange = () => {} }) {
 // new time. One Save writes every banked moment as its own dated entry, so each
 // stays individually findable, filterable and printable, the way evidence must.
 // Incidents opens the same pattern with a richer before/during/after box and
-// saves as a gate note (type 'handover').
+// saves as a dysregulation note (type 'handover').
 // The context row (founder, 16 Jul 2026): Day / Where / When sit side by side,
 // each one a tinted card holding its label above its current answer, so the pair
 // reads as a single thing to tap. Tapping a card opens just its own options
@@ -448,7 +448,7 @@ function QuickLogScreen({ nav, today, view }) {
           </div>
 
           {/* the moment editor: one category at a time. Incidents gets the
-              richer before/during/after box and banks as a gate note. */}
+              richer before/during/after box and banks as a dysregulation note. */}
           {openCat && (
             <div className="j-card j-card-pad" style={{ marginTop: 22, border: '1.5px solid var(--blue)', display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
@@ -534,7 +534,7 @@ function QuickLogScreen({ nav, today, view }) {
   );
 }
 
-// ---------------- Gate note (guided capture) ----------------
+// ---------------- Dysregulation (guided capture) ----------------
 // Child-centred, supportive questions. Not a witness statement.
 const GATE_QUESTIONS = (name) => [
   'What happened?',
@@ -545,7 +545,7 @@ const GATE_QUESTIONS = (name) => [
 ];
 
 // Who was with the child, and where it happened (founder ask, 15 Jul 2026): the
-// gate note now captures the scene, not only the behaviours and the ABC phases.
+// the guided note now captures the scene, not only the behaviours and the ABC phases.
 const WHO_CHIPS = ['Teachers', 'TA', 'Other children', 'Other adults'];
 const WHERE_CHIPS = ['Classroom', 'Playground', 'Corridor', 'Lunch hall', 'Outside', 'Toilets', 'Other'];
 
@@ -612,10 +612,10 @@ function HandoverScreen({ nav, today, profile }) {
       clock: String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0'),
       setting: 'School', category: 'Incidents',
       mood: 'hard', kind: 'contemporaneous', type: 'handover',
-      summary: during.trim() ? during.trim() : 'Hard moment captured at the gate.',
+      summary: during.trim() ? during.trim() : 'Hard moment captured.',
       handover: { behaviours, before, during, after, duration: duration + ' mins', helped, who, where: whereAt },
     };
-    if (media && media.dataUrl) { entry.photoData = media.dataUrl; entry.photo = 'Photo from the gate'; }
+    if (media && media.dataUrl) { entry.photoData = media.dataUrl; entry.photo = 'Photo from the moment'; }
     else if (media && media.kind === 'video') { entry.photo = 'Video noted (kept in your photo library)'; }
     nav.addEntry(entry);
     setNudge(true);
@@ -624,7 +624,7 @@ function HandoverScreen({ nav, today, profile }) {
 
   return (
     <div className="j-screen" style={{ background: 'var(--bg)' }}>
-      <PushHeader title="Gate note" subtitle="Dysregulation Mode. One calm screen, minimal typing." onBack={() => nav.back()} />
+      <PushHeader title="Dysregulation" subtitle="One calm screen, minimal typing." onBack={() => nav.back()} />
       <div className="j-scroll j-fade">
         <div className="j-pad" style={{ paddingBottom: 150, paddingTop: 2, display: 'flex', flexDirection: 'column', gap: 20 }}>
           {/* auto-attached context + the in-the-moment tips */}
@@ -722,7 +722,7 @@ function HandoverScreen({ nav, today, profile }) {
               placeholder="The thing that worked, however small." />
           </div>
 
-          {/* photo at the gate: adding media is part of Jotla Plus
+          {/* photo of the moment: adding media is part of Jotla Plus
               (12 Jul 2026); viewing saved media never gates anywhere */}
           {nav.plus ? (
             <div>
@@ -800,7 +800,7 @@ function GateIntroScreen({ nav, profile }) {
             A quick log captures that something happened, and how it felt. A line is plenty.
           </p>
           <p className="j-body" style={{ color: 'var(--muted)', marginBottom: 14 }}>
-            A gate note is for the harder days. The teacher meets you at the gate, or the message home says {childName} was dysregulated, and you are left holding one word instead of a picture of what actually happened.
+            A dysregulation note is for the harder days. The teacher meets you at the gate, or the message home says {childName} was dysregulated, and you are left holding one word instead of a picture of what actually happened.
           </p>
           <p className="j-body" style={{ color: 'var(--muted)', marginBottom: 22 }}>
             Dysregulation Mode walks you through it while you are still standing there. It knows the right questions to ask, and the right order to ask them in, and it turns the answers into a calm, dated note: what led up to it, what happened, and what helped. The time and place add themselves.
@@ -857,7 +857,7 @@ const DYSREG_TIPS = [
     body: 'Repair before review. Let them know the storm did not change anything between you. Save the talking-through for later, once everyone is truly calm, and keep it free of blame.',
     say: '"That was hard. We\'re okay."' },
   { illo: 'tipWrite', icon: 'note', tint: 'var(--tint-blue)', ink: 'var(--blue)', title: 'Then write it down',
-    body: 'Once things are settled, open a gate note. It asks you the right questions in the right order while everything is still fresh. Hours later is fine; the record keeps its timing honest.', cta: true },
+    body: 'Once things are settled, write it down. It asks you the right questions in the right order while everything is still fresh. Hours later is fine; the record keeps its timing honest.', cta: true },
 ];
 
 function DysregTipsScreen({ nav }) {
@@ -894,7 +894,7 @@ function DysregTipsScreen({ nav }) {
               )}
               {t.cta && (
                 <button className="j-btn j-btn-primary" style={{ marginTop: 22 }} onClick={() => nav.go('handover')}>
-                  <Icon name="note" size={18} color="#fff" /> Open a gate note
+                  <Icon name="note" size={18} color="#fff" /> Open Dysregulation
                 </button>
               )}
             </div>

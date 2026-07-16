@@ -160,7 +160,7 @@ const TOUR_STEPS = (name) => [
     body: `This is ${name}'s record, and right now it is completely blank. That is exactly how it should start. You will fill it one ordinary day at a time.` },
   { tint: 'var(--tint-blue)',  color: 'var(--blue)',  icon: 'today',
     illo: 'tourToday', title: 'Today is home',
-    body: "The Today screen is where you land. It shows how the day is going and gives you two calm shortcuts: your child's own check-in, or capture what happened at the gate." },
+    body: "The Today screen is where you land. It shows how the day is going and gives you two calm shortcuts: your child's own check-in, or capture what happened on a hard day." },
   { tint: 'var(--tint-green)', color: 'var(--green)', icon: 'plus',
     illo: 'tourLog', title: 'A line is plenty',
     body: 'Tap the round plus button any time to log a moment. Where, when, what kind, how it felt. It takes under thirty seconds, and one line is enough.' },

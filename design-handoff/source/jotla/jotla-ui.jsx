@@ -401,19 +401,23 @@ function KindPill({ label, color, icon }) {
 
 // Entry card: clock time left, mood dot, setting chip, category chip, summary, optional photo.
 //
-// Kind colours (12 Jul 2026): a dysregulation log and a gate note must each
-// read as their own kind at a glance. A dysregulation log is a quick log in
-// the Incidents category (the record's only dysregulation marker); a gate
-// note is type 'handover' (the guided Dysregulation Mode capture, always
-// blue-family). Each kinded card carries a left accent stripe and a solid
-// kind pill in its colour: plum for dysregulation, blue for the gate. The two
-// kinds are mutually exclusive, exactly as they are on the This month bars,
-// and standard day logs keep their mood colours untouched.
+// Kind colour (rewritten 16 Jul 2026): a dysregulation capture reads as its own
+// kind at a glance. It is either a guided note (type 'handover') or a quick log
+// in the Incidents category; both are the same thing to a parent, so both carry
+// the left accent stripe and one solid plum kind pill reading "Dysregulation".
+// It was two kinds in two colours (plum vs gate blue) until the tile was renamed
+// to Dysregulation, which left the blue one wearing a name no screen used.
+// Standard day logs keep their mood colours untouched.
 function EntryCard({ entry, onClick, showDate = false }) {
   const J = window.JOTLA;
   const isHandover = entry.type === 'handover';
   const isDysreg = !isHandover && entry.category === 'Incidents';
-  const kindColor = isHandover ? 'var(--blue)' : isDysreg ? 'var(--dysreg)' : null;
+  // Both are dysregulation captures and now read as one kind (founder, 16 Jul
+  // 2026): a guided record and a quick Incidents note differ only in how much
+  // was typed, which is Jotla's business, not something a parent should have to
+  // decode. They wear the palette's own --dysreg plum, not the gate blue.
+  const isDysregKind = isHandover || isDysreg;
+  const kindColor = isDysregKind ? 'var(--dysreg)' : null;
   const timeLabel = entry.clock || entry.time;
   return (
     <div className="j-card j-press" onClick={onClick} style={{ padding: 16, cursor: onClick ? 'pointer' : 'default',
@@ -430,12 +434,10 @@ function EntryCard({ entry, onClick, showDate = false }) {
             <MoodDot mood={entry.mood} size={13} />
             <div className="j-chiprow" style={{ gap: 8, flex: 1 }}>
               <span className="j-tag j-tag-grey">{entry.setting}</span>
-              {/* On a dysregulation log the kind pill IS the category, renamed
-                  to the word SEND parents actually hear; gate notes keep their
-                  category tag under the gate pill. */}
-              {!isDysreg && <span className="j-tag j-tag-blue">{entry.category}</span>}
-              {isDysreg && <KindPill label="Dysregulation" color="var(--dysreg)" />}
-              {isHandover && <KindPill label="Gate note" color="var(--blue)" icon={<Icon name="note" size={13} color="var(--bg)" />} />}
+              {/* On a dysregulation capture the kind pill IS the category (it is
+                  always Incidents), so the category tag would only repeat it. */}
+              {!isDysregKind && <span className="j-tag j-tag-blue">{entry.category}</span>}
+              {isDysregKind && <KindPill label="Dysregulation" color="var(--dysreg)" icon={<Icon name="note" size={13} color="var(--bg)" />} />}
             </div>
           </div>
           <p className="j-body" style={{ fontSize: 'calc(16.5px * var(--tscale, 1))', marginTop: 10, lineHeight: 1.4 }}>{entry.summary}</p>
@@ -481,7 +483,7 @@ function LogCard({ group, onOpen, showDate = false }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {list.map(e => {
                 const isH = e.type === 'handover';
-                const isDys = !isH && e.category === 'Incidents';
+                const isDysKind = isH || (!isH && e.category === 'Incidents');
                 return (
                   <button key={e.id} onClick={() => onOpen(e)} className="j-press" style={{ display: 'flex', gap: 10,
                     alignItems: 'flex-start', textAlign: 'left', width: '100%', border: 'none', cursor: 'pointer',
@@ -490,9 +492,8 @@ function LogCard({ group, onOpen, showDate = false }) {
                     <span style={{ flex: 1, minWidth: 0 }}>
                       <span className="j-chiprow" style={{ gap: 6, marginBottom: 4 }}>
                         <span className="j-tag j-tag-grey">{e.setting}</span>
-                        {!isDys && <span className="j-tag j-tag-blue">{e.category}</span>}
-                        {isDys && <KindPill label="Dysregulation" color="var(--dysreg)" />}
-                        {isH && <KindPill label="Gate note" color="var(--blue)" icon={<Icon name="note" size={13} color="var(--bg)" />} />}
+                        {!isDysKind && <span className="j-tag j-tag-blue">{e.category}</span>}
+                        {isDysKind && <KindPill label="Dysregulation" color="var(--dysreg)" icon={<Icon name="note" size={13} color="var(--bg)" />} />}
                       </span>
                       <span style={{ display: 'block', fontSize: 'calc(15px * var(--tscale, 1))', color: 'var(--body)', lineHeight: 1.4 }}>{e.summary}</span>
                     </span>
@@ -545,19 +546,22 @@ function SectionLabel({ children, right }) {
 // notes" would clip on narrow screens at the larger text dials.
 //
 // Counting rule (stated once, applied to both graphs): the three mood bars
-// count DAYS, dayMood folding every entry's mood in, so a gate note's hard
-// mood still colours its day. The two new bars count MOMENTS: Gate = guided
-// gate notes (type 'handover'), Dysregulation = quick logs in the Incidents
-// category. A gate note is itself a dysregulation capture, so the pair is
-// kept mutually exclusive by type: each entry lands in exactly one of the
-// two moment bars, and no moment is ever counted twice across them.
-function kindBarBlocks({ good, ok, hard, gate, dys }) {
+// count DAYS, dayMood folding every entry's mood in, so a dysregulation
+// capture's hard mood still colours its day. The fourth bar counts MOMENTS:
+// every dysregulation capture, however it was recorded.
+//
+// ONE Dysregulation bar since 16 Jul 2026 (founder). It was two, Gate (guided,
+// type 'handover') beside Dysregulation (a quick Incidents log), which left two
+// bars meaning the same thing to a parent and, after the tile was renamed to
+// Dysregulation, two different names for one feature. They are summed here, so
+// no moment is lost or double counted, and the split by how-it-was-typed stays
+// where it belongs: inside the entry.
+function kindBarBlocks({ good, ok, hard, dysreg }) {
   return [
     { key: 'good', label: 'Good', n: good, color: window.MOOD_COLOURS.good },
     { key: 'ok', label: 'Mixed', n: ok, color: window.MOOD_COLOURS.ok },
     { key: 'hard', label: 'Hard', n: hard, color: window.MOOD_COLOURS.hard },
-    { key: 'gate', label: 'Gate', n: gate, color: 'var(--blue)' },
-    { key: 'dysreg', label: 'Dysregulation', n: dys, color: 'var(--dysreg)', labelEnd: true },
+    { key: 'dysreg', label: 'Dysregulation', n: dysreg, color: 'var(--dysreg)', labelEnd: true },
   ];
 }
 function KindBars({ blocks, maxN }) {
@@ -579,7 +583,7 @@ function KindBars({ blocks, maxN }) {
   );
 }
 
-// Month summary: the five count blocks + a plain trend line.
+// Month summary: the four count blocks + a plain trend line.
 function MiniMonthStrip({ entries, onOpen }) {
   const J = window.JOTLA;
   let good = 0, ok = 0, hard = 0;
@@ -591,10 +595,9 @@ function MiniMonthStrip({ entries, onOpen }) {
     if (m === 'good') good++; else if (m === 'ok') ok++; else if (m === 'hard') hard++;
   }
   const monthEntries = entries.filter(e => e.date.startsWith(`${_my}-${_mm}-`));
-  const dys = monthEntries.filter(e => e.type !== 'handover' && e.category === 'Incidents').length;
-  const gate = monthEntries.filter(e => e.type === 'handover').length;
-  const blocks = kindBarBlocks({ good, ok, hard, gate, dys });
-  const maxN = Math.max(good, ok, hard, gate, dys, 1);
+  const dysreg = monthEntries.filter(e => e.type === 'handover' || e.category === 'Incidents').length;
+  const blocks = kindBarBlocks({ good, ok, hard, dysreg });
+  const maxN = Math.max(good, ok, hard, dysreg, 1);
   const _hc = {};
   entries.forEach(e => { if (e.mood === 'hard') _hc[e.category] = (_hc[e.category] || 0) + 1; });
   const _top = Object.entries(_hc).sort((a, b) => b[1] - a[1])[0];

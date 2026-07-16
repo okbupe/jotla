@@ -28,13 +28,12 @@ function TabTitle({
   }, sub)), right);
 }
 
-// Plus: the shown month as the same bar graph the Today page draws, five bars
-// since 12 Jul 2026: Good / Mixed / Hard days in the static mood colours, then
-// Gate and Dysregulation moments in their own colours (Dysregulation LAST with
-// its label tucked to the right edge, exactly as the Today strip), and the
-// plain summary sentence. The counting rule lives with kindBarBlocks in
-// jotla-ui.jsx: mood bars count DAYS, the two new bars count MOMENTS,
-// mutually exclusive by type.
+// Plus: the shown month as the same bar graph the Today page draws, four bars
+// since 16 Jul 2026: Good / Mixed / Hard days in the static mood colours, then
+// Dysregulation moments in their own plum (LAST, with its label tucked to the
+// right edge, exactly as the Today strip), and the plain summary sentence. The
+// counting rule lives with kindBarBlocks in jotla-ui.jsx: mood bars count DAYS,
+// the Dysregulation bar counts MOMENTS.
 function MonthMoodGraph({
   entries,
   year,
@@ -51,16 +50,14 @@ function MonthMoodGraph({
     if (m === 'good') good++;else if (m === 'ok') ok++;else if (m === 'hard') hard++;
   }
   const monthEntries = entries.filter(e => e.date.startsWith(pre));
-  const dys = monthEntries.filter(e => e.type !== 'handover' && e.category === 'Incidents').length;
-  const gate = monthEntries.filter(e => e.type === 'handover').length;
+  const dysreg = monthEntries.filter(e => e.type === 'handover' || e.category === 'Incidents').length;
   const blocks = window.kindBarBlocks({
     good,
     ok,
     hard,
-    gate,
-    dys
+    dysreg
   });
-  const maxN = Math.max(good, ok, hard, gate, dys, 1);
+  const maxN = Math.max(good, ok, hard, dysreg, 1);
   const hc = {};
   monthEntries.forEach(e => {
     if (e.mood === 'hard' && e.category) hc[e.category] = (hc[e.category] || 0) + 1;

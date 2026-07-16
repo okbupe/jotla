@@ -1215,7 +1215,7 @@ function PlusPage() {
           <PlusFeature icon={<Icon name="attach" size={22} color="var(--blue)" />}
             title="Photos and Videos on Notes"
             formal="Keep the picture with the fact. Capture a photo or video, or attach one from your library, and it stays with the note on this phone. Sometimes the picture is the evidence."
-            plain="A mark at pick-up: capture it with the gate note and it sits with that day's record, ready when you need it." />
+            plain="A mark at pick-up: capture it with a dysregulation note and it sits with that day's record, ready when you need it." />
           <PlusFeature icon={<Icon name="doc" size={22} color="var(--blue)" />}
             title="PDF Evidence Pack"
             formal="Hand over a clean, dated record when it counts. The evidence pack lays out your chosen entries as a clear, dated document, each with the day it was logged and whether it was written the same day or added later. It is built around the formats tribunals and professionals already use."
@@ -1579,7 +1579,7 @@ function InfoAboutScreen({ nav }) {
       </InfoBlock>
 
       <InfoBlock icon="check" title="What is live now">
-        <InfoP>This early build already does the everyday job: quick daily logging with moods, gate notes for the handover moments, photos and videos kept with a note (part of Plus), a vault for letters and reports that can keep the document itself, as a photo or the file (adding it is part of Plus), and keyword search of your own notes.</InfoP>
+        <InfoP>This early build already does the everyday job: quick daily logging with moods, dysregulation notes for the hard moments, photos and videos kept with a note (part of Plus), a vault for letters and reports that can keep the document itself, as a photo or the file (adding it is part of Plus), and keyword search of your own notes.</InfoP>
         <InfoP last>Around that: the month calendar (its mood patterns are part of Plus), the printable day record (part of Plus), the tips deck for hard moments, the child check-in with its follow-up questions (the questions are part of Plus), dark mode, larger text sizes, a free export of the whole record, and restore from an export.</InfoP>
       </InfoBlock>
 
@@ -1591,7 +1591,7 @@ function InfoAboutScreen({ nav }) {
       <InfoBlock icon="edit" title="What makes a strong record">
         <InfoP>Log facts: what happened, when, and who was there. What you write can end up in front of other people when you choose to share it; that is the record doing its job. So keep other children out of what you write and what you photograph where you can.</InfoP>
         <InfoP>Little and often beats perfect. The quick log takes seconds, and a plain sentence written today is worth more than a polished page written next month.</InfoP>
-        <InfoP last>After a hard handover, open a gate note. It asks you the right questions in the right order while everything is still fresh.</InfoP>
+        <InfoP last>After a hard handover, open Dysregulation. It asks you the right questions in the right order while everything is still fresh.</InfoP>
       </InfoBlock>
 
       <InfoBlock icon="shield" title="Private by how it is built">
@@ -1610,7 +1610,7 @@ function InfoAboutScreen({ nav }) {
         <InfoP>Nothing leaves this device unless you send it yourself. The app has exactly three doors out, and you open every one:</InfoP>
         <InfoP><span className="j-strong">Export my data</span> (in Settings, and offered again before you delete a child's record) saves one file to your device holding the whole of a child's record: every note with its date, its mood and what you wrote, the photos you kept with notes, the document files you kept in the vault, and the details of every letter and report, in a form the app can read straight back in. You choose where that file lives from there: your files, your own cloud drive, an email to yourself. It is free, and it stays free. Videos are never inside it: Jotla notes that a video exists but never copies the file, so the video itself stays in your own photo library.</InfoP>
         <InfoP><span className="j-strong">Create PDF</span> (the day record, part of Plus) opens a printable page in a new tab. It carries your words, never your photos, and it goes nowhere until you print or save it yourself.</InfoP>
-        <InfoP><span className="j-strong">Email this to the teacher</span> (after a gate note) opens your own email app with the note typed in for you. Nothing goes anywhere until you press send.</InfoP>
+        <InfoP><span className="j-strong">Email this to the teacher</span> (after a dysregulation note) opens your own email app with the note typed in for you. Nothing goes anywhere until you press send.</InfoP>
         <InfoP>Who can see the record? On this device: anyone you hand it to unlocked, in this browser, so your device's own lock is the front door. The child check-in screen is safe by design: leaving it takes a deliberate grown-up press-and-hold, never a stray tap, so a curious child cannot land in your notes. And once you share a copy, that copy is out of your hands: whoever you send it to can read it, keep it and pass it on. Share with people you trust, when it serves your child.</InfoP>
         <InfoP last>One honest detail: Jotla can only know that an export was run. It cannot see whether the file was saved or sent, or where it ended up. Keeping that copy safe is in your hands too.</InfoP>
       </InfoBlock>
