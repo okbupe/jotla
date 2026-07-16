@@ -209,6 +209,14 @@ function ok(name, cond) {
   const phaseBoxes = await page.locator('textarea').count();
   ok('Incidents opens the before/during/after box', phaseBoxes === 3);
   await page.locator('textarea').nth(1).fill('Boot-assert: hard moment in the corridor');
+  // A hard moment logged here has to ask who was there (founder, 16 Jul 2026); it
+  // used to save an empty who, so the question existed only on the guided screen.
+  ok('the quick log asks who was there', (await page.locator('#root').innerText()).includes('Who was there?'));
+  const whoChip = page.locator('button[aria-pressed="false"]', { hasText: 'TA' }).first();
+  ok('who offers tappable chips', await whoChip.count() === 1);
+  await whoChip.click();
+  await page.waitForTimeout(200);
+  ok('a who chip selects', (await page.locator('button[aria-pressed="true"]', { hasText: 'TA' }).count()) === 1);
   await page.getByText('Okay', { exact: true }).first().click();
   await page.waitForTimeout(300);
   ok('three moments stage together', (await page.locator('#root').innerText()).includes('3 moments ready'));
@@ -224,6 +232,15 @@ function ok(name, cond) {
   // (founder, 16 Jul 2026)
   ok('a saved hard moment wears the Dysregulation pill', oneLogText.includes('Dysregulation'));
   ok('no gate-note wording survives on a saved moment', !/Gate note/i.test(oneLogText));
+  // ...and the who actually reaches the record, not just the screen: an empty
+  // handover.who is exactly how this regresses without anyone noticing
+  const savedWho = await page.evaluate(() => {
+    const list = JSON.parse(localStorage.getItem('jotla_entries_v4') || '[]');
+    const inc = list.find(e => e.type === 'handover' && /corridor/.test(e.summary || ''));
+    return inc && inc.handover ? inc.handover.who : null;
+  });
+  ok('who was there is saved onto the entry (' + JSON.stringify(savedWho) + ')',
+    Array.isArray(savedWho) && savedWho.includes('TA'));
   ok('the log organises its moments by part of day', /morning/i.test(oneLogText) && /afternoon/i.test(oneLogText));
   ok('both moments sit inside the one log', oneLogText.includes('asked for more') && oneLogText.includes('ate most of his lunch'));
   await page.getByText('Settings', { exact: true }).last().click();

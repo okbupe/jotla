@@ -385,7 +385,7 @@ const TOUR_STEPS = name => [{
   icon: 'note',
   illo: 'tourGate',
   title: 'Dysregulation',
-  body: `When a hard moment happens, Jotla asks you five simple questions: what happened, where and when, how ${name} seemed, what led up to it, and what helped. Most answers are a tap.`
+  body: `When a hard moment happens, Jotla asks you six simple questions: what happened, where and when, who was there, how ${name} seemed, what led up to it, and what helped. Most answers are a tap.`
 }, {
   tint: 'var(--tint-green)',
   color: 'var(--green)',

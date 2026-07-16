@@ -170,7 +170,7 @@ const TOUR_STEPS = (name) => [
   // The five questions are listed in the order GATE_QUESTIONS actually asks them.
   { tint: 'var(--tint-blue)',  color: 'var(--blue)',  icon: 'note',
     illo: 'tourGate', title: 'Dysregulation',
-    body: `When a hard moment happens, Jotla asks you five simple questions: what happened, where and when, how ${name} seemed, what led up to it, and what helped. Most answers are a tap.` },
+    body: `When a hard moment happens, Jotla asks you six simple questions: what happened, where and when, who was there, how ${name} seemed, what led up to it, and what helped. Most answers are a tap.` },
   { tint: 'var(--tint-green)', color: 'var(--green)', icon: 'heart', face: true,
     illo: 'tourChild', title: 'Their day, in their words',
     body: `Tap "Your day" and ${name} can show how school felt: friendly faces and simple scenes, no typing. Do it together, or hand the phone over.` },

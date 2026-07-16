@@ -848,7 +848,7 @@ function App({ appMode }) {
     case 'evidence': screen = <EvidenceScreen nav={nav} entries={myEntries} docs={myDocs} profile={profile} navView={view} />; break;
     case 'adddoc': screen = <AddDocScreen nav={nav} />; break;
     case 'settings': screen = <SettingsScreen nav={nav} profile={profile} entries={myEntries} docs={myDocs} binCount={binEntries.length + binDocs.length} />; break;
-    case 'quicklog': screen = <QuickLogScreen nav={nav} today={today} view={view} />; break;
+    case 'quicklog': screen = <QuickLogScreen nav={nav} today={today} view={view} profile={profile} />; break;
     // The old infomission/infoprivacy/infodata pages are gone: About is the one
     // information page (founder consolidation, 12 Jul 2026 sixth pass). The old
     // route names still land there so a saved navigation state never strands.

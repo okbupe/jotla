@@ -1998,7 +1998,8 @@ function App({
       screen = /*#__PURE__*/React.createElement(QuickLogScreen, {
         nav: nav,
         today: today,
-        view: view
+        view: view,
+        profile: profile
       });
       break;
     // The old infomission/infoprivacy/infodata pages are gone: About is the one

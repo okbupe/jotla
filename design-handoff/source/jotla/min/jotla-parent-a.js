@@ -634,7 +634,8 @@ function ContextField({
 function QuickLogScreen({
   nav,
   today,
-  view
+  view,
+  profile
 }) {
   const J = window.JOTLA;
   const [setting, setSetting] = useStateA('School');
@@ -665,6 +666,7 @@ function QuickLogScreen({
   const [eBefore, setEBefore] = useStateA('');
   const [eDuring, setEDuring] = useStateA('');
   const [eAfter, setEAfter] = useStateA('');
+  const [eWho, setEWho] = useStateA([]); // who was there (founder, 16 Jul 2026)
   const [eMedia, setEMedia] = useStateA(null);
   const isInc = openCat === 'Incidents';
   const openEditor = c => {
@@ -676,6 +678,7 @@ function QuickLogScreen({
     setEBefore('');
     setEDuring('');
     setEAfter('');
+    setEWho([]);
     setEMedia(null);
   };
   // A banked moment reopens for changing (founder, 16 Jul 2026): something else
@@ -690,6 +693,7 @@ function QuickLogScreen({
     setEBefore(m.before);
     setEDuring(m.during);
     setEAfter(m.after);
+    setEWho(m.who || []);
     setEMedia(m.media);
   };
   const bankMoment = () => {
@@ -701,6 +705,7 @@ function QuickLogScreen({
       before: eBefore.trim(),
       during: eDuring.trim(),
       after: eAfter.trim(),
+      who: eWho,
       media: eMedia
     };
     if (editKey) setMoments(ms => ms.map(m => m.key === editKey ? {
@@ -760,7 +765,7 @@ function QuickLogScreen({
           after: m.after,
           duration: '',
           helped: '',
-          who: [],
+          who: m.who || [],
           where: ''
         }
       } : {
@@ -1006,7 +1011,14 @@ function QuickLogScreen({
     hint: "How it ended",
     value: eAfter,
     onChange: setEAfter
-  })) : /*#__PURE__*/React.createElement("textarea", {
+  }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "Who was there?"), /*#__PURE__*/React.createElement("div", {
+    className: "j-chiprow"
+  }, whoChipsFor(profile).map(c => /*#__PURE__*/React.createElement("button", {
+    key: c,
+    "aria-pressed": eWho.includes(c),
+    className: 'j-chip' + (eWho.includes(c) ? ' j-chip-on' : ''),
+    onClick: () => setEWho(v => v.includes(c) ? v.filter(x => x !== c) : [...v, c])
+  }, c))))) : /*#__PURE__*/React.createElement("textarea", {
     className: "j-input",
     value: eText,
     onChange: e => setEText(e.target.value),
@@ -1167,11 +1179,19 @@ function QuickLogScreen({
 
 // ---------------- Dysregulation (guided capture) ----------------
 // Child-centred, supportive questions. Not a witness statement.
-const GATE_QUESTIONS = name => ['What happened?', 'Where and when was this?', `How did ${name} seem?`, 'What seemed to lead up to it?', 'What helped, or what happened next?'];
+const GATE_QUESTIONS = name => ['What happened?', 'Where and when was this?', 'Who was there?', `How did ${name} seem?`, 'What seemed to lead up to it?', 'What helped, or what happened next?'];
 
 // Who was with the child, and where it happened (founder ask, 15 Jul 2026): the
 // the guided note now captures the scene, not only the behaviours and the ABC phases.
 const WHO_CHIPS = ['Teachers', 'TA', 'Other children', 'Other adults'];
+// The child's own named adults (the circle) lead the who-chips, exactly as they
+// already do in child mode (founder spec, 12 Jul 2026): "Miss Bell" is worth more
+// to a parent proving a pattern than "TA". Deduped case-insensitively so an adult
+// actually named "TA" never doubles the generic chip.
+function whoChipsFor(profile) {
+  const named = (profile && profile.adults || []).filter(Boolean);
+  return [...named, ...WHO_CHIPS.filter(g => !named.some(n => n.toLowerCase() === g.toLowerCase()))];
+}
 const WHERE_CHIPS = ['Classroom', 'Playground', 'Corridor', 'Lunch hall', 'Outside', 'Toilets', 'Other'];
 function Stepper({
   value,
@@ -1524,7 +1544,7 @@ function HandoverScreen({
     }
   }, "Add"))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "Who was with ", childName, "?"), /*#__PURE__*/React.createElement("div", {
     className: "j-chiprow"
-  }, WHO_CHIPS.map(c => /*#__PURE__*/React.createElement("button", {
+  }, whoChipsFor(profile).map(c => /*#__PURE__*/React.createElement("button", {
     key: c,
     "aria-pressed": who.includes(c),
     className: 'j-chip' + (who.includes(c) ? ' j-chip-on' : ''),
@@ -1904,7 +1924,7 @@ const DYSREG_TIPS = [{
   tint: 'var(--tint-blue)',
   ink: 'var(--blue)',
   title: 'Then write it down',
-  body: 'Once things are settled, write it down. It asks you the right questions in the right order while everything is still fresh. Hours later is fine; the record keeps its timing honest.',
+  body: 'Once things are settled, open Dysregulation. It asks you the right questions in the right order while everything is still fresh. Hours later is fine; the record keeps its timing honest.',
   cta: true
 }];
 function DysregTipsScreen({

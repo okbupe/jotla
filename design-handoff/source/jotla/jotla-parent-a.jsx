@@ -275,7 +275,7 @@ function ContextField({ label, value, active, onClick }) {
   );
 }
 
-function QuickLogScreen({ nav, today, view }) {
+function QuickLogScreen({ nav, today, view, profile }) {
   const J = window.JOTLA;
   const [setting, setSetting] = useStateA('School');
   const [time, setTime] = useStateA('Morning');
@@ -302,13 +302,14 @@ function QuickLogScreen({ nav, today, view }) {
   const [eBefore, setEBefore] = useStateA('');
   const [eDuring, setEDuring] = useStateA('');
   const [eAfter, setEAfter] = useStateA('');
+  const [eWho, setEWho] = useStateA([]);   // who was there (founder, 16 Jul 2026)
   const [eMedia, setEMedia] = useStateA(null);
   const isInc = openCat === 'Incidents';
 
   const openEditor = (c) => {
     setPicker(null); setOpenCat(c); setEditKey(null);
     setEText(''); setEMood(c === 'Incidents' ? 'hard' : 'good');
-    setEBefore(''); setEDuring(''); setEAfter(''); setEMedia(null);
+    setEBefore(''); setEDuring(''); setEAfter(''); setEWho([]); setEMedia(null);
   };
   // A banked moment reopens for changing (founder, 16 Jul 2026): something else
   // often comes back to you while you are still sitting there logging. It keeps
@@ -316,12 +317,13 @@ function QuickLogScreen({ nav, today, view }) {
   const editMoment = (m) => {
     setPicker(null); setOpenCat(m.category); setEditKey(m.key);
     setEText(m.text); setEMood(m.mood);
-    setEBefore(m.before); setEDuring(m.during); setEAfter(m.after); setEMedia(m.media);
+    setEBefore(m.before); setEDuring(m.during); setEAfter(m.after); setEWho(m.who || []); setEMedia(m.media);
   };
   const bankMoment = () => {
     const body = {
       category: openCat, mood: eMood, isIncident: openCat === 'Incidents',
-      text: eText.trim(), before: eBefore.trim(), during: eDuring.trim(), after: eAfter.trim(), media: eMedia,
+      text: eText.trim(), before: eBefore.trim(), during: eDuring.trim(), after: eAfter.trim(),
+      who: eWho, media: eMedia,
     };
     if (editKey) setMoments(ms => ms.map(m => m.key === editKey ? { ...m, ...body } : m));
     else setMoments(ms => [...ms, { ...body, key: 'm' + Date.now() + '_' + ms.length, time, setting }]);
@@ -351,7 +353,7 @@ function QuickLogScreen({ nav, today, view }) {
       };
       const entry = m.isIncident
         ? { ...base, type: 'handover', summary: m.during || m.text || 'Hard moment captured.',
-            handover: { behaviours: [], before: m.before, during: m.during || m.text, after: m.after, duration: '', helped: '', who: [], where: '' } }
+            handover: { behaviours: [], before: m.before, during: m.during || m.text, after: m.after, duration: '', helped: '', who: m.who || [], where: '' } }
         : { ...base, type: 'quick',
             summary: m.text || `${m.category} at ${m.setting.toLowerCase()}. ${m.time} went ${m.mood === 'good' ? 'well' : m.mood === 'ok' ? 'up and down' : 'hard'}.` };
       if (m.media && m.media.dataUrl) { entry.photoData = m.media.dataUrl; entry.photo = 'Photo from the day'; }
@@ -460,6 +462,18 @@ function QuickLogScreen({ nav, today, view }) {
                   <PhaseField label="Before" hint="What led up to it" value={eBefore} onChange={setEBefore} />
                   <PhaseField label="During" hint="What actually happened" value={eDuring} onChange={setEDuring} />
                   <PhaseField label="After" hint="How it ended" value={eAfter} onChange={setEAfter} />
+                  {/* Who was there (founder, 16 Jul 2026): the guided screen has always
+                      asked it, but a hard moment logged through the quick log never did,
+                      so it saved an empty who. Same chips, same named-adults-first order. */}
+                  <div>
+                    <FieldLabel>Who was there?</FieldLabel>
+                    <div className="j-chiprow">
+                      {whoChipsFor(profile).map(c => (
+                        <button key={c} aria-pressed={eWho.includes(c)} className={'j-chip' + (eWho.includes(c) ? ' j-chip-on' : '')}
+                          onClick={() => setEWho(v => v.includes(c) ? v.filter(x => x !== c) : [...v, c])}>{c}</button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <textarea className="j-input" value={eText} onChange={e => setEText(e.target.value)} rows={3}
@@ -539,6 +553,7 @@ function QuickLogScreen({ nav, today, view }) {
 const GATE_QUESTIONS = (name) => [
   'What happened?',
   'Where and when was this?',
+  'Who was there?',
   `How did ${name} seem?`,
   'What seemed to lead up to it?',
   'What helped, or what happened next?',
@@ -547,6 +562,14 @@ const GATE_QUESTIONS = (name) => [
 // Who was with the child, and where it happened (founder ask, 15 Jul 2026): the
 // the guided note now captures the scene, not only the behaviours and the ABC phases.
 const WHO_CHIPS = ['Teachers', 'TA', 'Other children', 'Other adults'];
+// The child's own named adults (the circle) lead the who-chips, exactly as they
+// already do in child mode (founder spec, 12 Jul 2026): "Miss Bell" is worth more
+// to a parent proving a pattern than "TA". Deduped case-insensitively so an adult
+// actually named "TA" never doubles the generic chip.
+function whoChipsFor(profile) {
+  const named = ((profile && profile.adults) || []).filter(Boolean);
+  return [...named, ...WHO_CHIPS.filter(g => !named.some(n => n.toLowerCase() === g.toLowerCase()))];
+}
 const WHERE_CHIPS = ['Classroom', 'Playground', 'Corridor', 'Lunch hall', 'Outside', 'Toilets', 'Other'];
 
 function Stepper({ value, onChange, unit = 'mins' }) {
@@ -686,7 +709,7 @@ function HandoverScreen({ nav, today, profile }) {
           <div>
             <FieldLabel>Who was with {childName}?</FieldLabel>
             <div className="j-chiprow">
-              {WHO_CHIPS.map(c => (
+              {whoChipsFor(profile).map(c => (
                 <button key={c} aria-pressed={who.includes(c)} className={'j-chip' + (who.includes(c) ? ' j-chip-on' : '')}
                   onClick={() => setWho(v => v.includes(c) ? v.filter(x => x !== c) : [...v, c])}>{c}</button>
               ))}
@@ -857,7 +880,7 @@ const DYSREG_TIPS = [
     body: 'Repair before review. Let them know the storm did not change anything between you. Save the talking-through for later, once everyone is truly calm, and keep it free of blame.',
     say: '"That was hard. We\'re okay."' },
   { illo: 'tipWrite', icon: 'note', tint: 'var(--tint-blue)', ink: 'var(--blue)', title: 'Then write it down',
-    body: 'Once things are settled, write it down. It asks you the right questions in the right order while everything is still fresh. Hours later is fine; the record keeps its timing honest.', cta: true },
+    body: 'Once things are settled, open Dysregulation. It asks you the right questions in the right order while everything is still fresh. Hours later is fine; the record keeps its timing honest.', cta: true },
 ];
 
 function DysregTipsScreen({ nav }) {
