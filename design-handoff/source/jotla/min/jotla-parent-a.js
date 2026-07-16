@@ -1899,8 +1899,8 @@ const DYSREG_TIPS = [{
 }, {
   illo: 'tipAvoid',
   icon: 'close',
-  tint: 'rgba(216,72,72,0.12)',
-  ink: '#C0392B',
+  tint: 'var(--tint-red)',
+  ink: 'var(--red-ink)',
   title: 'What makes it worse',
   body: 'Asking why. Threatening consequences. Crowding, holding or blocking the way unless safety truly demands it. Taking what is said in the storm personally. Dysregulation is not naughtiness, and mid-storm is never the teaching moment.'
 }, {

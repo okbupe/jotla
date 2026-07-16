@@ -872,7 +872,7 @@ const DYSREG_TIPS = [
     say: '"I\'m here. You\'re safe."' },
   { illo: 'tipSoft', icon: 'hand', tint: 'var(--tint-blue)', ink: 'var(--blue)', title: 'Fewer words, softer everything',
     body: 'Keep it short and simple. Lower your voice, come down to their level, stand slightly side-on rather than face-on. No questions yet: in the storm the thinking part of the brain is offline, so reasoning cannot land.' },
-  { illo: 'tipAvoid', icon: 'close', tint: 'rgba(216,72,72,0.12)', ink: '#C0392B', title: 'What makes it worse',
+  { illo: 'tipAvoid', icon: 'close', tint: 'var(--tint-red)', ink: 'var(--red-ink)', title: 'What makes it worse',
     body: 'Asking why. Threatening consequences. Crowding, holding or blocking the way unless safety truly demands it. Taking what is said in the storm personally. Dysregulation is not naughtiness, and mid-storm is never the teaching moment.' },
   { illo: 'tipRoom', icon: 'leaf', tint: 'var(--tint-amber)', ink: 'var(--amber)', title: 'Give it room to pass',
     body: 'Less noise, less light, less audience, if you can manage it. One steady presence beats a crowd. A storm passes faster when nothing feeds it.' },
