@@ -1355,6 +1355,31 @@ function PhotoCropper({
 /* StoryIllo: brand-style scene illustrations (tour + Tips deck)       */
 /* ------------------------------------------------------------------ */
 
+/* Generated illustration deck (build 1.9.0, candidate). Keys match the `scenes`
+   map below one-for-one; a scene listed here renders as an image, a scene left
+   out falls through to its hand-authored SVG. Both sets stay live until Bupe
+   signs the images off: "dont delete them until we are satified about the
+   images we replace them with" (16 Jul). Empty this map and the SVG deck is
+   back, with nothing to restore.
+   Provenance and prompts: Downloads/Tour/MANIFEST.md, Downloads/Tips/MANIFEST.md. */
+const STORY_IMAGES = {
+  tourWelcome: 'illo/tourWelcome.webp',
+  tourToday: 'illo/tourToday.webp',
+  tourLog: 'illo/tourLog.webp',
+  tourGate: 'illo/tourGate.webp',
+  tourChild: 'illo/tourChild.webp',
+  tourPattern: 'illo/tourPattern.webp',
+  tourPrivate: 'illo/tourPrivate.webp',
+  tourReady: 'illo/tourReady.webp',
+  tipCalm: 'illo/tipCalm.webp',
+  tipSoft: 'illo/tipSoft.webp',
+  tipAvoid: 'illo/tipAvoid.webp',
+  tipRoom: 'illo/tipRoom.webp',
+  tipReconnect: 'illo/tipReconnect.webp',
+  tipWrite: 'illo/tipWrite.webp'
+};
+const STORY_IMAGE_W = 690,
+  STORY_IMAGE_H = 463;
 function StoryIllo({
   scene = 'tourWelcome',
   width = 210
@@ -3235,6 +3260,25 @@ function StoryIllo({
       op: 0.4
     }))
   };
+  /* Image deck first, SVG deck as the fallback. The intrinsic width/height
+     attributes hand the browser the aspect ratio up front so the slide does not
+     reflow as the image lands. */
+  const imgSrc = STORY_IMAGES[scene];
+  if (imgSrc) {
+    return /*#__PURE__*/React.createElement("img", {
+      src: imgSrc,
+      alt: "",
+      "aria-hidden": "true",
+      width: STORY_IMAGE_W,
+      height: STORY_IMAGE_H,
+      className: "j-illo-img",
+      style: {
+        display: 'block',
+        width: width,
+        height: 'auto'
+      }
+    });
+  }
   return /*#__PURE__*/React.createElement("svg", {
     width: width,
     height: Math.round(width * 150 / 220),
@@ -3254,6 +3298,7 @@ Object.assign(window, {
   ChildAvatar,
   SceneIllo,
   StoryIllo,
+  STORY_IMAGES,
   readAvatarPhoto,
   fileToDataURL,
   PhotoCropper

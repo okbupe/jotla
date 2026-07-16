@@ -298,16 +298,58 @@ function ok(name, cond) {
   await page3.locator('[role="radio"][aria-label="Standard text"]').click();
   await page3.waitForTimeout(250);
 
-  // illustrated tour: brand scene SVGs and dots that are real buttons
+  // Illustrated tour: a real scene, and dots that are real buttons. Two decks are
+  // live by design while the generated images are on approval (1.9.0), so this
+  // asserts the RULE (a scene is present, not the fallback icon disc) rather than
+  // one implementation. Either the SVG scene or the image deck satisfies it.
+  const SCENE = 'svg[viewBox="0 0 220 150"], img.j-illo-img';
   await page3.getByText('Take the tour', { exact: false }).first().click();
   await page3.waitForTimeout(600);
   const tourText = await page3.locator('#root').innerText();
   ok('tour opens on Welcome', tourText.includes('Welcome to Jotla'));
-  ok('tour shows a scene illustration (not the old icon disc)', (await page3.locator('svg[viewBox="0 0 220 150"]').count()) >= 1);
+  ok('tour shows a scene illustration (not the old icon disc)', (await page3.locator(SCENE).count()) >= 1);
   await page3.locator('button[aria-label^="Step 2 of"]').click();
   await page3.waitForTimeout(400);
   ok('tour dots are buttons that navigate', (await page3.locator('#root').innerText()).includes('Start on Today'));
-  ok('step 2 carries its own illustrated scene', (await page3.locator('svg[viewBox="0 0 220 150"]').count()) >= 1);
+  ok('step 2 carries its own illustrated scene', (await page3.locator(SCENE).count()) >= 1);
+
+  // A broken <img> still satisfies a count check, so prove pixels actually decoded.
+  const illoImgs = await page3.locator('img.j-illo-img').count();
+  if (illoImgs > 0) {
+    ok('the tour illustration decoded (not a broken image)',
+      await page3.locator('img.j-illo-img').first()
+        .evaluate((el) => el.complete && el.naturalWidth > 0));
+    // The whole deck, not just the slide on screen: a typo'd filename would fall
+    // silently back to the SVG scene everywhere else and look deliberate.
+    const deck = await page3.evaluate(async () => {
+      const out = [];
+      for (const [k, src] of Object.entries(window.STORY_IMAGES || {})) {
+        try { out.push([k, (await fetch(src, { cache: 'no-store' })).status]); }
+        catch { out.push([k, 0]); }
+      }
+      return out;
+    });
+    const bad = deck.filter(([, s]) => s !== 200).map(([k]) => k);
+    ok(`all ${deck.length} illustration files resolve` + (bad.length ? ` (missing: ${bad.join(', ')})` : ''),
+      deck.length === 14 && bad.length === 0);
+  }
+
+  // Two places count the gate questions in prose: the Dysregulation card ("Six
+  // gentle questions") and this tour slide (which lists them in a sentence).
+  // Neither can be derived from the array, and adding "Who was there?" on 16 Jul
+  // left the card saying "Five" directly above six rendered questions. A source
+  // invariant, so the count cannot drift again unnoticed.
+  const fs = require('fs'), path = require('path');
+  const srcOf = (f) => fs.readFileSync(path.join(ROOT, 'design-handoff/source/jotla', f), 'utf8');
+  const srcA = srcOf('jotla-parent-a.jsx'), srcOnb = srcOf('jotla-onboard.jsx');
+  const gateBody = (srcA.match(/const GATE_QUESTIONS = \(name\) => \[([\s\S]*?)\n\];/) || [, ''])[1];
+  const gateN = gateBody.split('\n').filter((l) => /^\s*['"`]/.test(l)).length;
+  const WORD = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'][gateN] || '?';
+  ok(`GATE_QUESTIONS parses to a real list (${gateN})`, gateN >= 4 && gateN <= 8);
+  ok(`the Dysregulation card counts ${gateN} questions, matching GATE_QUESTIONS`,
+    new RegExp(WORD + ' gentle questions', 'i').test(srcA));
+  ok(`tour slide 4 counts ${gateN} questions, matching GATE_QUESTIONS`,
+    new RegExp(WORD + ' simple questions', 'i').test(srcOnb));
   // Tour copy is tier-neutral (1.10.0, sixth-pass item 34): the Your day tile
   // reads "Hand the phone to" on Free and "Do it together with" on Plus, so the
   // tour has to name the feature without adopting either framing. Asserted as the

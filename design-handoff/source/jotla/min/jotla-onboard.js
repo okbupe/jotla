@@ -378,7 +378,9 @@ const TOUR_STEPS = name => [{
   title: 'A line is plenty',
   body: 'Tap the round plus button to log the day. Add as many moments as you like, a tap each, then save them all in one go. One line about each is plenty.'
 },
-// The five questions are listed in the order GATE_QUESTIONS actually asks them.
+// The six questions are listed in the order GATE_QUESTIONS actually asks them.
+// Two places count them in prose (here, and the Dysregulation card's "Six gentle
+// questions"); boot-assert holds both to GATE_QUESTIONS.length so they cannot drift.
 {
   tint: 'var(--tint-blue)',
   color: 'var(--blue)',

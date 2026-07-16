@@ -58,6 +58,12 @@
 /* Form controls don't inherit font-family by default — keep them on-brand */
 button, input, select, textarea { font-family: inherit; }
 
+/* Generated tour/Tips illustrations (build 1.9.0, candidate). Unlike the SVG
+   deck, which is transparent and reads on either ground, these images carry a
+   baked-in light background. Rounding them turns that hard rectangle into a
+   deliberate card instead of a seam. Dark mode is the real test: see below. */
+.j-illo-img { border-radius: 16px; }
+
 /* ---- dark theme ---- */
 .jotla-root.j-dark {
   --bg: #0E1726;

@@ -6,7 +6,7 @@
    - Heavy static assets (vendor runtime, fonts, icons): CACHE-FIRST, they are
      versioned by path or never change.
    Bump VERSION when the precache list changes. */
-const VERSION = 'jotla-v1.11.1';
+const VERSION = 'jotla-v1.12.0';
 const PRECACHE = [
   './',
   'index.html',
@@ -33,7 +33,12 @@ const PRECACHE = [
   'min/jotla-onboard.js',
   'min/jotla-app.js'
 ];
-const CACHE_FIRST = /\/vendor\/|\.(ttf|otf|woff2?|png|svg|ico)$/;
+const CACHE_FIRST = /\/vendor\/|\.(ttf|otf|woff2?|png|svg|ico|webp)$/;
+/* The illo/*.webp deck is cache-first but deliberately NOT precached: cache.addAll
+   is atomic, so one bad filename would fail the whole install and take offline
+   support down with it. The tour is seen online at onboarding and cached from
+   there. Revisit at ship time: the Tips deck is a school-gate crisis tool and
+   has the strongest claim to being precached (all 14 images total ~166 KB). */
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

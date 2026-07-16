@@ -661,7 +661,7 @@ function HandoverScreen({ nav, today, profile }) {
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p className="j-eyebrow" style={{ marginBottom: 4 }}>Ask the teacher</p>
-                <p className="j-sm" style={{ margin: 0, color: 'var(--blue)' }}>Five gentle questions.<br />Read them out, tap the answers below.</p>
+                <p className="j-sm" style={{ margin: 0, color: 'var(--blue)' }}>Six gentle questions.<br />Read them out, tap the answers below.</p>
               </div>
               <button onClick={() => nav.go('tips')} className="j-press" style={{ border: 'none', cursor: 'pointer', flexShrink: 0,
                 display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 15px', borderRadius: 999, marginTop: 2,

@@ -1432,7 +1432,7 @@ function HandoverScreen({
       margin: 0,
       color: 'var(--blue)'
     }
-  }, "Five gentle questions.", /*#__PURE__*/React.createElement("br", null), "Read them out, tap the answers below.")), /*#__PURE__*/React.createElement("button", {
+  }, "Six gentle questions.", /*#__PURE__*/React.createElement("br", null), "Read them out, tap the answers below.")), /*#__PURE__*/React.createElement("button", {
     onClick: () => nav.go('tips'),
     className: "j-press",
     style: {

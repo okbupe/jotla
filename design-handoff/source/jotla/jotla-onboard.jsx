@@ -167,7 +167,9 @@ const TOUR_STEPS = (name) => [
   { tint: 'var(--tint-green)', color: 'var(--green)', icon: 'plus',
     illo: 'tourLog', title: 'A line is plenty',
     body: 'Tap the round plus button to log the day. Add as many moments as you like, a tap each, then save them all in one go. One line about each is plenty.' },
-  // The five questions are listed in the order GATE_QUESTIONS actually asks them.
+  // The six questions are listed in the order GATE_QUESTIONS actually asks them.
+  // Two places count them in prose (here, and the Dysregulation card's "Six gentle
+  // questions"); boot-assert holds both to GATE_QUESTIONS.length so they cannot drift.
   { tint: 'var(--tint-blue)',  color: 'var(--blue)',  icon: 'note',
     illo: 'tourGate', title: 'Dysregulation',
     body: `When a hard moment happens, Jotla asks you six simple questions: what happened, where and when, who was there, how ${name} seemed, what led up to it, and what helped. Most answers are a tap.` },
