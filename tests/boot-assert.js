@@ -70,14 +70,16 @@ function ok(name, cond) {
   ok('app recovers on next navigation', !(await page.locator('#root').innerText()).includes('hit a problem'));
 
   // ---- 5. accessibility: the context row and its pickers (build 1.12.0) ----
-  // Day / Where / When are three pills; each opens only its own options and
+  // Day / Where / When are three cards; each opens only its own options and
   // blurs the rest, so the chips exist once a question is open.
   console.log('Suite 5: context row + chip accessibility');
   await page.getByText('Log', { exact: true }).last().click();
   await page.waitForTimeout(500);
   const rowText = await page.locator('#root').innerText();
-  ok('context row asks Day / Where / When side by side',
-    rowText.includes('Day?') && rowText.includes('Where?') && rowText.includes('When?'));
+  // the labels read plainly, with no question marks (founder, 16 Jul 2026)
+  const rowLabels = await page.locator('button.j-ctx .j-ctx-q').allInnerTexts();
+  ok('context row labels read Day / Where / When (' + rowLabels.join(' / ') + ')',
+    JSON.stringify(rowLabels.map(s => s.trim())) === JSON.stringify(['Day', 'Where', 'When']));
   ok('the row starts on Today / School / Morning',
     rowText.includes('Today') && rowText.includes('School') && rowText.includes('Morning'));
   ok('the options stay closed until a question is tapped', (await page.locator('button[aria-pressed]').count()) === 0);
@@ -85,8 +87,8 @@ function ok(name, cond) {
   // question above answer, both centred. A span's box spans the card whatever the
   // alignment, so measure the real text extent.
   const rowGeom = await page.evaluate(() => {
-    const cards = Array.from(document.querySelectorAll('button[aria-label]'))
-      .filter(b => /^(Day\?|Where\?|When\?)/.test(b.getAttribute('aria-label')));
+    const cards = Array.from(document.querySelectorAll('button.j-ctx[aria-label]'))
+      .filter(b => /^(Day|Where|When), /.test(b.getAttribute('aria-label')));
     if (cards.length !== 3) return null;
     const textBox = el => { const r = document.createRange(); r.selectNodeContents(el); return r.getBoundingClientRect(); };
     return cards.map(b => {
@@ -106,7 +108,35 @@ function ok(name, cond) {
   ok('question and answer centre in their card (max offset '
     + (rowGeom ? Math.max(...rowGeom.map(c => c.offset)).toFixed(2) : '?') + 'px)',
     !!rowGeom && rowGeom.every(c => c.offset < 2));
-  await page.locator('button[aria-label^="Where?"]').first().click();
+  // tinted on the Dysregulation tile's recipe, not left white (founder, 16 Jul 2026)
+  const rowInk = await page.evaluate(() => {
+    const card = document.querySelector('button.j-ctx');
+    const root = getComputedStyle(document.querySelector('.jotla-root'));
+    const asRgb = name => { const p = document.createElement('div'); p.style.color = root.getPropertyValue(name).trim();
+      document.body.appendChild(p); const v = getComputedStyle(p).color; p.remove(); return v; };
+    return { bg: getComputedStyle(card).backgroundColor, tint: asRgb('--tint-blue'), white: asRgb('--card'),
+      q: getComputedStyle(card.querySelector('.j-ctx-q')).color, a: getComputedStyle(card.querySelector('.j-ctx-a')).color,
+      blue: asRgb('--blue'), muted: asRgb('--muted') };
+  });
+  ok('the cards rest on the Dysregulation tile tint, not white (' + rowInk.bg + ')',
+    rowInk.bg === rowInk.tint && rowInk.bg !== rowInk.white);
+  ok('the answer wears the matching ink and the label stays muted',
+    rowInk.a === rowInk.blue && rowInk.q === rowInk.muted);
+  // tired, often dyslexic parents: a tint must not cost legibility, so both texts
+  // still have to clear WCAG AA against the ground they sit on
+  const rowContrast = await page.evaluate(() => {
+    const lum = c => { const [r, g, b] = c.match(/\d+/g).slice(0, 3).map(Number).map(v => { v /= 255;
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+    const ratio = (x, y) => { const a = lum(x), b = lum(y);
+      return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05); };
+    const card = document.querySelector('button.j-ctx'), bg = getComputedStyle(card).backgroundColor;
+    return { q: ratio(getComputedStyle(card.querySelector('.j-ctx-q')).color, bg),
+      a: ratio(getComputedStyle(card.querySelector('.j-ctx-a')).color, bg) };
+  });
+  ok('both texts clear WCAG AA on the tint (label ' + rowContrast.q.toFixed(2)
+    + ':1, answer ' + rowContrast.a.toFixed(2) + ':1)', rowContrast.q >= 4.5 && rowContrast.a >= 4.5);
+  await page.locator('button.j-ctx[aria-label^="Where"]').first().click();
   await page.waitForTimeout(350);
   const chips = await page.locator('button[aria-pressed]').count();
   ok('the open picker exposes aria-pressed chips (' + chips + ')', chips >= 4);
@@ -118,12 +148,12 @@ function ok(name, cond) {
   await page.waitForTimeout(350);
   ok('picking an answer closes the picker', (await page.locator('button[aria-pressed]').count()) === 0);
   ok('the picked answer rides the Where card (' + chipText + ')',
-    (await page.locator('button[aria-label^="Where?"]').first().innerText()).includes(chipText));
-  await page.locator('button[aria-label^="Where?"]').first().click();
+    (await page.locator('button.j-ctx[aria-label^="Where"]').first().innerText()).includes(chipText));
+  await page.locator('button.j-ctx[aria-label^="Where"]').first().click();
   await page.waitForTimeout(300);
   const nowPressed = await page.locator('button[aria-pressed="true"]', { hasText: chipText }).count();
   ok('aria-pressed tracks selection (' + chipText + ')', nowPressed >= 1);
-  await page.locator('button[aria-label^="Where?"]').first().click(); // close it again
+  await page.locator('button.j-ctx[aria-label^="Where"]').first().click(); // close it again
   await page.waitForTimeout(300);
 
   // ---- 5b. dynamic day log (build 1.12.0): pill -> moment editor -> bank -> save ----
@@ -139,7 +169,7 @@ function ok(name, cond) {
   });
   ok('an empty Save rests solid, not see-through (' + restState.bg + ' @ ' + restState.opacity + ')',
     restState.opacity === '1' && restState.bg !== 'rgba(0, 0, 0, 0)' && !restState.primary);
-  await page.locator('button[aria-label^="Day?"]').first().click(); // the day lives behind its own card now
+  await page.locator('button.j-ctx[aria-label^="Day"]').first().click(); // the day lives behind its own card now
   await page.waitForTimeout(300);
   await page.locator('button.j-chip:has-text("Today")').first().click();
   await page.waitForTimeout(300);
@@ -163,7 +193,7 @@ function ok(name, cond) {
   ok('the edit replaces the moment rather than adding a second', afterEdit.includes('asked for more')
     && (afterEdit.match(/Boot-assert win/g) || []).length === 1);
   // a second moment in a different part of the day: the two must read back as ONE log
-  await page.locator('button[aria-label^="When?"]').first().click();
+  await page.locator('button.j-ctx[aria-label^="When"]').first().click();
   await page.waitForTimeout(300);
   await page.locator('button.j-chip:has-text("Afternoon")').first().click();
   await page.waitForTimeout(300);
@@ -297,7 +327,7 @@ function ok(name, cond) {
   ok('Add a note lands in Quick log preset to that day', qlPreset.includes('Quick log') && qlPreset.includes('Saving to'));
 
   // the custom day is picked from a calendar sheet, never typed
-  await page4.locator('button[aria-label^="Day?"]').first().click();
+  await page4.locator('button.j-ctx[aria-label^="Day"]').first().click();
   await page4.waitForTimeout(300);
   await page4.locator('button.j-chip:has-text("Another day")').first().click(); // opens the calendar straight away
   await page4.waitForTimeout(400);
@@ -793,7 +823,7 @@ function ok(name, cond) {
   // open Quick log -> Day? -> Another day -> the calendar sheet
   await page12.getByText('Log', { exact: true }).last().click();
   await page12.waitForTimeout(500);
-  await page12.locator('button[aria-label^="Day?"]').first().click();
+  await page12.locator('button.j-ctx[aria-label^="Day"]').first().click();
   await page12.waitForTimeout(300);
   await page12.locator('button.j-chip:has-text("Another day")').first().click();
   await page12.waitForTimeout(400);
@@ -824,12 +854,12 @@ function ok(name, cond) {
   await page12.locator('.j-sheet button[aria-label="' + pickLabel + '"]').click();
   await page12.waitForTimeout(400);
   ok('picking a day after a swipe closes the sheet', (await page12.locator('.j-sheet-scrim').count()) === 0);
-  const fieldText = await page12.locator('button[aria-label^="Day?"]').first().innerText();
+  const fieldText = await page12.locator('button.j-ctx[aria-label^="Day"]').first().innerText();
   ok('the picked day rides the Day card (' + fieldText.replace(/\n/g, ' ').trim() + ')', fieldText.includes('15'));
   // a day in THIS year stays short; a day in another year must say which year,
   // or "10 Dec" leaves you guessing (founder, 16 Jul 2026)
   ok('a day in the current year carries no year', !/20\d\d/.test(fieldText));
-  await page12.locator('button[aria-label^="Day?"]').first().click();
+  await page12.locator('button.j-ctx[aria-label^="Day"]').first().click();
   await page12.waitForTimeout(300);
   await page12.locator('button.j-chip:has-text("Another day")').first().click();
   await page12.waitForTimeout(400);
@@ -845,7 +875,7 @@ function ok(name, cond) {
   ok('the sheet can walk back into a previous year (' + backTitle + ')', backTitle.includes(String(lastYear)));
   await page12.locator('.j-sheet button[aria-label="10 ' + backTitle + '"]').click();
   await page12.waitForTimeout(400);
-  const prevYearPill = (await page12.locator('button[aria-label^="Day?"]').first().innerText()).replace(/\n/g, ' ').trim();
+  const prevYearPill = (await page12.locator('button.j-ctx[aria-label^="Day"]').first().innerText()).replace(/\n/g, ' ').trim();
   const prevYearBody = await page12.locator('#root').innerText();
   ok('a day from another year names its year on the card (' + backTitle + ' -> ' + prevYearPill + ')', /20\d\d/.test(prevYearPill));
   ok('and names it on the Saving to line', /Saving to [^\n]*20\d\d/.test(prevYearBody));
@@ -855,7 +885,7 @@ function ok(name, cond) {
   await page12.waitForTimeout(300);
   const clamp = await page12.evaluate(() => {
     const root = document.querySelector('.jotla-root');
-    const span = document.querySelector('button[aria-label^="Day?"] .j-ctx-a');
+    const span = document.querySelector('button.j-ctx[aria-label^="Day"] .j-ctx-a');
     const out = [];
     for (const s of ['1', '1.12', '1.25']) {
       root.style.setProperty('--tscale', s);

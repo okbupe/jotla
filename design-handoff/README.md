@@ -73,6 +73,19 @@ A bottom sheet (`.j-sheet`, slides up 0.26s) over a dark scrim. Title "Whose day
 - **"Add to today" button** (always, after the list): full-width primary button (`.j-btn-primary .j-btn-lg`) with a `+` icon → opens Quick log defaulting to today.
 
 ### 2. Quick log  (`QuickLogScreen`, pushed)
+
+> **SUPERSEDED 16 Jul 2026 — do not build from this section.** Quick log was rebuilt
+> that day as a *dynamic day log*: one sitting captures many moments, not one. The
+> spec below still describes the old single-moment form (one category, one textarea,
+> one Save = one entry; a native date input; When defaulting to Afternoon). What
+> actually ships now: a **context row of three tinted cards** (Day / Where / When,
+> each opening only its own options while the rest blurs), category chips that act as
+> **add-buttons with count badges** feeding a moment editor, an editable "moments so
+> far" list, and **one Save writing one log** (shared `logId`, each moment still its
+> own dated entry). Build from the live source (`source/jotla/jotla-parent-a.jsx`)
+> and `tests/boot-assert.js`, which are the truth. Rewriting this section is an open
+> task. History: `decisions/log.md`, 2026-07-16 entries (first through fourth pass).
+
 **Purpose:** capture one moment in under ~30 seconds.
 **Header:** `PushHeader` title "Quick log", subtitle "Takes under 30 seconds", close (×) button → back.
 **Body** (scroll, vertical stack `gap:22`, bottom padding 120 to clear the sticky Save bar). Fields top-to-bottom:

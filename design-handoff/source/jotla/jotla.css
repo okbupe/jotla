@@ -135,25 +135,30 @@ button, input, select, textarea { font-family: inherit; }
 .j-card-pad { padding: 16px; }
 
 /* ---- context card (quick log: Day / Where / When) ---- */
-/* one card per question (founder, 16 Jul 2026): the question sits above its
-   current answer inside a single tappable card, tinted while its options are open */
+/* one card per question (founder, 16 Jul 2026): the label sits above its current
+   answer inside a single tappable card. Tinted on the Dysregulation tile's recipe
+   (tint ground, --line edge, the word that matters in ink, the quiet one muted),
+   because these three are the same KIND of thing and should read as one row. They
+   are not colour-coded: colour already carries meaning in Jotla (green = your day,
+   plum = dysregulation, amber/red = a hard mood), so a colour per question would
+   collide with a meaning that already exists. */
 .j-ctx { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-  padding: 10px 6px; cursor: pointer; text-align: center; border-color: var(--chip-border);
-  transition: transform .12s ease, background .15s ease, border-color .15s ease;
+  padding: 10px 6px; cursor: pointer; text-align: center; background: var(--tint-blue);
+  transition: transform .12s ease, box-shadow .15s ease, border-color .15s ease;
   -webkit-tap-highlight-color: transparent; }
 .j-ctx:active { transform: scale(0.97); }
 .j-ctx-q { font-family: var(--f-body); font-weight: 500; font-size: calc(13px * var(--tscale, 1));
-  line-height: 1.2; color: var(--faint); }
+  line-height: 1.2; color: var(--muted); }
 /* an answer takes a second line rather than an ellipsis: "10 Dec 2025" must never
    truncate to "10 Dec 20..." at the bigger text sizes, or the year is lost again
    (founder, 16 Jul 2026). Two lines is the ceiling, so a long place a parent typed
    in themselves cannot stretch the row. */
 .j-ctx-a { font-family: var(--f-body); font-weight: 500; font-size: calc(16px * var(--tscale, 1));
-  line-height: 1.25; color: var(--ink); max-width: 100%; overflow-wrap: break-word;
+  line-height: 1.25; color: var(--blue); max-width: 100%; overflow-wrap: break-word;
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
-.j-ctx-on { background: var(--tint-blue); border-color: var(--blue); box-shadow: none; }
-.j-ctx-on .j-ctx-q { color: var(--blue); opacity: 0.72; }
-.j-ctx-on .j-ctx-a { color: var(--blue); }
+/* open: the edge lights up and rings. The ring sits outside the border, so nothing
+   reflows; the tint holds still, so the row never flashes colour mid-choice. */
+.j-ctx-on { border-color: var(--blue); box-shadow: 0 0 0 1.5px var(--blue), var(--card-shadow); }
 
 /* ---- buttons ---- */
 .j-btn { font-family: var(--f-body); font-weight: 500; font-size: calc(17px * var(--tscale, 1)); border: none; cursor: pointer;

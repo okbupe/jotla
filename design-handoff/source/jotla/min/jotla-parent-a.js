@@ -605,10 +605,10 @@ function MediaPicker({
 // Incidents opens the same pattern with a richer before/during/after box and
 // saves as a gate note (type 'handover').
 // The context row (founder, 16 Jul 2026): Day / Where / When sit side by side,
-// each one a card holding its question above its current answer, so the pair reads
-// as a single thing to tap. Tapping a card opens just its own options underneath
-// and blurs the rest of the screen, so a tired parent looks at one question at a
-// time. Picking an answer closes it.
+// each one a tinted card holding its label above its current answer, so the pair
+// reads as a single thing to tap. Tapping a card opens just its own options
+// underneath and blurs the rest of the screen, so a tired parent looks at one
+// question at a time. Picking an answer closes it.
 function ContextField({
   label,
   value,
@@ -617,12 +617,12 @@ function ContextField({
 }) {
   return (
     /*#__PURE__*/
-    // the card carries the question in its label too, so a screen reader never
-    // reads the answer out as a bare word with no idea which question it answers
+    // the card carries its label in the accessible name too, so a screen reader
+    // never reads the answer out as a bare word with nothing to attach it to
     React.createElement("button", {
       onClick: onClick,
       "aria-expanded": active,
-      "aria-label": label + ' ' + value,
+      "aria-label": label + ', ' + value,
       className: 'j-card j-ctx' + (active ? ' j-ctx-on' : '')
     }, /*#__PURE__*/React.createElement("span", {
       className: "j-ctx-q"
@@ -833,17 +833,17 @@ function QuickLogScreen({
       gap: 8
     }
   }, /*#__PURE__*/React.createElement(ContextField, {
-    label: "Day?",
+    label: "Day",
     value: dayLabel,
     active: picker === 'day',
     onClick: () => setPicker(p => p === 'day' ? null : 'day')
   }), /*#__PURE__*/React.createElement(ContextField, {
-    label: "Where?",
+    label: "Where",
     value: setting,
     active: picker === 'where',
     onClick: () => setPicker(p => p === 'where' ? null : 'where')
   }), /*#__PURE__*/React.createElement(ContextField, {
-    label: "When?",
+    label: "When",
     value: time,
     active: picker === 'when',
     onClick: () => setPicker(p => p === 'when' ? null : 'when')
