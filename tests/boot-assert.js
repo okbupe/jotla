@@ -289,10 +289,15 @@ function ok(name, cond) {
   ok('tour shows a scene illustration (not the old icon disc)', (await page3.locator('svg[viewBox="0 0 220 150"]').count()) >= 1);
   await page3.locator('button[aria-label^="Step 2 of"]').click();
   await page3.waitForTimeout(400);
-  ok('tour dots are buttons that navigate', (await page3.locator('#root').innerText()).includes('Today is home'));
+  ok('tour dots are buttons that navigate', (await page3.locator('#root').innerText()).includes('Start on Today'));
   ok('step 2 carries its own illustrated scene', (await page3.locator('svg[viewBox="0 0 220 150"]').count()) >= 1);
-  // tour copy is tier-neutral (1.10.0, sixth-pass item 34)
-  ok('tour Today slide reads check-in, not hand-the-phone', (await page3.locator('#root').innerText()).includes("your child's own check-in"));
+  // Tour copy is tier-neutral (1.10.0, sixth-pass item 34): the Your day tile
+  // reads "Hand the phone to" on Free and "Do it together with" on Plus, so the
+  // tour has to name the feature without adopting either framing. Asserted as the
+  // rule rather than one exact phrase, so plain-language edits cannot trip it.
+  const tourToday = await page3.locator('#root').innerText();
+  ok('tour Today slide names Your day but stays tier-neutral',
+    tourToday.includes('Your day') && !/Hand the phone|Do it together/i.test(tourToday));
   await page3.locator('button[aria-label^="Step 5 of"]').click();
   await page3.waitForTimeout(400);
   ok('tour child slide offers together or hand over', (await page3.locator('#root').innerText()).includes('Do it together, or hand the phone over.'));

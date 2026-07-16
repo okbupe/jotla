@@ -2313,7 +2313,7 @@ function StoryIllo({
       color: ILLO.bright,
       op: 0.55
     })),
-    /* Tour 2: Today is home: morning sun, the day on one screen, a plant by its side. */
+    /* Tour 2: Start on Today: morning sun, the day on one screen, a plant by its side. */
     tourToday: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement(IDisc, {
       cx: 118,
       cy: 82,
@@ -2886,7 +2886,7 @@ function StoryIllo({
       fill: ILLO.green,
       opacity: "0.4"
     })),
-    /* Tour 6: See the shape of it: the month grid under the glass, the pattern rising out. */
+    /* Tour 6: Spot the pattern: the month grid under the glass, the pattern rising out. */
     tourPattern: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement(IDisc, {
       cx: 106,
       cy: 80,
@@ -2986,7 +2986,7 @@ function StoryIllo({
       color: ILLO.amber,
       op: 0.9
     })),
-    /* Tour 7: Private by default: the record on its phone, inside the shield's quiet orbit. */
+    /* Tour 7: Nothing leaves your phone: the record on its phone, inside the shield's quiet orbit. */
     tourPrivate: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement(IDisc, {
       cx: 108,
       cy: 80,

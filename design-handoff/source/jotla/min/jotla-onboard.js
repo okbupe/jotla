@@ -364,22 +364,28 @@ const TOUR_STEPS = name => [{
   color: 'var(--blue)',
   icon: 'today',
   illo: 'tourToday',
-  title: 'Today is home',
-  body: "The Today screen is where you land. It shows how the day is going and gives you two calm shortcuts: your child's own check-in, or capture what happened on a hard day."
-}, {
+  title: 'Start on Today',
+  body: `This is the screen you open first. It shows how the day is going. Two buttons sit at the top: "Your day", where ${name} shows how school felt, and "Dysregulation", for writing down a hard moment.`
+},
+// Rewritten 16 Jul 2026: the old line ("one moment... under thirty seconds")
+// described the quick log as it was before the dynamic day log shipped, so the
+// tour was contradicting the screen's own subtitle.
+{
   tint: 'var(--tint-green)',
   color: 'var(--green)',
   icon: 'plus',
   illo: 'tourLog',
   title: 'A line is plenty',
-  body: 'Tap the round plus button any time to log a moment. Where, when, what kind, how it felt. It takes under thirty seconds, and one line is enough.'
-}, {
+  body: 'Tap the round plus button to log the day. Add as many moments as you like, a tap each, then save them all in one go. One line about each is plenty.'
+},
+// The five questions are listed in the order GATE_QUESTIONS actually asks them.
+{
   tint: 'var(--tint-blue)',
   color: 'var(--blue)',
   icon: 'note',
   illo: 'tourGate',
   title: 'Dysregulation',
-  body: 'On a hard day, Jotla helps you ask the right things while you are still standing there. Five gentle questions, tapped answers, put in order: what led up to it, what happened, what helped.'
+  body: `When a hard moment happens, Jotla asks you five simple questions: what happened, where and when, how ${name} seemed, what led up to it, and what helped. Most answers are a tap.`
 }, {
   tint: 'var(--tint-green)',
   color: 'var(--green)',
@@ -393,14 +399,14 @@ const TOUR_STEPS = name => [{
   color: 'var(--blue)',
   icon: 'calendar',
   illo: 'tourPattern',
-  title: 'See the shape of it',
-  body: 'Over time, Month and Find turn single days into a picture. The hard moments gather, the patterns show, and you can pull the exact entries that prove a point.'
+  title: 'Spot the pattern',
+  body: 'Over time, Month and Find turn single days into a picture, so you can see when the hard days happen and pull out the exact notes you need when someone asks for proof.'
 }, {
   tint: 'var(--tint-blue)',
   color: 'var(--blue)',
   icon: 'shield',
   illo: 'tourPrivate',
-  title: 'Private by default',
+  title: 'Nothing leaves your phone',
   body: 'No account, and nothing leaves this phone. Documents, letters and reports live in one place, and your record stays yours, always.'
 }, {
   tint: 'var(--tint-green)',

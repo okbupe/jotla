@@ -74,29 +74,73 @@ A bottom sheet (`.j-sheet`, slides up 0.26s) over a dark scrim. Title "Whose day
 
 ### 2. Quick log  (`QuickLogScreen`, pushed)
 
-> **SUPERSEDED 16 Jul 2026 — do not build from this section.** Quick log was rebuilt
-> that day as a *dynamic day log*: one sitting captures many moments, not one. The
-> spec below still describes the old single-moment form (one category, one textarea,
-> one Save = one entry; a native date input; When defaulting to Afternoon). What
-> actually ships now: a **context row of three tinted cards** (Day / Where / When,
-> each opening only its own options while the rest blurs), category chips that act as
-> **add-buttons with count badges** feeding a moment editor, an editable "moments so
-> far" list, and **one Save writing one log** (shared `logId`, each moment still its
-> own dated entry). Build from the live source (`source/jotla/jotla-parent-a.jsx`)
-> and `tests/boot-assert.js`, which are the truth. Rewriting this section is an open
-> task. History: `decisions/log.md`, 2026-07-16 entries (first through fourth pass).
+**Purpose:** a **dynamic day log**. One sitting captures **many** moments across a day (a wobble in the morning transition, a new word at lunch, an incident while eating). It is not one screen = one entry. The day, place and time are set once at the top of the screen; each category pill is then an add-button that banks a moment against those answers; **one Save writes them all as a single log**.
 
-**Purpose:** capture one moment in under ~30 seconds.
-**Header:** `PushHeader` title "Quick log", subtitle "Takes under 30 seconds", close (×) button → back.
-**Body** (scroll, vertical stack `gap:22`, bottom padding 120 to clear the sticky Save bar). Fields top-to-bottom:
-1. **Which day?** (`FieldLabel` + chip row). Three chips: **Today** (default), **Yesterday**, **Another day**. Selecting "Another day" reveals a native date input (`min 2026-01-01`, `max` = today). A caption reads "Saving to **{long date}**". This resolves to the entry's `date`. (Today = the active date; Yesterday = today − 1; Another day = the picked date — lets a parent back-fill a remembered incident.)
-2. **Where?** — chips from `SETTINGS`: School · Nursery · Home · Club. Default School.
-3. **When?** — chips from `TIMES`: **Morning · Afternoon · Evening**. Default Afternoon. *(Evening exists for home episodes / sleep troubles.)*
-4. **What kind of moment?** — chips from `CATEGORIES`: Mornings · Eating · Play · Transitions · Lunch hall · Other. Default Transitions.
-5. **What happened?** — `textarea` (`.j-input`, 3 rows), placeholder "A line is plenty. You can always add more later." Optional.
-6. **Add a photo or video** — `MediaPicker` (see below).
-7. **How did it feel?** — `MoodFacePicker`: three big faces (Good / Up and down / Hard), tapping rings the selected one in its mood colour. Default good.
-**Sticky footer:** full-width primary **Save** (check icon) over a `--fade-grad` gradient. On save, builds an entry (`mood`, `setting`, `category`, `time`, the resolved `date`, a `clock` HH:MM of "now", a generated summary if the text is blank) and returns.
+**Header:** `PushHeader` title "Quick log", subtitle "Log the whole day, one moment at a time", close (×) button → `nav.back()`.
+
+**Body** (scroll, `.j-pad`, `padding-top: 6`, `padding-bottom: 130` to clear the sticky Save bar).
+
+#### The context row  (`ContextField`, `.j-card .j-ctx`)
+Three tinted cards side by side (`display:flex; gap:8`), each holding **its label above its current answer**, so each question and its answer read as one thing to tap. Defaults: **Today / School / Morning**.
+- **Card** (`.j-ctx`, on top of `.j-card`): `flex:1; min-width:0`, column, both axes centred, `gap:3px`, `padding:10px 6px`, `text-align:center`, background **`--tint-blue`** (the same tint as Today's "Dysregulation" tile, never white). It keeps `.j-card`'s radius 16, 1px `--line` border and card shadow. Press: `scale(0.97)`.
+- **Label** (`.j-ctx-q`): Outfit 500, 13px, line-height 1.2, `--muted`. The three read plainly: "Day", "Where", "When". No question marks.
+- **Answer** (`.j-ctx-a`): Outfit 500, 16px, line-height 1.25, `--blue`. All three cards wear the same tint and the same ink: there is **no per-card colour-coding**.
+- **The answer wraps to a second line rather than truncating** (`overflow-wrap: break-word`, clamped at 2 lines). "10 Dec 2025" must never become "10 Dec 20...", or the year is lost; two lines is the ceiling, so a long place the parent typed cannot stretch the row.
+- **Open** (`.j-ctx-on`): `border-color: var(--blue)` plus `box-shadow: 0 0 0 1.5px var(--blue), var(--card-shadow)`. The ring sits outside the border so nothing reflows, and the tint holds still so the row never flashes colour mid-choice.
+- **Accessibility:** each card is a button with `aria-expanded` and `aria-label` of "{label}, {value}" (e.g. "Where, School"), so the answer is never read out as a bare word. Both texts must clear **WCAG AA (4.5:1)** against the tint they sit on.
+
+**Tapping a card opens only its own options**, in a `.j-chiprow` directly underneath the row (`margin-top: 12`). Everything below (and the sticky footer) softens out of the way: `filter: blur(4px)`, `opacity: 0.4`, transition `filter .18s ease, opacity .18s ease`, `pointer-events: none`. Tapping the blurred area closes the picker, and so does picking an answer. Tapping the open card again closes it. One question is in focus at a time.
+
+1. **Day** → chips **Today** (default), **Yesterday**, **Another day**. "Another day" opens a **`CalendarSheet`**, never a typed date input: `minDate` = `MIN_LOG_DAY` (`'2019-09-01'`, the data epoch), `maxDate` = today, out-of-rule days greyed and untappable. The custom date starts at the day before yesterday. A valid `date` arriving on the view (the Day view's "Add a note") presets the right chip, so nothing needs re-picking.
+   - The card's answer reads "Today", "Yesterday", or the short date (`fmtShort`, e.g. "10 Dec"), **plus the year whenever the date is not in the current year** ("10 Dec 2025"). The formatters never print a year themselves, so the year is added only when it is needed and the common case stays short.
+2. **Where** → chips from `SETTINGS` (School · Nursery · Home · Club, default **School**), then any places the parent has added this session, then a dashed **"Other"** chip (plus icon, 15px, `--faint`). "Other" reveals a row: an `.j-input` (`aria-label` "Add a place", placeholder "Grandma's, the park, soft play...") and an **Add** button (`.j-btn .j-btn-soft`, width auto, min-height 48, padding `0 22px`). Add trims the text, ignores an empty value, adds it to the chip list **for the rest of the log**, selects it, and closes the picker. It is never added twice.
+3. **When** → chips from `TIMES` (Morning · Afternoon · Evening), default **Morning**. Change it and the next moment banked takes the new stamp.
+
+Caption under the row (`.j-sm`, `--faint`): "Saving to **{long date}**", the date itself Outfit 500 in `--muted`. The long date is `fmtLong` ("Friday, 12 June") plus the same year rule ("Wednesday, 10 December 2025").
+
+#### "What happened?"  (the category pills are add-buttons)
+`FieldLabel` "What happened?", then a `.j-sm` `--faint` line: "Tap what happened. Add as many as you like, then Save once."
+
+A `.j-chiprow` of all ten `CATEGORIES`: Mornings · Eating · Play · Transitions · Lunch hall · School feedback · New words · Wins · **Incidents** · Other.
+
+These are **not a single-select**. Each chip is an **add-button**: tapping one opens that category's moment editor inline. A chip wears `.j-chip-on` while its editor is open or once it holds at least one moment, and carries a **count badge** of how many it holds (min-width 20, height 20, padding `0 5px`, radius 999, `--blue` fill, white 12px). They deliberately carry **no `aria-pressed`**: they are buttons, not toggles.
+
+#### The moment editor  (one category at a time)
+A `.j-card .j-card-pad` (`margin-top: 22`, **1.5px solid `--blue`** border, column, `gap:14`):
+1. **Title** = the category name (Cal Sans 500, 17px, `--ink`), with a `.j-meta` stamp beneath it: "{When} · {Where} · {long date}" (e.g. "Morning · School · Friday, 12 June").
+2. **What happened** = one `textarea.j-input`, 3 rows, placeholder "A line is plenty. Their exact words, in quotes, are gold."
+   - **Incidents instead opens the before/during/after box:** three `PhaseField`s in place of the single textarea. Each renders its prompt as the prominent line (Cal Sans 500, 15px, `--blue`) with the small phase word beside it (12.5px, `--faint`), then a 2-row `textarea.j-input` (15.5px), placeholder "Type a few words, or tap chips below." The three are "What led up to it" / Before, "What actually happened" / During, "How it ended" / After.
+3. **Media.** On Plus: `FieldLabel` "Add a photo or video" + `MediaPicker`. On Free: the honest `PlusLockedCard` in the same spot ("Add photos and videos" / "Keep a photo or video with the note. Sometimes the picture is the evidence. Part of Plus.") routing to `unlock`. Media rides the specific moment; viewing saved media never gates.
+4. **How did it feel?** = `FieldLabel` + `MoodFacePicker` (three 48px faces, labels "Good day" / "Up and down" / "Hard day"; the picked face rings in its mood colour). Default **good**, except **Incidents defaults to hard**.
+5. **Buttons:** **Cancel** (`.j-btn .j-btn-ghost`, `flex: 0 0 38%`, min-height 52) closes the editor and discards. **Okay** (`.j-btn .j-btn-primary`, `flex:1`, min-height 52, check icon) **banks** the moment and closes the editor.
+
+Banking stamps a new moment with the context row's **current** Day / Where / When.
+
+#### "Moments so far"  (the day taking shape)
+Once at least one moment is banked (`margin-top: 22`): `SectionLabel` "Moments so far", then a `.j-card` (padding `4px 16px`) of rows (padding `12px 0`, a 1px `--line` top border on every row but the first). Each row holds:
+- A **tappable** area (`aria-label` "Edit the {category} moment") with a 9px mood dot, a `.j-meta` line "{time} · {setting} · {category}", and the moment's words (15px `.j-body`). For an incident those words are the During text, falling back to the note text, then "Incident noted"; otherwise the text, falling back to "Noted".
+- A 34×34 **remove** button (`aria-label` "Remove moment", radius 10, `--tag-grey-bg`, 16px close icon).
+
+**Tapping a moment reopens it in the editor, filled in**, and banking again **replaces it, never adds a second**. A reopened moment **keeps its own time and place**; only what happened changes. Removing the moment being edited closes the editor. Under the card, a `.j-meta` line: "Tap a moment to change it. It all saves as one log."
+
+**Sticky footer** (absolute bottom, padding `12px 20px calc(16px + env(safe-area-inset-bottom))`, `--fade-grad`; it blurs with the rest while a picker is open):
+- With moments banked, a centred `.j-meta` count sits above the button: "{n} moment{s} ready. Saves as one log."
+- **Save** (`.j-btn .j-btn-lg`, check icon 22px). With nothing to save it **rests solid grey and inert** (`--tag-grey-bg` fill, `--faint` text and icon, no shadow, `cursor: default`), never a see-through blue button. It **turns blue** (`.j-btn-primary`, white icon) on the first banked moment.
+
+#### One Save writes one log
+`save()` does nothing while nothing is banked. Otherwise it mints **one `logId`** (`'L' + Date.now()`) and **one `clock`** (local HH:MM at the moment of saving) and writes **every banked moment as its own entry**, all sharing that `logId`, `clock`, the resolved `date`, and `kind` (`contemporaneous` when the day is Today, otherwise `recalled`). Then `nav.back()`.
+
+Per moment:
+- `id` = `'h'` for an incident or `'n'` for anything else, plus the moment's key. `time`, `setting`, `category` and `mood` come from the moment itself, not from the row's latest answers.
+- A normal moment saves as `type: 'quick'`, the typed text as `summary`, or a generated one when it is blank: "{Category} at {setting, lowercased}. {Time} went well|up and down|hard."
+- An **Incidents** moment saves as **a dysregulation note**: `type: 'handover'`, `summary` = the During text (falling back to the note text, then "Hard moment captured."), and a `handover` object `{ behaviours: [], before, during, after, duration: '', helped: '', who: [], where: '' }`.
+- Media: a photo sets `photoData` (the data URL) and `photo: 'Photo from the day'`; a video sets only `photo: 'Video noted (kept in your photo library)'`, because the video itself stays in the phone's own library.
+- Moments are written in reverse, because `addEntry` prepends, so the record keeps the order they were written in.
+
+#### How a saved log reads back  (`groupByLog`, `LogCard`, `LogList` in `jotla-ui.jsx`)
+Entries sharing a `logId` group into **one `LogCard`**: a header of "{n} moments" (Cal Sans 500, 16px, `--ink`) with "logged {clock}" opposite it (`.j-meta`, prefixed by the short date where `showDate`), and the moments **grouped by part of day** in `TIMES` order, each part under an uppercase `.j-meta` label. Every moment inside is its own tappable row (`--card-2` fill, radius 12, padding `10px 12px`) with an 11px mood dot, a grey `setting` tag, and then either a blue `category` tag or, for an incident (`type: 'handover'` or `category: 'Incidents'`), a solid plum **"Dysregulation"** `KindPill` (`--dysreg`). A Save holding a single moment stays a plain `EntryCard`.
+
+**Why both shapes:** the grouping is purely how a log is **read**. Underneath, each moment stays its own dated, atomic entry, which is exactly what keeps Find, the month graph and the PDF pack working.
 
 #### `MediaPicker`  (mocked in prototype — BUILD FOR REAL on-platform)
 Two dashed-border tiles in a row (`gap:12`, each flex:1, 84px min-height, radius 14):
@@ -177,7 +221,7 @@ A separate, warmer full-screen mode (background `#FFF6EC`, no app header) where 
 ### 13. App tour  (`TourScreen`, pushed — `view 'tour'`, file `jotla-onboard.jsx`)
 **Purpose:** a calm 8-step walkthrough of the whole app. Shown automatically right after adding a child, and re-launchable from Settings → "Take the tour" and from the Today first-run card (so the app can be handed to someone else to review).
 - Full-screen (no app header/tab bar). "Tour · n of 8" eyebrow + **Skip**. Centre: a 134px tinted disc with an `Icon` (or a happy `Face` on the child-mode step), Cal Sans title, body copy (personalised with the child's name). Progress dots + **Back** / **Next**; the last step's primary is "Start the record" → home.
-- Steps: Welcome (blank record) · Today is home · A line is plenty (Quick log) · At the gate (gate note) · Their day in their words (child mode) · See the shape of it (Month/Find) · Private by default · You are ready.
+- Steps (titles rewritten 16 Jul 2026 for plain language; the old set said "Today is home", "At the gate", "See the shape of it", "Private by default"): Welcome to Jotla (blank record) · Start on Today · A line is plenty (Quick log) · Dysregulation · Their day, in their words (child mode) · Spot the pattern (Month/Find) · Nothing leaves your phone · You are ready.
 
 ---
 

@@ -799,7 +799,7 @@ function StoryIllo({ scene = 'tourWelcome', width = 210 }) {
       </g>
     ),
 
-    /* Tour 2: Today is home: morning sun, the day on one screen, a plant by its side. */
+    /* Tour 2: Start on Today: morning sun, the day on one screen, a plant by its side. */
     tourToday: (
       <g>
         <IDisc cx={118} cy={82} r={56} tint={ILLO.tintBlue} />
@@ -933,7 +933,7 @@ function StoryIllo({ scene = 'tourWelcome', width = 210 }) {
       </g>
     ),
 
-    /* Tour 6: See the shape of it: the month grid under the glass, the pattern rising out. */
+    /* Tour 6: Spot the pattern: the month grid under the glass, the pattern rising out. */
     tourPattern: (
       <g>
         <IDisc cx={106} cy={80} r={58} tint={ILLO.tintBlue} />
@@ -961,7 +961,7 @@ function StoryIllo({ scene = 'tourWelcome', width = 210 }) {
       </g>
     ),
 
-    /* Tour 7: Private by default: the record on its phone, inside the shield's quiet orbit. */
+    /* Tour 7: Nothing leaves your phone: the record on its phone, inside the shield's quiet orbit. */
     tourPrivate: (
       <g>
         <IDisc cx={108} cy={80} r={58} tint={ILLO.tintBlue} />
