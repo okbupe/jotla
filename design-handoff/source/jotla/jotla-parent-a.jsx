@@ -870,13 +870,15 @@ const DYSREG_TIPS = [
   { illo: 'tipCalm', icon: 'heart', tint: 'var(--tint-green)', ink: 'var(--green)', title: 'Start with you',
     body: 'Your calm is the tool. Take one slow breath before any words. A dysregulated child borrows their calm from the nearest steady adult; that is co-regulation, and you are the anchor.',
     say: '"I\'m here. You\'re safe."' },
-  { illo: 'tipSoft', icon: 'hand', tint: 'var(--tint-blue)', ink: 'var(--blue)', title: 'Fewer words, softer everything',
+  // The \n is a deliberate break, not wrapping (founder, 16 Jul). .j-illo-title
+  // sets white-space: pre-line to honour it; aria-labels flatten it back to a space.
+  { illo: 'tipSoft', icon: 'hand', tint: 'var(--tint-blue)', ink: 'var(--blue)', title: 'Fewer words,\nsofter everything',
     body: 'Keep it short and simple. Lower your voice, come down to their level, stand slightly side-on rather than face-on. No questions yet: in the storm the thinking part of the brain is offline, so reasoning cannot land.' },
   { illo: 'tipAvoid', icon: 'close', tint: 'var(--tint-red)', ink: 'var(--red-ink)', title: 'What makes it worse',
     body: 'Asking why. Threatening consequences. Crowding, holding or blocking the way unless safety truly demands it. Taking what is said in the storm personally. Dysregulation is not naughtiness, and mid-storm is never the teaching moment.' },
   { illo: 'tipRoom', icon: 'leaf', tint: 'var(--tint-amber)', ink: 'var(--amber)', title: 'Give it room to pass',
     body: 'Less noise, less light, less audience, if you can manage it. One steady presence beats a crowd. A storm passes faster when nothing feeds it.' },
-  { illo: 'tipReconnect', icon: 'heart', tint: 'var(--tint-green)', ink: 'var(--green)', title: 'Afterwards, reconnect first',
+  { illo: 'tipReconnect', icon: 'heart', tint: 'var(--tint-green)', ink: 'var(--green)', title: 'Afterwards,\nreconnect first',
     body: 'Repair before review. Let them know the storm did not change anything between you. Save the talking-through for later, once everyone is truly calm, and keep it free of blame.',
     say: '"That was hard. We\'re okay."' },
   { illo: 'tipWrite', icon: 'note', tint: 'var(--tint-blue)', ink: 'var(--blue)', title: 'Then write it down',
@@ -899,27 +901,39 @@ function DysregTipsScreen({ nav }) {
         overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch', outline: 'none' }}>
         {DYSREG_TIPS.map((t, i) => (
           <div key={i} style={{ flex: '0 0 100%', width: '100%', height: '100%', scrollSnapAlign: 'start', overflowY: 'auto' }}>
-            <div className="j-pad" style={{ paddingTop: 18, paddingBottom: 140, display: 'flex', flexDirection: 'column',
+            {/* Centred like the tour, not pinned to the top (founder, 16 Jul: the
+                Tips cards sat "too high"). minHeight 100% + justify-content centre
+                means a short card centres in the pane while a long one still
+                scrolls; the reserved title/body heights keep every card identical. */}
+            <div className="j-pad" style={{ '--illo-body': '10.85em', '--illo-tail': '3.2em', minHeight: '100%', boxSizing: 'border-box', paddingTop: 18, paddingBottom: 140,
+              display: 'flex', flexDirection: 'column', justifyContent: 'center',
               alignItems: 'center', textAlign: 'center' }}>
               {/* brand-style scene illustration (build 1.8.0); the old icon square is the fallback */}
               {t.illo
-                ? <span style={{ marginBottom: 12 }}><StoryIllo scene={t.illo} width={210} /></span>
+                ? <span style={{ marginBottom: 12, width: '100%', display: 'flex', justifyContent: 'center' }}><StoryIllo scene={t.illo} width={264} /></span>
                 : <span style={{ width: 76, height: 76, borderRadius: 24, background: t.tint, display: 'flex',
                     alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
                     <Icon name={t.icon} size={36} color={t.ink} />
                   </span>}
               <p className="j-eyebrow" style={{ marginBottom: 6 }}>{i + 1} of {DYSREG_TIPS.length}</p>
-              <h1 className="j-h1" style={{ marginBottom: 12 }}>{t.title}</h1>
-              <p className="j-body" style={{ color: 'var(--muted)', fontSize: 'calc(16.5px * var(--tscale, 1))', lineHeight: 1.55, maxWidth: 330 }}>{t.body}</p>
-              {t.say && (
-                <span style={{ marginTop: 18, padding: '10px 18px', borderRadius: 999, background: t.tint, color: t.ink,
-                  fontSize: 'calc(15.5px * var(--tscale, 1))', fontWeight: 500 }}>{t.say}</span>
-              )}
-              {t.cta && (
-                <button className="j-btn j-btn-primary" style={{ marginTop: 22 }} onClick={() => nav.go('handover')}>
-                  <Icon name="note" size={18} color="#fff" /> Open Dysregulation
-                </button>
-              )}
+              {/* .j-illo-title reserves two lines so "Fewer words, softer everything"
+                  does not push its body lower than the one-line titles either side */}
+              <h1 className="j-h1 j-illo-title" style={{ marginBottom: 12 }}>{t.title}</h1>
+              <p className="j-body j-illo-body" style={{ color: 'var(--muted)', fontSize: 'calc(16.5px * var(--tscale, 1))', lineHeight: 1.55, maxWidth: 330 }}>{t.body}</p>
+              {/* Always rendered, even when empty. Only cards 1 and 5 carry a say
+                  pill and only card 6 a CTA, so without a reserved slot those three
+                  cards are taller and centre ~12px higher than the other three. */}
+              <div className="j-illo-tail">
+                {t.say && (
+                  <span style={{ padding: '10px 18px', borderRadius: 999, background: t.tint, color: t.ink,
+                    fontSize: 'calc(15.5px * var(--tscale, 1))', fontWeight: 500 }}>{t.say}</span>
+                )}
+                {t.cta && (
+                  <button className="j-btn j-btn-primary" onClick={() => nav.go('handover')}>
+                    <Icon name="note" size={18} color="#fff" /> Open Dysregulation
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         ))}
@@ -928,7 +942,7 @@ function DysregTipsScreen({ nav }) {
         padding: '10px 20px calc(14px + env(safe-area-inset-bottom))', background: 'var(--fade-grad)' }}>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginBottom: 8 }}>
           {DYSREG_TIPS.map((t, i) => (
-            <button key={i} aria-label={'Tip ' + (i + 1) + ' of ' + DYSREG_TIPS.length + ': ' + t.title} aria-current={idx === i}
+            <button key={i} aria-label={'Tip ' + (i + 1) + ' of ' + DYSREG_TIPS.length + ': ' + t.title.replace(/\n/g, ' ')} aria-current={idx === i}
               onClick={() => { const el = pagerRef.current; if (el) el.scrollTo({ left: i * el.clientWidth, behavior: 'smooth' }); }}
               style={{ width: idx === i ? 18 : 7, height: 7, borderRadius: 99, transition: 'all .2s ease', border: 'none', padding: 0, cursor: 'pointer',
               background: idx === i ? 'var(--blue)' : 'var(--chip-border)' }} />

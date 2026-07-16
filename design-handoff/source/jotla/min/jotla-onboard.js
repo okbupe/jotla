@@ -461,18 +461,28 @@ function TourScreen({
       minHeight: 0,
       display: 'flex',
       flexDirection: 'column',
+      overflowY: 'auto'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      '--illo-body': '9em',
+      margin: 'auto',
+      display: 'flex',
+      flexDirection: 'column',
       alignItems: 'center',
-      justifyContent: 'center',
       textAlign: 'center',
-      padding: '0 28px'
+      padding: '10px 28px'
     }
   }, step.illo ? /*#__PURE__*/React.createElement("span", {
     style: {
-      marginBottom: 22
+      marginBottom: 20,
+      width: '100%',
+      display: 'flex',
+      justifyContent: 'center'
     }
   }, /*#__PURE__*/React.createElement(StoryIllo, {
     scene: step.illo,
-    width: 228
+    width: 300
   })) : /*#__PURE__*/React.createElement("div", {
     style: {
       width: 134,
@@ -482,7 +492,8 @@ function TourScreen({
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      marginBottom: 30
+      marginBottom: 30,
+      flexShrink: 0
     }
   }, step.face ? /*#__PURE__*/React.createElement(Face, {
     mood: "good",
@@ -493,20 +504,20 @@ function TourScreen({
     color: step.color,
     stroke: 1.9
   })), /*#__PURE__*/React.createElement("h1", {
-    className: "j-h1",
+    className: "j-h1 j-illo-title",
     style: {
       marginBottom: 12,
       maxWidth: 320
     }
   }, step.title), /*#__PURE__*/React.createElement("p", {
-    className: "j-body",
+    className: "j-body j-illo-body",
     style: {
       color: 'var(--muted)',
       fontSize: 'calc(16.5px * var(--tscale, 1))',
       lineHeight: 1.5,
       maxWidth: 332
     }
-  }, step.body)), /*#__PURE__*/React.createElement("div", {
+  }, step.body))), /*#__PURE__*/React.createElement("div", {
     style: {
       padding: '12px 20px calc(18px + env(safe-area-inset-bottom))'
     }

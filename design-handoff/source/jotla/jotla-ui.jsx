@@ -556,26 +556,35 @@ function SectionLabel({ children, right }) {
 // Dysregulation, two different names for one feature. They are summed here, so
 // no moment is lost or double counted, and the split by how-it-was-typed stays
 // where it belongs: inside the entry.
+// `color` paints the bar and the count; `ink` carries the label. They are the same
+// hue, but the vivid bar colours are 2.1-3.7:1 on white and cannot legally carry
+// text, so the label takes the -ink variant the palette already keeps for exactly
+// this (founder, 16 Jul: "make the text for each graph bar same colour as the
+// graph bar" — same colour, still readable).
 function kindBarBlocks({ good, ok, hard, dysreg }) {
   return [
-    { key: 'good', label: 'Good', n: good, color: window.MOOD_COLOURS.good },
-    { key: 'ok', label: 'Mixed', n: ok, color: window.MOOD_COLOURS.ok },
-    { key: 'hard', label: 'Hard', n: hard, color: window.MOOD_COLOURS.hard },
-    { key: 'dysreg', label: 'Dysregulation', n: dysreg, color: 'var(--dysreg)', labelEnd: true },
+    { key: 'good', label: 'Good', n: good, color: window.MOOD_COLOURS.good, ink: 'var(--green-ink)' },
+    { key: 'ok', label: 'Mixed', n: ok, color: window.MOOD_COLOURS.ok, ink: 'var(--amber-ink)' },
+    { key: 'hard', label: 'Hard', n: hard, color: window.MOOD_COLOURS.hard, ink: 'var(--red-ink)' },
+    { key: 'dysreg', label: 'Dysregulation', n: dysreg, color: 'var(--dysreg)', ink: 'var(--dysreg-ink)' },
   ];
 }
 function KindBars({ blocks, maxN }) {
   return (
-    <div style={{ display: 'flex', gap: 8, justifyContent: 'space-between', alignItems: 'flex-end', minHeight: 92 }}>
+    // Equal columns (flex: 1), not content-width ones (founder, 16 Jul: "align
+    // them justify"). Sizing each column to its own label made the Dysregulation
+    // column 78px against ~30px for the others, so the bars sat at 54/134/212/312:
+    // even gaps of ~79px, then a 100px jump. Equal columns space them evenly and
+    // the old labelEnd right-align hack is no longer needed.
+    <div style={{ display: 'flex', gap: 4, alignItems: 'flex-end', minHeight: 92 }}>
       {blocks.map(b => {
         const h = 22 + (b.n / maxN) * 54; // taller bar for a higher count
         return (
-          <div key={b.key} style={{ minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+          <div key={b.key} style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
             <span style={{ fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 'calc(16px * var(--tscale, 1))', color: b.color, lineHeight: 1 }}>{b.n}</span>
-            <div style={{ width: 26, height: h, borderRadius: 13, background: b.color }} />
-            <span style={{ fontSize: 'calc(12.5px * var(--tscale, 1))', fontWeight: 500, color: 'var(--muted)',
-              whiteSpace: 'nowrap', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis',
-              ...(b.labelEnd ? { alignSelf: 'flex-end', textAlign: 'right' } : {}) }}>{b.label}</span>
+            <div style={{ width: 36, height: h, borderRadius: 18, background: b.color }} />
+            <span style={{ fontSize: 'calc(12px * var(--tscale, 1))', fontWeight: 500, color: b.ink,
+              whiteSpace: 'nowrap', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.label}</span>
           </div>
         );
       })}

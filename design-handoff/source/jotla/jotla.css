@@ -9,8 +9,13 @@
   --blue-bright: #3A7BD4;
   --blue-deep: #0f3d7a;
   --green: #27AE60;
-  --green-ink: #1e8a4c;
+  /* Nudged down from #1e8a4c on 16 Jul: that was 4.38:1 on white, so it missed
+     WCAG AA everywhere it sat on a card rather than on --tint-green. */
+  --green-ink: #1c8449;
   --amber: #F39C12;
+  /* The amber the other three inks already had. #F39C12 is ~2.1:1 on white, so it
+     cannot carry text; this is the same hue taken down to clear WCAG AA. */
+  --amber-ink: #8a5a00;
   --red: #E74C3C;
   --red-ink: #c0392b;
   --ink: #14223b;
@@ -58,11 +63,47 @@
 /* Form controls don't inherit font-family by default — keep them on-brand */
 button, input, select, textarea { font-family: inherit; }
 
-/* Generated tour/Tips illustrations (build 1.9.0, candidate). Unlike the SVG
-   deck, which is transparent and reads on either ground, these images carry a
-   baked-in light background. Rounding them turns that hard rectangle into a
-   deliberate card instead of a seam. Dark mode is the real test: see below. */
-.j-illo-img { border-radius: 16px; }
+/* Generated tour/Tips illustrations (build 1.9.0, candidate). Square since 16 Jul
+   (founder: the 3:2 deck rendered too small). Their ground is generated to --bg
+   #F7F9FC, so in light mode they blend into the page with no card edge; the
+   radius is what stops them reading as a hard rectangle on the dark theme, where
+   a baked-in light ground cannot adapt the way the SVG deck's rgba tints do.
+   aspect-ratio holds the square from the CSS side, so the layout reserves the
+   right space before the file lands and a source below 900px still sits right. */
+.j-illo-img { display: block; width: 100%; aspect-ratio: 1 / 1; height: auto; border-radius: 16px; }
+
+/* Story slides hold their copy in the same place on every slide (founder, 16 Jul:
+   the description "shifted up and down instead of being the same place"). The
+   slide is centred, so the cause was the block re-centring around each slide's own
+   copy length. Fix: make the block a constant height. The illustration is already
+   a fixed square, so the two variables left are the title wrapping to two lines
+   and the body running long. Both are reserved below.
+
+   Reserve two title lines always: 2 x the 1.08 line-height of .j-h1. In em, so it
+   tracks the text-size setting rather than hardcoding a pixel height that would
+   break at Extra large.
+   A plain block, not a flex box: block layout already starts the text at the top
+   of the reserved space, so every heading's first line begins on exactly the same
+   pixel. (Centring it would sit a one-line heading half a line below where a
+   two-line heading starts.) pre-line honours the deliberate \n in two Tips titles
+   while still collapsing ordinary wrapping. */
+.j-illo-title { min-height: 2.16em; white-space: pre-line; }
+
+/* Reserve the longest body in the deck, so a short slide leaves invisible space
+   below its text rather than pulling everything above it upward. Measured, not
+   guessed: the tour tops out at 9em and Tips at 10.85em (375px, Extra large), so
+   each deck sets its own via --illo-body. Sized to the largest text size rather
+   than the default on purpose: every body then lands on the same reserved height
+   at ALL the common sizes, so the spread is 0 at each, not just at the default.
+   Below roughly 360px with Extra large text the bodies outgrow even this and the
+   reserve stops binding, which degrades to ordinary flow rather than overflowing,
+   and those slides scroll. */
+.j-illo-body { min-height: var(--illo-body, 0px); }
+
+/* Trailing slot: reserved on every card so the three that carry nothing centre
+   identically to the two with a say pill and the one with a CTA. */
+.j-illo-tail { min-height: var(--illo-tail, 0px); margin-top: 18px; display: flex;
+  align-items: flex-start; justify-content: center; }
 
 /* ---- dark theme ---- */
 .jotla-root.j-dark {
@@ -75,6 +116,8 @@ button, input, select, textarea { font-family: inherit; }
   --green: #46C97E;
   --green-ink: #6BD699;
   --amber: #F6B450;
+  /* inks go lighter on the dark theme, like the other three */
+  --amber-ink: #F9CE86;
   --red: #F0705F;
   --red-ink: #F58C7E;
   --ink: #EAF0FA;

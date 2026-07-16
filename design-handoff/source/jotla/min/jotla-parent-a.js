@@ -1889,12 +1889,15 @@ const DYSREG_TIPS = [{
   title: 'Start with you',
   body: 'Your calm is the tool. Take one slow breath before any words. A dysregulated child borrows their calm from the nearest steady adult; that is co-regulation, and you are the anchor.',
   say: '"I\'m here. You\'re safe."'
-}, {
+},
+// The \n is a deliberate break, not wrapping (founder, 16 Jul). .j-illo-title
+// sets white-space: pre-line to honour it; aria-labels flatten it back to a space.
+{
   illo: 'tipSoft',
   icon: 'hand',
   tint: 'var(--tint-blue)',
   ink: 'var(--blue)',
-  title: 'Fewer words, softer everything',
+  title: 'Fewer words,\nsofter everything',
   body: 'Keep it short and simple. Lower your voice, come down to their level, stand slightly side-on rather than face-on. No questions yet: in the storm the thinking part of the brain is offline, so reasoning cannot land.'
 }, {
   illo: 'tipAvoid',
@@ -1915,7 +1918,7 @@ const DYSREG_TIPS = [{
   icon: 'heart',
   tint: 'var(--tint-green)',
   ink: 'var(--green)',
-  title: 'Afterwards, reconnect first',
+  title: 'Afterwards,\nreconnect first',
   body: 'Repair before review. Let them know the storm did not change anything between you. Save the talking-through for later, once everyone is truly calm, and keep it free of blame.',
   say: '"That was hard. We\'re okay."'
 }, {
@@ -1970,20 +1973,28 @@ function DysregTipsScreen({
   }, /*#__PURE__*/React.createElement("div", {
     className: "j-pad",
     style: {
+      '--illo-body': '10.85em',
+      '--illo-tail': '3.2em',
+      minHeight: '100%',
+      boxSizing: 'border-box',
       paddingTop: 18,
       paddingBottom: 140,
       display: 'flex',
       flexDirection: 'column',
+      justifyContent: 'center',
       alignItems: 'center',
       textAlign: 'center'
     }
   }, t.illo ? /*#__PURE__*/React.createElement("span", {
     style: {
-      marginBottom: 12
+      marginBottom: 12,
+      width: '100%',
+      display: 'flex',
+      justifyContent: 'center'
     }
   }, /*#__PURE__*/React.createElement(StoryIllo, {
     scene: t.illo,
-    width: 210
+    width: 264
   })) : /*#__PURE__*/React.createElement("span", {
     style: {
       width: 76,
@@ -2005,21 +2016,22 @@ function DysregTipsScreen({
       marginBottom: 6
     }
   }, i + 1, " of ", DYSREG_TIPS.length), /*#__PURE__*/React.createElement("h1", {
-    className: "j-h1",
+    className: "j-h1 j-illo-title",
     style: {
       marginBottom: 12
     }
   }, t.title), /*#__PURE__*/React.createElement("p", {
-    className: "j-body",
+    className: "j-body j-illo-body",
     style: {
       color: 'var(--muted)',
       fontSize: 'calc(16.5px * var(--tscale, 1))',
       lineHeight: 1.55,
       maxWidth: 330
     }
-  }, t.body), t.say && /*#__PURE__*/React.createElement("span", {
+  }, t.body), /*#__PURE__*/React.createElement("div", {
+    className: "j-illo-tail"
+  }, t.say && /*#__PURE__*/React.createElement("span", {
     style: {
-      marginTop: 18,
       padding: '10px 18px',
       borderRadius: 999,
       background: t.tint,
@@ -2029,15 +2041,12 @@ function DysregTipsScreen({
     }
   }, t.say), t.cta && /*#__PURE__*/React.createElement("button", {
     className: "j-btn j-btn-primary",
-    style: {
-      marginTop: 22
-    },
     onClick: () => nav.go('handover')
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "note",
     size: 18,
     color: "#fff"
-  }), " Open Dysregulation"))))), /*#__PURE__*/React.createElement("div", {
+  }), " Open Dysregulation")))))), /*#__PURE__*/React.createElement("div", {
     style: {
       position: 'absolute',
       left: 0,
@@ -2055,7 +2064,7 @@ function DysregTipsScreen({
     }
   }, DYSREG_TIPS.map((t, i) => /*#__PURE__*/React.createElement("button", {
     key: i,
-    "aria-label": 'Tip ' + (i + 1) + ' of ' + DYSREG_TIPS.length + ': ' + t.title,
+    "aria-label": 'Tip ' + (i + 1) + ' of ' + DYSREG_TIPS.length + ': ' + t.title.replace(/\n/g, ' '),
     "aria-current": idx === i,
     onClick: () => {
       const el = pagerRef.current;

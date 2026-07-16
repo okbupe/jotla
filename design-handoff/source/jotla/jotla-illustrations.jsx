@@ -591,7 +591,10 @@ const STORY_IMAGES = {
   tipReconnect: 'illo/tipReconnect.webp',
   tipWrite:     'illo/tipWrite.webp',
 };
-const STORY_IMAGE_W = 690, STORY_IMAGE_H = 463;
+/* Square (1:1), founder call 16 Jul: the 3:2 deck rendered too small in the slot.
+   The ratio is what matters here, not the number: `.j-illo-img` pins aspect-ratio
+   in CSS, so a file that ships below 900 (tipAvoid at 755) still lays out right. */
+const STORY_IMAGE_W = 900, STORY_IMAGE_H = 900;
 
 function StoryIllo({ scene = 'tourWelcome', width = 210 }) {
   const S = ILLO.skin, H = ILLO.hair;
@@ -1054,9 +1057,12 @@ function StoryIllo({ scene = 'tourWelcome', width = 210 }) {
      reflow as the image lands. */
   const imgSrc = STORY_IMAGES[scene];
   if (imgSrc) {
+    // `width` is a MAX here, not a fixed size: a square illustration is much taller
+    // than the old 3:2 one, so on a short phone at the largest text size a fixed
+    // width would push the copy off the slide. Shrink to fit instead.
     return (
       <img src={imgSrc} alt="" aria-hidden="true" width={STORY_IMAGE_W} height={STORY_IMAGE_H}
-        className="j-illo-img" style={{ display: 'block', width: width, height: 'auto' }} />
+        className="j-illo-img" style={{ maxWidth: width }} />
     );
   }
   return (

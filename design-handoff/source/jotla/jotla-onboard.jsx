@@ -203,15 +203,26 @@ function TourScreen({ nav, profile }) {
         <button onClick={() => nav.home()} className="j-press" style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--faint)', fontSize: 'calc(14.5px * var(--tscale, 1))', fontWeight: 500, padding: 4 }}>Skip</button>
       </div>
 
-      <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '0 28px' }}>
-        {/* brand-style scene illustration (build 1.8.0); icon disc kept as the fallback */}
-        {step.illo
-          ? <span style={{ marginBottom: 22 }}><StoryIllo scene={step.illo} width={228} /></span>
-          : <div style={{ width: 134, height: 134, borderRadius: '50%', background: step.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 30 }}>
-              {step.face ? <Face mood="good" size={92} /> : <Icon name={step.icon} size={58} color={step.color} stroke={1.9} />}
-            </div>}
-        <h1 className="j-h1" style={{ marginBottom: 12, maxWidth: 320 }}>{step.title}</h1>
-        <p className="j-body" style={{ color: 'var(--muted)', fontSize: 'calc(16.5px * var(--tscale, 1))', lineHeight: 1.5, maxWidth: 332 }}>{step.body}</p>
+      {/* Centred, and identical on every slide (founder, 16 Jul: the description
+          "shifted up and down instead of being the same place"). Centring alone
+          caused that: each slide re-centred around its own copy length. So the
+          block is now a FIXED height at any text size (square illustration +
+          .j-illo-title reserving two lines + .j-illo-body reserving the longest
+          body), which centres to the same place on all eight.
+          `margin: auto` rather than justify-content: center, because a centred
+          flex child that outgrows a scroll container clips at the top with no way
+          to scroll back; auto margins centre and still allow scrolling. */}
+      <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+        <div style={{ '--illo-body': '9em', margin: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '10px 28px' }}>
+          {/* brand-style scene illustration (build 1.8.0); icon disc kept as the fallback */}
+          {step.illo
+            ? <span style={{ marginBottom: 20, width: '100%', display: 'flex', justifyContent: 'center' }}><StoryIllo scene={step.illo} width={300} /></span>
+            : <div style={{ width: 134, height: 134, borderRadius: '50%', background: step.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 30, flexShrink: 0 }}>
+                {step.face ? <Face mood="good" size={92} /> : <Icon name={step.icon} size={58} color={step.color} stroke={1.9} />}
+              </div>}
+          <h1 className="j-h1 j-illo-title" style={{ marginBottom: 12, maxWidth: 320 }}>{step.title}</h1>
+          <p className="j-body j-illo-body" style={{ color: 'var(--muted)', fontSize: 'calc(16.5px * var(--tscale, 1))', lineHeight: 1.5, maxWidth: 332 }}>{step.body}</p>
+        </div>
       </div>
 
       <div style={{ padding: '12px 20px calc(18px + env(safe-area-inset-bottom))' }}>

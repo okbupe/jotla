@@ -334,6 +334,32 @@ function ok(name, cond) {
       deck.length === 14 && bad.length === 0);
   }
 
+  // Founder, 16 Jul: the heading and description "shifted up and down instead of
+  // being the same place" from slide to slide. Cause: the slide centred itself
+  // around its own copy length, so a longer body or a two-line title moved
+  // everything. Now the block is a constant height (fixed square + reserved title
+  // and body), so both land on the same pixel on all eight. Measured on the first
+  // LINE BOX via a Range, not the element box: an element-box check passes even
+  // when a one-line heading sits half a line low inside a two-line reserve.
+  const lineTopOf = (loc) => loc.evaluate((el) => {
+    const r = document.createRange(); r.selectNodeContents(el);
+    return +r.getClientRects()[0].top.toFixed(1);
+  });
+  const headY = [], bodyY = [];
+  for (let i = 1; i <= 8; i++) {
+    await page3.locator(`button[aria-label^="Step ${i} of"]`).click();
+    await page3.waitForTimeout(320);
+    headY.push(await lineTopOf(page3.locator('.j-illo-title').first()));
+    bodyY.push(await lineTopOf(page3.locator('.j-illo-body').first()));
+  }
+  const spread = (a) => +(Math.max(...a) - Math.min(...a)).toFixed(1);
+  ok(`every tour heading starts on the same line (spread ${spread(headY)}px)`, spread(headY) <= 1);
+  ok(`every tour description starts on the same line (spread ${spread(bodyY)}px)`, spread(bodyY) <= 1);
+  // Walk back to step 2, where this block found the tour: the tier-neutral check
+  // below reads the Today slide's copy off the screen.
+  await page3.locator('button[aria-label^="Step 2 of"]').click();
+  await page3.waitForTimeout(300);
+
   // Two places count the gate questions in prose: the Dysregulation card ("Six
   // gentle questions") and this tour slide (which lists them in a sentence).
   // Neither can be derived from the array, and adding "Who was there?" on 16 Jul
@@ -636,29 +662,95 @@ function ok(name, cond) {
     const rect = row.getBoundingClientRect();
     const kids = Array.from(row.children);
     const boxes = kids.map(k => k.getBoundingClientRect());
-    const gaps = [];
-    for (let i = 1; i < boxes.length; i++) gaps.push(boxes[i].left - boxes[i - 1].right);
-    const bars = kids.map(k => k.children[1].getBoundingClientRect().width);
+    const cols = boxes.map(b => b.width);
+    const barRects = kids.map(k => k.children[1].getBoundingClientRect());
+    // What a reader actually sees is the spacing of the BARS. The old check
+    // measured the gaps between the column boxes, which space-between makes even
+    // by definition even when the bars are not: with content-width columns the
+    // long Dysregulation label made its column 78px against ~30px, putting the bar
+    // centres at 54/134/212/312 (gaps 79, 78, 100). Even column gaps, visibly
+    // uneven bars, green test (founder spotted it, 16 Jul). Measure the bars.
+    const mids = barRects.map(b => b.x + b.width / 2);
+    const midGaps = [];
+    for (let i = 1; i < mids.length; i++) midGaps.push(mids[i] - mids[i - 1]);
+    const bars = barRects.map(b => b.width);
     return {
-      justify: getComputedStyle(row).justifyContent,
-      grow: kids.map(k => getComputedStyle(k).flexGrow).join(','),
       flushLeft: Math.abs(boxes[0].left - rect.left),
       flushRight: Math.abs(rect.right - boxes[boxes.length - 1].right),
-      gapSpread: Math.max(...gaps) - Math.min(...gaps),
+      colSpread: Math.max(...cols) - Math.min(...cols),
+      midGapSpread: Math.max(...midGaps) - Math.min(...midGaps),
       barSpread: Math.max(...bars) - Math.min(...bars),
+      barWidth: bars[0],
     };
   };
   const gToday = await page8.evaluate(graphGeom);
-  ok('Today strip row is justified space-between', !!gToday && gToday.justify === 'space-between');
-  ok('Today strip columns carry no flex weighting', !!gToday && gToday.grow === '0,0,0,0');
+  ok('Today strip columns are equal width (spread ' + (gToday ? gToday.colSpread.toFixed(2) : '?') + 'px)',
+    !!gToday && gToday.colSpread < 1);
   ok('Today strip: first column flush left, last flush right', !!gToday && gToday.flushLeft < 1 && gToday.flushRight < 1);
-  ok('Today strip gaps are even (spread ' + (gToday ? gToday.gapSpread.toFixed(2) : '?') + 'px)', !!gToday && gToday.gapSpread < 1.5);
-  ok('Today strip bars share one slim width', !!gToday && gToday.barSpread < 0.5);
+  ok('Today strip bars are evenly spaced (centre-gap spread ' + (gToday ? gToday.midGapSpread.toFixed(2) : '?') + 'px)',
+    !!gToday && gToday.midGapSpread < 1.5);
+  ok('Today strip bars share one width', !!gToday && gToday.barSpread < 0.5);
+  // Founder, 16 Jul: "the bars on the graphs are too thin, now that gate was removed".
+  ok('Today strip bars are not thin (' + (gToday ? gToday.barWidth : '?') + 'px)', !!gToday && gToday.barWidth >= 32);
   await page8.getByText('Month', { exact: true }).last().click();
   await page8.waitForTimeout(500);
   const gMonth = await page8.evaluate(graphGeom);
-  ok('Plus month graph row is justified space-between', !!gMonth && gMonth.justify === 'space-between');
-  ok('Plus month graph: flush edges and even gaps', !!gMonth && gMonth.flushLeft < 1 && gMonth.flushRight < 1 && gMonth.gapSpread < 1.5);
+  ok('Plus month graph columns are equal width', !!gMonth && gMonth.colSpread < 1);
+  ok('Plus month graph: flush edges and evenly spaced bars',
+    !!gMonth && gMonth.flushLeft < 1 && gMonth.flushRight < 1 && gMonth.midGapSpread < 1.5);
+
+  // Founder, 16 Jul: each bar's label wears its bar's colour. The catch is that the
+  // vivid bar colours are 2.1-3.7:1 on white and cannot carry text, so the labels
+  // take the -ink variants. Assert both halves: the label is that bar's hue (not
+  // the old grey --muted) AND it clears WCAG AA, since "same colour as the bar"
+  // taken literally would fail three of the four.
+  const labelInk = await page8.evaluate(() => {
+    const rows = Array.from(document.querySelectorAll('div')).filter(d =>
+      d.children.length === 4 &&
+      Array.from(d.children).map(c => c.lastElementChild && c.lastElementChild.textContent).join(',') === 'Good,Mixed,Hard,Dysregulation');
+    if (!rows[0]) return null;
+    const rel = (c) => {
+      const [r, g, b] = c.match(/\d+/g).map(Number).map(v => {
+        v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+      });
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    };
+    let ground = 'rgb(255, 255, 255)';
+    for (let el = rows[0]; el; el = el.parentElement) {
+      const bg = getComputedStyle(el).backgroundColor;
+      if (bg && !/rgba\(0, 0, 0, 0\)|transparent/.test(bg)) { ground = bg; break; }
+    }
+    // Hue, not raw RGB distance: an ink is the same hue at a different lightness,
+    // so --amber-ink sits 105 away from --amber in the red channel while being the
+    // same colour to the eye. Degrees on the wheel are what "same colour" means.
+    const hue = (c) => {
+      let [r, g, b] = c.match(/\d+/g).map(Number).map(v => v / 255);
+      const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+      if (d === 0) return -1; // grey has no hue
+      let h;
+      if (mx === r) h = ((g - b) / d) % 6;
+      else if (mx === g) h = (b - r) / d + 2;
+      else h = (r - g) / d + 4;
+      h *= 60; if (h < 0) h += 360;
+      return h;
+    };
+    return Array.from(rows[0].children).map((col) => {
+      const lab = col.lastElementChild, bar = col.children[1];
+      const lc = getComputedStyle(lab).color, bc = getComputedStyle(bar).backgroundColor;
+      const l1 = rel(lc), l2 = rel(ground);
+      const hl = hue(lc), hb = hue(bc);
+      const dh = (hl < 0 || hb < 0) ? 999 : Math.min(Math.abs(hl - hb), 360 - Math.abs(hl - hb));
+      return {
+        text: lab.textContent,
+        hueGap: +dh.toFixed(1),
+        contrast: +(((Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05))).toFixed(2),
+      };
+    });
+  });
+  ok('every bar label wears its own bar hue, not grey (' + (labelInk ? labelInk.map(l => l.text[0] + ':' + l.hueGap + 'deg').join(' ') : '?') + ')',
+    !!labelInk && labelInk.length === 4 && labelInk.every(l => l.hueGap <= 15));
+  ok('every bar label clears WCAG AA (' + (labelInk ? labelInk.map(l => l.text[0] + ':' + l.contrast).join(' ') : '?') + ')',
+    !!labelInk && labelInk.every(l => l.contrast >= 4.5));
   ok('no uncaught page errors across suite 11', errors8.length === 0);
   await ctx8.close();
 
