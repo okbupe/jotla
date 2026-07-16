@@ -394,7 +394,7 @@ const TOUR_STEPS = name => [{
   icon: 'heart',
   face: true,
   illo: 'tourChild',
-  title: 'Their day, in their words',
+  title: 'Their day,\nin their words',
   body: `Tap "Your day" and ${name} can show how school felt: friendly faces and simple scenes, no typing. Do it together, or hand the phone over.`
 }, {
   tint: 'var(--tint-blue)',
@@ -408,7 +408,7 @@ const TOUR_STEPS = name => [{
   color: 'var(--blue)',
   icon: 'shield',
   illo: 'tourPrivate',
-  title: 'Nothing leaves your phone',
+  title: 'Nothing leaves\nyour phone',
   body: 'No account, and nothing leaves this phone. Documents, letters and reports live in one place, and your record stays yours, always.'
 }, {
   tint: 'var(--tint-green)',
@@ -530,7 +530,7 @@ function TourScreen({
     }
   }, steps.map((s2, k) => /*#__PURE__*/React.createElement("button", {
     key: k,
-    "aria-label": 'Step ' + (k + 1) + ' of ' + steps.length + ': ' + s2.title,
+    "aria-label": 'Step ' + (k + 1) + ' of ' + steps.length + ': ' + s2.title.replace(/\n/g, ' '),
     "aria-current": k === i,
     onClick: () => setI(k),
     style: {

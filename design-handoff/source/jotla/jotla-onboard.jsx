@@ -174,13 +174,13 @@ const TOUR_STEPS = (name) => [
     illo: 'tourGate', title: 'Dysregulation',
     body: `When a hard moment happens, Jotla asks you six simple questions: what happened, where and when, who was there, how ${name} seemed, what led up to it, and what helped. Most answers are a tap.` },
   { tint: 'var(--tint-green)', color: 'var(--green)', icon: 'heart', face: true,
-    illo: 'tourChild', title: 'Their day, in their words',
+    illo: 'tourChild', title: 'Their day,\nin their words',
     body: `Tap "Your day" and ${name} can show how school felt: friendly faces and simple scenes, no typing. Do it together, or hand the phone over.` },
   { tint: 'var(--tint-blue)',  color: 'var(--blue)',  icon: 'calendar',
     illo: 'tourPattern', title: 'Spot the pattern',
     body: 'Over time, Month and Find turn single days into a picture, so you can see when the hard days happen and pull out the exact notes you need when someone asks for proof.' },
   { tint: 'var(--tint-blue)',  color: 'var(--blue)',  icon: 'shield',
-    illo: 'tourPrivate', title: 'Nothing leaves your phone',
+    illo: 'tourPrivate', title: 'Nothing leaves\nyour phone',
     body: 'No account, and nothing leaves this phone. Documents, letters and reports live in one place, and your record stays yours, always.' },
   { tint: 'var(--tint-green)', color: 'var(--green)', icon: 'check',
     illo: 'tourReady', title: 'You are ready',
@@ -228,7 +228,7 @@ function TourScreen({ nav, profile }) {
       <div style={{ padding: '12px 20px calc(18px + env(safe-area-inset-bottom))' }}>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginBottom: 16 }}>
           {steps.map((s2, k) => (
-            <button key={k} aria-label={'Step ' + (k + 1) + ' of ' + steps.length + ': ' + s2.title} aria-current={k === i}
+            <button key={k} aria-label={'Step ' + (k + 1) + ' of ' + steps.length + ': ' + s2.title.replace(/\n/g, ' ')} aria-current={k === i}
               onClick={() => setI(k)}
               style={{ width: k === i ? 18 : 7, height: 7, borderRadius: 99, transition: 'all .2s ease', border: 'none', padding: 0, cursor: 'pointer', background: k === i ? 'var(--blue)' : 'var(--chip-border)' }} />
           ))}
