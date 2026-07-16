@@ -265,7 +265,9 @@ function MediaPicker({ value = null, onChange = () => {} }) {
 // tired parent looks at one question at a time. Picking an answer closes it.
 function ContextField({ label, value, active, onClick }) {
   return (
-    <div style={{ flex: 1, minWidth: 0 }}>
+    // the heading centres over its own pill (founder, 16 Jul 2026) so each
+    // column reads as one unit, question sitting directly above its answer
+    <div style={{ flex: 1, minWidth: 0, textAlign: 'center' }}>
       <FieldLabel>{label}</FieldLabel>
       {/* the pill reads only its answer; the heading above says which question,
           so the button carries both in its label for a screen reader */}

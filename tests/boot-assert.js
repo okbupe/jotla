@@ -81,6 +81,28 @@ function ok(name, cond) {
   ok('the row starts on Today / School / Morning',
     rowText.includes('Today') && rowText.includes('School') && rowText.includes('Morning'));
   ok('the options stay closed until a question is tapped', (await page.locator('button[aria-pressed]').count()) === 0);
+  // each question is a heading sitting centred directly above its own pill, not
+  // welded into one joined pill (founder, 16 Jul 2026). The heading's box spans
+  // the column whatever the alignment, so measure the real text extent.
+  const rowGeom = await page.evaluate(() => {
+    const pills = Array.from(document.querySelectorAll('button[aria-label]'))
+      .filter(b => /^(Day\?|Where\?|When\?)/.test(b.getAttribute('aria-label')));
+    if (pills.length !== 3) return null;
+    return pills.map(b => {
+      const h = b.parentElement.querySelector('p');
+      const r = document.createRange(); r.selectNodeContents(h);
+      const tb = r.getBoundingClientRect(), pb = b.getBoundingClientRect();
+      return {
+        label: h.textContent, insidePill: b.contains(h), above: tb.bottom <= pb.top,
+        offset: Math.abs((tb.left + tb.right) / 2 - (pb.left + pb.right) / 2),
+      };
+    });
+  });
+  ok('each question is a heading above its pill, not welded into it',
+    !!rowGeom && rowGeom.every(c => !c.insidePill && c.above));
+  ok('each heading centres over its own pill (max offset '
+    + (rowGeom ? Math.max(...rowGeom.map(c => c.offset)).toFixed(2) : '?') + 'px)',
+    !!rowGeom && rowGeom.every(c => c.offset < 2));
   await page.locator('button[aria-label^="Where?"]').first().click();
   await page.waitForTimeout(350);
   const chips = await page.locator('button[aria-pressed]').count();

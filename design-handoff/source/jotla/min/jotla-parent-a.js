@@ -615,29 +615,35 @@ function ContextField({
   active,
   onClick
 }) {
-  return /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      minWidth: 0
-    }
-  }, /*#__PURE__*/React.createElement(FieldLabel, null, label), /*#__PURE__*/React.createElement("button", {
-    onClick: onClick,
-    "aria-expanded": active,
-    "aria-label": label + ' ' + value,
-    className: 'j-chip' + (active ? ' j-chip-on' : ''),
-    style: {
-      width: '100%',
-      padding: '0 12px',
-      justifyContent: 'center'
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      minWidth: 0,
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap'
-    }
-  }, value)));
+  return (
+    /*#__PURE__*/
+    // the heading centres over its own pill (founder, 16 Jul 2026) so each
+    // column reads as one unit, question sitting directly above its answer
+    React.createElement("div", {
+      style: {
+        flex: 1,
+        minWidth: 0,
+        textAlign: 'center'
+      }
+    }, /*#__PURE__*/React.createElement(FieldLabel, null, label), /*#__PURE__*/React.createElement("button", {
+      onClick: onClick,
+      "aria-expanded": active,
+      "aria-label": label + ' ' + value,
+      className: 'j-chip' + (active ? ' j-chip-on' : ''),
+      style: {
+        width: '100%',
+        padding: '0 12px',
+        justifyContent: 'center'
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        minWidth: 0,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap'
+      }
+    }, value)))
+  );
 }
 function QuickLogScreen({
   nav,
