@@ -81,7 +81,7 @@ function ok(name, cond) {
   ok('the row starts on Today / School / Morning',
     rowText.includes('Today') && rowText.includes('School') && rowText.includes('Morning'));
   ok('the options stay closed until a question is tapped', (await page.locator('button[aria-pressed]').count()) === 0);
-  await page.getByText('Where?', { exact: true }).first().click();
+  await page.locator('button[aria-label^="Where?"]').first().click();
   await page.waitForTimeout(350);
   const chips = await page.locator('button[aria-pressed]').count();
   ok('the open picker exposes aria-pressed chips (' + chips + ')', chips >= 4);
@@ -93,19 +93,28 @@ function ok(name, cond) {
   await page.waitForTimeout(350);
   ok('picking an answer closes the picker', (await page.locator('button[aria-pressed]').count()) === 0);
   ok('the picked answer rides the Where pill (' + chipText + ')',
-    (await page.locator('button:has-text("Where?")').first().innerText()).includes(chipText));
-  await page.getByText('Where?', { exact: true }).first().click();
+    (await page.locator('button[aria-label^="Where?"]').first().innerText()).includes(chipText));
+  await page.locator('button[aria-label^="Where?"]').first().click();
   await page.waitForTimeout(300);
   const nowPressed = await page.locator('button[aria-pressed="true"]', { hasText: chipText }).count();
   ok('aria-pressed tracks selection (' + chipText + ')', nowPressed >= 1);
-  await page.getByText('Where?', { exact: true }).first().click(); // close it again
+  await page.locator('button[aria-label^="Where?"]').first().click(); // close it again
   await page.waitForTimeout(300);
 
   // ---- 5b. dynamic day log (build 1.12.0): pill -> moment editor -> bank -> save ----
   console.log('Suite 5b: dynamic day log');
   const logText = await page.locator('#root').innerText();
   for (const c of ['School feedback', 'New words', 'Wins']) ok('chip present: ' + c, logText.includes(c));
-  await page.getByText('Day?', { exact: true }).first().click(); // the day lives behind its own pill now
+  // Save rests as a solid grey button, never a see-through blue one, and only
+  // goes primary once there is something worth saving (founder, 16 Jul 2026)
+  const saveBtn = page.locator('button.j-btn-lg:has-text("Save")').last();
+  const restState = await saveBtn.evaluate(el => {
+    const cs = getComputedStyle(el);
+    return { opacity: cs.opacity, bg: cs.backgroundColor, primary: el.classList.contains('j-btn-primary') };
+  });
+  ok('an empty Save rests solid, not see-through (' + restState.bg + ' @ ' + restState.opacity + ')',
+    restState.opacity === '1' && restState.bg !== 'rgba(0, 0, 0, 0)' && !restState.primary);
+  await page.locator('button[aria-label^="Day?"]').first().click(); // the day lives behind its own pill now
   await page.waitForTimeout(300);
   await page.locator('button.j-chip:has-text("Today")').first().click();
   await page.waitForTimeout(300);
@@ -116,6 +125,7 @@ function ok(name, cond) {
   await page.getByText('Okay', { exact: true }).first().click(); // bank the moment
   await page.waitForTimeout(300);
   ok('a banked moment lands in the day list', (await page.locator('#root').innerText()).includes('Boot-assert win: tried a new food'));
+  ok('Save turns blue once a moment is banked', await saveBtn.evaluate(el => el.classList.contains('j-btn-primary')));
   // a banked moment reopens for changing, and the change sticks
   await page.locator('button[aria-label="Edit the Wins moment"]').first().click();
   await page.waitForTimeout(300);
@@ -128,7 +138,7 @@ function ok(name, cond) {
   ok('the edit replaces the moment rather than adding a second', afterEdit.includes('asked for more')
     && (afterEdit.match(/Boot-assert win/g) || []).length === 1);
   // a second moment in a different part of the day: the two must read back as ONE log
-  await page.getByText('When?', { exact: true }).first().click();
+  await page.locator('button[aria-label^="When?"]').first().click();
   await page.waitForTimeout(300);
   await page.locator('button.j-chip:has-text("Afternoon")').first().click();
   await page.waitForTimeout(300);
@@ -262,7 +272,7 @@ function ok(name, cond) {
   ok('Add a note lands in Quick log preset to that day', qlPreset.includes('Quick log') && qlPreset.includes('Saving to'));
 
   // the custom day is picked from a calendar sheet, never typed
-  await page4.getByText('Day?', { exact: true }).first().click();
+  await page4.locator('button[aria-label^="Day?"]').first().click();
   await page4.waitForTimeout(300);
   await page4.locator('button.j-chip:has-text("Another day")').first().click(); // opens the calendar straight away
   await page4.waitForTimeout(400);
@@ -758,7 +768,7 @@ function ok(name, cond) {
   // open Quick log -> Day? -> Another day -> the calendar sheet
   await page12.getByText('Log', { exact: true }).last().click();
   await page12.waitForTimeout(500);
-  await page12.getByText('Day?', { exact: true }).first().click();
+  await page12.locator('button[aria-label^="Day?"]').first().click();
   await page12.waitForTimeout(300);
   await page12.locator('button.j-chip:has-text("Another day")').first().click();
   await page12.waitForTimeout(400);
@@ -789,8 +799,31 @@ function ok(name, cond) {
   await page12.locator('.j-sheet button[aria-label="' + pickLabel + '"]').click();
   await page12.waitForTimeout(400);
   ok('picking a day after a swipe closes the sheet', (await page12.locator('.j-sheet-scrim').count()) === 0);
-  const fieldText = await page12.locator('button:has-text("Day?")').first().innerText();
+  const fieldText = await page12.locator('button[aria-label^="Day?"]').first().innerText();
   ok('the picked day rides the Day pill (' + fieldText.replace(/\n/g, ' ').trim() + ')', fieldText.includes('15'));
+  // a day in THIS year stays short; a day in another year must say which year,
+  // or "10 Dec" leaves you guessing (founder, 16 Jul 2026)
+  ok('a day in the current year carries no year', !/20\d\d/.test(fieldText));
+  await page12.locator('button[aria-label^="Day?"]').first().click();
+  await page12.waitForTimeout(300);
+  await page12.locator('button.j-chip:has-text("Another day")').first().click();
+  await page12.waitForTimeout(400);
+  // walk back until the sheet is genuinely in a previous year (the pager
+  // animates, so chevron clicks need room to land)
+  const lastYear = new Date().getFullYear() - 1;
+  for (let k = 0; k < 18; k++) {
+    if ((await page12.locator('.j-sheet h2').first().innerText()).includes(String(lastYear))) break;
+    await page12.locator('.j-sheet button[aria-label="Previous month"]').click();
+    await page12.waitForTimeout(450);
+  }
+  const backTitle = (await page12.locator('.j-sheet h2').first().innerText()).trim();
+  ok('the sheet can walk back into a previous year (' + backTitle + ')', backTitle.includes(String(lastYear)));
+  await page12.locator('.j-sheet button[aria-label="10 ' + backTitle + '"]').click();
+  await page12.waitForTimeout(400);
+  const prevYearPill = (await page12.locator('button[aria-label^="Day?"]').first().innerText()).replace(/\n/g, ' ').trim();
+  const prevYearBody = await page12.locator('#root').innerText();
+  ok('a day from another year names its year on the pill (' + backTitle + ' -> ' + prevYearPill + ')', /20\d\d/.test(prevYearPill));
+  ok('and names it on the Saving to line', /Saving to [^\n]*20\d\d/.test(prevYearBody));
   await page12.locator('button[aria-label="Close"]').first().click();
   await page12.waitForTimeout(400);
 

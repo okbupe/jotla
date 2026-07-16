@@ -131,7 +131,7 @@ function TodayScreen({
       color: "var(--blue)"
     }),
     title: "Dysregulation",
-    sub: "Capture a hard moment",
+    sub: "Capture what happened",
     tint: "var(--tint-blue)",
     ink: "var(--blue)",
     onClick: () => nav.go(nav.plus ? 'handover' : 'gateintro')
@@ -604,51 +604,40 @@ function MediaPicker({
 // stays individually findable, filterable and printable, the way evidence must.
 // Incidents opens the same pattern with a richer before/during/after box and
 // saves as a gate note (type 'handover').
-// The context row (founder, 16 Jul 2026): Day / Where / When are three compact
-// pills side by side, each showing its current answer. Tapping one opens just
-// its own options underneath and blurs the rest of the screen, so a tired parent
-// is looking at one question at a time. Picking an answer closes it again.
-function ContextPill({
+// The context row (founder, 16 Jul 2026): Day / Where / When sit side by side,
+// but each keeps the shape the fields always had, a heading with its answer on a
+// pill below it, rather than welding the two into one joined pill. Tapping a pill
+// opens just its own options underneath and blurs the rest of the screen, so a
+// tired parent looks at one question at a time. Picking an answer closes it.
+function ContextField({
   label,
   value,
   active,
   onClick
 }) {
-  return /*#__PURE__*/React.createElement("button", {
-    onClick: onClick,
-    "aria-expanded": active,
-    className: "j-press",
+  return /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1,
-      minWidth: 0,
-      textAlign: 'left',
-      cursor: 'pointer',
-      borderRadius: 999,
-      padding: '7px 14px',
-      minHeight: 54,
-      border: '1.5px solid ' + (active ? 'var(--blue)' : 'var(--chip-border)'),
-      background: active ? 'var(--tint-blue)' : 'var(--chip-bg)',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      gap: 1
+      minWidth: 0
+    }
+  }, /*#__PURE__*/React.createElement(FieldLabel, null, label), /*#__PURE__*/React.createElement("button", {
+    onClick: onClick,
+    "aria-expanded": active,
+    "aria-label": label + ' ' + value,
+    className: 'j-chip' + (active ? ' j-chip-on' : ''),
+    style: {
+      width: '100%',
+      padding: '0 12px',
+      justifyContent: 'center'
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
-      fontSize: 'calc(11.5px * var(--tscale, 1))',
-      fontWeight: 500,
-      color: active ? 'var(--blue)' : 'var(--faint)'
-    }
-  }, label), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 'calc(14.5px * var(--tscale, 1))',
-      fontWeight: 500,
-      color: active ? 'var(--blue)' : 'var(--ink)',
-      whiteSpace: 'nowrap',
+      minWidth: 0,
       overflow: 'hidden',
-      textOverflow: 'ellipsis'
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap'
     }
-  }, value));
+  }, value)));
 }
 function QuickLogScreen({
   nav,
@@ -807,7 +796,12 @@ function QuickLogScreen({
       marginTop: 6
     }
   });
-  const dayLabel = dayMode === 'today' ? 'Today' : dayMode === 'yesterday' ? 'Yesterday' : J.fmtShort(logDate);
+  // A day from another year has to say so (founder, 16 Jul 2026): the formatters
+  // never print a year, so "10 Dec" alone leaves you guessing which December.
+  // The year shows only when it is not the current one, so the common case stays short.
+  const yearSuffix = J.parseISO(logDate).getFullYear() === J.parseISO(today).getFullYear() ? '' : ' ' + J.parseISO(logDate).getFullYear();
+  const longDate = J.fmtLong(logDate) + yearSuffix;
+  const dayLabel = dayMode === 'today' ? 'Today' : dayMode === 'yesterday' ? 'Yesterday' : J.fmtShort(logDate) + yearSuffix;
   const placeOptions = [...J.SETTINGS, ...places];
   // a reopened moment keeps its own stamp; a new one takes the row's current answers
   const editing = editKey ? moments.find(m => m.key === editKey) : null;
@@ -846,17 +840,17 @@ function QuickLogScreen({
       display: 'flex',
       gap: 8
     }
-  }, /*#__PURE__*/React.createElement(ContextPill, {
+  }, /*#__PURE__*/React.createElement(ContextField, {
     label: "Day?",
     value: dayLabel,
     active: picker === 'day',
     onClick: () => setPicker(p => p === 'day' ? null : 'day')
-  }), /*#__PURE__*/React.createElement(ContextPill, {
+  }), /*#__PURE__*/React.createElement(ContextField, {
     label: "Where?",
     value: setting,
     active: picker === 'where',
     onClick: () => setPicker(p => p === 'where' ? null : 'where')
-  }), /*#__PURE__*/React.createElement(ContextPill, {
+  }), /*#__PURE__*/React.createElement(ContextField, {
     label: "When?",
     value: time,
     active: picker === 'when',
@@ -945,7 +939,7 @@ function QuickLogScreen({
     style: {
       color: 'var(--muted)'
     }
-  }, J.fmtLong(logDate))), /*#__PURE__*/React.createElement("div", {
+  }, longDate)), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 22
     }
@@ -999,7 +993,7 @@ function QuickLogScreen({
     style: {
       marginTop: 2
     }
-  }, eTime, " \xB7 ", eSetting, " \xB7 ", J.fmtLong(logDate))), isInc ? /*#__PURE__*/React.createElement("div", {
+  }, eTime, " \xB7 ", eSetting, " \xB7 ", longDate)), isInc ? /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       flexDirection: 'column',
@@ -1158,15 +1152,18 @@ function QuickLogScreen({
       marginBottom: 8
     }
   }, moments.length, " moment", moments.length === 1 ? '' : 's', " ready. Saves as one log."), /*#__PURE__*/React.createElement("button", {
-    className: "j-btn j-btn-primary j-btn-lg",
+    className: 'j-btn j-btn-lg' + (moments.length ? ' j-btn-primary' : ''),
     onClick: save,
     style: moments.length ? {} : {
-      opacity: 0.5
+      background: 'var(--tag-grey-bg)',
+      color: 'var(--faint)',
+      boxShadow: 'none',
+      cursor: 'default'
     }
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "check",
     size: 22,
-    color: "#fff"
+    color: moments.length ? '#fff' : 'var(--faint)'
   }), " Save")), dayPickerOpen && /*#__PURE__*/React.createElement(CalendarSheet, {
     onClose: () => setDayPickerOpen(false),
     value: customDate,

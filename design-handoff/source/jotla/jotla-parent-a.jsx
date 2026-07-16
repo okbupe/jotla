@@ -63,7 +63,7 @@ function TodayScreen({ nav, entries, today, profile }) {
                 it is. Dysregulation is the word school uses at them all day. */}
             <ActionTile
               icon={<Icon name="note" size={20} color="var(--blue)" />}
-              title="Dysregulation" sub="Capture a hard moment" tint="var(--tint-blue)" ink="var(--blue)"
+              title="Dysregulation" sub="Capture what happened" tint="var(--tint-blue)" ink="var(--blue)"
               onClick={() => nav.go(nav.plus ? 'handover' : 'gateintro')} />
           </div>
 
@@ -258,22 +258,23 @@ function MediaPicker({ value = null, onChange = () => {} }) {
 // stays individually findable, filterable and printable, the way evidence must.
 // Incidents opens the same pattern with a richer before/during/after box and
 // saves as a gate note (type 'handover').
-// The context row (founder, 16 Jul 2026): Day / Where / When are three compact
-// pills side by side, each showing its current answer. Tapping one opens just
-// its own options underneath and blurs the rest of the screen, so a tired parent
-// is looking at one question at a time. Picking an answer closes it again.
-function ContextPill({ label, value, active, onClick }) {
+// The context row (founder, 16 Jul 2026): Day / Where / When sit side by side,
+// but each keeps the shape the fields always had, a heading with its answer on a
+// pill below it, rather than welding the two into one joined pill. Tapping a pill
+// opens just its own options underneath and blurs the rest of the screen, so a
+// tired parent looks at one question at a time. Picking an answer closes it.
+function ContextField({ label, value, active, onClick }) {
   return (
-    <button onClick={onClick} aria-expanded={active} className="j-press" style={{
-      flex: 1, minWidth: 0, textAlign: 'left', cursor: 'pointer', borderRadius: 999, padding: '7px 14px',
-      minHeight: 54, border: '1.5px solid ' + (active ? 'var(--blue)' : 'var(--chip-border)'),
-      background: active ? 'var(--tint-blue)' : 'var(--chip-bg)',
-      display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 1,
-    }}>
-      <span style={{ fontSize: 'calc(11.5px * var(--tscale, 1))', fontWeight: 500, color: active ? 'var(--blue)' : 'var(--faint)' }}>{label}</span>
-      <span style={{ fontSize: 'calc(14.5px * var(--tscale, 1))', fontWeight: 500, color: active ? 'var(--blue)' : 'var(--ink)',
-        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</span>
-    </button>
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <FieldLabel>{label}</FieldLabel>
+      {/* the pill reads only its answer; the heading above says which question,
+          so the button carries both in its label for a screen reader */}
+      <button onClick={onClick} aria-expanded={active} aria-label={label + ' ' + value}
+        className={'j-chip' + (active ? ' j-chip-on' : '')}
+        style={{ width: '100%', padding: '0 12px', justifyContent: 'center' }}>
+        <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</span>
+      </button>
+    </div>
   );
 }
 
@@ -364,7 +365,13 @@ function QuickLogScreen({ nav, today, view }) {
   };
 
   const moodDot = (mk) => <span style={{ width: 9, height: 9, borderRadius: '50%', background: window.MOOD_COLOURS[mk], flexShrink: 0, marginTop: 6 }} />;
-  const dayLabel = dayMode === 'today' ? 'Today' : dayMode === 'yesterday' ? 'Yesterday' : J.fmtShort(logDate);
+  // A day from another year has to say so (founder, 16 Jul 2026): the formatters
+  // never print a year, so "10 Dec" alone leaves you guessing which December.
+  // The year shows only when it is not the current one, so the common case stays short.
+  const yearSuffix = J.parseISO(logDate).getFullYear() === J.parseISO(today).getFullYear()
+    ? '' : ' ' + J.parseISO(logDate).getFullYear();
+  const longDate = J.fmtLong(logDate) + yearSuffix;
+  const dayLabel = dayMode === 'today' ? 'Today' : dayMode === 'yesterday' ? 'Yesterday' : J.fmtShort(logDate) + yearSuffix;
   const placeOptions = [...J.SETTINGS, ...places];
   // a reopened moment keeps its own stamp; a new one takes the row's current answers
   const editing = editKey ? moments.find(m => m.key === editKey) : null;
@@ -381,11 +388,11 @@ function QuickLogScreen({ nav, today, view }) {
       <PushHeader title="Quick log" subtitle="Log the whole day, one moment at a time" onClose={() => nav.back()} />
       <div className="j-scroll j-fade">
         <div className="j-pad" style={{ paddingBottom: 130, paddingTop: 6 }}>
-          {/* the three questions side by side, each wearing its own answer */}
+          {/* the three questions side by side, each a heading over its answer */}
           <div style={{ display: 'flex', gap: 8 }}>
-            <ContextPill label="Day?" value={dayLabel} active={picker === 'day'} onClick={() => setPicker(p => p === 'day' ? null : 'day')} />
-            <ContextPill label="Where?" value={setting} active={picker === 'where'} onClick={() => setPicker(p => p === 'where' ? null : 'where')} />
-            <ContextPill label="When?" value={time} active={picker === 'when'} onClick={() => setPicker(p => p === 'when' ? null : 'when')} />
+            <ContextField label="Day?" value={dayLabel} active={picker === 'day'} onClick={() => setPicker(p => p === 'day' ? null : 'day')} />
+            <ContextField label="Where?" value={setting} active={picker === 'where'} onClick={() => setPicker(p => p === 'where' ? null : 'where')} />
+            <ContextField label="When?" value={time} active={picker === 'when'} onClick={() => setPicker(p => p === 'when' ? null : 'when')} />
           </div>
 
           {/* only the open question's options, right underneath it */}
@@ -423,7 +430,7 @@ function QuickLogScreen({ nav, today, view }) {
           {/* everything else softens, so one question is in focus at a time */}
           <div onClick={picker ? () => setPicker(null) : undefined} style={dim}>
            <div style={picker ? { pointerEvents: 'none' } : undefined}>
-            <p className="j-sm" style={{ margin: '12px 0 0', color: 'var(--faint)' }}>Saving to <span className="j-strong" style={{ color: 'var(--muted)' }}>{J.fmtLong(logDate)}</span></p>
+            <p className="j-sm" style={{ margin: '12px 0 0', color: 'var(--faint)' }}>Saving to <span className="j-strong" style={{ color: 'var(--muted)' }}>{longDate}</span></p>
 
           {/* the category pills are add-buttons. A count badge shows how many
               moments each holds today; change When above to stamp the next one. */}
@@ -449,7 +456,7 @@ function QuickLogScreen({ nav, today, view }) {
             <div className="j-card j-card-pad" style={{ marginTop: 22, border: '1.5px solid var(--blue)', display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
                 <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(17px * var(--tscale, 1))', color: 'var(--ink)', margin: 0 }}>{openCat}</p>
-                <p className="j-meta" style={{ marginTop: 2 }}>{eTime} · {eSetting} · {J.fmtLong(logDate)}</p>
+                <p className="j-meta" style={{ marginTop: 2 }}>{eTime} · {eSetting} · {longDate}</p>
               </div>
               {isInc ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -511,8 +518,12 @@ function QuickLogScreen({ nav, today, view }) {
       <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '12px 20px calc(16px + env(safe-area-inset-bottom))',
         background: 'var(--fade-grad)', ...dim, ...(picker ? { pointerEvents: 'none' } : {}) }}>
         {moments.length > 0 && <p className="j-meta" style={{ textAlign: 'center', marginBottom: 8 }}>{moments.length} moment{moments.length === 1 ? '' : 's'} ready. Saves as one log.</p>}
-        <button className="j-btn j-btn-primary j-btn-lg" onClick={save} style={moments.length ? {} : { opacity: 0.5 }}>
-          <Icon name="check" size={22} color="#fff" /> Save
+        {/* Nothing to save yet reads as a solid, resting grey button rather than
+            a see-through blue one (founder, 16 Jul 2026). It turns blue the
+            moment there is something worth saving. */}
+        <button className={'j-btn j-btn-lg' + (moments.length ? ' j-btn-primary' : '')} onClick={save}
+          style={moments.length ? {} : { background: 'var(--tag-grey-bg)', color: 'var(--faint)', boxShadow: 'none', cursor: 'default' }}>
+          <Icon name="check" size={22} color={moments.length ? '#fff' : 'var(--faint)'} /> Save
         </button>
       </div>
       {/* The same bounds as ever, now picked instead of typed: nothing before
