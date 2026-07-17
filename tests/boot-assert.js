@@ -1120,6 +1120,67 @@ function ok(name, cond) {
   ok('no uncaught page errors across suite 14', errors12.length === 0);
   await ctx12.close();
 
+  // ---- suite 15: a good month must render ----
+  // The gate-to-Dysregulation rename (2aae634) renamed `dys` to `dysreg` at the
+  // definition and left two call sites reading the old name. Both sit in the
+  // branch taken when NOTHING is tagged as a hard moment, so the trend line threw
+  // a ReferenceError for exactly the two records we most want to work: a parent
+  // having a good month, and a new parent whose child has not had a hard day yet.
+  // The seeded demo record is thick with hard entries, so 182 green checks sailed
+  // straight past it. Every seed here is deliberately free of a hard mood.
+  const ctx13 = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  const page13 = await ctx13.newPage();
+  const errors13 = [];
+  page13.on('pageerror', e => errors13.push(String(e)));
+  const _now13 = new Date();
+  const _pre13 = `${_now13.getFullYear()}-${String(_now13.getMonth() + 1).padStart(2, '0')}`;
+  const seedGood = ({ pre, withDysreg }) => {
+    try {
+      localStorage.setItem('jotla_prefs_v2', JSON.stringify({
+        dark: false, tscale: 1, profileId: 'sam', plus: true, childCfg: {}, customProfiles: [], deletedIds: [],
+      }));
+      const list = [
+        { id: 'g1', childId: 'sam', date: `${pre}-02`, time: 'Morning', clock: '08:40', setting: 'School',
+          category: 'Play', mood: 'good', kind: 'contemporaneous', type: 'quick',
+          summary: 'Straight in at drop-off, no wobble.' },
+      ];
+      // A dysregulation moment can carry a good or mixed mood, so a month with a
+      // plum bar and no hard day is a real record, not a contrived one. It is also
+      // the branch that threw.
+      if (withDysreg) list.push({ id: 'g2', childId: 'sam', date: `${pre}-03`, time: 'Afternoon', clock: '15:10',
+        setting: 'School', category: 'Incidents', mood: 'ok', kind: 'contemporaneous', type: 'quick',
+        summary: 'Left the room at the bell, came back by himself.' });
+      localStorage.setItem('jotla_entries_v4', JSON.stringify(list));
+    } catch (e) {}
+  };
+  await page13.addInitScript(seedGood, { pre: _pre13, withDysreg: true });
+  await page13.goto(URL_APP, { waitUntil: 'networkidle' });
+  await page13.waitForTimeout(1200);
+  const todayGood = await page13.locator('#root').innerText();
+  ok('good month: the Today trend line renders instead of throwing',
+    todayGood.includes('none marked as a hard moment'));
+  await page13.getByText('Month', { exact: true }).last().click();
+  await page13.waitForTimeout(600);
+  const monthGood = await page13.locator('#root').innerText();
+  ok('good month: the Month trend line renders instead of throwing',
+    monthGood.includes('none marked as a hard moment'));
+  ok('good month: no uncaught page errors', errors13.length === 0);
+  await ctx13.close();
+
+  // The same record with nothing dysregulated at all: the other side of the branch.
+  const ctx14 = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  const page14 = await ctx14.newPage();
+  const errors14 = [];
+  page14.on('pageerror', e => errors14.push(String(e)));
+  await page14.addInitScript(seedGood, { pre: _pre13, withDysreg: false });
+  await page14.goto(URL_APP, { waitUntil: 'networkidle' });
+  await page14.waitForTimeout(1200);
+  const todayClear = await page14.locator('#root').innerText();
+  ok('a month with nothing hard and nothing dysregulated says so kindly',
+    todayClear.includes('Long may it last'));
+  ok('clear month: no uncaught page errors', errors14.length === 0);
+  await ctx14.close();
+
   await browser.close();
   server.kill();
   console.log('\n' + passed + '/' + (passed + failed) + ' checks green' + (failed ? ' - ' + failed + ' FAILED' : ''));

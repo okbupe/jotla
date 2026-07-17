@@ -622,10 +622,10 @@ function MiniMonthStrip({ entries, onOpen }) {
       <p className="j-body" style={{ fontSize: 'calc(14.5px * var(--tscale, 1))', color: 'var(--muted)', marginTop: 16 }}>
         {_top
           ? (<><span className="j-strong">{_top[0]}</span> entries come up most often as the hard moments. Tap Find to see them gathered.</>)
-          : dys > 0
+          : dysreg > 0
             // Dysregulation moments can carry a good or mixed mood, so "no hard
             // moments" alone would sit dishonestly next to a plum bar with a count.
-            ? `${dys} dysregulation ${dys === 1 ? 'moment' : 'moments'} logged this month, none marked as a hard moment.`
+            ? `${dysreg} dysregulation ${dysreg === 1 ? 'moment' : 'moments'} logged this month, none marked as a hard moment.`
             : 'No hard moments logged so far. Long may it last.'}
       </p>
     </div>

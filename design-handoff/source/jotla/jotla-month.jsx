@@ -49,11 +49,11 @@ function MonthMoodGraph({ entries, year, month }) {
               {top
                 ? (<><span className="j-strong">{top[0]}</span> entries come up most often as the hard moments.</>)
                 : hardCount === 0
-                  ? (dys > 0
+                  ? (dysreg > 0
                       // Dysregulation moments can carry a good or mixed mood, so
                       // "no hard moments" alone would sit dishonestly next to a
                       // plum bar with a count in it.
-                      ? `${dys} dysregulation ${dys === 1 ? 'moment' : 'moments'} logged, none marked as a hard moment.`
+                      ? `${dysreg} dysregulation ${dysreg === 1 ? 'moment' : 'moments'} logged, none marked as a hard moment.`
                       : 'No hard moments logged. Long may it last.')
                   // Hard moments with no theme tagged: saying "no hard moments"
                   // here would be a false claim, so count them honestly.

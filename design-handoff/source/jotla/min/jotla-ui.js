@@ -1254,10 +1254,10 @@ function MiniMonthStrip({
     }
   }, _top ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
     className: "j-strong"
-  }, _top[0]), " entries come up most often as the hard moments. Tap Find to see them gathered.") : dys > 0
+  }, _top[0]), " entries come up most often as the hard moments. Tap Find to see them gathered.") : dysreg > 0
   // Dysregulation moments can carry a good or mixed mood, so "no hard
   // moments" alone would sit dishonestly next to a plum bar with a count.
-  ? `${dys} dysregulation ${dys === 1 ? 'moment' : 'moments'} logged this month, none marked as a hard moment.` : 'No hard moments logged so far. Long may it last.'));
+  ? `${dysreg} dysregulation ${dysreg === 1 ? 'moment' : 'moments'} logged this month, none marked as a hard moment.` : 'No hard moments logged so far. Long may it last.'));
 }
 Object.assign(window, {
   PushHeader,
