@@ -631,7 +631,7 @@ function SectionLabel({ children, right }) {
 // hue, but the vivid bar colours are 2.1-3.7:1 on white and cannot legally carry
 // text, so the label takes the -ink variant the palette already keeps for exactly
 // this (founder, 16 Jul: "make the text for each graph bar same colour as the
-// graph bar" — same colour, still readable).
+// graph bar" (same colour, still readable).
 function kindBarBlocks({ good, ok, hard, dysreg }) {
   return [
     { key: 'good', label: 'Good', n: good, color: window.MOOD_COLOURS.good, ink: 'var(--green-ink)' },

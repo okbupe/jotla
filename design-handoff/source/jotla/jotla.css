@@ -1,4 +1,4 @@
-/* jotla.css — app styling layered on the SEN Help tokens (../styles.css).
+/* jotla.css: app styling layered on the SEN Help tokens (../styles.css).
    Scoped under .jotla-root. Cal Sans headings, Outfit body. No ultra-thin weights. */
 
 .jotla-root {
@@ -60,7 +60,7 @@
   -webkit-font-smoothing: antialiased;
 }
 
-/* Form controls don't inherit font-family by default — keep them on-brand */
+/* Form controls don't inherit font-family by default, so keep them on-brand */
 button, input, select, textarea { font-family: inherit; }
 
 /* Generated tour/Tips illustrations (build 1.9.0, candidate). Square since 16 Jul
@@ -356,7 +356,7 @@ html.j-appmode .j-tabbar { padding-bottom: calc(env(safe-area-inset-bottom) + 14
   outline: none; resize: none; }
 .j-input::placeholder { color: var(--faint); }
 
-/* fade for screen changes — visible state is the base; animation only adds a gentle rise. */
+/* fade for screen changes: the visible state is the base; animation only adds a gentle rise. */
 @keyframes jFadeIn { from { opacity: 0.2; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .j-fade { animation: jFadeIn .28s ease; }
 @keyframes jSheetUp { from { transform: translateY(100%); } to { transform: none; } }

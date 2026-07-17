@@ -1,11 +1,11 @@
 // @ds-adherence-ignore -- omelette starter scaffold (raw elements/hex/px by design)
 
 /* BEGIN USAGE */
-// iOS.jsx — Simplified iOS 26 (Liquid Glass) device frame
+// iOS.jsx: simplified iOS 26 (Liquid Glass) device frame
 // Based on the iOS 26 UI Kit + Figma status bar spec. No assets, no deps.
 // Exports (to window): IOSDevice, IOSStatusBar, IOSNavBar, IOSGlassPill, IOSList, IOSListRow, IOSKeyboard
 //
-// Usage — wrap your screen content in <IOSDevice> to get the bezel, status bar
+// Usage: wrap your screen content in <IOSDevice> to get the bezel, status bar
 // and home indicator (props: title, dark, keyboard):
 //
 //   <IOSDevice title="Settings">
@@ -137,7 +137,7 @@ function IOSStatusBar({
 }
 
 // ─────────────────────────────────────────────────────────────
-// Liquid glass pill — blur + tint + shine
+// Liquid glass pill: blur + tint + shine
 // ─────────────────────────────────────────────────────────────
 function IOSGlassPill({
   children,
@@ -186,7 +186,7 @@ function IOSGlassPill({
 }
 
 // ─────────────────────────────────────────────────────────────
-// Navigation bar — glass pills + large title
+// Navigation bar: glass pills + large title
 // ─────────────────────────────────────────────────────────────
 function IOSNavBar({
   title = 'Title',
@@ -451,7 +451,7 @@ function IOSDevice({
 }
 
 // ─────────────────────────────────────────────────────────────
-// Keyboard — iOS 26 liquid glass
+// Keyboard: iOS 26 liquid glass
 // ─────────────────────────────────────────────────────────────
 function IOSKeyboard({
   dark = false

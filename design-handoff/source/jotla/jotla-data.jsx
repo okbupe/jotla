@@ -1,4 +1,4 @@
-// jotla-data.jsx — seed content for the Jotla prototype.
+// jotla-data.jsx: seed content for the Jotla prototype.
 // Children "Sam" and "Maria" (both invented); schools invented.
 // The sample record spans a school journey from early January to today:
 // most of it comes from a deterministic generator (seeded PRNG, so every

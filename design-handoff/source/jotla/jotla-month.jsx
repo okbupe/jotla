@@ -1,4 +1,4 @@
-// jotla-month.jsx — Month calendar (tab) and Day detail (push).
+// jotla-month.jsx: Month calendar (tab) and Day detail (push).
 const { useState: useStateM } = React;
 
 function TabTitle({ title, sub, right }) {

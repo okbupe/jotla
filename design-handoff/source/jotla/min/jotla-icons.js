@@ -1,4 +1,4 @@
-// jotla-icons.jsx — calm line icons. One stroke weight, round caps. 24x24 grid.
+// jotla-icons.jsx: calm line icons. One stroke weight, round caps. 24x24 grid.
 function Icon({
   name,
   size = 24,
