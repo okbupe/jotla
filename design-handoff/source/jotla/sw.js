@@ -5,8 +5,14 @@
      waiting for a service-worker version bump. Offline still serves the cache.
    - Heavy static assets (vendor runtime, fonts, icons): CACHE-FIRST, they are
      versioned by path or never change.
-   Bump VERSION when the precache list changes. */
-const VERSION = 'jotla-v1.12.0';
+   Bump VERSION when the precache list changes, OR when any cache-first asset is
+   replaced under a name it already had: activate() drops every cache except
+   VERSION, and that is the ONLY thing that can evict a cache-first entry. A ?v=
+   query cannot, because the fetch handler matches with ignoreSearch: true. The
+   illo deck now hashes its filenames so it never needs this; anything else that
+   reuses a filename does. Bumped to 1.13.0 on 16 Jul to evict the 3:2 illustration
+   set that v1.12.0 had cached under the square set's names. */
+const VERSION = 'jotla-v1.13.0';
 const PRECACHE = [
   './',
   'index.html',

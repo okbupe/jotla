@@ -1361,22 +1361,31 @@ function PhotoCropper({
    signs the images off: "dont delete them until we are satified about the
    images we replace them with" (16 Jul). Empty this map and the SVG deck is
    back, with nothing to restore.
-   Provenance and prompts: Downloads/Tour/MANIFEST.md, Downloads/Tips/MANIFEST.md. */
+   Provenance and prompts: Downloads/Tour/MANIFEST.md, Downloads/Tips/MANIFEST.md.
+
+   Filenames carry a hash of their own bytes, and that is load-bearing, not tidy:
+   sw.js caches webp CACHE-FIRST and matches with ignoreSearch: true, so a stable
+   name is served from cache forever and a ?v= query cannot bust it. Re-using
+   tourWelcome.webp for a new picture shipped the OLD image to every device that
+   already had one, stretched into the new square box (16 Jul, founder: "they look
+   like the old images... they also appear squished"). Content in the name means a
+   changed image is a changed URL. Regenerate with the convert script, which prints
+   this map; never hand-edit a hash. */
 const STORY_IMAGES = {
-  tourWelcome: 'illo/tourWelcome.webp',
-  tourToday: 'illo/tourToday.webp',
-  tourLog: 'illo/tourLog.webp',
-  tourGate: 'illo/tourGate.webp',
-  tourChild: 'illo/tourChild.webp',
-  tourPattern: 'illo/tourPattern.webp',
-  tourPrivate: 'illo/tourPrivate.webp',
-  tourReady: 'illo/tourReady.webp',
-  tipCalm: 'illo/tipCalm.webp',
-  tipSoft: 'illo/tipSoft.webp',
-  tipAvoid: 'illo/tipAvoid.webp',
-  tipRoom: 'illo/tipRoom.webp',
-  tipReconnect: 'illo/tipReconnect.webp',
-  tipWrite: 'illo/tipWrite.webp'
+  tourWelcome: 'illo/tourWelcome.8da0a563.webp',
+  tourToday: 'illo/tourToday.3acd7efe.webp',
+  tourLog: 'illo/tourLog.40ac0b56.webp',
+  tourGate: 'illo/tourGate.e577cf3e.webp',
+  tourChild: 'illo/tourChild.ede054f3.webp',
+  tourPattern: 'illo/tourPattern.27d2d4a0.webp',
+  tourPrivate: 'illo/tourPrivate.e5f30d36.webp',
+  tourReady: 'illo/tourReady.da35eb9b.webp',
+  tipCalm: 'illo/tipCalm.0aab1463.webp',
+  tipSoft: 'illo/tipSoft.9d7eda0d.webp',
+  tipAvoid: 'illo/tipAvoid.5ebc8852.webp',
+  tipRoom: 'illo/tipRoom.5ec028be.webp',
+  tipReconnect: 'illo/tipReconnect.7c285113.webp',
+  tipWrite: 'illo/tipWrite.56985ff3.webp'
 };
 /* Square (1:1), founder call 16 Jul: the 3:2 deck rendered too small in the slot.
    The ratio is what matters here, not the number: `.j-illo-img` pins aspect-ratio

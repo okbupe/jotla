@@ -332,6 +332,26 @@ function ok(name, cond) {
     const bad = deck.filter(([, s]) => s !== 200).map(([k]) => k);
     ok(`all ${deck.length} illustration files resolve` + (bad.length ? ` (missing: ${bad.join(', ')})` : ''),
       deck.length === 14 && bad.length === 0);
+
+    // The image must render at its OWN shape. `aspect-ratio: 1/1` in CSS used to
+    // force the box square and stretch whatever did not fit, so a stale 3:2 file
+    // came out distorted instead of merely wrong (16 Jul: "they also appear
+    // squished"). Compare the drawn box to the decoded file, not to a constant.
+    const shape = await page3.locator('img.j-illo-img').first().evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      return { drawn: r.width / r.height, real: el.naturalWidth / el.naturalHeight };
+    });
+    ok(`the illustration is not distorted (drawn ${shape.drawn.toFixed(3)} vs file ${shape.real.toFixed(3)})`,
+      Math.abs(shape.drawn - shape.real) < 0.02);
+    ok(`the illustration deck is square (${shape.real.toFixed(3)})`, Math.abs(shape.real - 1) < 0.02);
+
+    // Every filename carries a content hash. Without it the service worker, which
+    // caches webp cache-first and matches with ignoreSearch: true, serves a stale
+    // picture forever under a reused name and no query string can bust it.
+    const unhashed = Object.entries(await page3.evaluate(() => window.STORY_IMAGES))
+      .filter(([, src]) => !/\.[0-9a-f]{8}\.webp$/.test(src)).map(([k]) => k);
+    ok('every illustration filename carries a content hash' + (unhashed.length ? ` (bare: ${unhashed.join(', ')})` : ''),
+      unhashed.length === 0);
   }
 
   // Founder, 16 Jul: the heading and description "shifted up and down instead of

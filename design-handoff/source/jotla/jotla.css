@@ -68,9 +68,13 @@ button, input, select, textarea { font-family: inherit; }
    #F7F9FC, so in light mode they blend into the page with no card edge; the
    radius is what stops them reading as a hard rectangle on the dark theme, where
    a baked-in light ground cannot adapt the way the SVG deck's rgba tints do.
-   aspect-ratio holds the square from the CSS side, so the layout reserves the
-   right space before the file lands and a source below 900px still sits right. */
-.j-illo-img { display: block; width: 100%; aspect-ratio: 1 / 1; height: auto; border-radius: 16px; }
+   No aspect-ratio here on purpose. It used to say `aspect-ratio: 1 / 1`, which
+   FORCES any image into a square box and stretches whatever does not fit: when a
+   cached 3:2 image met the new square CSS, it rendered distorted rather than just
+   wrong. The width/height attributes on the <img> already reserve the right space
+   before the file lands, and without a CSS override the browser then honours the
+   image's own ratio, so a mismatch shows up honestly instead of squashed. */
+.j-illo-img { display: block; width: 100%; height: auto; border-radius: 16px; }
 
 /* Story slides hold their copy in the same place on every slide (founder, 16 Jul:
    the description "shifted up and down instead of being the same place"). The
