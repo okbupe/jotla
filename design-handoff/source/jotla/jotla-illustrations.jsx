@@ -8,9 +8,18 @@
 // tint discs and grounds, a shared character system (heads, torsos, limbs,
 // one shoe colour), shared accent helpers (sparkle, leaf, heart), no text
 // baked into the artwork. Hand-authored SVG so the app stays tiny and fully
-// offline (no raster assets). The brand hues stay static in dark mode;
-// every colour was checked against both the light (#F7F9FC) and dark
-// (#0E1726) app backgrounds.
+// offline (no raster assets). The brand hues stay static in dark mode.
+//
+// CORRECTED 17 Jul. This header used to say "every colour was checked against
+// both the light (#F7F9FC) and dark (#0E1726) app backgrounds". Rendered on
+// both grounds for the first time on 17 Jul: that is NOT true. 11 of 26 palette
+// tokens fail the 3:1 non-text floor on dark, and the tint discs (the deck's own
+// depth system) are translucent, so on a dark ground they go DARKER, not lighter
+// (tintBlue over #0E1726 = #152742). tipRoom renders a brown mud blob and
+// tipAvoid a maroon stain: both Tips cards, i.e. the 11pm crisis deck. The deck
+// reads on dark only where the dominant masses happen to be light-on-dark (skin,
+// white cards, green). That is luck, not design. Do not cite this deck as the
+// theme-correct fallback without rendering it first. See NATIVE-SYNC.md B.
 
 const FACE_FILL = '#F4C95D';   // warm butter
 const FACE_LINE = '#4A3D1E';   // soft dark brown features
@@ -196,7 +205,12 @@ const ILLO = {
   amber: '#F39C12',
   amberDeep: '#D9820B',
   red: '#E74C3C',
-  slate: '#46618C',  // structural ink that reads on light and dark grounds
+  // MEASURED 17 Jul: 5.95:1 on the light ground, 2.86:1 on dark, i.e. UNDER the 3:1
+  // non-text floor. This comment used to claim it "reads on light and dark grounds".
+  // It does not, and that false claim was taken on trust into a founder decision
+  // (NATIVE-SYNC.md section B). Where slate reads on dark it is because it sits on
+  // skin or a white card, never on the bare ground. Do not treat it as dark-safe ink.
+  slate: '#46618C',
   navy: '#22344F',   // details sitting on white surfaces
   cream: '#FDF9F2',
   white: '#FFFFFF',
