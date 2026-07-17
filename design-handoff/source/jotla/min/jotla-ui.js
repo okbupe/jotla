@@ -40,6 +40,136 @@ function pagerKeyProps(ref, label) {
   };
 }
 
+/* One skeleton for BOTH story decks, the tour and Tips (founder, 17 Jul: "the
+   positioning of image and heading and paragraph is perfect on tips and tour
+   should just use that", and the closing button on each must line up with the Tips
+   say pills). Built separately they drifted apart exactly there: different copy
+   reserves, different header heights, a foot on one and not the other, so the
+   tour's heading sat ~150px lower and its button ran into the bottom of the phone.
+   The skeleton lives here once and both decks wear it, so they cannot drift again.
+
+     head  the deck's name and count, and Skip. The subtitle line is reserved even
+           when a deck has none, so both start their picture at the same height.
+     card  the illustration slot, which flexes, above a copy block of fixed height:
+           the heading never moves and the paragraph rides up under a short one.
+     foot  the dots, centred between the copy block and the note, then the note,
+           which reserves its two lines even when empty for the same reason.
+
+   ONE reserve serves both decks, deliberately. The tour needs less (238px against
+   Tips' 347 at the largest text), but giving it its own would put its closing
+   button on a different line from the Tips pills, which is the thing being fixed. */
+const DECK_COPY_RESERVE = '17.2em';
+function StoryDeck({
+  label,
+  sub,
+  note,
+  slides,
+  labelFor,
+  onSkip,
+  renderSlide
+}) {
+  const [i, setI] = useState(0);
+  const ref = useRef(null);
+  const onScroll = () => {
+    const el = ref.current;
+    if (!el || !el.clientWidth) return;
+    const k = Math.round(el.scrollLeft / el.clientWidth);
+    if (k !== i) setI(k);
+  };
+  const goTo = k => {
+    const el = ref.current;
+    if (el) el.scrollTo({
+      left: k * el.clientWidth,
+      behavior: 'smooth'
+    });
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "j-screen",
+    style: {
+      background: 'var(--bg)'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-deck-head"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      minWidth: 0
+    }
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "j-eyebrow"
+  }, label, " \xB7 ", i + 1, " of ", slides.length), /*#__PURE__*/React.createElement("p", {
+    className: "j-meta j-deck-sub"
+  }, sub || '')), /*#__PURE__*/React.createElement("button", {
+    onClick: onSkip,
+    className: "j-press",
+    style: {
+      border: 'none',
+      background: 'none',
+      cursor: 'pointer',
+      color: 'var(--faint)',
+      fontSize: 'calc(14.5px * var(--tscale, 1))',
+      fontWeight: 500,
+      padding: 4,
+      flexShrink: 0
+    }
+  }, "Skip")), /*#__PURE__*/React.createElement("div", _extends({
+    ref: ref,
+    onScroll: onScroll,
+    className: "j-pager"
+  }, pagerKeyProps(ref, label), {
+    style: {
+      flex: 1,
+      minHeight: 0,
+      display: 'flex',
+      overflowX: 'auto',
+      overflowY: 'hidden',
+      WebkitOverflowScrolling: 'touch',
+      outline: 'none'
+    }
+  }), slides.map((s, k) =>
+  /*#__PURE__*/
+  /* overflowY auto is the valve, not the plan: the illustration gives way
+     first (see .j-illo-slot), so this only ever fires on the smallest phone
+     at the largest text, where the words alone fill the screen. It beats
+     clipping the say pill off the bottom. */
+  React.createElement("div", {
+    key: k,
+    style: {
+      flex: '0 0 100%',
+      width: '100%',
+      height: '100%',
+      scrollSnapAlign: 'start',
+      overflowX: 'hidden',
+      overflowY: 'auto'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-deck-card",
+    style: {
+      '--illo-copy': DECK_COPY_RESERVE
+    }
+  }, renderSlide(s, k))))), /*#__PURE__*/React.createElement("div", {
+    className: "j-deck-foot"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-deck-dots"
+  }, slides.map((s, k) => /*#__PURE__*/React.createElement("button", {
+    key: k,
+    "aria-label": labelFor(s, k),
+    "aria-current": i === k,
+    onClick: () => goTo(k),
+    style: {
+      width: i === k ? 18 : 7,
+      height: 7,
+      borderRadius: 99,
+      transition: 'all .2s ease',
+      border: 'none',
+      padding: 0,
+      cursor: 'pointer',
+      background: i === k ? 'var(--blue)' : 'var(--chip-border)'
+    }
+  }))), /*#__PURE__*/React.createElement("p", {
+    className: "j-meta j-deck-note"
+  }, note || '')));
+}
+
 /* ---- CalendarSheet + DateField (12 Jul 2026) ----
    Typing a whole date to backdate a log is hostile, so every date in the app
    is picked from a calendar instead. Shaped like the Month view: the same
@@ -1277,6 +1407,7 @@ Object.assign(window, {
   inDateRange,
   PlusLockedCard,
   pagerKeyProps,
+  StoryDeck,
   CalendarSheet,
   DateField
 });

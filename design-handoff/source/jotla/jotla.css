@@ -146,6 +146,30 @@ button, input, select, textarea { font-family: inherit; }
 .j-illo-tail { margin-top: auto; padding-top: 18px; display: flex;
   align-items: flex-start; justify-content: center; }
 
+/* ---- the story-deck skeleton (tour + Tips, see StoryDeck in jotla-ui.jsx) ---- */
+.j-deck-head { display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 12px; padding: 14px 18px 6px; flex-shrink: 0; }
+/* Reserved even when a deck has no subtitle, so both decks start their picture at
+   the same height. Same trick as the copy block, one line instead of many. */
+.j-deck-sub { min-height: 1.45em; margin-top: 3px; }
+.j-deck-card { height: 100%; box-sizing: border-box; padding: 6px 20px 10px;
+  display: flex; flex-direction: column; align-items: center; text-align: center; }
+.j-deck-foot { flex-shrink: 0; display: flex; flex-direction: column;
+  padding: 0 20px calc(14px + env(safe-area-inset-bottom)); }
+/* The dots sit centred in the gap between the copy block above and the note below
+   (founder, 17 Jul: "above the advisory text, but below the green pills. central
+   between them"). */
+.j-deck-dots { flex: 1 0 auto; min-height: 36px; display: flex; align-items: center;
+  justify-content: center; gap: 6px; }
+/* Reserves its two lines even when empty. The tour has no advisory, and without
+   the reserve its dots would sit lower than the Tips ones. */
+.j-deck-note { min-height: 2.9em; text-align: center; white-space: pre-line; line-height: 1.45; }
+
+/* .j-btn is built for a full-width action bar (width: 100%), so dropped into a
+   centred slot it collapses to exactly its text with no side padding of its own.
+   That is what both deck CTAs were doing. This gives them their own shape. */
+.j-btn-inline { width: auto; padding: 0 26px; }
+
 /* ---- dark theme ---- */
 .jotla-root.j-dark {
   --bg: #0E1726;

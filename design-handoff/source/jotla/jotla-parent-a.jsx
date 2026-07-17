@@ -892,91 +892,53 @@ const DYSREG_TIPS = [
 const TIPS_ADVISORY = 'Swipe for the next one. Good general practice,\nnot medical advice; you know your child best.';
 
 function DysregTipsScreen({ nav }) {
-  const [idx, setIdx] = useStateA(0);
-  const pagerRef = useRefA(null);
-  const onScroll = () => {
-    const el = pagerRef.current; if (!el || !el.clientWidth) return;
-    const i = Math.round(el.scrollLeft / el.clientWidth);
-    if (i !== idx) setIdx(i);
-  };
+  // Same skeleton as the tour, from StoryDeck (founder, 17 Jul). The push header
+  // is gone: the deck owns the screen, names itself and counts its own cards in
+  // the header, which is what lets the cards drop their old "N of 6" eyebrow.
   return (
-    <div className="j-screen">
-      {/* Full-bleed like the tour (founder, 17 Jul): the push header goes and the
-          deck owns the screen. Progress moves up here, which is what lets the cards
-          drop their own "N of 6" eyebrow and buys back a line of height for the
-          no-scroll rule. Skip sits in the far corner, exactly as the tour's does. */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
-        gap: 12, padding: '14px 18px 6px' }}>
-        <div style={{ minWidth: 0 }}>
-          <p className="j-eyebrow">Tips · {idx + 1} of {DYSREG_TIPS.length}</p>
-          <p className="j-meta" style={{ marginTop: 3 }}>How to be, when it is happening</p>
-        </div>
-        <button onClick={() => nav.back()} className="j-press" style={{ border: 'none', background: 'none',
-          cursor: 'pointer', color: 'var(--faint)', fontSize: 'calc(14.5px * var(--tscale, 1))',
-          fontWeight: 500, padding: 4, flexShrink: 0 }}>Skip</button>
-      </div>
-      <div ref={pagerRef} onScroll={onScroll} className="j-pager j-fade" {...pagerKeyProps(pagerRef, 'Tips')}
-        style={{ flex: 1, minHeight: 0, display: 'flex',
-        overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch', outline: 'none' }}>
-        {DYSREG_TIPS.map((t, i) => (
-          /* A Tips card must not scroll (founder, 17 Jul). The illustration gives
-             way instead (see .j-illo-slot), so on every normal phone this never
-             fires; it is the valve for the one case where the words alone fill the
-             screen, and it beats clipping the say pill off the bottom. */
-          <div key={i} style={{ flex: '0 0 100%', width: '100%', height: '100%', scrollSnapAlign: 'start', overflowX: 'hidden', overflowY: 'auto' }}>
-            {/* Measured at 375px across all three text sizes, never guessed. The
-                deck's tallest copy block is card 5 ("Afterwards, reconnect first":
-                two-line title, longest body, say pill), which runs 263px at the
-                default, 288 at Large and 347 at Extra large. 17.2em covers the
-                worst of the three with 8px to spare at Extra large and about 21px
-                of slack at the default. */}
-            <div className="j-pad" style={{ '--illo-copy': '17.2em', height: '100%', boxSizing: 'border-box',
-              paddingTop: 6, paddingBottom: 16,
-              display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-              {/* brand-style scene illustration (build 1.8.0); the old icon square is the fallback.
-                  The slot takes the height the copy block leaves, which is the same
-                  on every card, so the picture centres in it and shrinks to fit
-                  rather than the card scrolling. */}
-              {t.illo
-                ? <span className="j-illo-slot" style={{ marginBottom: 12 }}>
-                    <StoryIllo scene={t.illo} width={264} />
-                  </span>
-                : <span style={{ width: 76, height: 76, borderRadius: 24, background: t.tint, display: 'flex',
-                    alignItems: 'center', justifyContent: 'center', marginBottom: 18, flexShrink: 0 }}>
-                    <Icon name={t.icon} size={36} color={t.ink} />
-                  </span>}
-              {/* The copy block carries the reserve; the heading sits at its top on
-                  every card and the paragraph rides up under a one-line title. */}
-              <div className="j-illo-copy">
-                <h1 className="j-h1 j-illo-title" style={{ marginBottom: 12 }}>{t.title}</h1>
-                <p className="j-body j-illo-body" style={{ color: 'var(--muted)', fontSize: 'calc(16.5px * var(--tscale, 1))', lineHeight: 1.55, maxWidth: 330 }}>{t.body}</p>
-                {(t.say || t.cta) && (
-                  <div className="j-illo-tail">
-                    {t.say && (
-                      <span style={{ padding: '10px 18px', borderRadius: 999, background: t.tint, color: t.ink,
-                        fontSize: 'calc(15.5px * var(--tscale, 1))', fontWeight: 500 }}>{t.say}</span>
-                    )}
-                    {t.cta && (
-                      <button className="j-btn j-btn-primary" onClick={() => nav.go('handover')}>
-                        <Icon name="note" size={18} color="#fff" /> Open Dysregulation
-                      </button>
-                    )}
-                  </div>
+    <StoryDeck
+      label="Tips"
+      sub="How to be, when it is happening"
+      note={TIPS_ADVISORY}
+      slides={DYSREG_TIPS}
+      onSkip={() => nav.back()}
+      labelFor={(t, i) => 'Tip ' + (i + 1) + ' of ' + DYSREG_TIPS.length + ': ' + t.title.replace(/\n/g, ' ')}
+      renderSlide={(t) => (
+        <React.Fragment>
+          {/* brand-style scene illustration (build 1.8.0); the old icon square is the
+              fallback. The slot takes the height the copy block leaves, which is the
+              same on every card, so the picture centres in it and shrinks to fit
+              rather than the card scrolling. */}
+          {t.illo
+            ? <span className="j-illo-slot" style={{ marginBottom: 12 }}>
+                <StoryIllo scene={t.illo} width={264} />
+              </span>
+            : <span style={{ width: 76, height: 76, borderRadius: 24, background: t.tint, display: 'flex',
+                alignItems: 'center', justifyContent: 'center', marginBottom: 18, flexShrink: 0 }}>
+                <Icon name={t.icon} size={36} color={t.ink} />
+              </span>}
+          {/* The copy block carries the reserve; the heading sits at its top on
+              every card and the paragraph rides up under a one-line title. */}
+          <div className="j-illo-copy">
+            <h1 className="j-h1 j-illo-title" style={{ marginBottom: 12 }}>{t.title}</h1>
+            <p className="j-body j-illo-body" style={{ color: 'var(--muted)', fontSize: 'calc(16.5px * var(--tscale, 1))', lineHeight: 1.55, maxWidth: 330 }}>{t.body}</p>
+            {(t.say || t.cta) && (
+              <div className="j-illo-tail">
+                {t.say && (
+                  <span style={{ padding: '10px 18px', borderRadius: 999, background: t.tint, color: t.ink,
+                    fontSize: 'calc(15.5px * var(--tscale, 1))', fontWeight: 500 }}>{t.say}</span>
+                )}
+                {t.cta && (
+                  <button className="j-btn j-btn-primary j-btn-inline" onClick={() => nav.go('handover')}>
+                    <Icon name="note" size={18} color="#fff" /> Open Dysregulation
+                  </button>
                 )}
               </div>
-            </div>
+            )}
           </div>
-        ))}
-      </div>
-      {/* Nothing at the bottom but the advisory (founder, 17 Jul). The dots went
-          with the buttons: progress is already in the header, so they were a second
-          way of saying it, and they cost the height the no-scroll rule needs. The
-          pager still answers the arrow keys via pagerKeyProps, so losing the dots
-          does not cost a keyboard user their way through the deck. */}
-      <div style={{ padding: '8px 20px calc(14px + env(safe-area-inset-bottom))', flexShrink: 0 }}>
-        <p className="j-meta" style={{ textAlign: 'center', whiteSpace: 'pre-line', lineHeight: 1.45 }}>{TIPS_ADVISORY}</p>
-      </div>
-    </div>
+        </React.Fragment>
+      )}
+    />
   );
 }
 

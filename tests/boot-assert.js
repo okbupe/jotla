@@ -320,8 +320,8 @@ function ok(name, cond) {
   ok('the tour carries no Back/Next pair any more',
     (await page3.locator('button:has-text("Next")').count()) === 0
     && (await page3.locator('button:has-text("Back")').count()) === 0);
-  ok('the tour dots are gone (progress lives in the header)',
-    (await page3.locator('button[aria-label^="Step "]').count()) === 0);
+  ok('the tour keeps its dots (founder, 17 Jul: put them back)',
+    (await page3.locator('button[aria-label^="Step "]').count()) === 8);
   // .j-eyebrow is text-transform: uppercase, and innerText reports the transformed
   // text, so match case-insensitively rather than asserting the source casing.
   ok('the tour header counts the slides', /Tour · 1 of 8/i.test(tourText));
@@ -1310,7 +1310,8 @@ function ok(name, cond) {
   ok('tips keeps its subtitle', /How to be, when it is happening/i.test(tipsChrome));
   ok('tips offers Skip in the far corner', (await page15.locator('button:has-text("Skip")').count()) === 1);
   ok('tips has no back-arrow push header any more', (await page15.locator('button[aria-label="Back"]').count()) === 0);
-  ok('the tips dots are gone', (await page15.locator('button[aria-label^="Tip "]').count()) === 0);
+  ok('tips keeps its dots', (await page15.locator('button[aria-label^="Tip "]').count()) === 6);
+
   // The advisory's line break is deliberate, so assert the break, not just the text.
   const advisory = await page15.evaluate(() => {
     const p = [...document.querySelectorAll('p')].find(e => e.textContent.startsWith('Swipe for the next one'));
@@ -1320,6 +1321,68 @@ function ok(name, cond) {
     !!advisory && advisory.txt === 'Swipe for the next one. Good general practice,\nnot medical advice; you know your child best.');
   ok('and its break is honoured, not collapsed (renders on 2 lines)',
     !!advisory && advisory.ws === 'pre-line' && advisory.lines === 2);
+
+  // Both decks wear ONE skeleton (StoryDeck), so a parent moving between them sees
+  // the same page. Founder, 17 Jul: the tour's heading sat ~150px lower than Tips',
+  // and its closing button has to land on the same line as the Tips say pills.
+  // Measured across decks, which is the only way to catch them drifting apart.
+  // Reads the NTH card, not the first: on the tour only the last slide carries a
+  // tail, so a first-card read would report null and quietly pass nothing.
+  const deckGeom = (n) => {
+    const pane = document.querySelector('.j-pager');
+    const paneR = pane.getBoundingClientRect();
+    const card = document.querySelectorAll('.j-deck-card')[n];
+    const tail = card.querySelector('.j-illo-tail');
+    const dots = document.querySelector('.j-deck-dots');
+    const r = (el) => el ? +el.getBoundingClientRect().top.toFixed(1) : null;
+    return {
+      illoTop: r(card.querySelector('.j-illo-slot')),
+      headTop: r(card.querySelector('.j-illo-title')),
+      bodyTop: r(card.querySelector('.j-illo-body')),
+      tailBottom: tail ? +tail.getBoundingClientRect().bottom.toFixed(1) : null,
+      dotsMid: dots ? +((dots.getBoundingClientRect().top + dots.getBoundingClientRect().bottom) / 2).toFixed(1) : null,
+      paneTop: +paneR.top.toFixed(1),
+    };
+  };
+  const tipsGeom = await page15.evaluate(deckGeom, 0);       // Tips card 1 carries a say pill
+  await page15.goto(URL_APP, { waitUntil: 'networkidle' });
+  await page15.waitForTimeout(1000);
+  await page15.getByText('Settings', { exact: true }).last().click();
+  await page15.waitForTimeout(450);
+  await page15.locator('[role="radio"][aria-label="Extra large text"]').click();
+  await page15.waitForTimeout(300);
+  await page15.getByText('Take the tour', { exact: false }).first().click();
+  await page15.waitForTimeout(700);
+  const tourGeom = await page15.evaluate(deckGeom, 0);
+  const near = (a, b, tol) => a !== null && b !== null && Math.abs(a - b) <= tol;
+  ok(`both decks start their picture at the same height (tips ${tipsGeom.illoTop} vs tour ${tourGeom.illoTop})`,
+    near(tipsGeom.illoTop, tourGeom.illoTop, 1));
+  ok(`both decks put the heading on the same line (tips ${tipsGeom.headTop} vs tour ${tourGeom.headTop})`,
+    near(tipsGeom.headTop, tourGeom.headTop, 1));
+  ok(`both decks put the paragraph on the same line (tips ${tipsGeom.bodyTop} vs tour ${tourGeom.bodyTop})`,
+    near(tipsGeom.bodyTop, tourGeom.bodyTop, 1));
+  ok(`both decks centre their dots on the same line (tips ${tipsGeom.dotsMid} vs tour ${tourGeom.dotsMid})`,
+    near(tipsGeom.dotsMid, tourGeom.dotsMid, 1));
+  // The tour's closing button vs the Tips say pill: same bottom line.
+  await page15.evaluate(() => { const p = document.querySelector('.j-pager'); p.scrollTo({ left: p.clientWidth * 7 }); });
+  await page15.waitForTimeout(700);
+  const tourEnd = await page15.evaluate(deckGeom, 7);       // only the last tour slide has a tail
+  ok(`the tour's closing button sits on the same line as the Tips say pills (${tourEnd.tailBottom} vs ${tipsGeom.tailBottom})`,
+    near(tourEnd.tailBottom, tipsGeom.tailBottom, 1));
+  ok('the dots sit below the tail and above the note',
+    tourEnd.dotsMid > tourEnd.tailBottom);
+  // .j-btn is width:100% for the action bar; inline in a deck it collapsed to bare
+  // text with no side padding of its own. Assert it has room around the words.
+  const cta = await page15.evaluate(() => {
+    const b = [...document.querySelectorAll('.j-illo-tail button')][0];
+    if (!b) return null;
+    const label = b.querySelector('svg') ? b.lastChild : b;
+    const w = b.getBoundingClientRect().width;
+    const r = document.createRange(); r.selectNodeContents(b);
+    return { btn: Math.round(w), content: Math.round(r.getBoundingClientRect().width) };
+  });
+  ok(`the closing button has padding around its label (button ${cta && cta.btn}px vs label ${cta && cta.content}px)`,
+    !!cta && cta.btn - cta.content >= 40);
   await ctx15.close();
 
   await browser.close();

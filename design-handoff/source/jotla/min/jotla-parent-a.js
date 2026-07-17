@@ -1939,161 +1939,75 @@ const TIPS_ADVISORY = 'Swipe for the next one. Good general practice,\nnot medic
 function DysregTipsScreen({
   nav
 }) {
-  const [idx, setIdx] = useStateA(0);
-  const pagerRef = useRefA(null);
-  const onScroll = () => {
-    const el = pagerRef.current;
-    if (!el || !el.clientWidth) return;
-    const i = Math.round(el.scrollLeft / el.clientWidth);
-    if (i !== idx) setIdx(i);
-  };
-  return /*#__PURE__*/React.createElement("div", {
-    className: "j-screen"
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      alignItems: 'flex-start',
-      justifyContent: 'space-between',
-      gap: 12,
-      padding: '14px 18px 6px'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      minWidth: 0
-    }
-  }, /*#__PURE__*/React.createElement("p", {
-    className: "j-eyebrow"
-  }, "Tips \xB7 ", idx + 1, " of ", DYSREG_TIPS.length), /*#__PURE__*/React.createElement("p", {
-    className: "j-meta",
-    style: {
-      marginTop: 3
-    }
-  }, "How to be, when it is happening")), /*#__PURE__*/React.createElement("button", {
-    onClick: () => nav.back(),
-    className: "j-press",
-    style: {
-      border: 'none',
-      background: 'none',
-      cursor: 'pointer',
-      color: 'var(--faint)',
-      fontSize: 'calc(14.5px * var(--tscale, 1))',
-      fontWeight: 500,
-      padding: 4,
-      flexShrink: 0
-    }
-  }, "Skip")), /*#__PURE__*/React.createElement("div", _extends({
-    ref: pagerRef,
-    onScroll: onScroll,
-    className: "j-pager j-fade"
-  }, pagerKeyProps(pagerRef, 'Tips'), {
-    style: {
-      flex: 1,
-      minHeight: 0,
-      display: 'flex',
-      overflowX: 'auto',
-      overflowY: 'hidden',
-      WebkitOverflowScrolling: 'touch',
-      outline: 'none'
-    }
-  }), DYSREG_TIPS.map((t, i) =>
-  /*#__PURE__*/
-  /* A Tips card must not scroll (founder, 17 Jul). The illustration gives
-     way instead (see .j-illo-slot), so on every normal phone this never
-     fires; it is the valve for the one case where the words alone fill the
-     screen, and it beats clipping the say pill off the bottom. */
-  React.createElement("div", {
-    key: i,
-    style: {
-      flex: '0 0 100%',
-      width: '100%',
-      height: '100%',
-      scrollSnapAlign: 'start',
-      overflowX: 'hidden',
-      overflowY: 'auto'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "j-pad",
-    style: {
-      '--illo-copy': '17.2em',
-      height: '100%',
-      boxSizing: 'border-box',
-      paddingTop: 6,
-      paddingBottom: 16,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      textAlign: 'center'
-    }
-  }, t.illo ? /*#__PURE__*/React.createElement("span", {
-    className: "j-illo-slot",
-    style: {
-      marginBottom: 12
-    }
-  }, /*#__PURE__*/React.createElement(StoryIllo, {
-    scene: t.illo,
-    width: 264
-  })) : /*#__PURE__*/React.createElement("span", {
-    style: {
-      width: 76,
-      height: 76,
-      borderRadius: 24,
-      background: t.tint,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginBottom: 18,
-      flexShrink: 0
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: t.icon,
-    size: 36,
-    color: t.ink
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "j-illo-copy"
-  }, /*#__PURE__*/React.createElement("h1", {
-    className: "j-h1 j-illo-title",
-    style: {
-      marginBottom: 12
-    }
-  }, t.title), /*#__PURE__*/React.createElement("p", {
-    className: "j-body j-illo-body",
-    style: {
-      color: 'var(--muted)',
-      fontSize: 'calc(16.5px * var(--tscale, 1))',
-      lineHeight: 1.55,
-      maxWidth: 330
-    }
-  }, t.body), (t.say || t.cta) && /*#__PURE__*/React.createElement("div", {
-    className: "j-illo-tail"
-  }, t.say && /*#__PURE__*/React.createElement("span", {
-    style: {
-      padding: '10px 18px',
-      borderRadius: 999,
-      background: t.tint,
-      color: t.ink,
-      fontSize: 'calc(15.5px * var(--tscale, 1))',
-      fontWeight: 500
-    }
-  }, t.say), t.cta && /*#__PURE__*/React.createElement("button", {
-    className: "j-btn j-btn-primary",
-    onClick: () => nav.go('handover')
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "note",
-    size: 18,
-    color: "#fff"
-  }), " Open Dysregulation"))))))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: '8px 20px calc(14px + env(safe-area-inset-bottom))',
-      flexShrink: 0
-    }
-  }, /*#__PURE__*/React.createElement("p", {
-    className: "j-meta",
-    style: {
-      textAlign: 'center',
-      whiteSpace: 'pre-line',
-      lineHeight: 1.45
-    }
-  }, TIPS_ADVISORY)));
+  // Same skeleton as the tour, from StoryDeck (founder, 17 Jul). The push header
+  // is gone: the deck owns the screen, names itself and counts its own cards in
+  // the header, which is what lets the cards drop their old "N of 6" eyebrow.
+  return /*#__PURE__*/React.createElement(StoryDeck, {
+    label: "Tips",
+    sub: "How to be, when it is happening",
+    note: TIPS_ADVISORY,
+    slides: DYSREG_TIPS,
+    onSkip: () => nav.back(),
+    labelFor: (t, i) => 'Tip ' + (i + 1) + ' of ' + DYSREG_TIPS.length + ': ' + t.title.replace(/\n/g, ' '),
+    renderSlide: t => /*#__PURE__*/React.createElement(React.Fragment, null, t.illo ? /*#__PURE__*/React.createElement("span", {
+      className: "j-illo-slot",
+      style: {
+        marginBottom: 12
+      }
+    }, /*#__PURE__*/React.createElement(StoryIllo, {
+      scene: t.illo,
+      width: 264
+    })) : /*#__PURE__*/React.createElement("span", {
+      style: {
+        width: 76,
+        height: 76,
+        borderRadius: 24,
+        background: t.tint,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 18,
+        flexShrink: 0
+      }
+    }, /*#__PURE__*/React.createElement(Icon, {
+      name: t.icon,
+      size: 36,
+      color: t.ink
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "j-illo-copy"
+    }, /*#__PURE__*/React.createElement("h1", {
+      className: "j-h1 j-illo-title",
+      style: {
+        marginBottom: 12
+      }
+    }, t.title), /*#__PURE__*/React.createElement("p", {
+      className: "j-body j-illo-body",
+      style: {
+        color: 'var(--muted)',
+        fontSize: 'calc(16.5px * var(--tscale, 1))',
+        lineHeight: 1.55,
+        maxWidth: 330
+      }
+    }, t.body), (t.say || t.cta) && /*#__PURE__*/React.createElement("div", {
+      className: "j-illo-tail"
+    }, t.say && /*#__PURE__*/React.createElement("span", {
+      style: {
+        padding: '10px 18px',
+        borderRadius: 999,
+        background: t.tint,
+        color: t.ink,
+        fontSize: 'calc(15.5px * var(--tscale, 1))',
+        fontWeight: 500
+      }
+    }, t.say), t.cta && /*#__PURE__*/React.createElement("button", {
+      className: "j-btn j-btn-primary j-btn-inline",
+      onClick: () => nav.go('handover')
+    }, /*#__PURE__*/React.createElement(Icon, {
+      name: "note",
+      size: 18,
+      color: "#fff"
+    }), " Open Dysregulation"))))
+  });
 }
 Object.assign(window, {
   TodayScreen,

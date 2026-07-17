@@ -1,8 +1,6 @@
-function _extends() { return _extends = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends.apply(null, arguments); }
 // jotla-onboard.jsx: Add a child (blank-record onboarding) + a guided app tour.
 const {
-  useState: useStateO,
-  useRef: useRefO
+  useState: useStateO
 } = React;
 const ONBOARD_GLYPHS = ['person', 'heart', 'star', 'leaf', 'sparkle', 'shield', 'bell', 'hand', 'today', 'note'];
 
@@ -426,129 +424,70 @@ function TourScreen({
 }) {
   const name = profile && profile.name || 'your child';
   const steps = TOUR_STEPS(name);
-  const [i, setI] = useStateO(0);
-  const pagerRef = useRefO(null);
-  const onScroll = () => {
-    const el = pagerRef.current;
-    if (!el || !el.clientWidth) return;
-    const k = Math.round(el.scrollLeft / el.clientWidth);
-    if (k !== i) setI(k);
-  };
-  return /*#__PURE__*/React.createElement("div", {
-    className: "j-screen",
-    style: {
-      background: 'var(--bg)'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: '14px 18px 4px'
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "j-eyebrow"
-  }, "Tour \xB7 ", i + 1, " of ", steps.length), /*#__PURE__*/React.createElement("button", {
-    onClick: () => nav.home(),
-    className: "j-press",
-    style: {
-      border: 'none',
-      background: 'none',
-      cursor: 'pointer',
-      color: 'var(--faint)',
-      fontSize: 'calc(14.5px * var(--tscale, 1))',
-      fontWeight: 500,
-      padding: 4
-    }
-  }, "Skip")), /*#__PURE__*/React.createElement("div", _extends({
-    ref: pagerRef,
-    onScroll: onScroll,
-    className: "j-pager"
-  }, pagerKeyProps(pagerRef, 'Tour'), {
-    style: {
-      flex: 1,
-      minHeight: 0,
-      display: 'flex',
-      overflowX: 'auto',
-      overflowY: 'hidden',
-      WebkitOverflowScrolling: 'touch',
-      outline: 'none'
-    }
-  }), steps.map((step, k) => /*#__PURE__*/React.createElement("div", {
-    key: k,
-    style: {
-      flex: '0 0 100%',
-      width: '100%',
-      height: '100%',
-      scrollSnapAlign: 'start',
-      overflowX: 'hidden',
-      overflowY: 'auto'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      '--illo-copy': '12em',
-      height: '100%',
-      boxSizing: 'border-box',
-      padding: '6px 28px calc(12px + env(safe-area-inset-bottom))',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      textAlign: 'center'
-    }
-  }, step.illo ? /*#__PURE__*/React.createElement("span", {
-    className: "j-illo-slot",
-    style: {
-      marginBottom: 20
-    }
-  }, /*#__PURE__*/React.createElement(StoryIllo, {
-    scene: step.illo,
-    width: 300
-  })) : /*#__PURE__*/React.createElement("div", {
-    style: {
-      width: 134,
-      height: 134,
-      borderRadius: '50%',
-      background: step.tint,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginBottom: 30,
-      flexShrink: 0
-    }
-  }, step.face ? /*#__PURE__*/React.createElement(Face, {
-    mood: "good",
-    size: 92
-  }) : /*#__PURE__*/React.createElement(Icon, {
-    name: step.icon,
-    size: 58,
-    color: step.color,
-    stroke: 1.9
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "j-illo-copy"
-  }, /*#__PURE__*/React.createElement("h1", {
-    className: "j-h1 j-illo-title",
-    style: {
-      marginBottom: 12,
-      maxWidth: 320
-    }
-  }, step.title), /*#__PURE__*/React.createElement("p", {
-    className: "j-body j-illo-body",
-    style: {
-      color: 'var(--muted)',
-      fontSize: 'calc(16.5px * var(--tscale, 1))',
-      lineHeight: 1.5,
-      maxWidth: 332
-    }
-  }, step.body), k === steps.length - 1 && /*#__PURE__*/React.createElement("div", {
-    className: "j-illo-tail"
-  }, /*#__PURE__*/React.createElement("button", {
-    className: "j-btn j-btn-primary",
-    onClick: () => nav.home()
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "check",
-    size: 20,
-    color: "#fff"
-  }), " Start the record"))))))));
+  // Same skeleton as Tips, from StoryDeck: the picture, heading and paragraph land
+  // in the same place on both decks, and the closing button below lines up with the
+  // Tips say pills (founder, 17 Jul). The tour carries no note of its own; the foot
+  // still reserves one so the dots sit where the Tips dots do.
+  return /*#__PURE__*/React.createElement(StoryDeck, {
+    label: "Tour",
+    slides: steps,
+    onSkip: () => nav.home(),
+    labelFor: (s2, k) => 'Step ' + (k + 1) + ' of ' + steps.length + ': ' + s2.title.replace(/\n/g, ' '),
+    renderSlide: (step, k) => /*#__PURE__*/React.createElement(React.Fragment, null, step.illo ? /*#__PURE__*/React.createElement("span", {
+      className: "j-illo-slot",
+      style: {
+        marginBottom: 20
+      }
+    }, /*#__PURE__*/React.createElement(StoryIllo, {
+      scene: step.illo,
+      width: 300
+    })) : /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 134,
+        height: 134,
+        borderRadius: '50%',
+        background: step.tint,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 30,
+        flexShrink: 0
+      }
+    }, step.face ? /*#__PURE__*/React.createElement(Face, {
+      mood: "good",
+      size: 92
+    }) : /*#__PURE__*/React.createElement(Icon, {
+      name: step.icon,
+      size: 58,
+      color: step.color,
+      stroke: 1.9
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "j-illo-copy"
+    }, /*#__PURE__*/React.createElement("h1", {
+      className: "j-h1 j-illo-title",
+      style: {
+        marginBottom: 12,
+        maxWidth: 320
+      }
+    }, step.title), /*#__PURE__*/React.createElement("p", {
+      className: "j-body j-illo-body",
+      style: {
+        color: 'var(--muted)',
+        fontSize: 'calc(16.5px * var(--tscale, 1))',
+        lineHeight: 1.5,
+        maxWidth: 332
+      }
+    }, step.body), k === steps.length - 1 && /*#__PURE__*/React.createElement("div", {
+      className: "j-illo-tail"
+    }, /*#__PURE__*/React.createElement("button", {
+      className: "j-btn j-btn-primary j-btn-inline",
+      onClick: () => nav.home()
+    }, /*#__PURE__*/React.createElement(Icon, {
+      name: "check",
+      size: 20,
+      color: "#fff"
+    }), " Start the record"))))
+  });
 }
 Object.assign(window, {
   AddChildScreen,
