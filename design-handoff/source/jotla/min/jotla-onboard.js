@@ -1,6 +1,8 @@
+function _extends() { return _extends = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends.apply(null, arguments); }
 // jotla-onboard.jsx: Add a child (blank-record onboarding) + a guided app tour.
 const {
-  useState: useStateO
+  useState: useStateO,
+  useRef: useRefO
 } = React;
 const ONBOARD_GLYPHS = ['person', 'heart', 'star', 'leaf', 'sparkle', 'shield', 'bell', 'hand', 'today', 'note'];
 
@@ -425,10 +427,13 @@ function TourScreen({
   const name = profile && profile.name || 'your child';
   const steps = TOUR_STEPS(name);
   const [i, setI] = useStateO(0);
-  const step = steps[i];
-  const last = i === steps.length - 1;
-  const next = () => last ? nav.home() : setI(i + 1);
-  const back = () => i === 0 ? nav.home() : setI(i - 1);
+  const pagerRef = useRefO(null);
+  const onScroll = () => {
+    const el = pagerRef.current;
+    if (!el || !el.clientWidth) return;
+    const k = Math.round(el.scrollLeft / el.clientWidth);
+    if (k !== i) setI(k);
+  };
   return /*#__PURE__*/React.createElement("div", {
     className: "j-screen",
     style: {
@@ -455,30 +460,45 @@ function TourScreen({
       fontWeight: 500,
       padding: 4
     }
-  }, "Skip")), /*#__PURE__*/React.createElement("div", {
+  }, "Skip")), /*#__PURE__*/React.createElement("div", _extends({
+    ref: pagerRef,
+    onScroll: onScroll,
+    className: "j-pager"
+  }, pagerKeyProps(pagerRef, 'Tour'), {
     style: {
       flex: 1,
       minHeight: 0,
       display: 'flex',
-      flexDirection: 'column',
+      overflowX: 'auto',
+      overflowY: 'hidden',
+      WebkitOverflowScrolling: 'touch',
+      outline: 'none'
+    }
+  }), steps.map((step, k) => /*#__PURE__*/React.createElement("div", {
+    key: k,
+    style: {
+      flex: '0 0 100%',
+      width: '100%',
+      height: '100%',
+      scrollSnapAlign: 'start',
+      overflowX: 'hidden',
       overflowY: 'auto'
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      '--illo-body': '9em',
-      margin: 'auto',
+      '--illo-copy': '15em',
+      height: '100%',
+      boxSizing: 'border-box',
+      padding: '6px 28px calc(12px + env(safe-area-inset-bottom))',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      textAlign: 'center',
-      padding: '10px 28px'
+      textAlign: 'center'
     }
   }, step.illo ? /*#__PURE__*/React.createElement("span", {
+    className: "j-illo-slot",
     style: {
-      marginBottom: 20,
-      width: '100%',
-      display: 'flex',
-      justifyContent: 'center'
+      marginBottom: 20
     }
   }, /*#__PURE__*/React.createElement(StoryIllo, {
     scene: step.illo,
@@ -503,7 +523,9 @@ function TourScreen({
     size: 58,
     color: step.color,
     stroke: 1.9
-  })), /*#__PURE__*/React.createElement("h1", {
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "j-illo-copy"
+  }, /*#__PURE__*/React.createElement("h1", {
     className: "j-h1 j-illo-title",
     style: {
       marginBottom: 12,
@@ -517,58 +539,16 @@ function TourScreen({
       lineHeight: 1.5,
       maxWidth: 332
     }
-  }, step.body))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: '12px 20px calc(18px + env(safe-area-inset-bottom))'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      justifyContent: 'center',
-      gap: 6,
-      marginBottom: 16
-    }
-  }, steps.map((s2, k) => /*#__PURE__*/React.createElement("button", {
-    key: k,
-    "aria-label": 'Step ' + (k + 1) + ' of ' + steps.length + ': ' + s2.title.replace(/\n/g, ' '),
-    "aria-current": k === i,
-    onClick: () => setI(k),
-    style: {
-      width: k === i ? 18 : 7,
-      height: 7,
-      borderRadius: 99,
-      transition: 'all .2s ease',
-      border: 'none',
-      padding: 0,
-      cursor: 'pointer',
-      background: k === i ? 'var(--blue)' : 'var(--chip-border)'
-    }
-  }))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      gap: 12
-    }
+  }, step.body), k === steps.length - 1 && /*#__PURE__*/React.createElement("div", {
+    className: "j-illo-tail"
   }, /*#__PURE__*/React.createElement("button", {
-    className: "j-btn j-btn-ghost",
-    style: {
-      flex: '0 0 34%'
-    },
-    onClick: back
-  }, i === 0 ? 'Close' : 'Back'), /*#__PURE__*/React.createElement("button", {
     className: "j-btn j-btn-primary",
-    style: {
-      flex: 1
-    },
-    onClick: next
-  }, last ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Icon, {
+    onClick: () => nav.home()
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "check",
     size: 20,
     color: "#fff"
-  }), " Start the record") : /*#__PURE__*/React.createElement(React.Fragment, null, "Next ", /*#__PURE__*/React.createElement(Icon, {
-    name: "arrowRight",
-    size: 20,
-    color: "#fff"
-  }))))));
+  }), " Start the record"))))))));
 }
 Object.assign(window, {
   AddChildScreen,

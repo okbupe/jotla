@@ -73,41 +73,69 @@ button, input, select, textarea { font-family: inherit; }
    cached 3:2 image met the new square CSS, it rendered distorted rather than just
    wrong. The width/height attributes on the <img> already reserve the right space
    before the file lands, and without a CSS override the browser then honours the
-   image's own ratio, so a mismatch shows up honestly instead of squashed. */
-.j-illo-img { display: block; width: 100%; height: auto; border-radius: 16px; }
+   image's own ratio, so a mismatch shows up honestly instead of squashed.
+   The illustration is the one thing on a slide allowed to give way: it takes the
+   space left above the copy block and centres in it, capped at the deck's design
+   width by an inline max-width. On a short phone at Extra large text it shrinks
+   rather than letting the slide scroll or pushing the words off (founder, 17 Jul:
+   "everything should fit within the page"). */
+.j-illo-img { display: block; width: auto; height: auto; max-height: 100%;
+  border-radius: 16px; margin: auto; }
 
-/* Story slides hold their copy in the same place on every slide (founder, 16 Jul:
-   the description "shifted up and down instead of being the same place"). The
-   slide is centred, so the cause was the block re-centring around each slide's own
-   copy length. Fix: make the block a constant height. The illustration is already
-   a fixed square, so the two variables left are the title wrapping to two lines
-   and the body running long. Both are reserved below.
+/* The illustration's slot: it takes whatever height the copy block leaves and
+   centres the picture in it. The floor is where shrinking stops being honest. With
+   no floor the slot is free to collapse to nothing, and it does: on a 375x667
+   phone at Extra large text the pane is 472px and the copy block alone is 450, so
+   the picture was handed -6px and silently disappeared. A missing illustration is
+   a broken screen, not a trade-off, so below the floor the card scrolls instead.
+   That is the ONLY configuration that scrolls: on every normal phone, and at every
+   text size on a 390-wide one, the picture absorbs the difference and nothing
+   moves (founder, 17 Jul: "everything should fit within the page"). */
+.j-illo-slot { flex: 1 1 auto; min-height: 96px; width: 100%; display: flex;
+  align-items: center; justify-content: center; }
 
-   Reserve two title lines always: 2 x the 1.08 line-height of .j-h1. In em, so it
-   tracks the text-size setting rather than hardcoding a pixel height that would
-   break at Extra large.
-   A plain block, not a flex box: block layout already starts the text at the top
-   of the reserved space, so every heading's first line begins on exactly the same
-   pixel. (Centring it would sit a one-line heading half a line below where a
-   two-line heading starts.) pre-line honours the deliberate \n in two Tips titles
-   while still collapsing ordinary wrapping. */
-.j-illo-title { min-height: 2.16em; white-space: pre-line; }
+/* Story slides: the heading holds still, the paragraph moves.
 
-/* Reserve the longest body in the deck, so a short slide leaves invisible space
-   below its text rather than pulling everything above it upward. Measured, not
-   guessed: the tour tops out at 9em and Tips at 10.85em (375px, Extra large), so
-   each deck sets its own via --illo-body. Sized to the largest text size rather
-   than the default on purpose: every body then lands on the same reserved height
-   at ALL the common sizes, so the spread is 0 at each, not just at the default.
-   Below roughly 360px with Extra large text the bodies outgrow even this and the
-   reserve stops binding, which degrades to ordinary flow rather than overflowing,
-   and those slides scroll. */
-.j-illo-body { min-height: var(--illo-body, 0px); }
+   Founder, 17 Jul: "the single line heading should stay exactly at that height but
+   the paragraph comes up below it to the same spacing as the double line heading
+   ... so only the paragraph can go up and down depending on the heading lines."
 
-/* Trailing slot: reserved on every card so the three that carry nothing centre
-   identically to the two with a say pill and the one with a CTA. */
-.j-illo-tail { min-height: var(--illo-tail, 0px); margin-top: 18px; display: flex;
-  align-items: flex-start; justify-content: center; }
+   The build before this reserved two lines on the TITLE. That did hold the body
+   still, which is what was asked for on 16 Jul, but it holds it still in the WRONG
+   place: a one-line heading was left stranded above half a line of dead air. The
+   reserve is right, the thing being reserved was wrong.
+
+   So reserve the copy BLOCK instead, and let title, body and tail flow from its
+   top. The block is a constant height, so the illustration above it and the
+   heading both land on the same pixel on every slide; inside it the paragraph
+   rides up under a one-line heading and down under a two-line one, always the same
+   gap from the words above it. The slack collects at the bottom of the block,
+   where there is nothing to read.
+
+   The reserve is in em against the block's own body font-size, set here rather
+   than inherited so the sum has a stable basis. It is NOT text-size invariant, and
+   it is worth knowing why before anyone "simplifies" it: the body's maxWidth is a
+   fixed 330px, so larger text wraps to more lines and the same copy runs 16.41em
+   at the default size but 21.68em at Extra large. Each deck therefore reserves its
+   worst case at the LARGEST size, measured, never guessed: see --illo-copy at each
+   deck's call site. Reserving the larger value holds the heading still at every
+   size, and costs only some room the picture would not have used anyway (it caps
+   at its design width on any normal phone).
+
+   flex-shrink: 0 is load-bearing, not tidiness: the copy block and the
+   illustration are siblings competing for the same height, and without it the
+   words are what give way when space runs short. The picture is the only thing on
+   a slide allowed to shrink. */
+.j-illo-copy { min-height: var(--illo-copy, 0px); font-size: calc(16.5px * var(--tscale, 1));
+  display: flex; flex-direction: column; align-items: center; width: 100%; flex-shrink: 0; }
+
+/* pre-line honours the deliberate \n in the two Tips and two tour titles while
+   still collapsing ordinary wrapping. */
+.j-illo-title { white-space: pre-line; }
+
+/* Trailing slot: a say pill, or the CTA that closes each deck. No reserve of its
+   own now, because the copy block's reserve already absorbs the difference. */
+.j-illo-tail { margin-top: 18px; display: flex; align-items: flex-start; justify-content: center; }
 
 /* ---- dark theme ---- */
 .jotla-root.j-dark {

@@ -595,7 +595,7 @@ const STORY_IMAGES = {
   tourReady:    'illo/tourReady.da35eb9b.webp',
   tipCalm:      'illo/tipCalm.0aab1463.webp',
   tipSoft:      'illo/tipSoft.9d7eda0d.webp',
-  tipAvoid:     'illo/tipAvoid.5ebc8852.webp',
+  tipAvoid:     'illo/tipAvoid.9fc4ad15.webp',
   tipRoom:      'illo/tipRoom.5ec028be.webp',
   tipReconnect: 'illo/tipReconnect.7c285113.webp',
   tipWrite:     'illo/tipWrite.56985ff3.webp',

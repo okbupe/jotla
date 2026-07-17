@@ -298,20 +298,52 @@ function ok(name, cond) {
   await page3.locator('[role="radio"][aria-label="Standard text"]').click();
   await page3.waitForTimeout(250);
 
-  // Illustrated tour: a real scene, and dots that are real buttons. Two decks are
-  // live by design while the generated images are on approval (1.9.0), so this
-  // asserts the RULE (a scene is present, not the fallback icon disc) rather than
-  // one implementation. Either the SVG scene or the image deck satisfies it.
+  // Illustrated tour. Two decks are live by design while the generated images are
+  // on approval (1.9.0), so this asserts the RULE (a scene is present, not the
+  // fallback icon disc) rather than one implementation. Either the SVG scene or the
+  // image deck satisfies it.
   const SCENE = 'svg[viewBox="0 0 220 150"], img.j-illo-img';
   await page3.getByText('Take the tour', { exact: false }).first().click();
   await page3.waitForTimeout(600);
   const tourText = await page3.locator('#root').innerText();
-  ok('tour opens on Welcome', tourText.includes('Welcome to Jotla'));
+  // The tour is a pager now, so EVERY slide is in the DOM at once and an innerText
+  // check on #root is worthless: it matches copy from slides you cannot see. Read
+  // the slide, and read the header for which slide is up.
+  const slideText = (n) => page3.locator('.j-pager > div').nth(n - 1).innerText();
+  const headerCount = () => page3.locator('.j-eyebrow').first().innerText();
+  ok('tour opens on Welcome', (await slideText(1)).includes('Welcome to Jotla'));
   ok('tour shows a scene illustration (not the old icon disc)', (await page3.locator(SCENE).count()) >= 1);
-  await page3.locator('button[aria-label^="Step 2 of"]').click();
-  await page3.waitForTimeout(400);
-  ok('tour dots are buttons that navigate', (await page3.locator('#root').innerText()).includes('Start on Today'));
+  // Swiped, not driven by buttons (founder, 17 Jul). The dots and the Back/Next
+  // pair are gone: the only button in the deck is the one that closes it, on the
+  // last slide. Arrow keys are the keyboard route the dots used to provide, so
+  // this asserts the deck is still crossable without a mouse.
+  ok('the tour carries no Back/Next pair any more',
+    (await page3.locator('button:has-text("Next")').count()) === 0
+    && (await page3.locator('button:has-text("Back")').count()) === 0);
+  ok('the tour dots are gone (progress lives in the header)',
+    (await page3.locator('button[aria-label^="Step "]').count()) === 0);
+  // .j-eyebrow is text-transform: uppercase, and innerText reports the transformed
+  // text, so match case-insensitively rather than asserting the source casing.
+  ok('the tour header counts the slides', /Tour · 1 of 8/i.test(tourText));
+  await page3.locator('.j-pager').first().press('ArrowRight');
+  await page3.waitForTimeout(700);
+  ok('the arrow key pages the tour (keyboard route survives the dots)',
+    /Tour · 2 of 8/i.test(await headerCount()));
+  ok('slide 2 is the one it landed on', (await slideText(2)).includes('Start on Today'));
   ok('step 2 carries its own illustrated scene', (await page3.locator(SCENE).count()) >= 1);
+  // The deck closes on its last slide, not from a persistent bottom bar. Every
+  // slide is in the DOM at once (that is what makes it swipeable), so a count of
+  // rendered buttons can never show one is absent from slide 1. Ask WHICH slide
+  // holds it instead.
+  const closer = await page3.evaluate(() => {
+    const btns = [...document.querySelectorAll('button')].filter(b => b.textContent.includes('Start the record'));
+    if (btns.length !== 1) return { n: btns.length };
+    const slides = [...document.querySelector('.j-pager').children];
+    return { n: 1, at: slides.findIndex(s => s.contains(btns[0])), of: slides.length };
+  });
+  ok('the deck holds exactly one closing button', closer.n === 1);
+  ok(`and it rides the last slide, nowhere earlier (slide ${closer.at + 1} of ${closer.of})`,
+    closer.at === closer.of - 1);
 
   // A broken <img> still satisfies a count check, so prove pixels actually decoded.
   const illoImgs = await page3.locator('img.j-illo-img').count();
@@ -355,30 +387,30 @@ function ok(name, cond) {
   }
 
   // Founder, 16 Jul: the heading and description "shifted up and down instead of
-  // being the same place" from slide to slide. Cause: the slide centred itself
-  // around its own copy length, so a longer body or a two-line title moved
-  // everything. Now the block is a constant height (fixed square + reserved title
-  // and body), so both land on the same pixel on all eight. Measured on the first
-  // LINE BOX via a Range, not the element box: an element-box check passes even
-  // when a one-line heading sits half a line low inside a two-line reserve.
+  // being the same place" from slide to slide. Founder, 17 Jul, refining it: the
+  // HEADING holds still and the paragraph rides up under a one-line one. Measured
+  // on the first LINE BOX via a Range, not the element box: an element-box check
+  // passes even when a heading sits half a line low inside its own reserve.
+  // Only the heading is asserted here; that the paragraph MOVES, and that nothing
+  // scrolls, is suite 16's job across both decks and both text sizes.
   const lineTopOf = (loc) => loc.evaluate((el) => {
     const r = document.createRange(); r.selectNodeContents(el);
     return +r.getClientRects()[0].top.toFixed(1);
   });
-  const headY = [], bodyY = [];
+  const goSlide = async (n) => {
+    await page3.evaluate((k) => { const p = document.querySelector('.j-pager'); p.scrollTo({ left: p.clientWidth * k }); }, n - 1);
+    await page3.waitForTimeout(420);
+  };
+  const headY = [];
   for (let i = 1; i <= 8; i++) {
-    await page3.locator(`button[aria-label^="Step ${i} of"]`).click();
-    await page3.waitForTimeout(320);
-    headY.push(await lineTopOf(page3.locator('.j-illo-title').first()));
-    bodyY.push(await lineTopOf(page3.locator('.j-illo-body').first()));
+    await goSlide(i);
+    headY.push(await lineTopOf(page3.locator('.j-illo-title').nth(i - 1)));
   }
   const spread = (a) => +(Math.max(...a) - Math.min(...a)).toFixed(1);
   ok(`every tour heading starts on the same line (spread ${spread(headY)}px)`, spread(headY) <= 1);
-  ok(`every tour description starts on the same line (spread ${spread(bodyY)}px)`, spread(bodyY) <= 1);
   // Walk back to step 2, where this block found the tour: the tier-neutral check
   // below reads the Today slide's copy off the screen.
-  await page3.locator('button[aria-label^="Step 2 of"]').click();
-  await page3.waitForTimeout(300);
+  await goSlide(2);
 
   // Two places count the gate questions in prose: the Dysregulation card ("Six
   // gentle questions") and this tour slide (which lists them in a sentence).
@@ -400,12 +432,14 @@ function ok(name, cond) {
   // reads "Hand the phone to" on Free and "Do it together with" on Plus, so the
   // tour has to name the feature without adopting either framing. Asserted as the
   // rule rather than one exact phrase, so plain-language edits cannot trip it.
-  const tourToday = await page3.locator('#root').innerText();
+  // Scoped to slide 2's own copy: slide 5 legitimately says "Do it together", and
+  // in a pager its text is in the DOM the whole time, so reading #root here would
+  // fail on its neighbour's words.
+  const tourToday = await slideText(2);
   ok('tour Today slide names Your day but stays tier-neutral',
     tourToday.includes('Your day') && !/Hand the phone|Do it together/i.test(tourToday));
-  await page3.locator('button[aria-label^="Step 5 of"]').click();
-  await page3.waitForTimeout(400);
-  ok('tour child slide offers together or hand over', (await page3.locator('#root').innerText()).includes('Do it together, or hand the phone over.'));
+  await goSlide(5);
+  ok('tour child slide offers together or hand over', (await slideText(5)).includes('Do it together, or hand the phone over.'));
   await ctx3.close();
 
   // ---- 8. build 1.9.0 (12 Jul native parity), free tier ----
@@ -1180,6 +1214,109 @@ function ok(name, cond) {
     todayClear.includes('Long may it last'));
   ok('clear month: no uncaught page errors', errors14.length === 0);
   await ctx14.close();
+
+  // ---- suite 16: the story-deck layout contract (tour + Tips) ----
+  // Founder, 17 Jul: the heading holds still, the paragraph moves under it, and
+  // nothing scrolls. Worth asserting rather than eyeballing: the reserve lives in
+  // ONE css rule, and a rule can vanish silently. It did during this build, when a
+  // malformed comment ate `.j-illo-copy` and every slide still rendered a perfectly
+  // plausible page with the headings 116px apart. Nothing threw, nothing looked
+  // broken in a screenshot, and only measuring caught it.
+  const deckProbe = () => {
+    const out = [];
+    document.querySelectorAll('.j-illo-copy').forEach((el) => {
+      const card = el.closest('[style*="--illo-copy"]');
+      const pane = card.parentElement;
+      const paneTop = pane.getBoundingClientRect().top;
+      const title = el.querySelector('.j-illo-title');
+      const body = el.querySelector('.j-illo-body');
+      const img = card.querySelector('.j-illo-img');
+      out.push({
+        titleTop: +(title.getBoundingClientRect().top - paneTop).toFixed(1),
+        bodyTop: +(body.getBoundingClientRect().top - paneTop).toFixed(1),
+        lines: Math.round(title.getBoundingClientRect().height / (parseFloat(getComputedStyle(title).fontSize) * 1.08)),
+        overflow: pane.scrollHeight - pane.clientHeight,
+        img: img ? Math.round(img.getBoundingClientRect().width) : -1,
+      });
+    });
+    return out;
+  };
+  const spreadOf = (rows, k) => +(Math.max(...rows.map(r => r[k])) - Math.min(...rows.map(r => r[k]))).toFixed(1);
+
+  const ctx15 = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  const page15 = await ctx15.newPage();
+  await page15.addInitScript(() => {
+    try {
+      localStorage.setItem('jotla_prefs_v2', JSON.stringify({
+        dark: false, tscale: 1, profileId: 'sam', plus: true, childCfg: {}, customProfiles: [], deletedIds: [],
+      }));
+      // The app remembers where you were (jotla_nav_v3), which is right for a
+      // parent and wrong for a test: a reload lands back on Tips, not Today. Drop
+      // it so each pass starts from a known screen.
+      localStorage.removeItem('jotla_nav_v3');
+    } catch (e) {}
+  });
+  await page15.goto(URL_APP, { waitUntil: 'networkidle' });
+  await page15.waitForTimeout(1200);
+
+  for (const scale of ['Standard text', 'Extra large text']) {
+    // Fresh load per pass: Tips' Skip goes back to the Dysregulation screen, not
+    // home, so the tab bar is not there to find Settings on the second lap.
+    await page15.goto(URL_APP, { waitUntil: 'networkidle' });
+    await page15.waitForTimeout(1000);
+    await page15.getByText('Settings', { exact: true }).last().click();
+    await page15.waitForTimeout(450);
+    await page15.locator(`[role="radio"][aria-label="${scale}"]`).click();
+    await page15.waitForTimeout(300);
+    await page15.getByText('Take the tour', { exact: false }).first().click();
+    await page15.waitForTimeout(700);
+    const tour = await page15.evaluate(deckProbe);
+    ok(`tour/${scale}: every heading lands on the same pixel (spread ${spreadOf(tour, 'titleTop')}px)`,
+      tour.length === 8 && spreadOf(tour, 'titleTop') === 0);
+    // The point of the 17 Jul rework: the paragraph is what moves, not the heading.
+    // A deck where BOTH are pinned is the old bug (a one-line title stranded above
+    // a gap), so a zero body spread is a failure, not a pass.
+    ok(`tour/${scale}: the paragraph rides up under a one-line heading (spread ${spreadOf(tour, 'bodyTop')}px)`,
+      spreadOf(tour, 'bodyTop') > 0 && new Set(tour.map(r => r.lines)).size > 1);
+    ok(`tour/${scale}: two-line headings sit lower-bodied than one-line ones, never higher`,
+      Math.min(...tour.filter(r => r.lines === 2).map(r => r.bodyTop)) > Math.max(...tour.filter(r => r.lines === 1).map(r => r.bodyTop)));
+    ok(`tour/${scale}: no slide scrolls`, Math.max(...tour.map(r => r.overflow)) === 0);
+    ok(`tour/${scale}: the illustration never collapses`, Math.min(...tour.map(r => r.img)) >= 96);
+    await page15.locator('button:has-text("Skip")').first().click();
+    await page15.waitForTimeout(500);
+
+    await page15.getByText('Dysregulation', { exact: false }).first().click();
+    await page15.waitForTimeout(600);
+    await page15.getByText('Tips', { exact: false }).first().click();
+    await page15.waitForTimeout(700);
+    const tips = await page15.evaluate(deckProbe);
+    ok(`tips/${scale}: every heading lands on the same pixel (spread ${spreadOf(tips, 'titleTop')}px)`,
+      tips.length === 6 && spreadOf(tips, 'titleTop') === 0);
+    ok(`tips/${scale}: the paragraph rides up under a one-line heading (spread ${spreadOf(tips, 'bodyTop')}px)`,
+      spreadOf(tips, 'bodyTop') > 0 && new Set(tips.map(r => r.lines)).size > 1);
+    ok(`tips/${scale}: no card scrolls`, Math.max(...tips.map(r => r.overflow)) === 0);
+    ok(`tips/${scale}: the illustration never collapses`, Math.min(...tips.map(r => r.img)) >= 96);
+  }
+
+  // Tips wears the tour's chrome now: no push header, progress and Skip up top,
+  // and nothing at the foot but the advisory. The loop above leaves us on Tips at
+  // Extra large, which is the harder size for the header to survive anyway.
+  const tipsChrome = await page15.locator('#root').innerText();
+  ok('tips names itself and counts its cards in the header', tipsChrome.includes('TIPS · 1 OF 6') || /Tips · 1 of 6/i.test(tipsChrome));
+  ok('tips keeps its subtitle', /How to be, when it is happening/i.test(tipsChrome));
+  ok('tips offers Skip in the far corner', (await page15.locator('button:has-text("Skip")').count()) === 1);
+  ok('tips has no back-arrow push header any more', (await page15.locator('button[aria-label="Back"]').count()) === 0);
+  ok('the tips dots are gone', (await page15.locator('button[aria-label^="Tip "]').count()) === 0);
+  // The advisory's line break is deliberate, so assert the break, not just the text.
+  const advisory = await page15.evaluate(() => {
+    const p = [...document.querySelectorAll('p')].find(e => e.textContent.startsWith('Swipe for the next one'));
+    return p ? { txt: p.textContent, ws: getComputedStyle(p).whiteSpace, lines: Math.round(p.getBoundingClientRect().height / parseFloat(getComputedStyle(p).lineHeight)) } : null;
+  });
+  ok('the advisory reads as the founder wrote it',
+    !!advisory && advisory.txt === 'Swipe for the next one. Good general practice,\nnot medical advice; you know your child best.');
+  ok('and its break is honoured, not collapsed (renders on 2 lines)',
+    !!advisory && advisory.ws === 'pre-line' && advisory.lines === 2);
+  await ctx15.close();
 
   await browser.close();
   server.kill();

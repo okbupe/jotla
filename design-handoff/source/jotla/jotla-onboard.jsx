@@ -1,5 +1,5 @@
 // jotla-onboard.jsx: Add a child (blank-record onboarding) + a guided app tour.
-const { useState: useStateO } = React;
+const { useState: useStateO, useRef: useRefO } = React;
 
 const ONBOARD_GLYPHS = ['person', 'heart', 'star', 'leaf', 'sparkle', 'shield', 'bell', 'hand', 'today', 'note'];
 
@@ -191,10 +191,12 @@ function TourScreen({ nav, profile }) {
   const name = (profile && profile.name) || 'your child';
   const steps = TOUR_STEPS(name);
   const [i, setI] = useStateO(0);
-  const step = steps[i];
-  const last = i === steps.length - 1;
-  const next = () => last ? nav.home() : setI(i + 1);
-  const back = () => i === 0 ? nav.home() : setI(i - 1);
+  const pagerRef = useRefO(null);
+  const onScroll = () => {
+    const el = pagerRef.current; if (!el || !el.clientWidth) return;
+    const k = Math.round(el.scrollLeft / el.clientWidth);
+    if (k !== i) setI(k);
+  };
 
   return (
     <div className="j-screen" style={{ background: 'var(--bg)' }}>
@@ -203,44 +205,46 @@ function TourScreen({ nav, profile }) {
         <button onClick={() => nav.home()} className="j-press" style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--faint)', fontSize: 'calc(14.5px * var(--tscale, 1))', fontWeight: 500, padding: 4 }}>Skip</button>
       </div>
 
-      {/* Centred, and identical on every slide (founder, 16 Jul: the description
-          "shifted up and down instead of being the same place"). Centring alone
-          caused that: each slide re-centred around its own copy length. So the
-          block is now a FIXED height at any text size (square illustration +
-          .j-illo-title reserving two lines + .j-illo-body reserving the longest
-          body), which centres to the same place on all eight.
-          `margin: auto` rather than justify-content: center, because a centred
-          flex child that outgrows a scroll container clips at the top with no way
-          to scroll back; auto margins centre and still allow scrolling. */}
-      <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-        <div style={{ '--illo-body': '9em', margin: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '10px 28px' }}>
-          {/* brand-style scene illustration (build 1.8.0); icon disc kept as the fallback */}
-          {step.illo
-            ? <span style={{ marginBottom: 20, width: '100%', display: 'flex', justifyContent: 'center' }}><StoryIllo scene={step.illo} width={300} /></span>
-            : <div style={{ width: 134, height: 134, borderRadius: '50%', background: step.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 30, flexShrink: 0 }}>
-                {step.face ? <Face mood="good" size={92} /> : <Icon name={step.icon} size={58} color={step.color} stroke={1.9} />}
-              </div>}
-          <h1 className="j-h1 j-illo-title" style={{ marginBottom: 12, maxWidth: 320 }}>{step.title}</h1>
-          <p className="j-body j-illo-body" style={{ color: 'var(--muted)', fontSize: 'calc(16.5px * var(--tscale, 1))', lineHeight: 1.5, maxWidth: 332 }}>{step.body}</p>
-        </div>
-      </div>
-
-      <div style={{ padding: '12px 20px calc(18px + env(safe-area-inset-bottom))' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginBottom: 16 }}>
-          {steps.map((s2, k) => (
-            <button key={k} aria-label={'Step ' + (k + 1) + ' of ' + steps.length + ': ' + s2.title.replace(/\n/g, ' ')} aria-current={k === i}
-              onClick={() => setI(k)}
-              style={{ width: k === i ? 18 : 7, height: 7, borderRadius: 99, transition: 'all .2s ease', border: 'none', padding: 0, cursor: 'pointer', background: k === i ? 'var(--blue)' : 'var(--chip-border)' }} />
-          ))}
-        </div>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <button className="j-btn j-btn-ghost" style={{ flex: '0 0 34%' }} onClick={back}>{i === 0 ? 'Close' : 'Back'}</button>
-          <button className="j-btn j-btn-primary" style={{ flex: 1 }} onClick={next}>
-            {last
-              ? <React.Fragment><Icon name="check" size={20} color="#fff" /> Start the record</React.Fragment>
-              : <React.Fragment>Next <Icon name="arrowRight" size={20} color="#fff" /></React.Fragment>}
-          </button>
-        </div>
+      {/* Swiped, not driven by Back/Next (founder, 17 Jul: the tour matches Tips).
+          The bottom bar is gone entirely: progress is already in the header, so the
+          dots said it twice, and the only button left is the one that closes the
+          deck, which now rides the last slide. */}
+      <div ref={pagerRef} onScroll={onScroll} className="j-pager" {...pagerKeyProps(pagerRef, 'Tour')}
+        style={{ flex: 1, minHeight: 0, display: 'flex',
+        overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch', outline: 'none' }}>
+        {steps.map((step, k) => (
+          <div key={k} style={{ flex: '0 0 100%', width: '100%', height: '100%', scrollSnapAlign: 'start', overflowX: 'hidden', overflowY: 'auto' }}>
+            {/* Measured, never guessed: the tour's tallest copy block is 14.88em
+                (slides 2, 4 and 6 tie on body length) at 375px and Extra large
+                text. Sized to the largest text size for the reason at the Tips
+                call site: the reserve is not text-size invariant. */}
+            <div style={{ '--illo-copy': '15em', height: '100%', boxSizing: 'border-box',
+              padding: '6px 28px calc(12px + env(safe-area-inset-bottom))',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+              {/* brand-style scene illustration (build 1.8.0); icon disc kept as the fallback */}
+              {step.illo
+                ? <span className="j-illo-slot" style={{ marginBottom: 20 }}>
+                    <StoryIllo scene={step.illo} width={300} />
+                  </span>
+                : <div style={{ width: 134, height: 134, borderRadius: '50%', background: step.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 30, flexShrink: 0 }}>
+                    {step.face ? <Face mood="good" size={92} /> : <Icon name={step.icon} size={58} color={step.color} stroke={1.9} />}
+                  </div>}
+              {/* The copy block carries the reserve; the heading sits at its top on
+                  every slide and the paragraph rides up under a one-line title. */}
+              <div className="j-illo-copy">
+                <h1 className="j-h1 j-illo-title" style={{ marginBottom: 12, maxWidth: 320 }}>{step.title}</h1>
+                <p className="j-body j-illo-body" style={{ color: 'var(--muted)', fontSize: 'calc(16.5px * var(--tscale, 1))', lineHeight: 1.5, maxWidth: 332 }}>{step.body}</p>
+                {k === steps.length - 1 && (
+                  <div className="j-illo-tail">
+                    <button className="j-btn j-btn-primary" onClick={() => nav.home()}>
+                      <Icon name="check" size={20} color="#fff" /> Start the record
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
