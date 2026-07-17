@@ -1259,7 +1259,11 @@ function ok(name, cond) {
   await page15.goto(URL_APP, { waitUntil: 'networkidle' });
   await page15.waitForTimeout(1200);
 
-  for (const scale of ['Standard text', 'Extra large text']) {
+  // All THREE sizes, not just the ends. The reserve is one number per deck covering
+  // every size, and the middle one is where a linear assumption would quietly fail:
+  // wrapping is a step function, so Large can need proportionally more than either
+  // neighbour. Only measuring the ends would miss it.
+  for (const scale of ['Standard text', 'Large text', 'Extra large text']) {
     // Fresh load per pass: Tips' Skip goes back to the Dysregulation screen, not
     // home, so the tab bar is not there to find Settings on the second lap.
     await page15.goto(URL_APP, { waitUntil: 'networkidle' });

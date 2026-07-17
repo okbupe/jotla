@@ -214,11 +214,11 @@ function TourScreen({ nav, profile }) {
         overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch', outline: 'none' }}>
         {steps.map((step, k) => (
           <div key={k} style={{ flex: '0 0 100%', width: '100%', height: '100%', scrollSnapAlign: 'start', overflowX: 'hidden', overflowY: 'auto' }}>
-            {/* Measured, never guessed: the tour's tallest copy block is 14.88em
-                (slides 2, 4 and 6 tie on body length) at 375px and Extra large
-                text. Sized to the largest text size for the reason at the Tips
-                call site: the reserve is not text-size invariant. */}
-            <div style={{ '--illo-copy': '15em', height: '100%', boxSizing: 'border-box',
+            {/* Measured at 375px across all three text sizes, never guessed: the
+                tour's tallest copy block runs 176px at the default, 215 at Large
+                and 238 at Extra large. 12em covers the worst of the three with
+                room at each. */}
+            <div style={{ '--illo-copy': '12em', height: '100%', boxSizing: 'border-box',
               padding: '6px 28px calc(12px + env(safe-area-inset-bottom))',
               display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
               {/* brand-style scene illustration (build 1.8.0); icon disc kept as the fallback */}

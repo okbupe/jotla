@@ -113,14 +113,15 @@ button, input, select, textarea { font-family: inherit; }
    where there is nothing to read.
 
    The reserve is in em against the block's own body font-size, set here rather
-   than inherited so the sum has a stable basis. It is NOT text-size invariant, and
-   it is worth knowing why before anyone "simplifies" it: the body's maxWidth is a
-   fixed 330px, so larger text wraps to more lines and the same copy runs 16.41em
-   at the default size but 21.68em at Extra large. Each deck therefore reserves its
-   worst case at the LARGEST size, measured, never guessed: see --illo-copy at each
-   deck's call site. Reserving the larger value holds the heading still at every
-   size, and costs only some room the picture would not have used anyway (it caps
-   at its design width on any normal phone).
+   than inherited so the sum has a stable basis. It very nearly IS text-size
+   invariant, because every ingredient of the worst case scales with --tscale. It
+   does drift a little, and the reason is worth knowing before anyone tightens it:
+   the body's maxWidth is a fixed 330px, so larger text wraps to one more line here
+   and there and the deck's worst card runs 15.57em to 16.82em across the three
+   sizes. So each deck reserves the worst case across ALL of them, measured at
+   375px, never guessed: see --illo-copy at each deck's call site. The cost of
+   reserving the max is about 20px of slack at the default size, and it buys a
+   heading that does not move when a parent changes their text size.
 
    flex-shrink: 0 is load-bearing, not tidiness: the copy block and the
    illustration are siblings competing for the same height, and without it the
@@ -134,8 +135,16 @@ button, input, select, textarea { font-family: inherit; }
 .j-illo-title { white-space: pre-line; }
 
 /* Trailing slot: a say pill, or the CTA that closes each deck. No reserve of its
-   own now, because the copy block's reserve already absorbs the difference. */
-.j-illo-tail { margin-top: 18px; display: flex; align-items: flex-start; justify-content: center; }
+   own now, because the copy block's reserve already absorbs the difference.
+   margin-top: auto parks it at the FOOT of the copy block, so it lands on the same
+   line on every card instead of hanging off the end of whatever the paragraph
+   happened to be (founder, 17 Jul: "the green tips near the bottom of the screen
+   in tips should be spaced accordingly"). That also puts the reserve's slack
+   between the paragraph and the pill, rather than in one dead pool underneath it.
+   The padding, not a margin, is the floor for that gap: auto collapses to zero on
+   the longest card, and the two must not touch there. */
+.j-illo-tail { margin-top: auto; padding-top: 18px; display: flex;
+  align-items: flex-start; justify-content: center; }
 
 /* ---- dark theme ---- */
 .jotla-root.j-dark {

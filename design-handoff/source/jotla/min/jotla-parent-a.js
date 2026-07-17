@@ -2014,11 +2014,11 @@ function DysregTipsScreen({
   }, /*#__PURE__*/React.createElement("div", {
     className: "j-pad",
     style: {
-      '--illo-copy': '21.8em',
+      '--illo-copy': '17.2em',
       height: '100%',
       boxSizing: 'border-box',
       paddingTop: 6,
-      paddingBottom: 10,
+      paddingBottom: 16,
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
@@ -2083,7 +2083,7 @@ function DysregTipsScreen({
     color: "#fff"
   }), " Open Dysregulation"))))))), /*#__PURE__*/React.createElement("div", {
     style: {
-      padding: '2px 20px calc(14px + env(safe-area-inset-bottom))',
+      padding: '8px 20px calc(14px + env(safe-area-inset-bottom))',
       flexShrink: 0
     }
   }, /*#__PURE__*/React.createElement("p", {

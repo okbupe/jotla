@@ -817,7 +817,12 @@ function App({ appMode }) {
 
   const isTab = TAB_NAMES.includes(view.name);
   const isChild = view.name === 'child';
-  const isFullscreen = isChild || view.name === 'addchild' || view.name === 'tour';
+  // Tips joins the tour as a full-bleed deck (founder, 17 Jul: "the top navbar
+  // disappeared"). It is a story deck, not a screen inside the app: it carries its
+  // own name, its own count and its own Skip, so the Jotla header above it was a
+  // second lot of chrome competing with its own, and it cost the height the deck
+  // needs to fit without scrolling.
+  const isFullscreen = isChild || view.name === 'addchild' || view.name === 'tour' || view.name === 'tips';
   const today = J.TODAY_ISO;
 
   // scope to active child, and hide anything in the Bin (deletedAt set)

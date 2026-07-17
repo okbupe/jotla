@@ -924,17 +924,14 @@ function DysregTipsScreen({ nav }) {
              fires; it is the valve for the one case where the words alone fill the
              screen, and it beats clipping the say pill off the bottom. */
           <div key={i} style={{ flex: '0 0 100%', width: '100%', height: '100%', scrollSnapAlign: 'start', overflowX: 'hidden', overflowY: 'auto' }}>
-            {/* Measured, never guessed: the deck's tallest copy block is card 5
-                ("Afterwards, reconnect first": two-line title, longest body, say
-                pill) at 21.68em, taken at 375px and Extra large text. Sized to the
-                LARGEST text size because the reserve is not text-size invariant:
-                the body's maxWidth is a fixed 330px, so bigger text wraps to more
-                lines and the same copy runs 16.41em at the default and 21.68em at
-                Extra large. Reserving the larger holds the heading still at every
-                size; the cost is only that the picture has less room to fill, and
-                it is capped at 264 on a normal phone anyway. */}
-            <div className="j-pad" style={{ '--illo-copy': '21.8em', height: '100%', boxSizing: 'border-box',
-              paddingTop: 6, paddingBottom: 10,
+            {/* Measured at 375px across all three text sizes, never guessed. The
+                deck's tallest copy block is card 5 ("Afterwards, reconnect first":
+                two-line title, longest body, say pill), which runs 263px at the
+                default, 288 at Large and 347 at Extra large. 17.2em covers the
+                worst of the three with 8px to spare at Extra large and about 21px
+                of slack at the default. */}
+            <div className="j-pad" style={{ '--illo-copy': '17.2em', height: '100%', boxSizing: 'border-box',
+              paddingTop: 6, paddingBottom: 16,
               display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
               {/* brand-style scene illustration (build 1.8.0); the old icon square is the fallback.
                   The slot takes the height the copy block leaves, which is the same
@@ -976,7 +973,7 @@ function DysregTipsScreen({ nav }) {
           way of saying it, and they cost the height the no-scroll rule needs. The
           pager still answers the arrow keys via pagerKeyProps, so losing the dots
           does not cost a keyboard user their way through the deck. */}
-      <div style={{ padding: '2px 20px calc(14px + env(safe-area-inset-bottom))', flexShrink: 0 }}>
+      <div style={{ padding: '8px 20px calc(14px + env(safe-area-inset-bottom))', flexShrink: 0 }}>
         <p className="j-meta" style={{ textAlign: 'center', whiteSpace: 'pre-line', lineHeight: 1.45 }}>{TIPS_ADVISORY}</p>
       </div>
     </div>

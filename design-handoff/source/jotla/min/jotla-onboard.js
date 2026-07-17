@@ -486,7 +486,7 @@ function TourScreen({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      '--illo-copy': '15em',
+      '--illo-copy': '12em',
       height: '100%',
       boxSizing: 'border-box',
       padding: '6px 28px calc(12px + env(safe-area-inset-bottom))',
