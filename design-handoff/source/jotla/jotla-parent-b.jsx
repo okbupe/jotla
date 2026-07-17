@@ -920,19 +920,23 @@ function DocScreen({ nav, docs, id }) {
 
 // The money model (decisions/log.md, 2026-07-14, Bupe's money gate):
 //   Free      £0 forever.
-//   Plus      £49 a year. Annual only, never monthly. Family Sync is inside it.
-//   Jotla AI  £79 a year, coming 2027, and it INCLUDES Plus (£79 in total,
-//             not £49 + £79). It replaces the old "Living Companion" tier.
+//   Plus      £79 a year (Best value), or £49 for 6 months. No monthly plan.
+//             Family Sync is inside it.
+//   Jotla AI  £149 a year, coming 2027, and it INCLUDES Plus (£149 in total,
+//             not £79 + £149). It replaces the old "Living Companion" tier.
 // There is no one-time price and no lifetime buyout of any kind. The old
 // buy-once copy (pay once, yours to keep, no subscription, no timers) is
 // retired with it and must not come back.
-const PLUS_PRICE = '£49';
+const PLUS_PRICE = '£79';
 const PLUS_PERIOD = 'a year';
-const AI_PRICE = '£79';
+const TERM_PRICE = '£49';
+const TERM_PERIOD = 'for 6 months';
+const AI_PRICE = '£149';
+// Repriced 2026-07-17 (Bupe, money gate) from £49 Plus / £79 AI. The £49 six-
+// month term is the low-commitment door that keeps the £79 annual affordable.
 
 // Free is a calm, flat darker blue. Plus has its own purple identity. The premium
-// navy + gold look (and the sparkle) dresses Jotla AI, the Settings upsell card and
-// the dormant promotion kit.
+// navy + gold look (and the sparkle) dresses Jotla AI and the Settings upsell card.
 const FREE_BLUE = '#1A56A8';
 const PLUS_GRAD = 'linear-gradient(135deg, #3C2A72 0%, #6E54D6 100%)';
 const PLUS_ACCENT = '#CDBBF7';
@@ -963,14 +967,14 @@ function PlusFeature({ icon, title, formal, plain }) {
   return (
     <div className="j-card" style={{ padding: 16 }}>
       <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 10 }}>
-        <span style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--tint-blue)', flexShrink: 0,
+        <span style={{ width: 40, height: 40, borderRadius: 12, background: PLUS_GRAD, flexShrink: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{icon}</span>
         <p className="j-h3">{title}</p>
       </div>
       <p className="j-body" style={{ fontSize: 'calc(15.5px * var(--tscale, 1))', marginBottom: 10 }}>{formal}</p>
-      <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', background: 'var(--tint-blue)', borderRadius: 12, padding: '10px 12px' }}>
-        <Icon name="arrowRight" size={16} color="var(--blue)" style={{ marginTop: 2, flexShrink: 0 }} />
-        <p className="j-sm" style={{ color: 'var(--blue)' }}>{plain}</p>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', background: 'var(--plus-tint)', borderRadius: 12, padding: '10px 12px' }}>
+        <Icon name="arrowRight" size={16} color="var(--plus-ink)" style={{ marginTop: 2, flexShrink: 0 }} />
+        <p className="j-sm" style={{ color: 'var(--plus-ink)' }}>{plain}</p>
       </div>
     </div>
   );
@@ -1024,104 +1028,16 @@ function FreePage() {
   );
 }
 
-// ---- The promotion kit (parked, not live) ----
-// Kept ready for a real campaign. Flip `on` to true and it runs itself.
-//
-// THE RULE (decisions/log.md, 2026-06-19, still binding under the 2026-07-14
-// repricing): a promotion is only ever a REAL campaign with ONE shared
-// deadline, the same instant for every parent, whoever they are and whenever
-// they installed. A per-install timer that starts on first view, or resets, is
-// banned discount theatre.
-//
-// The old code broke that rule. It set the deadline to `now + SALE.days` the
-// first time a parent opened the page and saved it in that browser's
-// localStorage, so every parent got their own private clock. That is exactly
-// the banned mechanic, and it is gone: no deadline is stored anywhere now.
-// `endsAt` is a single fixed instant (ISO 8601, UTC). The sale expires by
-// itself and the price returns to normal with no code change and no deploy.
-//
-// Two honesty rules before flipping `on`:
-//  1. A struck-through "was" price is only honest once the normal price has
-//     genuinely been the selling price for a decent period. So no promotion in
-//     launch week, and never a "was" number Jotla has not actually charged.
-//  2. Plus is an annual price, so a promotion discounts the FIRST YEAR only.
-//     The copy must say what it renews at, in the same breath as the offer.
-//
-// The values below are a dormant placeholder, not a scheduled campaign.
-const SALE = {
-  on: false,
-  name: 'Back-to-school offer',   // name the occasion, so it reads as a real sale
-  price: '£29',                   // the discounted FIRST YEAR
-  was: PLUS_PRICE,                // the normal annual price
-  save: '£20',
-  renews: PLUS_PRICE,             // what it renews at, every year after the first
-  endsAt: '2026-09-07T23:59:59Z', // ONE shared deadline for every parent (UTC)
-};
-
-// The offer is live only while the shared campaign window is open. Once the
-// instant passes, this returns false on its own and the normal price is shown.
-// A malformed endsAt reads as "not live", so a typo fails closed rather than
-// showing a broken offer.
-const SALE_ENDS_AT = Date.parse(SALE.endsAt);
-function saleOn() {
-  return SALE.on && Number.isFinite(SALE_ENDS_AT) && Date.now() < SALE_ENDS_AT;
-}
-
-// The deadline in plain words, derived from endsAt itself, never typed twice:
-// a hand-kept second copy of the date is a bug waiting to happen.
-const SALE_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'];
-function saleEndLabel() {
-  if (!Number.isFinite(SALE_ENDS_AT)) return '';
-  const d = new Date(SALE_ENDS_AT);
-  return d.getDate() + ' ' + SALE_MONTHS[d.getMonth()] + ' ' + d.getFullYear();
-}
-
-// Counts down to the campaign's single shared deadline. Nothing is written to
-// localStorage: there is no per-browser deadline to write. Days and hours are
-// enough (no ticking seconds, per the same decision), so it ticks once a
-// minute.
-function useSaleCountdown() {
-  const [left, setLeft] = useStateB(null);
-  useEffectB(() => {
-    if (!saleOn()) return;
-    const tick = () => {
-      const ms = Math.max(0, SALE_ENDS_AT - Date.now());
-      setLeft({ d: Math.floor(ms / 86400000), h: Math.floor((ms % 86400000) / 3600000),
-        m: Math.floor((ms % 3600000) / 60000) });
-    };
-    tick();
-    const id = setInterval(tick, 30000);
-    return () => clearInterval(id);
-  }, []);
-  return left;
-}
-
-function SaleCountdown({ left }) {
-  const pad = (n) => String(n).padStart(2, '0');
-  const units = [['Days', left && left.d], ['Hrs', left && left.h], ['Min', left && left.m]];
-  return (
-    <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-      {units.map(([lbl, val]) => (
-        <div key={lbl} style={{ flex: 1, borderRadius: 12, background: 'rgba(255,255,255,0.10)',
-          border: '1px solid rgba(230,184,92,0.45)', padding: '9px 0', textAlign: 'center' }}>
-          <div style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(26px * var(--tscale, 1))', lineHeight: 1, color: PREMIUM_GOLD }}>
-            {left ? pad(val) : '--'}
-          </div>
-          <div style={{ fontSize: 'calc(10.5px * var(--tscale, 1))', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', marginTop: 5 }}>{lbl}</div>
-        </div>
-      ))}
-    </div>
-  );
-}
+// The back-to-school promotion kit was RETIRED 2026-07-17 (Bupe) when Plus moved
+// to £79 a year plus a £49 six-month term. The term now does, honestly and
+// permanently, the job a first-year discount did, so Jotla ships no dormant
+// discount kit. The old kit is in git history if it is ever wanted again.
 
 // ---- Page 2: Jotla Plus (premium) ----
 // The no-ransom promise sits directly under the price, at the same visual
 // weight, because it is the other half of the price. A parent has to be able
 // to see, before they pay, that a year ending never costs them their record.
 function PlusPage() {
-  const left = useSaleCountdown();
-  const sale = saleOn();
   return (
     <div style={PAGE_STYLE}>
       <div className="j-pad" style={{ paddingTop: 6, paddingBottom: 150 }}>
@@ -1134,60 +1050,38 @@ function PlusPage() {
               fontSize: 'calc(12px * var(--tscale, 1))', fontWeight: 600, letterSpacing: '0.08em' }}>
               <Icon name="star" size={13} color={PLUS_ACCENT} /> JOTLA PLUS
             </span>
-            {sale && (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 999,
-                background: PREMIUM_GOLD, color: '#3A2A0C', fontSize: 'calc(12px * var(--tscale, 1))', fontWeight: 700, letterSpacing: '0.06em' }}>
-                <Icon name="clock" size={13} color="#3A2A0C" /> {SALE.name}
-              </span>
-            )}
           </div>
           <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(24px * var(--tscale, 1))', lineHeight: 1.14, margin: '14px 0 0' }}>
             The tools to help you spot patterns and make your case
           </p>
-          {sale ? (
-            <React.Fragment>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 16, flexWrap: 'wrap' }}>
-                <span style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(40px * var(--tscale, 1))', color: PREMIUM_GOLD }}>{SALE.price}</span>
-                <span style={{ fontSize: 'calc(20px * var(--tscale, 1))', color: 'rgba(255,255,255,0.55)', textDecoration: 'line-through' }}>{SALE.was}</span>
-                <span style={{ fontSize: 'calc(14px * var(--tscale, 1))', color: 'rgba(255,255,255,0.82)' }}>for the first year</span>
-                <span style={{ marginLeft: 'auto', fontSize: 'calc(12.5px * var(--tscale, 1))', fontWeight: 700, color: '#3A2A0C', background: PREMIUM_GOLD,
-                  padding: '4px 10px', borderRadius: 999 }}>Save {SALE.save}</span>
-              </div>
-              <p style={{ fontSize: 'calc(13.5px * var(--tscale, 1))', color: 'rgba(255,255,255,0.82)', margin: '6px 0 0' }}>
-                Then {SALE.renews} {PLUS_PERIOD}, every year after that.
-              </p>
-              <SaleCountdown left={left} />
-              <p style={{ fontSize: 'calc(13px * var(--tscale, 1))', color: 'rgba(255,255,255,0.72)', margin: '12px 0 0', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Icon name="clock" size={13} color="rgba(255,255,255,0.72)" /> The {SALE.name.toLowerCase()} ends on {saleEndLabel()}, the same day for everyone. Then the price goes back to {SALE.was} {PLUS_PERIOD}.
-              </p>
-            </React.Fragment>
-          ) : (
-            <React.Fragment>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 16 }}>
-                <span style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(40px * var(--tscale, 1))', color: PLUS_ACCENT }}>{PLUS_PRICE}</span>
-                <span style={{ fontSize: 'calc(14px * var(--tscale, 1))', color: 'rgba(255,255,255,0.82)' }}>{PLUS_PERIOD}</span>
-              </div>
-              <p style={{ fontSize: 'calc(13.5px * var(--tscale, 1))', color: 'rgba(255,255,255,0.75)', margin: '4px 0 0' }}>Paid once a year. There is no monthly plan. Cancel any time.</p>
-            </React.Fragment>
-          )}
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
+            <span style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(40px * var(--tscale, 1))', color: PLUS_ACCENT }}>{PLUS_PRICE}</span>
+            <span style={{ fontSize: 'calc(14px * var(--tscale, 1))', color: 'rgba(255,255,255,0.82)' }}>{PLUS_PERIOD}</span>
+            <span style={{ marginLeft: 'auto', fontSize: 'calc(12.5px * var(--tscale, 1))', fontWeight: 700, color: '#2A1E52', background: PLUS_ACCENT,
+              padding: '4px 10px', borderRadius: 999 }}>Best value</span>
+          </div>
+          <p style={{ fontSize: 'calc(13.5px * var(--tscale, 1))', color: 'rgba(255,255,255,0.82)', margin: '8px 0 0' }}>
+            or {TERM_PRICE} {TERM_PERIOD}, if you would rather start with a shorter run.
+          </p>
+          <p style={{ fontSize: 'calc(13.5px * var(--tscale, 1))', color: 'rgba(255,255,255,0.75)', margin: '4px 0 0' }}>Paid up front, never monthly. Cancel any time. If it ever ends, you keep everything.</p>
         </div>
 
         {/* The no-ransom promise: the same weight as the price, right under it. */}
-        <div className="j-card" style={{ padding: 18, marginBottom: 18, borderColor: 'var(--green)' }}>
+        <div className="j-card" style={{ padding: 18, marginBottom: 18, borderColor: 'var(--plus-ink)' }}>
           <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 10 }}>
-            <span style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--tint-green)', flexShrink: 0,
+            <span style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--plus-tint)', flexShrink: 0,
               display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name="shield" size={22} color="var(--green-ink)" />
+              <Icon name="shield" size={22} color="var(--plus-ink)" />
             </span>
             <p className="j-h3">If your year ends, you keep everything</p>
           </div>
           <p className="j-body" style={{ fontSize: 'calc(15.5px * var(--tscale, 1))', marginBottom: 12 }}>
             Your record is never held to ransom. If Plus ends, for any reason at all, whether you cancel, let it lapse, or a card quietly expires, you lose nothing you have written.
           </p>
-          <CheckList items={NO_RANSOM_ITEMS} color="var(--green-ink)" tint="var(--tint-green)" />
-          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', background: 'var(--tint-green)', borderRadius: 12, padding: '10px 12px', marginTop: 12 }}>
-            <Icon name="arrowRight" size={16} color="var(--green-ink)" style={{ marginTop: 2, flexShrink: 0 }} />
-            <p className="j-sm" style={{ color: 'var(--green-ink)' }}>A subscription only ever switches off the paid tools. It never touches your history.</p>
+          <CheckList items={NO_RANSOM_ITEMS} color="var(--plus-ink)" tint="var(--plus-tint)" />
+          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', background: 'var(--plus-tint)', borderRadius: 12, padding: '10px 12px', marginTop: 12 }}>
+            <Icon name="arrowRight" size={16} color="var(--plus-ink)" style={{ marginTop: 2, flexShrink: 0 }} />
+            <p className="j-sm" style={{ color: 'var(--plus-ink)' }}>A subscription only ever switches off the paid tools. It never touches your history.</p>
           </div>
         </div>
 
@@ -1200,23 +1094,23 @@ function PlusPage() {
 
         <SectionLabel>What Plus adds</SectionLabel>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <PlusFeature icon={<Icon name="calendar" size={22} color="var(--blue)" />}
+          <PlusFeature icon={<Icon name="calendar" size={22} color="#fff" />}
             title="Patterns and Month View"
             formal="See the shape of your child's months. Patterns and the Month view turn a year of single days into a clear picture of good days and hard days, so trends you could never spot across separate notes become obvious."
             plain="A calendar of green and amber days. Tap any day to read what happened behind it." />
-          <PlusFeature icon={<Icon name="filter" size={22} color="var(--blue)" />}
+          <PlusFeature icon={<Icon name="filter" size={22} color="#fff" />}
             title="Deep Filtering"
             formal="Find the exact entries that prove your point. Combine theme, behaviour, setting and dates in one search, so you can pull together every relevant moment in seconds instead of reading back through months."
             plain="Pick 'lunch hall' plus 'running off' plus 'this term' and get just those days, in order." />
-          <PlusFeature icon={<Icon name="note" size={22} color="var(--blue)" />}
+          <PlusFeature icon={<Icon name="note" size={22} color="#fff" />}
             title="Dysregulation Mode"
             formal="Capture a hard moment as fact, while you are still standing there. It gives you the five questions to ask, takes the answers as plain notes, and puts them in order: what led up to it, what happened, and what helped. You walk away with a usable record, not just 'a hard afternoon'."
             plain="Teacher mentions a tough afternoon. You tap 'Dysregulation', read the questions, tap the answers. Done in under two minutes." />
-          <PlusFeature icon={<Icon name="attach" size={22} color="var(--blue)" />}
+          <PlusFeature icon={<Icon name="attach" size={22} color="#fff" />}
             title="Photos and Videos on Notes"
             formal="Keep the picture with the fact. Capture a photo or video, or attach one from your library, and it stays with the note on this phone. Sometimes the picture is the evidence."
             plain="A mark at pick-up: capture it with a dysregulation note and it sits with that day's record, ready when you need it." />
-          <PlusFeature icon={<Icon name="doc" size={22} color="var(--blue)" />}
+          <PlusFeature icon={<Icon name="doc" size={22} color="#fff" />}
             title="PDF Evidence Pack"
             formal="Hand over a clean, dated record when it counts. The evidence pack lays out your chosen entries as a clear, dated document, each with the day it was logged and whether it was written the same day or added later. It is built around the formats tribunals and professionals already use."
             plain="Choose your dates and themes, and get a tidy PDF you can email or print for an assessment, review or tribunal." />
@@ -1233,8 +1127,8 @@ function PlusPage() {
 }
 
 // ---- Page 3: Jotla AI (2027, coming soon) ----
-// This replaces the old "Living Companion" tier. It is £79 a year and it
-// INCLUDES Plus: a parent on Jotla AI pays £79 in total, not £49 plus £79.
+// This replaces the old "Living Companion" tier. It is £149 a year and it
+// INCLUDES Plus: a parent on Jotla AI pays £149 in total, not £79 plus £149.
 function AiPage() {
   return (
     <div style={PAGE_STYLE}>
@@ -1354,8 +1248,7 @@ function UnlockScreen({ nav }) {
               <Icon name="check" size={20} color={PLUS_ACCENT_DEEP} /> You have Jotla Plus
             </button>
           : <button className="j-btn j-btn-lg" style={{ background: PLUS_GRAD, color: '#fff', boxShadow: '0 14px 28px -10px rgba(60,42,114,0.6)' }} onClick={() => setConfirmPlus(true)}>
-              <Icon name="star" size={18} color={PLUS_ACCENT} /> Get Jotla Plus, {saleOn() ? SALE.price : PLUS_PRICE} {PLUS_PERIOD}
-              {saleOn() && <span style={{ fontSize: 'calc(14px * var(--tscale, 1))', opacity: 0.6, textDecoration: 'line-through', marginLeft: 6 }}>{SALE.was}</span>}
+              <Icon name="star" size={18} color={PLUS_ACCENT} /> Get Jotla Plus, {PLUS_PRICE} {PLUS_PERIOD}
             </button>)}
         {idx === 2 && (
           <button className="j-btn j-btn-lg" disabled style={{ background: 'var(--tag-grey-bg)', color: 'var(--muted)', cursor: 'default' }}>
@@ -1633,7 +1526,7 @@ function InfoAboutScreen({ nav }) {
 
       <InfoBlock icon="sparkle" title="Jotla Plus">
         <InfoP>The record itself is free, forever: logging, your timeline, search and export never cost anything, never expire, and stay yours.</InfoP>
-        <InfoP>Jotla Plus adds the tools to help you spot patterns and make your case: photos and videos kept with your notes, patterns and the Month view, deep filtering, Dysregulation Mode, and the PDF evidence pack. Family Sync, when it arrives, is part of Plus too. Plus is {PLUS_PRICE} {PLUS_PERIOD}. It is paid once a year, and there is no monthly plan.</InfoP>
+        <InfoP>Jotla Plus adds the tools to help you spot patterns and make your case: photos and videos kept with your notes, patterns and the Month view, deep filtering, Dysregulation Mode, and the PDF evidence pack. Family Sync, when it arrives, is part of Plus too. Plus is {PLUS_PRICE} {PLUS_PERIOD}, or {TERM_PRICE} {TERM_PERIOD}. It is paid up front, and there is no monthly plan.</InfoP>
         <InfoP><span className="j-strong">If your year ends, you keep everything.</span> Your record is never held to ransom. If Plus ends, for any reason at all, whether you cancel, let it lapse, or a card quietly expires, you lose nothing you have written. Every entry stays. Your full timeline stays. Plain keyword search stays. Raw export stays. You can still make the PDF of everything you have already logged. Appeal-deadline safety reminders keep coming, with or without a subscription. A subscription only ever switches off the paid tools. It never touches your history.</InfoP>
         <InfoP>Jotla AI is coming in 2027: {AI_PRICE} {PLUS_PERIOD}, with Jotla Plus included, so it is {AI_PRICE} in total and not one price on top of another.</InfoP>
         <button className="j-btn j-btn-soft" onClick={() => nav.go('unlock')}>
