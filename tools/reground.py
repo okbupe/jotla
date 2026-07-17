@@ -22,8 +22,13 @@ so re-grounding onto G' is exact: P' = P + (1-a)*(G' - G). Only the per-pixel al
 is needed. Ground is found by a CONNECTIVITY-aware flood from the border, not a
 colour test, so an enclosed light prop is correctly kept as art.
 
-Ground lands on #0E1726 EXACTLY (delta 0). It is a composite, not a generation, so
-it beats the light set's own measured delta of 3.
+GROUND, MEASURED (17 Jul, all 14, not asserted). The page ground lands on #0E1726
+EXACTLY, delta 0, across 45-74% of each frame. It beats the light set's own measured
+delta of 3, because this is a composite rather than a generation: no model has to hit
+a hex. That is true only since the `out[gcore_er] = NEW` line below; the recomposite
+alone carried the source's webp noise through and drifted up to 18. The 2px fringe
+band hugging each silhouette still carries that noise (max ~12) and is left alone
+deliberately: it is the anti-aliasing transition, not the page.
 
 WHAT IT DOES NOT FIX, and this is the honest limit. Roughly 5 of 14 scenes contain a
 light-tuned PROP that was drawn to sit on an off-white page and now glows on the dark
