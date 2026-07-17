@@ -8,9 +8,18 @@
 // tint discs and grounds, a shared character system (heads, torsos, limbs,
 // one shoe colour), shared accent helpers (sparkle, leaf, heart), no text
 // baked into the artwork. Hand-authored SVG so the app stays tiny and fully
-// offline (no raster assets). The brand hues stay static in dark mode;
-// every colour was checked against both the light (#F7F9FC) and dark
-// (#0E1726) app backgrounds.
+// offline (no raster assets). The brand hues stay static in dark mode.
+//
+// CORRECTED 17 Jul. This header used to say "every colour was checked against
+// both the light (#F7F9FC) and dark (#0E1726) app backgrounds". Rendered on
+// both grounds for the first time on 17 Jul: that is NOT true. 11 of 26 palette
+// tokens fail the 3:1 non-text floor on dark, and the tint discs (the deck's own
+// depth system) are translucent, so on a dark ground they go DARKER, not lighter
+// (tintBlue over #0E1726 = #152742). tipRoom renders a brown mud blob and
+// tipAvoid a maroon stain: both Tips cards, i.e. the 11pm crisis deck. The deck
+// reads on dark only where the dominant masses happen to be light-on-dark (skin,
+// white cards, green). That is luck, not design. Do not cite this deck as the
+// theme-correct fallback without rendering it first. See NATIVE-SYNC.md B.
 
 const FACE_FILL = '#F4C95D'; // warm butter
 const FACE_LINE = '#4A3D1E'; // soft dark brown features
@@ -362,8 +371,12 @@ const ILLO = {
   amber: '#F39C12',
   amberDeep: '#D9820B',
   red: '#E74C3C',
+  // MEASURED 17 Jul: 5.95:1 on the light ground, 2.86:1 on dark, i.e. UNDER the 3:1
+  // non-text floor. This comment used to claim it "reads on light and dark grounds".
+  // It does not, and that false claim was taken on trust into a founder decision
+  // (NATIVE-SYNC.md section B). Where slate reads on dark it is because it sits on
+  // skin or a white card, never on the bare ground. Do not treat it as dark-safe ink.
   slate: '#46618C',
-  // structural ink that reads on light and dark grounds
   navy: '#22344F',
   // details sitting on white surfaces
   cream: '#FDF9F2',
@@ -2521,268 +2534,103 @@ function StoryIllo({
       fill: ILLO.bright,
       opacity: "0.45"
     })),
-    /* Tour 4: At the gate: the railed school gate, the hedge, the school and
-       its flag beyond, parent and child arriving hand in hand. */
+    /* Tour 4: Dysregulation: a parent sits down on the floor beside their child,
+       close and steady, one arm around them, the hard moment already passing and
+       both of them calm. The three ordered steps sit beside them.
+         REDRAWN 17 Jul, and it is a concept change, not a restyle. This scene was
+       "At the gate": a child waving at a railed school gate with a flag. Slide 4
+       was renamed "Dysregulation", so the art contradicted its own copy, which now
+       reads "When a hard moment happens, Jotla asks you six simple questions...
+       what led up to it, what happened, what helped." A cheerful school-gate
+       arrival next to crisis copy. The generated image deck already fixed this on
+       the web; the SVG deck had not, and the SVG deck is what native renders and
+       what the web falls back to whenever STORY_IMAGES is emptied.
+         Held to the imagery locks: never a crying, distressed or mid-meltdown child.
+       The feeling is steadiness and repair, and the moment has already passed. The
+       third step's dot is green because the third question is "what helped".
+       Kept identical to the native port (illustrations.tsx). */
     tourGate: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement(IDisc, {
-      cx: 120,
-      cy: 74,
-      r: 60,
-      tint: ILLO.tintGreen
+      cx: 88,
+      cy: 76,
+      r: 54,
+      tint: ILLO.tintBlue
     }), /*#__PURE__*/React.createElement(IGround, {
-      cx: 118,
-      rx: 84,
-      tint: ILLO.tintGreen
+      cx: 86,
+      rx: 62,
+      tint: ILLO.tintBlue
     }), /*#__PURE__*/React.createElement(IContact, {
-      cx: 140,
-      rx: 40
-    }), /*#__PURE__*/React.createElement("rect", {
-      x: "146",
-      y: "46",
-      width: "46",
-      height: "44",
-      rx: "3",
-      fill: ILLO.cream,
-      stroke: ILLO.slate,
-      strokeWidth: "2.2"
+      cx: 86,
+      rx: 42
     }), /*#__PURE__*/React.createElement("path", {
-      d: "M 142 46 L 169 28 L 196 46 Z",
+      d: "M 48 124 Q 46 92 70 84 Q 86 80 90 96 L 92 124 Z",
+      fill: ILLO.blue
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M 94 124 Q 92 98 108 96 Q 122 96 122 124 Z",
       fill: ILLO.bright
-    }), /*#__PURE__*/React.createElement("line", {
-      x1: "169",
-      y1: "28",
-      x2: "169",
-      y2: "18",
-      stroke: ILLO.slate,
-      strokeWidth: "2.2",
-      strokeLinecap: "round"
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M 169 18 L 180 21 L 169 24 Z",
-      fill: ILLO.green
-    }), /*#__PURE__*/React.createElement("rect", {
-      x: "153",
-      y: "56",
-      width: "9",
-      height: "10",
-      rx: "2",
-      fill: ILLO.white,
-      stroke: ILLO.slate,
-      strokeWidth: "1.8"
-    }), /*#__PURE__*/React.createElement("rect", {
-      x: "176",
-      y: "56",
-      width: "9",
-      height: "10",
-      rx: "2",
-      fill: ILLO.white,
-      stroke: ILLO.slate,
-      strokeWidth: "1.8"
-    }), /*#__PURE__*/React.createElement("circle", {
-      cx: "150",
-      cy: "94",
-      r: "15",
-      fill: ILLO.green,
-      opacity: "0.85"
-    }), /*#__PURE__*/React.createElement("circle", {
-      cx: "174",
-      cy: "95",
-      r: "14",
-      fill: ILLO.green,
-      opacity: "0.7"
-    }), /*#__PURE__*/React.createElement("circle", {
-      cx: "196",
-      cy: "97",
-      r: "12",
-      fill: ILLO.green,
-      opacity: "0.85"
-    }), /*#__PURE__*/React.createElement("circle", {
-      cx: "130",
-      cy: "97",
-      r: "12",
-      fill: ILLO.green,
-      opacity: "0.7"
-    }), [121, 130, 139, 148].map(x => /*#__PURE__*/React.createElement("line", {
-      key: x,
-      x1: x,
-      y1: "80",
-      x2: x,
-      y2: "124",
-      stroke: ILLO.slate,
-      strokeWidth: "3",
-      strokeLinecap: "round",
-      opacity: "0.85"
-    })), /*#__PURE__*/React.createElement("rect", {
-      x: "109",
-      y: "70",
-      width: "6",
-      height: "56",
-      rx: "3",
-      fill: ILLO.slate
-    }), /*#__PURE__*/React.createElement("rect", {
-      x: "153",
-      y: "70",
-      width: "6",
-      height: "56",
-      rx: "3",
-      fill: ILLO.slate
-    }), /*#__PURE__*/React.createElement("circle", {
-      cx: "112",
-      cy: "68",
-      r: "3.5",
-      fill: ILLO.slate
-    }), /*#__PURE__*/React.createElement("circle", {
-      cx: "156",
-      cy: "68",
-      r: "3.5",
-      fill: ILLO.slate
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M 112 72 Q 134 62 156 72",
-      fill: "none",
-      stroke: ILLO.slate,
-      strokeWidth: "4",
-      strokeLinecap: "round"
-    }), /*#__PURE__*/React.createElement("line", {
-      x1: "26",
-      y1: "88",
-      x2: "26",
-      y2: "116",
-      stroke: ILLO.wood,
-      strokeWidth: "4",
-      strokeLinecap: "round"
-    }), /*#__PURE__*/React.createElement("circle", {
-      cx: "26",
-      cy: "72",
-      r: "14",
-      fill: ILLO.green,
-      opacity: "0.9"
-    }), /*#__PURE__*/React.createElement("circle", {
-      cx: "17",
-      cy: "81",
-      r: "9.5",
-      fill: ILLO.green,
-      opacity: "0.75"
-    }), /*#__PURE__*/React.createElement("circle", {
-      cx: "35",
-      cy: "81",
-      r: "9.5",
-      fill: ILLO.green,
-      opacity: "0.75"
-    }), /*#__PURE__*/React.createElement(IContact, {
-      cx: 68,
-      rx: 36
     }), /*#__PURE__*/React.createElement(ILimb, {
-      d: "M 44 84 Q 36 92 38 100",
-      color: ILLO.green,
-      w: 8
+      d: "M 80 92 Q 102 96 116 108",
+      color: ILLO.blue,
+      w: 9
     }), /*#__PURE__*/React.createElement(IHand, {
-      x: 38,
-      y: 102,
+      x: 118,
+      y: 110,
       r: 4.5,
-      skin: S.tan
-    }), /*#__PURE__*/React.createElement(ITorso, {
-      cx: 54,
-      top: 77,
-      hw: 14,
-      bottom: 104,
-      color: ILLO.green
-    }), /*#__PURE__*/React.createElement(IBand, {
-      cx: 54,
-      top: 102,
-      hw: 14,
-      depth: 10,
-      color: ILLO.greenDeep
-    }), /*#__PURE__*/React.createElement(ILimb, {
-      d: "M 47 112 L 45 124",
-      color: ILLO.greenDeep,
-      w: 7.5
-    }), /*#__PURE__*/React.createElement(ILimb, {
-      d: "M 61 112 L 63 124",
-      color: ILLO.greenDeep,
-      w: 7.5
-    }), /*#__PURE__*/React.createElement(IShoe, {
-      cx: 44,
-      cy: 127.5,
-      rx: 6.5,
-      ry: 3.2,
-      rot: -8
-    }), /*#__PURE__*/React.createElement(IShoe, {
-      cx: 64,
-      cy: 127.5,
-      rx: 6.5,
-      ry: 3.2,
-      rot: 8
-    }), /*#__PURE__*/React.createElement(IHead, {
-      cx: 54,
-      cy: 64,
-      r: 14,
-      skin: S.tan,
-      hair: H.brown,
-      mood: "calm",
-      bun: true
-    }), /*#__PURE__*/React.createElement(ITorso, {
-      cx: 84,
-      top: 98,
-      hw: 10,
-      bottom: 116,
-      color: ILLO.bright
-    }), /*#__PURE__*/React.createElement(IBand, {
-      cx: 84,
-      top: 114,
-      hw: 10,
-      depth: 7,
-      color: ILLO.deep
-    }), /*#__PURE__*/React.createElement(ILimb, {
-      d: "M 79 121 L 79 126",
-      color: ILLO.deep,
-      w: 5.5
-    }), /*#__PURE__*/React.createElement(ILimb, {
-      d: "M 89 121 L 89 126",
-      color: ILLO.deep,
-      w: 5.5
-    }), /*#__PURE__*/React.createElement(IShoe, {
-      cx: 78.5,
-      cy: 128.5,
-      rx: 4.5,
-      ry: 2.6
-    }), /*#__PURE__*/React.createElement(IShoe, {
-      cx: 89.5,
-      cy: 128.5,
-      rx: 4.5,
-      ry: 2.6
-    }), /*#__PURE__*/React.createElement(ILimb, {
-      d: "M 64 86 Q 70 96 72 100",
-      color: ILLO.green,
-      w: 8
-    }), /*#__PURE__*/React.createElement(ILimb, {
-      d: "M 78 102 Q 76 102 74 102",
-      color: ILLO.bright,
-      w: 5.5
-    }), /*#__PURE__*/React.createElement(IHand, {
-      x: 73,
-      y: 102,
+      skin: S.brown
+    }), [0, 1, 2].map(i => /*#__PURE__*/React.createElement("g", {
+      key: i
+    }, /*#__PURE__*/React.createElement("rect", {
+      x: 148,
+      y: 40 + i * 30,
+      width: 50,
+      height: 24,
+      rx: 5,
+      fill: ILLO.white,
+      stroke: ILLO.slate,
+      strokeWidth: 1.8
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: 159,
+      cy: 52 + i * 30,
       r: 4,
-      skin: S.tan
-    }), /*#__PURE__*/React.createElement(ILimb, {
-      d: "M 92 102 Q 99 96 103 89",
-      color: ILLO.bright,
-      w: 5.5
-    }), /*#__PURE__*/React.createElement(IHand, {
-      x: 104,
-      y: 87,
-      r: 3.6,
-      skin: S.tan
+      fill: i === 2 ? ILLO.green : ILLO.bright,
+      opacity: i === 2 ? 1 : 0.55 + i * 0.2
+    }), /*#__PURE__*/React.createElement("rect", {
+      x: 168,
+      y: 50 + i * 30,
+      width: 22,
+      height: 3.4,
+      rx: 1.7,
+      fill: ILLO.faintRow
+    }))), /*#__PURE__*/React.createElement("line", {
+      x1: 159,
+      y1: 56,
+      x2: 159,
+      y2: 100,
+      stroke: ILLO.slate,
+      strokeWidth: 1.6,
+      strokeLinecap: "round",
+      opacity: 0.35
     }), /*#__PURE__*/React.createElement(IHead, {
-      cx: 84,
-      cy: 86,
-      r: 10.5,
-      skin: S.tan,
-      hair: H.chestnut,
-      mood: "warm"
+      cx: 70,
+      cy: 66,
+      r: 14,
+      skin: S.brown,
+      hair: H.black,
+      mood: "calm",
+      tilt: 8
+    }), /*#__PURE__*/React.createElement(IHead, {
+      cx: 106,
+      cy: 84,
+      r: 11,
+      skin: S.brown,
+      hair: H.black,
+      mood: "calm",
+      tilt: -8
     }), /*#__PURE__*/React.createElement(ISparkle, {
-      x: 196,
-      y: 38,
-      s: 4,
-      color: ILLO.amber,
-      op: 0.6
+      x: 132,
+      y: 40,
+      s: 3.5,
+      color: ILLO.bright,
+      op: 0.5
     })),
     /* Tour 5: Their day, in their words: the child proudly holds the phone, happy face up. */
     tourChild: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement(IDisc, {

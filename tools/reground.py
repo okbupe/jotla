@@ -118,10 +118,28 @@ def nearest_colour(a, src_mask, need_mask, iters=12):
     return out
 
 
+def enclosed_ground(a, gcore, hole_tol=8):
+    """Ground-coloured pockets the border flood cannot reach: the gap between a figure's
+    legs, under an arm, inside a handle. Closed off by the art, so they are not
+    border-connected, so `flood_connected` correctly refuses to guess and leaves them as
+    art. On a light page that is invisible (they ARE the page). On a dark one they become
+    bright wedges: tipAvoid's father had a white slab down his legs because of this.
+
+    Colour separates them from a real light prop, and the margin is enormous, so this is
+    safe rather than lucky. Measured on tipAvoid: the three pockets are #F8F9FD, delta 0
+    from the ground, i.e. the same flat fill. Measured on tipReconnect: the white sofa is
+    NOT within even tol=18 of the ground and never appears here. hole_tol=8 sits in a gap
+    with nothing in it. A prop that genuinely IS the page colour is indistinguishable from
+    the page anyway, so flooding it is right.
+    """
+    return (np.abs(a - ground_colour(a)).max(axis=2) <= hole_tol) & ~gcore
+
+
 def matte_reground(a, tol=18):
     """Method B. Connectivity-aware ground, per-pixel alpha, exact recomposite."""
     G = ground_colour(a)
     gcore = flood_connected(a, tol)          # true page ground only
+    gcore = gcore | enclosed_ground(a, gcore)  # ...plus the pockets it cannot reach
     gcore_er = ~dilate(~gcore, 2)            # erode: drop the soft fringe
     art_core = ~dilate(gcore, 2)             # confidently art
     fringe = ~gcore_er & ~art_core           # the anti-aliased band

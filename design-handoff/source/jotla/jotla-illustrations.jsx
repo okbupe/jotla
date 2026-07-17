@@ -896,58 +896,56 @@ function StoryIllo({ scene = 'tourWelcome', width = 210 }) {
       </g>
     ),
 
-    /* Tour 4: At the gate: the railed school gate, the hedge, the school and
-       its flag beyond, parent and child arriving hand in hand. */
+    /* Tour 4: Dysregulation: a parent sits down on the floor beside their child,
+       close and steady, one arm around them, the hard moment already passing and
+       both of them calm. The three ordered steps sit beside them.
+
+       REDRAWN 17 Jul, and it is a concept change, not a restyle. This scene was
+       "At the gate": a child waving at a railed school gate with a flag. Slide 4
+       was renamed "Dysregulation", so the art contradicted its own copy, which now
+       reads "When a hard moment happens, Jotla asks you six simple questions...
+       what led up to it, what happened, what helped." A cheerful school-gate
+       arrival next to crisis copy. The generated image deck already fixed this on
+       the web; the SVG deck had not, and the SVG deck is what native renders and
+       what the web falls back to whenever STORY_IMAGES is emptied.
+
+       Held to the imagery locks: never a crying, distressed or mid-meltdown child.
+       The feeling is steadiness and repair, and the moment has already passed. The
+       third step's dot is green because the third question is "what helped".
+       Kept identical to the native port (illustrations.tsx). */
     tourGate: (
       <g>
-        <IDisc cx={120} cy={74} r={60} tint={ILLO.tintGreen} />
-        <IGround cx={118} rx={84} tint={ILLO.tintGreen} />
-        <IContact cx={140} rx={40} />
-        <rect x="146" y="46" width="46" height="44" rx="3" fill={ILLO.cream} stroke={ILLO.slate} strokeWidth="2.2" />
-        <path d="M 142 46 L 169 28 L 196 46 Z" fill={ILLO.bright} />
-        <line x1="169" y1="28" x2="169" y2="18" stroke={ILLO.slate} strokeWidth="2.2" strokeLinecap="round" />
-        <path d="M 169 18 L 180 21 L 169 24 Z" fill={ILLO.green} />
-        <rect x="153" y="56" width="9" height="10" rx="2" fill={ILLO.white} stroke={ILLO.slate} strokeWidth="1.8" />
-        <rect x="176" y="56" width="9" height="10" rx="2" fill={ILLO.white} stroke={ILLO.slate} strokeWidth="1.8" />
-        <circle cx="150" cy="94" r="15" fill={ILLO.green} opacity="0.85" />
-        <circle cx="174" cy="95" r="14" fill={ILLO.green} opacity="0.7" />
-        <circle cx="196" cy="97" r="12" fill={ILLO.green} opacity="0.85" />
-        <circle cx="130" cy="97" r="12" fill={ILLO.green} opacity="0.7" />
-        {[121, 130, 139, 148].map(x => (
-          <line key={x} x1={x} y1="80" x2={x} y2="124" stroke={ILLO.slate} strokeWidth="3" strokeLinecap="round" opacity="0.85" />
+        <IDisc cx={88} cy={76} r={54} tint={ILLO.tintBlue} />
+        <IGround cx={86} rx={62} tint={ILLO.tintBlue} />
+        <IContact cx={86} rx={42} />
+        {/* Geometry lifted from tipReconnect and shifted -22 in x to clear the cards,
+           rather than invented: that scene is an approved seated parent-and-child with
+           an arm around, which is exactly this brief. My first attempt at bespoke paths
+           left a white wedge where the two bodies failed to meet. Bodies overlap by 2
+           units on purpose; the child is drawn second and sits on top. */}
+        <path d="M 48 124 Q 46 92 70 84 Q 86 80 90 96 L 92 124 Z" fill={ILLO.blue} />
+        <path d="M 94 124 Q 92 98 108 96 Q 122 96 122 124 Z" fill={ILLO.bright} />
+        {/* the arm that goes around them: the whole point of the slide */}
+        <ILimb d="M 80 92 Q 102 96 116 108" color={ILLO.blue} w={9} />
+        <IHand x={118} y={110} r={4.5} skin={S.brown} />
+        {/* No arm reaching back from the child: they are settled and leaning in, not
+           consoling the adult. Two arms crossed here read as an X at this size. */}
+        {/* three steps, put in order; abstract marks only, never readable letters */}
+        {[0, 1, 2].map(i => (
+          <g key={i}>
+            <rect x={148} y={40 + i * 30} width={50} height={24} rx={5}
+              fill={ILLO.white} stroke={ILLO.slate} strokeWidth={1.8} />
+            <circle cx={159} cy={52 + i * 30} r={4}
+              fill={i === 2 ? ILLO.green : ILLO.bright} opacity={i === 2 ? 1 : 0.55 + i * 0.2} />
+            <rect x={168} y={50 + i * 30} width={22} height={3.4} rx={1.7} fill={ILLO.faintRow} />
+          </g>
         ))}
-        <rect x="109" y="70" width="6" height="56" rx="3" fill={ILLO.slate} />
-        <rect x="153" y="70" width="6" height="56" rx="3" fill={ILLO.slate} />
-        <circle cx="112" cy="68" r="3.5" fill={ILLO.slate} />
-        <circle cx="156" cy="68" r="3.5" fill={ILLO.slate} />
-        <path d="M 112 72 Q 134 62 156 72" fill="none" stroke={ILLO.slate} strokeWidth="4" strokeLinecap="round" />
-        <line x1="26" y1="88" x2="26" y2="116" stroke={ILLO.wood} strokeWidth="4" strokeLinecap="round" />
-        <circle cx="26" cy="72" r="14" fill={ILLO.green} opacity="0.9" />
-        <circle cx="17" cy="81" r="9.5" fill={ILLO.green} opacity="0.75" />
-        <circle cx="35" cy="81" r="9.5" fill={ILLO.green} opacity="0.75" />
-        <IContact cx={68} rx={36} />
-        <ILimb d="M 44 84 Q 36 92 38 100" color={ILLO.green} w={8} />
-        <IHand x={38} y={102} r={4.5} skin={S.tan} />
-        <ITorso cx={54} top={77} hw={14} bottom={104} color={ILLO.green} />
-        <IBand cx={54} top={102} hw={14} depth={10} color={ILLO.greenDeep} />
-        <ILimb d="M 47 112 L 45 124" color={ILLO.greenDeep} w={7.5} />
-        <ILimb d="M 61 112 L 63 124" color={ILLO.greenDeep} w={7.5} />
-        <IShoe cx={44} cy={127.5} rx={6.5} ry={3.2} rot={-8} />
-        <IShoe cx={64} cy={127.5} rx={6.5} ry={3.2} rot={8} />
-        <IHead cx={54} cy={64} r={14} skin={S.tan} hair={H.brown} mood="calm" bun />
-        <ITorso cx={84} top={98} hw={10} bottom={116} color={ILLO.bright} />
-        <IBand cx={84} top={114} hw={10} depth={7} color={ILLO.deep} />
-        <ILimb d="M 79 121 L 79 126" color={ILLO.deep} w={5.5} />
-        <ILimb d="M 89 121 L 89 126" color={ILLO.deep} w={5.5} />
-        <IShoe cx={78.5} cy={128.5} rx={4.5} ry={2.6} />
-        <IShoe cx={89.5} cy={128.5} rx={4.5} ry={2.6} />
-        <ILimb d="M 64 86 Q 70 96 72 100" color={ILLO.green} w={8} />
-        <ILimb d="M 78 102 Q 76 102 74 102" color={ILLO.bright} w={5.5} />
-        <IHand x={73} y={102} r={4} skin={S.tan} />
-        <ILimb d="M 92 102 Q 99 96 103 89" color={ILLO.bright} w={5.5} />
-        <IHand x={104} y={87} r={3.6} skin={S.tan} />
-        <IHead cx={84} cy={86} r={10.5} skin={S.tan} hair={H.chestnut} mood="warm" />
-        <ISparkle x={196} y={38} s={4} color={ILLO.amber} op={0.6} />
+        {/* the thread that makes them a sequence rather than three loose cards */}
+        <line x1={159} y1={56} x2={159} y2={100} stroke={ILLO.slate}
+          strokeWidth={1.6} strokeLinecap="round" opacity={0.35} />
+        <IHead cx={70} cy={66} r={14} skin={S.brown} hair={H.black} mood="calm" tilt={8} />
+        <IHead cx={106} cy={84} r={11} skin={S.brown} hair={H.black} mood="calm" tilt={-8} />
+        <ISparkle x={132} y={40} s={3.5} color={ILLO.bright} op={0.5} />
       </g>
     ),
 
