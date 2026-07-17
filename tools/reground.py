@@ -130,6 +130,12 @@ def matte_reground(a, tol=18):
     alpha[gcore_er] = 0.0
 
     out = a + (1 - alpha)[..., None] * (NEW - G)   # P' = P + (1-a)(G'-G)
+    # The recomposite carries the SOURCE ground's webp noise through as (a - G), which
+    # measured p50=0 / p99=4 / max=18 against #0E1726. Invisible on the light original;
+    # not on a dark page, where flat navy shows every stray point. Pixels at alpha==0 are
+    # pure page ground by definition, so set them rather than nudge them: delta 0, and
+    # the tail dies. Only the fringe (0 < alpha < 1) needs the arithmetic.
+    out[gcore_er] = NEW
     return np.clip(out, 0, 255), alpha, gcore
 
 
