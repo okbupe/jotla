@@ -771,7 +771,7 @@ function QuickLogScreen({
       } : {
         ...base,
         type: 'quick',
-        summary: m.text || `${m.category} at ${m.setting.toLowerCase()}. ${m.time} went ${m.mood === 'good' ? 'well' : m.mood === 'ok' ? 'up and down' : 'hard'}.`
+        summary: m.text || `${m.category} at ${J.settingInSentence(m.setting)}. ${m.time} went ${m.mood === 'good' ? 'well' : m.mood === 'ok' ? 'up and down' : 'hard'}.`
       };
       if (m.media && m.media.dataUrl) {
         entry.photoData = m.media.dataUrl;

@@ -688,7 +688,7 @@ function EntryScreen({
     size: 44
   }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
     className: "j-h3"
-  }, e.time, " at ", e.setting.toLowerCase()), /*#__PURE__*/React.createElement("p", {
+  }, e.time, " at ", J.settingInSentence(e.setting)), /*#__PURE__*/React.createElement("p", {
     className: "j-meta"
   }, J.fmtLong(e.date), " \xB7 ", e.category))), /*#__PURE__*/React.createElement("span", {
     style: {

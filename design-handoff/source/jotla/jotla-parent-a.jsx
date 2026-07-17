@@ -355,7 +355,7 @@ function QuickLogScreen({ nav, today, view, profile }) {
         ? { ...base, type: 'handover', summary: m.during || m.text || 'Hard moment captured.',
             handover: { behaviours: [], before: m.before, during: m.during || m.text, after: m.after, duration: '', helped: '', who: m.who || [], where: '' } }
         : { ...base, type: 'quick',
-            summary: m.text || `${m.category} at ${m.setting.toLowerCase()}. ${m.time} went ${m.mood === 'good' ? 'well' : m.mood === 'ok' ? 'up and down' : 'hard'}.` };
+            summary: m.text || `${m.category} at ${J.settingInSentence(m.setting)}. ${m.time} went ${m.mood === 'good' ? 'well' : m.mood === 'ok' ? 'up and down' : 'hard'}.` };
       if (m.media && m.media.dataUrl) { entry.photoData = m.media.dataUrl; entry.photo = 'Photo from the day'; }
       else if (m.media && m.media.kind === 'video') { entry.photo = 'Video noted (kept in your photo library)'; }
       nav.addEntry(entry);

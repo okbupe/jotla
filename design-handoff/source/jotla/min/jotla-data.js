@@ -812,6 +812,26 @@ const TODAY_ISO = _isoOf(_NOW);
 const SEED_ANCHOR_ISO = '2026-06-12'; // the last seeded day in the original data
 
 const SETTINGS = ['School', 'Nursery', 'Home', 'Club'];
+
+/** True for the four Jotla suggests, false for a place the parent typed. */
+function isNamedSetting(s) {
+  return SETTINGS.includes(s);
+}
+
+/** A setting as it reads inside a sentence ("Play at school", "Play at Grandma's").
+ *
+ *  The four are common nouns and belong lowercase mid-sentence. A place the PARENT
+ *  typed is theirs, capitals and all, and must survive verbatim.
+ *
+ *  This is not cosmetic. `jotla-parent-a.jsx` composes the entry summary from it when
+ *  a moment carries no words of its own, and then STORES it: a summary is testimony,
+ *  and Jotla never rewrites or back-fills one afterwards. A blanket toLowerCase() put
+ *  "Play at grandma's." in the record permanently, and "at st mary's", and "at nanny
+ *  jean's". Ported from native's settingInSentence (src/domain/types.ts), which fixed
+ *  this first; the two must not drift. */
+function settingInSentence(s) {
+  return isNamedSetting(s) ? s.toLowerCase() : s;
+}
 const TIMES = ['Morning', 'Afternoon', 'Evening'];
 const CATEGORIES = ['Mornings', 'Eating', 'Play', 'Transitions', 'Lunch hall', 'School feedback', 'New words', 'Wins', 'Incidents', 'Other'];
 const BEHAVIOURS = ['Crying', 'Hitting out', 'Running off', 'Refusing', 'Stomping', 'Withdrawing', 'Screaming'];
@@ -937,6 +957,8 @@ Object.assign(window, {
     parseISO,
     fmtLong,
     fmtShort,
-    dayMood
+    dayMood,
+    isNamedSetting,
+    settingInSentence
   }
 });
