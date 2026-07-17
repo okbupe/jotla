@@ -10,3 +10,7 @@ node_modules/
 dist/
 build/
 .expo/
+
+# Python bytecode from the tools/ scripts (reground.py and friends)
+__pycache__/
+*.pyc
