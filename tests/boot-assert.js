@@ -451,9 +451,14 @@ function ok(name, cond) {
   await page4.goto(URL_APP, { waitUntil: 'networkidle' });
   await page4.waitForTimeout(1200);
 
-  // four-bar This month strip: one Dysregulation bar joins the mood trio
+  // The "This month" graph is a Plus feature since 17 Jul 2026 (founder): free no
+  // longer sees it on Today, matching the Month screen's locked card. The demo
+  // record is non-empty (its day list shows below), so the strip's absence is the
+  // gate doing its job, not an empty record. NOTE the old check here looked for
+  // 'Dysregulation', which the action tile carries too, so it never tested the
+  // graph at all; this asserts the strip's own heading instead.
   const todayText = await page4.locator('#root').innerText();
-  ok('Today strip carries the Dysregulation bar', todayText.includes('Dysregulation'));
+  ok('free Today drops the This month graph (Plus-only)', !todayText.includes('This month'));
   // the gate name is gone from the parent's view (founder, 16 Jul 2026); "at the
   // gate" survives only in a log's own words, where it means the actual gate
   ok('no Gate bar or gate-note wording remains on Today', !/Gate\b|gate note/.test(todayText));
@@ -559,7 +564,11 @@ function ok(name, cond) {
 
   ok('header wordmark wears the +PLUS pill', (await page5.locator('.j-appheader').innerText()).includes('+PLUS'));
   // item 34 (1.10.0): Plus frames the check-in as a two-of-you thing
-  ok("Plus Your day tile reads 'Do it together'", (await page5.locator('#root').innerText()).includes('Do it together with Sam'));
+  const todayPlus = await page5.locator('#root').innerText();
+  ok("Plus Your day tile reads 'Do it together'", todayPlus.includes('Do it together with Sam'));
+  // negative control for suite 8: the same demo record, on Plus, DOES carry the
+  // "This month" graph on Today (Plus-only since 17 Jul 2026).
+  ok('Plus Today keeps the This month graph', todayPlus.includes('This month'));
 
   // Plus quick log: the media tiles are live inside the moment editor
   await page5.getByText('Log', { exact: true }).last().click();
@@ -687,8 +696,8 @@ function ok(name, cond) {
 
   // ---- 11. build 1.9.2: justified graph columns (native parity) ----
   console.log('Suite 11: justified graph columns (1.9.2)');
-  // One Plus context covers both graphs: the Today "This month" strip (every
-  // tier) and the Plus-only month graph. Geometry is measured on the real
+  // One Plus context covers both graphs: the Today "This month" strip (Plus-only
+  // since 17 Jul 2026) and the Plus month graph. Geometry is measured on the real
   // rendered rows, per the iron rule: shrink-wrapped columns (no flex
   // weighting), space-between spread, first column flush left, last flush
   // right, even gaps, and the bars keeping one slim shared width.

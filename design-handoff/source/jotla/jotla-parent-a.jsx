@@ -77,11 +77,13 @@ function TodayScreen({ nav, entries, today, profile }) {
               <p className="j-sm" style={{ marginBottom: 16 }}>The picture builds itself one ordinary day at a time. New to Jotla?</p>
               <button className="j-btn j-btn-ghost" onClick={() => nav.go('tour')}><Icon name="hand" size={18} color="var(--blue)" /> Take the quick tour</button>
             </div>
-          ) : (
+          ) : nav.plus ? (
+            /* The "This month" graph is a Plus feature, matching the Month screen
+               (founder, 17 Jul 2026): free no longer gets it on Today, Plus keeps it. */
             <div style={{ marginBottom: 22 }}>
               <MiniMonthStrip entries={entries} onOpen={() => nav.setTab('month')} />
             </div>
-          )}
+          ) : null}
 
           <SectionLabel>{childName}'s day so far</SectionLabel>
           {todays.length === 0 ? (

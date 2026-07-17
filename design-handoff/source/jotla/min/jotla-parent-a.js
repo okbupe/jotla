@@ -179,14 +179,18 @@ function TodayScreen({
     name: "hand",
     size: 18,
     color: "var(--blue)"
-  }), " Take the quick tour")) : /*#__PURE__*/React.createElement("div", {
+  }), " Take the quick tour")) : nav.plus ?
+  /*#__PURE__*/
+  /* The "This month" graph is a Plus feature, matching the Month screen
+     (founder, 17 Jul 2026): free no longer gets it on Today, Plus keeps it. */
+  React.createElement("div", {
     style: {
       marginBottom: 22
     }
   }, /*#__PURE__*/React.createElement(MiniMonthStrip, {
     entries: entries,
     onOpen: () => nav.setTab('month')
-  })), /*#__PURE__*/React.createElement(SectionLabel, null, childName, "'s day so far"), todays.length === 0 ? /*#__PURE__*/React.createElement("div", {
+  })) : null, /*#__PURE__*/React.createElement(SectionLabel, null, childName, "'s day so far"), todays.length === 0 ? /*#__PURE__*/React.createElement("div", {
     className: "j-card",
     style: {
       padding: 24,
