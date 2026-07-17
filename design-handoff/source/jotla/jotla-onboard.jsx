@@ -205,7 +205,7 @@ function TourScreen({ nav, profile }) {
           {/* brand-style scene illustration (build 1.8.0); icon disc kept as the fallback */}
           {step.illo
             ? <span className="j-illo-slot" style={{ marginBottom: 20 }}>
-                <StoryIllo scene={step.illo} width={300} />
+                <StoryIllo scene={step.illo} width={300} dark={nav.dark} />
               </span>
             : <div style={{ width: 134, height: 134, borderRadius: '50%', background: step.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 30, flexShrink: 0 }}>
                 {step.face ? <Face mood="good" size={92} /> : <Icon name={step.icon} size={58} color={step.color} stroke={1.9} />}

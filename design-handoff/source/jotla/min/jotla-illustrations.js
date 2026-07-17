@@ -1400,6 +1400,37 @@ const STORY_IMAGES = {
   tipReconnect: 'illo/tipReconnect.7c285113.webp',
   tipWrite: 'illo/tipWrite.56985ff3.webp'
 };
+/* The dark counterpart set. Same art, same composition, same casting: only the ground
+   differs (#0E1726 instead of #F7F9FC), because the ground is BAKED into a raster and a
+   picture cannot theme itself. StoryIllo picks the SET off `dark`.
+
+   This is an image-to-image switch and it is NOT `dark ? SVG : image`, which was refuted
+   on six grounds on 17 Jul (it swapped art identity on a theme toggle and voided the
+   fairness and gender locks on the dark side). Same pixels here, so the casting locks
+   hold on both themes by construction.
+
+   Built by tools/reground.py + tools/props.py from the light set, not regenerated: every
+   Higgsfield job ran with "Reference image: none", so a fresh dark set returns DIFFERENT
+   faces. Measured on the shipped bytes: the page ground decodes to #0E1726 exactly, delta
+   0, on all 14. Hashes stay load-bearing here for the same sw.js reason as the light set
+   (cache-first + ignoreSearch); native strips them, because Metro hashes assets itself. */
+const STORY_IMAGES_DARK = {
+  tourWelcome: 'illo-dark/tourWelcome.12063231.webp',
+  tourToday: 'illo-dark/tourToday.16fdfbba.webp',
+  tourLog: 'illo-dark/tourLog.c8208674.webp',
+  tourGate: 'illo-dark/tourGate.db54ef02.webp',
+  tourChild: 'illo-dark/tourChild.917f26d9.webp',
+  tourPattern: 'illo-dark/tourPattern.bf6f9152.webp',
+  tourPrivate: 'illo-dark/tourPrivate.a2e3fc37.webp',
+  tourReady: 'illo-dark/tourReady.232b3e44.webp',
+  tipCalm: 'illo-dark/tipCalm.7cd4e146.webp',
+  tipSoft: 'illo-dark/tipSoft.3ac7b670.webp',
+  tipAvoid: 'illo-dark/tipAvoid.8eb5e5ca.webp',
+  tipRoom: 'illo-dark/tipRoom.9aeac006.webp',
+  tipReconnect: 'illo-dark/tipReconnect.2fff8838.webp',
+  tipWrite: 'illo-dark/tipWrite.aed19891.webp'
+};
+
 /* Square (1:1), founder call 16 Jul: the 3:2 deck rendered too small in the slot.
    The ratio is what matters here, not the number: `.j-illo-img` pins aspect-ratio
    in CSS, so a file that ships below 900 (tipAvoid at 755) still lays out right. */
@@ -1407,7 +1438,8 @@ const STORY_IMAGE_W = 900,
   STORY_IMAGE_H = 900;
 function StoryIllo({
   scene = 'tourWelcome',
-  width = 210
+  width = 210,
+  dark = false
 }) {
   const S = ILLO.skin,
     H = ILLO.hair;
@@ -3123,7 +3155,12 @@ function StoryIllo({
   /* Image deck first, SVG deck as the fallback. The intrinsic width/height
      attributes hand the browser the aspect ratio up front so the slide does not
      reflow as the image lands. */
-  const imgSrc = STORY_IMAGES[scene];
+  /* The theme picks the SET, not the artwork: same scene, same casting, only the
+     ground differs. `dark` is a prop rather than context because the app has none
+     (verified: zero createContext/useContext hits); it rides in on `nav.dark`, which
+     both call sites already hold. A scene missing from the map still falls through
+     to its SVG, and emptying both maps restores the hand-authored deck whole. */
+  const imgSrc = (dark ? STORY_IMAGES_DARK : STORY_IMAGES)[scene];
   if (imgSrc) {
     // `width` is a MAX here, not a fixed size: a square illustration is much taller
     // than the old 3:2 one, so on a short phone at the largest text size a fixed
@@ -3160,6 +3197,7 @@ Object.assign(window, {
   SceneIllo,
   StoryIllo,
   STORY_IMAGES,
+  STORY_IMAGES_DARK,
   readAvatarPhoto,
   fileToDataURL,
   PhotoCropper

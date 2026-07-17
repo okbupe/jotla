@@ -911,7 +911,7 @@ function DysregTipsScreen({ nav }) {
               rather than the card scrolling. */}
           {t.illo
             ? <span className="j-illo-slot" style={{ marginBottom: 12 }}>
-                <StoryIllo scene={t.illo} width={264} />
+                <StoryIllo scene={t.illo} width={264} dark={nav.dark} />
               </span>
             : <span style={{ width: 76, height: 76, borderRadius: 24, background: t.tint, display: 'flex',
                 alignItems: 'center', justifyContent: 'center', marginBottom: 18, flexShrink: 0 }}>

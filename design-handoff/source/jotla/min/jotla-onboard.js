@@ -440,7 +440,8 @@ function TourScreen({
       }
     }, /*#__PURE__*/React.createElement(StoryIllo, {
       scene: step.illo,
-      width: 300
+      width: 300,
+      dark: nav.dark
     })) : /*#__PURE__*/React.createElement("div", {
       style: {
         width: 134,

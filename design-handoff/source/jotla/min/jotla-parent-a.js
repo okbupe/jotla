@@ -1956,7 +1956,8 @@ function DysregTipsScreen({
       }
     }, /*#__PURE__*/React.createElement(StoryIllo, {
       scene: t.illo,
-      width: 264
+      width: 264,
+      dark: nav.dark
     })) : /*#__PURE__*/React.createElement("span", {
       style: {
         width: 76,
