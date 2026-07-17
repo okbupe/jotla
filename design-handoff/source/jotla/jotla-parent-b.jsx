@@ -1057,7 +1057,7 @@ function PlusPage() {
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
             <span style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(40px * var(--tscale, 1))', color: PLUS_ACCENT }}>{PLUS_PRICE}</span>
             <span style={{ fontSize: 'calc(14px * var(--tscale, 1))', color: 'rgba(255,255,255,0.82)' }}>{PLUS_PERIOD}</span>
-            <span style={{ marginLeft: 'auto', fontSize: 'calc(12.5px * var(--tscale, 1))', fontWeight: 700, color: '#2A1E52', background: PLUS_ACCENT,
+            <span style={{ marginLeft: 'auto', fontSize: 'calc(12.5px * var(--tscale, 1))', fontWeight: 700, color: '#3A2A0C', background: PREMIUM_GOLD,
               padding: '4px 10px', borderRadius: 999 }}>Best value</span>
           </div>
           <p style={{ fontSize: 'calc(13.5px * var(--tscale, 1))', color: 'rgba(255,255,255,0.82)', margin: '8px 0 0' }}>
@@ -1248,7 +1248,7 @@ function UnlockScreen({ nav }) {
               <Icon name="check" size={20} color={PLUS_ACCENT_DEEP} /> You have Jotla Plus
             </button>
           : <button className="j-btn j-btn-lg" style={{ background: PLUS_GRAD, color: '#fff', boxShadow: '0 14px 28px -10px rgba(60,42,114,0.6)' }} onClick={() => setConfirmPlus(true)}>
-              <Icon name="star" size={18} color={PLUS_ACCENT} /> Get Jotla Plus, {PLUS_PRICE} {PLUS_PERIOD}
+              <Icon name="star" size={18} color={PLUS_ACCENT} /> Get Jotla Plus
             </button>)}
         {idx === 2 && (
           <button className="j-btn j-btn-lg" disabled style={{ background: 'var(--tag-grey-bg)', color: 'var(--muted)', cursor: 'default' }}>
@@ -1268,13 +1268,20 @@ function UnlockScreen({ nav }) {
                 <Icon name="star" size={26} color={PLUS_ACCENT} />
               </span>
             </div>
-            <h2 className="j-h2" style={{ textAlign: 'center', marginBottom: 8 }}>You are about to switch to Jotla Plus</h2>
-            <p className="j-body" style={{ textAlign: 'center', color: 'var(--muted)', marginBottom: 20 }}>
-              {PLUS_PRICE} {PLUS_PERIOD}. This turns on Patterns, the Month view, Deep Filtering, Dysregulation Mode, Photos and Videos on Notes, and the PDF Evidence Pack. Everything you have already saved stays exactly as it is, and it stays yours if your year ever ends.
+            <h2 className="j-h2" style={{ textAlign: 'center', marginBottom: 8 }}>Choose how to start Jotla Plus</h2>
+            <p className="j-body" style={{ textAlign: 'center', color: 'var(--muted)', marginBottom: 18 }}>
+              Same Plus either way. It turns on Patterns, the Month view, Deep Filtering, Dysregulation Mode, Photos and Videos on Notes, and the PDF Evidence Pack. You keep everything you have written if it ever ends.
             </p>
-            <button className="j-btn j-btn-lg" style={{ background: PLUS_GRAD, color: '#fff', marginBottom: 10 }}
+            <button className="j-btn j-btn-lg" style={{ background: PLUS_GRAD, color: '#fff', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}
               onClick={() => { nav.buyPlus(); setConfirmPlus(false); setBought(true); }}>
-              <Icon name="check" size={20} color="#fff" /> Confirm
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Icon name="check" size={20} color="#fff" /> The whole year, {PLUS_PRICE}
+              </span>
+              <span style={{ fontSize: 'calc(12px * var(--tscale, 1))', fontWeight: 700, color: '#3A2A0C', background: PREMIUM_GOLD, padding: '3px 9px', borderRadius: 999 }}>Best value</span>
+            </button>
+            <button className="j-btn j-btn-lg" style={{ background: 'var(--plus-tint)', color: 'var(--plus-ink)', marginBottom: 10 }}
+              onClick={() => { nav.buyPlus(); setConfirmPlus(false); setBought(true); }}>
+              6 months, {TERM_PRICE}
             </button>
             <button className="j-btn j-btn-ghost" onClick={() => setConfirmPlus(false)}>Cancel</button>
           </div>

@@ -2150,8 +2150,8 @@ function PlusPage() {
       marginLeft: 'auto',
       fontSize: 'calc(12.5px * var(--tscale, 1))',
       fontWeight: 700,
-      color: '#2A1E52',
-      background: PLUS_ACCENT,
+      color: '#3A2A0C',
+      background: PREMIUM_GOLD,
       padding: '4px 10px',
       borderRadius: 999
     }
@@ -2614,7 +2614,7 @@ function UnlockScreen({
     name: "star",
     size: 18,
     color: PLUS_ACCENT
-  }), " Get Jotla Plus, ", PLUS_PRICE, " ", PLUS_PERIOD)), idx === 2 && /*#__PURE__*/React.createElement("button", {
+  }), " Get Jotla Plus")), idx === 2 && /*#__PURE__*/React.createElement("button", {
     className: "j-btn j-btn-lg",
     disabled: true,
     style: {
@@ -2660,18 +2660,53 @@ function UnlockScreen({
       textAlign: 'center',
       marginBottom: 8
     }
-  }, "You are about to switch to Jotla Plus"), /*#__PURE__*/React.createElement("p", {
+  }, "Choose how to start Jotla Plus"), /*#__PURE__*/React.createElement("p", {
     className: "j-body",
     style: {
       textAlign: 'center',
       color: 'var(--muted)',
-      marginBottom: 20
+      marginBottom: 18
     }
-  }, PLUS_PRICE, " ", PLUS_PERIOD, ". This turns on Patterns, the Month view, Deep Filtering, Dysregulation Mode, Photos and Videos on Notes, and the PDF Evidence Pack. Everything you have already saved stays exactly as it is, and it stays yours if your year ever ends."), /*#__PURE__*/React.createElement("button", {
+  }, "Same Plus either way. It turns on Patterns, the Month view, Deep Filtering, Dysregulation Mode, Photos and Videos on Notes, and the PDF Evidence Pack. You keep everything you have written if it ever ends."), /*#__PURE__*/React.createElement("button", {
     className: "j-btn j-btn-lg",
     style: {
       background: PLUS_GRAD,
       color: '#fff',
+      marginBottom: 10,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 10
+    },
+    onClick: () => {
+      nav.buyPlus();
+      setConfirmPlus(false);
+      setBought(true);
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "check",
+    size: 20,
+    color: "#fff"
+  }), " The whole year, ", PLUS_PRICE), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 'calc(12px * var(--tscale, 1))',
+      fontWeight: 700,
+      color: '#3A2A0C',
+      background: PREMIUM_GOLD,
+      padding: '3px 9px',
+      borderRadius: 999
+    }
+  }, "Best value")), /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-lg",
+    style: {
+      background: 'var(--plus-tint)',
+      color: 'var(--plus-ink)',
       marginBottom: 10
     },
     onClick: () => {
@@ -2679,11 +2714,7 @@ function UnlockScreen({
       setConfirmPlus(false);
       setBought(true);
     }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "check",
-    size: 20,
-    color: "#fff"
-  }), " Confirm"), /*#__PURE__*/React.createElement("button", {
+  }, "6 months, ", TERM_PRICE), /*#__PURE__*/React.createElement("button", {
     className: "j-btn j-btn-ghost",
     onClick: () => setConfirmPlus(false)
   }, "Cancel"))), confirmFree && /*#__PURE__*/React.createElement("div", {
