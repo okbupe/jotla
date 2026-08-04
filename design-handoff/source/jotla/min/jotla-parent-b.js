@@ -86,8 +86,7 @@ function FindScreen({
       paddingBottom: 120
     }
   }, /*#__PURE__*/React.createElement(TabTitle, {
-    title: "Find",
-    sub: "Search across everything you have noted."
+    title: "Find"
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
@@ -428,7 +427,6 @@ function EvidenceScreen({
     className: "j-screen"
   }, /*#__PURE__*/React.createElement(PushHeader, {
     title: "Documents and evidence",
-    subtitle: "A dated record of what you saw, when you saw it.",
     onBack: () => nav.back()
   }), /*#__PURE__*/React.createElement("div", {
     className: "j-scroll j-fade",
@@ -472,7 +470,13 @@ function EvidenceScreen({
     "aria-pressed": themes.includes(t),
     className: 'j-chip' + (themes.includes(t) ? ' j-chip-on' : ''),
     onClick: () => toggleTheme(t)
-  }, t))), /*#__PURE__*/React.createElement(SectionLabel, null, "Preview"), /*#__PURE__*/React.createElement("div", {
+  }, t))), /*#__PURE__*/React.createElement(SectionLabel, null, "Preview"), /*#__PURE__*/React.createElement("p", {
+    className: "j-sm",
+    style: {
+      margin: '-4px 0 10px',
+      color: 'var(--muted)'
+    }
+  }, "A dated record of what you saw, when you saw it."), /*#__PURE__*/React.createElement("div", {
     style: {
       borderRadius: 14,
       background: 'var(--card)',

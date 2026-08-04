@@ -47,7 +47,9 @@ function FindScreen({ nav, entries, view }) {
     <div className="j-screen">
       <div className="j-scroll j-fade" ref={scrollRef}>
         <div className="j-pad" style={{ paddingTop: 14, paddingBottom: 120 }}>
-          <TabTitle title="Find" sub="Search across everything you have noted." />
+          {/* DECLUTTER (founder, 4 Aug 2026): the sub is gone. The screen said Find,
+              showed a magnifying glass, and the field itself reads "Search your notes". */}
+          <TabTitle title="Find" />
 
           {/* search bar */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--card-2)', border: '1.5px solid var(--chip-border)',
@@ -241,7 +243,11 @@ function EvidenceScreen({ nav, entries, docs, profile, navView }) {
 
   return (
     <div className="j-screen">
-      <PushHeader title="Documents and evidence" subtitle="A dated record of what you saw, when you saw it." onBack={() => nav.back()} />
+      {/* DECLUTTER (founder, 4 Aug 2026): this line moved down onto the Preview,
+          where it describes the pack being built rather than the screen it is
+          built on, directly above the rows whose Same day / Added later badges
+          it explains. It is the only explanatory line worth keeping. */}
+      <PushHeader title="Documents and evidence" onBack={() => nav.back()} />
       <div className="j-scroll j-fade" ref={scrollRef}>
         <div className="j-pad" style={{ paddingTop: 2, paddingBottom: view === 'records' ? 120 : 120 }}>
 
@@ -265,6 +271,11 @@ function EvidenceScreen({ nav, entries, docs, profile, navView }) {
               </div>
 
               <SectionLabel>Preview</SectionLabel>
+              {/* The provenance promise, moved here from the screen header on
+                  4 Aug 2026. Every row below carries its own Same day / Added
+                  later badge; this is the sentence saying what those mean,
+                  sitting directly above them. */}
+              <p className="j-sm" style={{ margin: '-4px 0 10px', color: 'var(--muted)' }}>A dated record of what you saw, when you saw it.</p>
               <div style={{ borderRadius: 14, background: 'var(--card)', border: '1px solid var(--line)',
                 boxShadow: '0 18px 40px -24px rgba(20,40,80,0.45)', overflow: 'hidden' }}>
                 <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid var(--line)' }}>

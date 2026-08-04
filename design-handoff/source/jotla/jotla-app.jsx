@@ -99,7 +99,12 @@ function AppHeader({ profile, plus, onProfile, onOptions, onEvidence }) {
   const handleClick = () => { if (longRef.current) { longRef.current = false; return; } onProfile(); };
   return (
     <div className="j-appheader">
-      <Wordmark size={26} color="var(--blue)" subColor="var(--faint)" plus={plus} />
+      {/* DECLUTTER (founder, 4 Aug 2026): no "by SEN Help", no +PLUS pill. Both
+          were permanent on every screen, telling a parent whose app this is and
+          that they had paid. The endorsement belongs where trust is being decided
+          (splash, About, store); Plus status is answered in Settings. Wordmark
+          keeps both halves for those places. */}
+      <Wordmark size={26} color="var(--blue)" sub={false} />
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <button className="j-iconbtn j-iconbtn-plain" aria-label="Documents" onClick={onEvidence}>
           <Icon name="doc" size={23} color="var(--blue)" />

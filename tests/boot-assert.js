@@ -562,13 +562,20 @@ function ok(name, cond) {
   await page5.goto(URL_APP, { waitUntil: 'networkidle' });
   await page5.waitForTimeout(1200);
 
-  ok('header wordmark wears the +PLUS pill', (await page5.locator('.j-appheader').innerText()).includes('+PLUS'));
+  // DECLUTTER (founder, 4 Aug 2026): the header is the bare logotype now. It used
+  // to carry the +PLUS pill and "by SEN Help" on every screen, telling a parent
+  // whose app this is and that they had paid. This check is inverted rather than
+  // deleted, so neither can creep back in.
+  const header5 = await page5.locator('.j-appheader').innerText();
+  ok('header wordmark drops the +PLUS pill, even on Plus', !header5.includes('+PLUS'));
+  ok('header wordmark drops the "by SEN Help" endorsement', !header5.includes('by SEN Help'));
   // item 34 (1.10.0): Plus frames the check-in as a two-of-you thing
   const todayPlus = await page5.locator('#root').innerText();
   ok("Plus Your day tile reads 'Do it together'", todayPlus.includes('Do it together with Sam'));
   // negative control for suite 8: the same demo record, on Plus, DOES carry the
-  // "This month" graph on Today (Plus-only since 17 Jul 2026).
-  ok('Plus Today keeps the This month graph', todayPlus.includes('This month'));
+  // "This month" card on Today (Plus-only since 17 Jul 2026). It is a card, not
+  // a graph, since 4 Aug 2026: the bars moved to Month.
+  ok('Plus Today keeps the This month card', todayPlus.includes('This month'));
 
   // Plus quick log: the media tiles are live inside the moment editor
   await page5.getByText('Log', { exact: true }).last().click();
@@ -746,15 +753,17 @@ function ok(name, cond) {
       barWidth: bars[0],
     };
   };
+  // THE TODAY STRIP NO LONGER DRAWS BARS (founder, 4 Aug 2026). Today and Month
+  // used to draw the identical four bars from identical counts one tab away, so
+  // the five geometry checks that used to run here were a second copy of the
+  // Month checks a few lines below. Month owns the graph; Today keeps the trend
+  // sentence and the way through. What is asserted here now is that the
+  // duplicate cannot come back, and the geometry invariants themselves — equal
+  // columns, flush edges, evenly spaced bars of one width, none of them thin —
+  // are unchanged and still enforced, on the Month graph where the bars live.
   const gToday = await page8.evaluate(graphGeom);
-  ok('Today strip columns are equal width (spread ' + (gToday ? gToday.colSpread.toFixed(2) : '?') + 'px)',
-    !!gToday && gToday.colSpread < 1);
-  ok('Today strip: first column flush left, last flush right', !!gToday && gToday.flushLeft < 1 && gToday.flushRight < 1);
-  ok('Today strip bars are evenly spaced (centre-gap spread ' + (gToday ? gToday.midGapSpread.toFixed(2) : '?') + 'px)',
-    !!gToday && gToday.midGapSpread < 1.5);
-  ok('Today strip bars share one width', !!gToday && gToday.barSpread < 0.5);
-  // Founder, 16 Jul: "the bars on the graphs are too thin, now that gate was removed".
-  ok('Today strip bars are not thin (' + (gToday ? gToday.barWidth : '?') + 'px)', !!gToday && gToday.barWidth >= 32);
+  ok('Today strip draws no bar graph any more', gToday === null);
+  ok('Today strip keeps its trend sentence', (await page8.locator('#root').innerText()).includes('come up most often as the hard moments'));
   await page8.getByText('Month', { exact: true }).last().click();
   await page8.waitForTimeout(500);
   const gMonth = await page8.evaluate(graphGeom);

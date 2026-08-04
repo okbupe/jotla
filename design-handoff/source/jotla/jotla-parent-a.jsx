@@ -45,7 +45,7 @@ function TodayScreen({ nav, entries, today, profile }) {
           <h1 className="j-h1" style={{ marginBottom: 4 }}>{greeting()}.</h1>
           <p className="j-body" style={{ color: 'var(--muted)', marginBottom: 20 }}>{isEmpty
             ? `${childName}'s record is brand new. Add the first line whenever you are ready.`
-            : `Here is how ${childName}'s day is looking. Nothing to catch up on.`}</p>
+            : 'Nothing to catch up on.'}</p>
 
           {/* two tiles first, then the graph below */}
           <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
@@ -386,7 +386,10 @@ function QuickLogScreen({ nav, today, view, profile }) {
 
   return (
     <div className="j-screen">
-      <PushHeader title="Quick log" subtitle="Log the whole day, one moment at a time" onClose={() => nav.back()} />
+      {/* DECLUTTER (founder, 4 Aug 2026): subtitle gone, and the "Tap what
+          happened" line below it with it. Between them they explained the screen
+          twice to a parent who opens it several times a day. */}
+      <PushHeader title="Quick log" onClose={() => nav.back()} />
       <div className="j-scroll j-fade">
         <div className="j-pad" style={{ paddingBottom: 130, paddingTop: 6 }}>
           {/* the three questions side by side, each a card of question + answer */}
@@ -437,7 +440,6 @@ function QuickLogScreen({ nav, today, view, profile }) {
               moments each holds today; change When above to stamp the next one. */}
           <div style={{ marginTop: 22 }}>
             <FieldLabel>What happened?</FieldLabel>
-            <p className="j-sm" style={{ margin: '-4px 0 12px', color: 'var(--faint)' }}>Tap what happened. Add as many as you like, then Save once.</p>
             <div className="j-chiprow">
               {J.CATEGORIES.map(c => {
                 const n = countFor(c);

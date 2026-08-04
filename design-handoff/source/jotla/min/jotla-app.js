@@ -231,8 +231,7 @@ function AppHeader({
   }, /*#__PURE__*/React.createElement(Wordmark, {
     size: 26,
     color: "var(--blue)",
-    subColor: "var(--faint)",
-    plus: plus
+    sub: false
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',

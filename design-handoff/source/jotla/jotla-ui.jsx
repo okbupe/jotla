@@ -663,39 +663,44 @@ function KindBars({ blocks, maxN }) {
   );
 }
 
-// Month summary: the four count blocks + a plain trend line.
+// Month summary: one sentence and the way through to Month.
+//
+// THE GRAPH IS GONE (founder, 4 Aug 2026). This card drew KindBars — Good /
+// Mixed / Hard / Dysregulation — and the Month screen drew the identical four
+// bars from the identical counts one tab away. Two screens, same picture, and
+// Today is the busiest screen in the app. Month owns the graph now; Today keeps
+// the one line saying what the month has been about, which is what Month cannot
+// give you without a tab change. The day-counting loop went with the bars: only
+// the trend line and the dysregulation count are still needed.
+//
+// NOTE, unchanged and worth knowing: _top is computed over the WHOLE record, not
+// just this month, while dysreg is this month only. That mismatch predates this
+// change and is left as it was rather than altered silently under a tidy-up.
 function MiniMonthStrip({ entries, onOpen }) {
   const J = window.JOTLA;
-  let good = 0, ok = 0, hard = 0;
   const _my = J.TODAY_ISO.slice(0, 4), _mm = J.TODAY_ISO.slice(5, 7);
-  const _dim = new Date(Number(_my), Number(_mm), 0).getDate();
-  for (let d = 1; d <= _dim; d++) {
-    const iso = `${_my}-${_mm}-${String(d).padStart(2, '0')}`;
-    const m = J.dayMood(entries.filter(e => e.date === iso));
-    if (m === 'good') good++; else if (m === 'ok') ok++; else if (m === 'hard') hard++;
-  }
   const monthEntries = entries.filter(e => e.date.startsWith(`${_my}-${_mm}-`));
   const dysreg = monthEntries.filter(e => e.type === 'handover' || e.category === 'Incidents').length;
-  const blocks = kindBarBlocks({ good, ok, hard, dysreg });
-  const maxN = Math.max(good, ok, hard, dysreg, 1);
   const _hc = {};
   entries.forEach(e => { if (e.mood === 'hard') _hc[e.category] = (_hc[e.category] || 0) + 1; });
   const _top = Object.entries(_hc).sort((a, b) => b[1] - a[1])[0];
   return (
     <div className="j-card j-press" onClick={onOpen} style={{ padding: 18, cursor: 'pointer' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <span className="j-h3">This month</span>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--blue)', fontSize: 'calc(14px * var(--tscale, 1))', fontWeight: 500 }}>
           Open Month view <Icon name="chevronRight" size={16} color="var(--blue)" />
         </span>
       </div>
-      <KindBars blocks={blocks} maxN={maxN} />
       <p className="j-body" style={{ fontSize: 'calc(14.5px * var(--tscale, 1))', color: 'var(--muted)', marginTop: 16 }}>
         {_top
-          ? (<><span className="j-strong">{_top[0]}</span> entries come up most often as the hard moments. Tap Find to see them gathered.</>)
+          // "Tap Find to see them gathered" went with the graph: the whole card
+          // is a tap target that opens MONTH, so an instruction to tap for Find
+          // was pointing somewhere the tap does not go.
+          ? (<><span className="j-strong">{_top[0]}</span> entries come up most often as the hard moments.</>)
           : dysreg > 0
             // Dysregulation moments can carry a good or mixed mood, so "no hard
-            // moments" alone would sit dishonestly next to a plum bar with a count.
+            // moments" alone would sit dishonestly next to a month that holds some.
             ? `${dysreg} dysregulation ${dysreg === 1 ? 'moment' : 'moments'} logged this month, none marked as a hard moment.`
             : 'No hard moments logged so far. Long may it last.'}
       </p>

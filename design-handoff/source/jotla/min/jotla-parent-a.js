@@ -107,7 +107,7 @@ function TodayScreen({
       color: 'var(--muted)',
       marginBottom: 20
     }
-  }, isEmpty ? `${childName}'s record is brand new. Add the first line whenever you are ready.` : `Here is how ${childName}'s day is looking. Nothing to catch up on.`), /*#__PURE__*/React.createElement("div", {
+  }, isEmpty ? `${childName}'s record is brand new. Add the first line whenever you are ready.` : 'Nothing to catch up on.'), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       gap: 12,
@@ -826,7 +826,6 @@ function QuickLogScreen({
     className: "j-screen"
   }, /*#__PURE__*/React.createElement(PushHeader, {
     title: "Quick log",
-    subtitle: "Log the whole day, one moment at a time",
     onClose: () => nav.back()
   }), /*#__PURE__*/React.createElement("div", {
     className: "j-scroll j-fade"
@@ -944,13 +943,7 @@ function QuickLogScreen({
     style: {
       marginTop: 22
     }
-  }, /*#__PURE__*/React.createElement(FieldLabel, null, "What happened?"), /*#__PURE__*/React.createElement("p", {
-    className: "j-sm",
-    style: {
-      margin: '-4px 0 12px',
-      color: 'var(--faint)'
-    }
-  }, "Tap what happened. Add as many as you like, then Save once."), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(FieldLabel, null, "What happened?"), /*#__PURE__*/React.createElement("div", {
     className: "j-chiprow"
   }, J.CATEGORIES.map(c => {
     const n = countFor(c);

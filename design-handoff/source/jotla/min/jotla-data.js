@@ -842,7 +842,7 @@ const MOODS = [{
   label: 'Good day'
 }, {
   key: 'ok',
-  label: 'Up and down'
+  label: 'Mixed day'
 }, {
   key: 'hard',
   label: 'Hard day'

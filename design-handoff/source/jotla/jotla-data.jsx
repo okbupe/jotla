@@ -310,7 +310,7 @@ const BEHAVIOURS = ['Crying', 'Hitting out', 'Running off', 'Refusing', 'Stompin
 // Moods in order good -> hard for the face row
 const MOODS = [
   { key: 'good', label: 'Good day' },
-  { key: 'ok',   label: 'Up and down' },
+  { key: 'ok',   label: 'Mixed day' },
   { key: 'hard', label: 'Hard day' },
 ];
 
