@@ -255,6 +255,10 @@
   .backbtn svg { width: 22px; height: 22px; }
   .tgl { width: 42px; height: 25px; border-radius: 999px; background: var(--accent-fill); position: relative; flex: 0 0 42px; }
   .tgl::after { content: ''; position: absolute; top: 2.5px; right: 2.5px; width: 20px; height: 20px; border-radius: 50%; background: #fff; }
+  /* the Plus gate marker: in the FREE app, a Plus row's trailing control
+     (chevron or toggle) becomes the solid gold crown; tapping a crowned
+     row always opens the Jotla Plus page */
+  .crownmark { width: 20px; height: 20px; flex: 0 0 20px; color: var(--gold); }
 
   /* menu icon picker */
   .optstrip { display: flex; gap: 10px; padding: 14px; border-radius: 18px; flex-wrap: wrap; justify-content: center; }
@@ -1079,19 +1083,19 @@
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
         </div>
 
-        <div class="sectionrow"><div class="section">Google Drive</div><span class="chip plus">Plus</span></div>
+        <div class="section">Google Drive</div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-cloudup"/></svg>
           <div class="body">
             <div class="title">Back up to your Drive</div>
             <div class="sub">Not backed up yet</div>
           </div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
+          <svg class="crownmark" viewBox="0 0 24 24" fill="currentColor"><use href="#i-crown"/></svg>
         </div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-clouddown"/></svg>
           <div class="body"><div class="title">Restore from your Drive</div></div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
+          <svg class="crownmark" viewBox="0 0 24 24" fill="currentColor"><use href="#i-crown"/></svg>
         </div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-clock"/></svg>
@@ -1099,7 +1103,7 @@
             <div class="title">Auto backup</div>
             <div class="sub">Backs up by itself when the record changes</div>
           </div>
-          <span class="tgl"></span>
+          <svg class="crownmark" viewBox="0 0 24 24" fill="currentColor"><use href="#i-crown"/></svg>
         </div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-bell"/></svg>
@@ -1107,7 +1111,7 @@
             <div class="title">Backup reminder</div>
             <div class="sub">Every week</div>
           </div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
+          <svg class="crownmark" viewBox="0 0 24 24" fill="currentColor"><use href="#i-crown"/></svg>
         </div>
 
         <div class="fsync"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-lock"/></svg>Your backup lives in your own Google Drive, in a space only the app can read. Jotla has no servers and never sees your record.</div>
@@ -1146,19 +1150,19 @@
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
         </div>
 
-        <div class="sectionrow"><div class="section">Google Drive</div><span class="chip plus">Plus</span></div>
+        <div class="section">Google Drive</div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-cloudup"/></svg>
           <div class="body">
             <div class="title">Back up to your Drive</div>
             <div class="sub">Not backed up yet</div>
           </div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
+          <svg class="crownmark" viewBox="0 0 24 24" fill="currentColor"><use href="#i-crown"/></svg>
         </div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-clouddown"/></svg>
           <div class="body"><div class="title">Restore from your Drive</div></div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
+          <svg class="crownmark" viewBox="0 0 24 24" fill="currentColor"><use href="#i-crown"/></svg>
         </div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-clock"/></svg>
@@ -1166,7 +1170,7 @@
             <div class="title">Auto backup</div>
             <div class="sub">Backs up by itself when the record changes</div>
           </div>
-          <span class="tgl"></span>
+          <svg class="crownmark" viewBox="0 0 24 24" fill="currentColor"><use href="#i-crown"/></svg>
         </div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-bell"/></svg>
@@ -1174,7 +1178,7 @@
             <div class="title">Backup reminder</div>
             <div class="sub">Every week</div>
           </div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
+          <svg class="crownmark" viewBox="0 0 24 24" fill="currentColor"><use href="#i-crown"/></svg>
         </div>
 
         <div class="fsync"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-lock"/></svg>Your backup lives in your own Google Drive, in a space only the app can read. Jotla has no servers and never sees your record.</div>
