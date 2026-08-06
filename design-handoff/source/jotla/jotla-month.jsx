@@ -64,6 +64,39 @@ function MonthMoodGraph({ entries, year, month }) {
   );
 }
 
+// Free: the locked patterns preview (redesign, 6 Aug). The analytics SHAPE sits
+// blurred behind a soft veil carrying the solid gold crown and the feature line;
+// tapping anywhere opens the Jotla Plus page (the crown gate). The bars are a
+// shape preview, unreadable by design, never presented as this month's data.
+function PatternsLockedPreview({ onOpen }) {
+  const bars = [['68%','var(--green)'],['40%','var(--green)'],['88%','var(--red)'],['52%','var(--amber)'],
+    ['80%','var(--red)'],['44%','var(--green)'],['58%','var(--amber)'],['36%','var(--green)'],
+    ['64%','var(--green)'],['84%','var(--red)'],['48%','var(--amber)'],['40%','var(--green)'],
+    ['76%','var(--red)'],['56%','var(--green)']];
+  const dys = ['40%','22%','78%','45%','95%','28%','55%','22%','70%','90%','35%','25%','82%','48%'];
+  return (
+    <button onClick={onOpen} className="j-press" aria-label="Month patterns, part of Jotla Plus"
+      style={{ position: 'relative', width: '100%', border: '1px solid var(--line)', borderRadius: 16,
+        overflow: 'hidden', background: 'var(--card)', marginTop: 18, padding: 0, cursor: 'pointer', textAlign: 'left' }}>
+      <div aria-hidden="true" style={{ filter: 'blur(7px)', opacity: 0.8, padding: '16px 16px 14px', pointerEvents: 'none' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 5, height: 70 }}>
+          {bars.map(([h, c], i) => <span key={i} style={{ flex: 1, height: h, background: c, borderRadius: 3 }} />)}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 5, height: 34, marginTop: 8 }}>
+          {dys.map((h, i) => <span key={i} style={{ flex: 1, height: h, background: 'var(--dysreg)', borderRadius: 3 }} />)}
+        </div>
+        <p style={{ fontSize: 'calc(12.5px * var(--tscale, 1))', color: 'var(--muted)', marginTop: 10, marginBottom: 0 }}>9 good · 4 mixed · 5 hard · 6 dysregulation</p>
+      </div>
+      <span className="j-patveil" style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center', gap: 3 }}>
+        <Icon name="crown" size={22} color="var(--gold)" />
+        <span style={{ fontSize: 'calc(14.5px * var(--tscale, 1))', fontWeight: 600, color: 'var(--ink)' }}>Month patterns</span>
+        <span style={{ fontSize: 'calc(12px * var(--tscale, 1))', color: 'var(--muted)' }}>The mood graph, counts and hard-day patterns.</span>
+      </span>
+    </button>
+  );
+}
+
 function MonthScreen({ nav, entries, view }) {
   const J = window.JOTLA;
   const today = J.parseISO(J.TODAY_ISO);
@@ -192,13 +225,6 @@ function MonthScreen({ nav, entries, view }) {
           <TabTitle title={monthLabel}
             right={<div style={{ display: 'flex', gap: 8 }}>{monthNavBtn('prev')}{monthNavBtn('next')}</div>} />
 
-          {/* month patterns are a Plus feature: free sees the honest locked card,
-              Plus gets the counts inside the graph card below the calendar */}
-          {!nav.plus && (
-            <PlusLockedCard onClick={() => nav.go('unlock')} style={{ marginBottom: 18 }}
-              title="Month patterns" text="The mood graph, counts and hard-day patterns for each month. Part of Plus." />
-          )}
-
           {/* calendar: swipe the grid itself between months, like the tier pager */}
           <div className="j-card" style={{ padding: 14, overflow: 'hidden' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6, marginBottom: 8 }}>
@@ -231,8 +257,8 @@ function MonthScreen({ nav, entries, view }) {
                           aria-label={c.future
                             ? `${c.d} ${J.MONTH_NAMES[m.month]} ${m.year}, in the future`
                             : `${c.d} ${J.MONTH_NAMES[m.month]} ${m.year}, ${c.count > 0 ? c.count + (c.count === 1 ? ' note' : ' notes') : 'no note'}`}
-                          style={{ aspectRatio: '1 / 1', borderRadius: 12, cursor: tappable ? 'pointer' : 'default',
-                            border: 'none', boxShadow: c.isToday ? 'inset 0 0 0 2px var(--blue)' : 'none',
+                          style={{ aspectRatio: '1 / 1', borderRadius: '50%', cursor: tappable ? 'pointer' : 'default',
+                            border: 'none', boxShadow: c.isToday ? 'inset 0 0 0 1.5px var(--blue)' : 'none',
                             background: tint, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3,
                             opacity: c.future ? 0.55 : 1 }}>
                           <span style={{ fontFamily: "'Outfit', system-ui", fontWeight: c.isToday ? 600 : 500, fontSize: 'calc(15px * var(--tscale, 1))', color: c.isToday ? 'var(--blue)' : ink }}>{c.d}</span>
@@ -267,8 +293,12 @@ function MonthScreen({ nav, entries, view }) {
             ))}
           </div>
 
-          {/* Plus: the shown month, graphed like the Today page */}
-          {nav.plus && <MonthMoodGraph entries={entries} year={year} month={month} />}
+          {/* Below the calendar: Plus gets the real graph; free gets the locked
+              preview, the analytics shape blurred behind the crown veil
+              (redesign, 6 Aug: the old locked card above the calendar is gone). */}
+          {nav.plus
+            ? <MonthMoodGraph entries={entries} year={year} month={month} />
+            : <PatternsLockedPreview onOpen={() => nav.go('unlock')} />}
         </div>
       </div>
     </div>

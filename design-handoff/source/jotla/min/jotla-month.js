@@ -110,6 +110,106 @@ function MonthMoodGraph({
     className: "j-strong"
   }, "Nothing logged in ", J.MONTH_NAMES[month], "."), " Swipe the calendar to move between months.")));
 }
+
+// Free: the locked patterns preview (redesign, 6 Aug). The analytics SHAPE sits
+// blurred behind a soft veil carrying the solid gold crown and the feature line;
+// tapping anywhere opens the Jotla Plus page (the crown gate). The bars are a
+// shape preview, unreadable by design, never presented as this month's data.
+function PatternsLockedPreview({
+  onOpen
+}) {
+  const bars = [['68%', 'var(--green)'], ['40%', 'var(--green)'], ['88%', 'var(--red)'], ['52%', 'var(--amber)'], ['80%', 'var(--red)'], ['44%', 'var(--green)'], ['58%', 'var(--amber)'], ['36%', 'var(--green)'], ['64%', 'var(--green)'], ['84%', 'var(--red)'], ['48%', 'var(--amber)'], ['40%', 'var(--green)'], ['76%', 'var(--red)'], ['56%', 'var(--green)']];
+  const dys = ['40%', '22%', '78%', '45%', '95%', '28%', '55%', '22%', '70%', '90%', '35%', '25%', '82%', '48%'];
+  return /*#__PURE__*/React.createElement("button", {
+    onClick: onOpen,
+    className: "j-press",
+    "aria-label": "Month patterns, part of Jotla Plus",
+    style: {
+      position: 'relative',
+      width: '100%',
+      border: '1px solid var(--line)',
+      borderRadius: 16,
+      overflow: 'hidden',
+      background: 'var(--card)',
+      marginTop: 18,
+      padding: 0,
+      cursor: 'pointer',
+      textAlign: 'left'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    "aria-hidden": "true",
+    style: {
+      filter: 'blur(7px)',
+      opacity: 0.8,
+      padding: '16px 16px 14px',
+      pointerEvents: 'none'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'flex-end',
+      gap: 5,
+      height: 70
+    }
+  }, bars.map(([h, c], i) => /*#__PURE__*/React.createElement("span", {
+    key: i,
+    style: {
+      flex: 1,
+      height: h,
+      background: c,
+      borderRadius: 3
+    }
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'flex-end',
+      gap: 5,
+      height: 34,
+      marginTop: 8
+    }
+  }, dys.map((h, i) => /*#__PURE__*/React.createElement("span", {
+    key: i,
+    style: {
+      flex: 1,
+      height: h,
+      background: 'var(--dysreg)',
+      borderRadius: 3
+    }
+  }))), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 'calc(12.5px * var(--tscale, 1))',
+      color: 'var(--muted)',
+      marginTop: 10,
+      marginBottom: 0
+    }
+  }, "9 good \xB7 4 mixed \xB7 5 hard \xB7 6 dysregulation")), /*#__PURE__*/React.createElement("span", {
+    className: "j-patveil",
+    style: {
+      position: 'absolute',
+      inset: 0,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 3
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "crown",
+    size: 22,
+    color: "var(--gold)"
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 'calc(14.5px * var(--tscale, 1))',
+      fontWeight: 600,
+      color: 'var(--ink)'
+    }
+  }, "Month patterns"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 'calc(12px * var(--tscale, 1))',
+      color: 'var(--muted)'
+    }
+  }, "The mood graph, counts and hard-day patterns.")));
+}
 function MonthScreen({
   nav,
   entries,
@@ -286,13 +386,6 @@ function MonthScreen({
         gap: 8
       }
     }, monthNavBtn('prev'), monthNavBtn('next'))
-  }), !nav.plus && /*#__PURE__*/React.createElement(PlusLockedCard, {
-    onClick: () => nav.go('unlock'),
-    style: {
-      marginBottom: 18
-    },
-    title: "Month patterns",
-    text: "The mood graph, counts and hard-day patterns for each month. Part of Plus."
   }), /*#__PURE__*/React.createElement("div", {
     className: "j-card",
     style: {
@@ -375,10 +468,10 @@ function MonthScreen({
         "aria-label": c.future ? `${c.d} ${J.MONTH_NAMES[m.month]} ${m.year}, in the future` : `${c.d} ${J.MONTH_NAMES[m.month]} ${m.year}, ${c.count > 0 ? c.count + (c.count === 1 ? ' note' : ' notes') : 'no note'}`,
         style: {
           aspectRatio: '1 / 1',
-          borderRadius: 12,
+          borderRadius: '50%',
           cursor: tappable ? 'pointer' : 'default',
           border: 'none',
-          boxShadow: c.isToday ? 'inset 0 0 0 2px var(--blue)' : 'none',
+          boxShadow: c.isToday ? 'inset 0 0 0 1.5px var(--blue)' : 'none',
           background: tint,
           display: 'flex',
           flexDirection: 'column',
@@ -418,10 +511,12 @@ function MonthScreen({
   }, /*#__PURE__*/React.createElement(MoodDot, {
     mood: k,
     size: 9
-  }), " ", l))), nav.plus && /*#__PURE__*/React.createElement(MonthMoodGraph, {
+  }), " ", l))), nav.plus ? /*#__PURE__*/React.createElement(MonthMoodGraph, {
     entries: entries,
     year: year,
     month: month
+  }) : /*#__PURE__*/React.createElement(PatternsLockedPreview, {
+    onOpen: () => nav.go('unlock')
   }))));
 }
 

@@ -98,8 +98,8 @@ function FindScreen({ nav, entries, view }) {
               </div>
             </>
           ) : (
-            <PlusLockedCard onClick={() => nav.go('unlock')} style={{ marginBottom: 18 }}
-              title="Filters" text="Combine theme, mood, place and dates to answer a question in seconds. Keyword search is always free." />
+            <PlusLockedCard onClick={() => nav.go('unlock')} style={{ marginBottom: 18 }} icon="filter"
+              title="Filters" text="Theme, mood, place and dates. Keyword search is always free." />
           )}
 
           {/* standout query line + results */}
@@ -188,7 +188,8 @@ function DocCard({ doc, onClick }) {
       </span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-          <span className="j-tag j-tag-blue">{doc.type}</span>
+          {/* colour-coded type pill (6 Aug): Plan blue, Letter amber, Email green, the rest quiet grey */}
+          <span className={'j-tag ' + ({ Plan: 'j-tag-plan', Letter: 'j-tag-letter', Email: 'j-tag-email' }[doc.type] || 'j-tag-grey')}>{doc.type}</span>
           <span className="j-meta" style={{ whiteSpace: 'nowrap' }}>{J.fmtShort(doc.received)} {doc.received.slice(0, 4)}</span>
           {attached > 0 && (
             <span aria-label={attached + ' attached'} style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
@@ -205,7 +206,7 @@ function DocCard({ doc, onClick }) {
           </span>
         )}
       </div>
-      <Icon name="chevronRight" size={18} color="var(--faint)" style={{ marginTop: 4 }} />
+      {/* no trailing arrow: rows are tappable as a whole (6 Aug, app-wide) */}
     </div>
   );
 }
@@ -216,7 +217,7 @@ function EvidenceScreen({ nav, entries, docs, profile, navView }) {
   // position are remembered on the view, so reading one document and returning
   // lands the parent back on the Documents list where they left it.
   const saved = (navView && navView.ev) || {};
-  const [view, setView] = useStateB(saved.tab || 'records'); // records | documents
+  const [view, setView] = useStateB(saved.tab || 'documents'); // documents leads (founder, 6 Aug)
   const [range, setRange] = useStateB(saved.range || { preset: 'Last 3 weeks', from: '', to: '' });
   const [themes, setThemes] = useStateB(saved.themes || []);
   const [done, setDone] = useStateB(false);
@@ -247,14 +248,17 @@ function EvidenceScreen({ nav, entries, docs, profile, navView }) {
 
   return (
     <div className="j-screen">
-      <PushHeader title="Documents and evidence" subtitle="A dated record of what you saw, when you saw it." onBack={() => nav.back()} />
+      {/* Documents is a TAB now (6 Aug): its own big title, no back, no subtitle,
+          and the old green banner is gone: both explained a screen that already
+          shows what it is. */}
       <div className="j-scroll j-fade" ref={scrollRef}>
-        <div className="j-pad" style={{ paddingTop: 2, paddingBottom: view === 'records' ? 120 : 120 }}>
+        <div className="j-pad" style={{ paddingTop: 14, paddingBottom: 120 }}>
+          <TabTitle title="Documents" />
 
-          {/* segmented switch */}
+          {/* segmented switch: Documents leads (founder, 6 Aug) */}
           <div style={{ display: 'flex', gap: 4, padding: 4, borderRadius: 999, background: 'var(--tag-grey-bg)', marginBottom: 20 }}>
-            <Seg id="records" label="Day records" />
             <Seg id="documents" label="Documents" />
+            <Seg id="records" label="Day records" />
           </div>
 
           {view === 'records' && (
@@ -303,30 +307,32 @@ function EvidenceScreen({ nav, entries, docs, profile, navView }) {
 
           {view === 'documents' && (
             <>
-              <div className="j-card" style={{ padding: 14, marginBottom: 16, display: 'flex', gap: 12, alignItems: 'center',
-                background: 'var(--tint-green)', border: 'none' }}>
-                <Icon name="shield" size={20} color="var(--green-ink)" style={{ flexShrink: 0 }} />
-                <p className="j-body" style={{ fontSize: 'calc(14.5px * var(--tscale, 1))', color: 'var(--green-ink)' }}>Keep every letter, report and plan in one place, so nothing important gets lost.</p>
-              </div>
-
               <SectionLabel right={<span className="j-meta">{docs.length} saved</span>}>Your documents</SectionLabel>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {docs.length === 0
                   ? <div className="j-card" style={{ padding: 22, textAlign: 'center' }}><p className="j-sm">No documents yet. Add the first letter or report and never lose it again.</p></div>
                   : docs.map(d => <DocCard key={d.id} doc={d} onClick={() => openDoc(d.id)} />)}
+                {/* the add affordance is a dashed row under the list (6 Aug), not a bottom bar */}
+                <button className="j-press" onClick={() => nav.go('adddoc')}
+                  style={{ border: '1px dashed var(--chip-border)', background: 'none', borderRadius: 14, padding: '13px 16px',
+                    display: 'flex', alignItems: 'center', gap: 12, color: 'var(--blue)', cursor: 'pointer',
+                    fontFamily: "'Outfit', system-ui", fontWeight: 500, fontSize: 'calc(15.5px * var(--tscale, 1))' }}>
+                  <Icon name="plus" size={20} color="var(--blue)" stroke={2.2} /> Add a document
+                </button>
               </div>
             </>
           )}
         </div>
       </div>
 
-      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '12px 20px calc(16px + env(safe-area-inset-bottom))', background: 'var(--fade-grad)' }}>
-        {view === 'records'
-          ? (nav.plus
+      {view === 'records' && (
+        <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '12px 20px calc(96px + env(safe-area-inset-bottom))', background: 'var(--fade-grad)' }}>
+          {nav.plus
             ? <button className="j-btn j-btn-primary j-btn-lg" onClick={() => { if (openPrintPack(childLabel, rangeLabel, inPack)) setDone(true); }}><Icon name="doc" size={20} color="#fff" /> Create PDF</button>
-            : <button className="j-btn j-btn-primary j-btn-lg" onClick={() => nav.go('unlock')}><Icon name="lock" size={18} color="#fff" /> Create PDF is part of Plus</button>)
-          : <button className="j-btn j-btn-primary j-btn-lg" onClick={() => nav.go('adddoc')}><Icon name="plus" size={22} color="#fff" /> Add document</button>}
-      </div>
+            /* crown gate (founder, 6 Aug): a Plus-tier control wears the solid gold crown and opens the Jotla Plus page */
+            : <button className="j-btn j-btn-primary j-btn-lg" onClick={() => nav.go('unlock')}><Icon name="crown" size={20} color="#EBBA4D" /> Create PDF is part of Plus</button>}
+        </div>
+      )}
 
       {done && (
         <div className="j-sheet-scrim" onClick={() => setDone(false)}>
@@ -651,7 +657,7 @@ function AddDocScreen({ nav }) {
                 onRemove={(i) => setDocMedia(v => v.filter((_, x) => x !== i))} />
             </div>
           ) : (
-            <PlusLockedCard title="Add the document itself" text="Keep the letter with its details. Part of Plus."
+            <PlusLockedCard icon="attach" title="Add the document itself" text="Keep the letter with its details. Part of Plus."
               onClick={() => nav.go('unlock')} />
           )}
 
@@ -780,7 +786,7 @@ function EditDocSheet({ doc, plus, onSave, onAddMedia, onUnlock, onClose }) {
               onRemove={(i) => setNewMedia(v => v.filter((_, x) => x !== i))} />
           </div>
         ) : (
-          <PlusLockedCard title="Add the document itself" text="Keep the letter with its details. Part of Plus."
+          <PlusLockedCard icon="attach" title="Add the document itself" text="Keep the letter with its details. Part of Plus."
             onClick={onUnlock} style={{ marginBottom: 16 }} />
         )}
         <button className="j-btn j-btn-primary" disabled={!title.trim()} style={{ opacity: title.trim() ? 1 : 0.5 }}

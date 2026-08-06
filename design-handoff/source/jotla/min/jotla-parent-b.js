@@ -165,8 +165,9 @@ function FindScreen({
     style: {
       marginBottom: 18
     },
+    icon: "filter",
     title: "Filters",
-    text: "Combine theme, mood, place and dates to answer a question in seconds. Keyword search is always free."
+    text: "Theme, mood, place and dates. Keyword search is always free."
   }), /*#__PURE__*/React.createElement("div", {
     className: "j-card",
     style: {
@@ -302,7 +303,11 @@ function DocCard({
       marginBottom: 4
     }
   }, /*#__PURE__*/React.createElement("span", {
-    className: "j-tag j-tag-blue"
+    className: 'j-tag ' + ({
+      Plan: 'j-tag-plan',
+      Letter: 'j-tag-letter',
+      Email: 'j-tag-email'
+    }[doc.type] || 'j-tag-grey')
   }, doc.type), /*#__PURE__*/React.createElement("span", {
     className: "j-meta",
     style: {
@@ -344,14 +349,7 @@ function DocCard({
     name: "bell",
     size: 13,
     color: "var(--amber)"
-  }), " ", doc.action)), /*#__PURE__*/React.createElement(Icon, {
-    name: "chevronRight",
-    size: 18,
-    color: "var(--faint)",
-    style: {
-      marginTop: 4
-    }
-  }));
+  }), " ", doc.action)));
 }
 function EvidenceScreen({
   nav,
@@ -365,7 +363,7 @@ function EvidenceScreen({
   // position are remembered on the view, so reading one document and returning
   // lands the parent back on the Documents list where they left it.
   const saved = navView && navView.ev || {};
-  const [view, setView] = useStateB(saved.tab || 'records'); // records | documents
+  const [view, setView] = useStateB(saved.tab || 'documents'); // documents leads (founder, 6 Aug)
   const [range, setRange] = useStateB(saved.range || {
     preset: 'Last 3 weeks',
     from: '',
@@ -425,20 +423,18 @@ function EvidenceScreen({
   }, label);
   return /*#__PURE__*/React.createElement("div", {
     className: "j-screen"
-  }, /*#__PURE__*/React.createElement(PushHeader, {
-    title: "Documents and evidence",
-    subtitle: "A dated record of what you saw, when you saw it.",
-    onBack: () => nav.back()
-  }), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "j-scroll j-fade",
     ref: scrollRef
   }, /*#__PURE__*/React.createElement("div", {
     className: "j-pad",
     style: {
-      paddingTop: 2,
-      paddingBottom: view === 'records' ? 120 : 120
+      paddingTop: 14,
+      paddingBottom: 120
     }
-  }, /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(TabTitle, {
+    title: "Documents"
+  }), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       gap: 4,
@@ -448,11 +444,11 @@ function EvidenceScreen({
       marginBottom: 20
     }
   }, /*#__PURE__*/React.createElement(Seg, {
-    id: "records",
-    label: "Day records"
-  }), /*#__PURE__*/React.createElement(Seg, {
     id: "documents",
     label: "Documents"
+  }), /*#__PURE__*/React.createElement(Seg, {
+    id: "records",
+    label: "Day records"
   })), view === 'records' && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SectionLabel, null, "Date range"), /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 14
@@ -557,31 +553,7 @@ function EvidenceScreen({
       paddingTop: 12,
       borderTop: '1px dashed var(--line)'
     }
-  }, "Each entry shows when it was written. \"Same day\" means it was logged on the day it happened. \"Added later\" means it was written up afterwards. Any edits keep the original date and time.")))), view === 'documents' && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-    className: "j-card",
-    style: {
-      padding: 14,
-      marginBottom: 16,
-      display: 'flex',
-      gap: 12,
-      alignItems: 'center',
-      background: 'var(--tint-green)',
-      border: 'none'
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "shield",
-    size: 20,
-    color: "var(--green-ink)",
-    style: {
-      flexShrink: 0
-    }
-  }), /*#__PURE__*/React.createElement("p", {
-    className: "j-body",
-    style: {
-      fontSize: 'calc(14.5px * var(--tscale, 1))',
-      color: 'var(--green-ink)'
-    }
-  }, "Keep every letter, report and plan in one place, so nothing important gets lost.")), /*#__PURE__*/React.createElement(SectionLabel, {
+  }, "Each entry shows when it was written. \"Same day\" means it was logged on the day it happened. \"Added later\" means it was written up afterwards. Any edits keep the original date and time.")))), view === 'documents' && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SectionLabel, {
     right: /*#__PURE__*/React.createElement("span", {
       className: "j-meta"
     }, docs.length, " saved")
@@ -603,16 +575,38 @@ function EvidenceScreen({
     key: d.id,
     doc: d,
     onClick: () => openDoc(d.id)
-  })))))), /*#__PURE__*/React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("button", {
+    className: "j-press",
+    onClick: () => nav.go('adddoc'),
+    style: {
+      border: '1px dashed var(--chip-border)',
+      background: 'none',
+      borderRadius: 14,
+      padding: '13px 16px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 12,
+      color: 'var(--blue)',
+      cursor: 'pointer',
+      fontFamily: "'Outfit', system-ui",
+      fontWeight: 500,
+      fontSize: 'calc(15.5px * var(--tscale, 1))'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "plus",
+    size: 20,
+    color: "var(--blue)",
+    stroke: 2.2
+  }), " Add a document"))))), view === 'records' && /*#__PURE__*/React.createElement("div", {
     style: {
       position: 'absolute',
       left: 0,
       right: 0,
       bottom: 0,
-      padding: '12px 20px calc(16px + env(safe-area-inset-bottom))',
+      padding: '12px 20px calc(96px + env(safe-area-inset-bottom))',
       background: 'var(--fade-grad)'
     }
-  }, view === 'records' ? nav.plus ? /*#__PURE__*/React.createElement("button", {
+  }, nav.plus ? /*#__PURE__*/React.createElement("button", {
     className: "j-btn j-btn-primary j-btn-lg",
     onClick: () => {
       if (openPrintPack(childLabel, rangeLabel, inPack)) setDone(true);
@@ -621,21 +615,15 @@ function EvidenceScreen({
     name: "doc",
     size: 20,
     color: "#fff"
-  }), " Create PDF") : /*#__PURE__*/React.createElement("button", {
+  }), " Create PDF")
+  /* crown gate (founder, 6 Aug): a Plus-tier control wears the solid gold crown and opens the Jotla Plus page */ : /*#__PURE__*/React.createElement("button", {
     className: "j-btn j-btn-primary j-btn-lg",
     onClick: () => nav.go('unlock')
   }, /*#__PURE__*/React.createElement(Icon, {
-    name: "lock",
-    size: 18,
-    color: "#fff"
-  }), " Create PDF is part of Plus") : /*#__PURE__*/React.createElement("button", {
-    className: "j-btn j-btn-primary j-btn-lg",
-    onClick: () => nav.go('adddoc')
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "plus",
-    size: 22,
-    color: "#fff"
-  }), " Add document")), done && /*#__PURE__*/React.createElement("div", {
+    name: "crown",
+    size: 20,
+    color: "#EBBA4D"
+  }), " Create PDF is part of Plus")), done && /*#__PURE__*/React.createElement("div", {
     className: "j-sheet-scrim",
     onClick: () => setDone(false)
   }, /*#__PURE__*/React.createElement("div", {
@@ -1275,6 +1263,7 @@ function AddDocScreen({
     onAdd: onAddMedia,
     onRemove: i => setDocMedia(v => v.filter((_, x) => x !== i))
   })) : /*#__PURE__*/React.createElement(PlusLockedCard, {
+    icon: "attach",
     title: "Add the document itself",
     text: "Keep the letter with its details. Part of Plus.",
     onClick: () => nav.go('unlock')
@@ -1512,6 +1501,7 @@ function EditDocSheet({
     onAdd: p => setNewMedia(v => [...v, ...p]),
     onRemove: i => setNewMedia(v => v.filter((_, x) => x !== i))
   })) : /*#__PURE__*/React.createElement(PlusLockedCard, {
+    icon: "attach",
     title: "Add the document itself",
     text: "Keep the letter with its details. Part of Plus.",
     onClick: onUnlock,

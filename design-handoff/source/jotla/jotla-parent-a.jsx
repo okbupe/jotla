@@ -12,19 +12,14 @@ function greeting() {
 // the cards (var(--line) + var(--card-shadow)) so the two tiles lift off the page
 // and read as siblings of the cards below them, not flat patches (founder's
 // seventh pass, item 39, 13 Jul 2026).
-function ActionTile({ icon, title, sub, tint, ink, onClick }) {
+/* The board's check-in tile (6 Aug): colour-carrying panel, bare icon, title in
+   the tile's own colour, sub muted. kind: 'blue' (Your day) | 'purple' (Dysregulation). */
+function ActionTile({ icon, title, sub, kind, ink, onClick }) {
   return (
-    <button onClick={onClick} className="j-press" style={{
-      flex: 1, textAlign: 'left', border: '1px solid var(--line)', cursor: 'pointer', background: tint,
-      borderRadius: 16, padding: '14px 14px 16px', display: 'flex', flexDirection: 'column', gap: 8,
-      minHeight: 56, boxShadow: 'var(--card-shadow)',
-    }}>
-      <span style={{ width: 38, height: 38, borderRadius: 12, background: 'var(--card)', display: 'flex',
-        alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px -8px rgba(20,40,80,0.4)' }}>
-        {icon}
-      </span>
+    <button onClick={onClick} className={'j-ctile ' + (kind === 'purple' ? 'j-ctile-purple' : 'j-ctile-blue')}>
+      {icon}
       <span>
-        <span style={{ display: 'block', fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(16px * var(--tscale, 1))', color: ink, lineHeight: 1.1 }}>{title}</span>
+        <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 'calc(15.5px * var(--tscale, 1))', color: ink, lineHeight: 1.15 }}>{title}</span>
         <span style={{ display: 'block', fontSize: 'calc(12.5px * var(--tscale, 1))', color: 'var(--muted)', marginTop: 2 }}>{sub}</span>
       </span>
     </button>
@@ -41,29 +36,30 @@ function TodayScreen({ nav, entries, today, profile }) {
     <div className="j-screen">
       <div className="j-scroll j-fade">
         <div className="j-pad" style={{ paddingTop: 14, paddingBottom: 120 }}>
-          <p className="j-eyebrow" style={{ marginBottom: 6 }}>{J.fmtLong(today)}</p>
-          <h1 className="j-h1" style={{ marginBottom: 4 }}>{greeting()}.</h1>
-          <p className="j-body" style={{ color: 'var(--muted)', marginBottom: 20 }}>{isEmpty
-            ? `${childName}'s record is brand new. Add the first line whenever you are ready.`
-            : `Here is how ${childName}'s day is looking. Nothing to catch up on.`}</p>
+          {/* Neutral shell (6 Aug): the greeting leads, the date sits under it as
+              the overline, and the status sentence is gone: the screen shows the
+              day rather than describing it. */}
+          <h1 className="j-h1" style={{ marginBottom: 6 }}>{greeting()}.</h1>
+          <p className="j-eyebrow" style={{ marginBottom: 18 }}>{J.fmtLong(today)}</p>
 
-          {/* two tiles first, then the graph below */}
-          <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+          <SectionLabel>Check in</SectionLabel>
+          <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
             {/* Founder call, 12 Jul 2026 (sixth pass): the check-in reads as
                 working together on Plus (the guided questions are a two-of-you
                 thing), hand-the-phone on Free. His confirm is batched. */}
             <ActionTile
-              icon={<Icon name="heart" size={20} color="var(--green)" />}
+              icon={<Icon name="heart" size={23} color="var(--blue)" />}
               title="Your day" sub={nav.plus ? 'Do it together with ' + childName : 'Hand the phone to ' + childName}
-              tint="var(--tint-green)" ink="var(--green-ink)"
+              kind="blue" ink="var(--blue)"
               onClick={() => nav.go('child')} />
             {/* Named "Dysregulation", not "At the gate?" (founder, 16 Jul 2026):
                 the handful of parents shown the app could not tell what "At the
                 gate?" was without guessing, and asked for the mode to say what
-                it is. Dysregulation is the word school uses at them all day. */}
+                it is. Dysregulation is the word school uses at them all day.
+                The pulse is the standing Jotla symbol for it. */}
             <ActionTile
-              icon={<Icon name="note" size={20} color="var(--blue)" />}
-              title="Dysregulation" sub="Capture what happened" tint="var(--tint-blue)" ink="var(--blue)"
+              icon={<Icon name="pulse" size={23} color="var(--dysreg)" />}
+              title="Dysregulation" sub="Capture what happened" kind="purple" ink="var(--dysreg)"
               onClick={() => nav.go(nav.plus ? 'handover' : 'gateintro')} />
           </div>
 
@@ -96,9 +92,8 @@ function TodayScreen({ nav, entries, today, profile }) {
             <LogList list={todays} nav={nav} />
           )}
 
-          <button className="j-btn j-btn-primary j-btn-lg" style={{ marginTop: 16 }} onClick={() => nav.go('quicklog')}>
-            <Icon name="plus" size={22} color="#fff" stroke={2.2} /> Add to today
-          </button>
+          {/* The full-width "Add to today" button is gone (6 Aug): the floating
+              FAB is the one add affordance on every tab. */}
         </div>
       </div>
     </div>
@@ -487,7 +482,7 @@ function QuickLogScreen({ nav, today, view, profile }) {
               {nav.plus ? (
                 <div><FieldLabel>Add a photo or video</FieldLabel><MediaPicker value={eMedia} onChange={setEMedia} /></div>
               ) : (
-                <PlusLockedCard title="Add photos and videos"
+                <PlusLockedCard icon="camera" title="Add photos and videos"
                   text="Keep a photo or video with the note. Sometimes the picture is the evidence. Part of Plus."
                   onClick={() => nav.go('unlock')} />
               )}
@@ -755,7 +750,7 @@ function HandoverScreen({ nav, today, profile }) {
               <MediaPicker value={media} onChange={setMedia} />
             </div>
           ) : (
-            <PlusLockedCard title="Add photos and videos"
+            <PlusLockedCard icon="camera" title="Add photos and videos"
               text="Keep a photo or video with the note. Sometimes the picture is the evidence. Part of Plus."
               onClick={() => nav.go('unlock')} />
           )}

@@ -294,23 +294,21 @@ function DateField({ value, placeholder, label, onClick, compact = false, style 
   );
 }
 
-// A calm, honest locked card for Plus features in the free app: the feature is
-// visible and named, never hidden, and one tap shows what Plus is.
-function PlusLockedCard({ title, text, onClick, style }) {
+// THE CROWN GATE (founder, 6 Aug, app-wide): in the FREE app a Plus-tier row
+// shows the solid gold crown in place of its control, with no "Plus" pill and
+// no lecture: the crown is the whole sentence. Tapping a crowned row ALWAYS
+// opens the Jotla Plus page. In the paid app the row renders its real control
+// instead (callers branch on nav.plus). Replaces the old dashed locked card.
+function PlusLockedCard({ title, text, onClick, style, icon = 'lock' }) {
   return (
-    <button className="j-card j-press" onClick={onClick} style={{ width: '100%', textAlign: 'left', cursor: 'pointer', padding: 14,
-      display: 'flex', gap: 12, alignItems: 'center', border: '1px dashed var(--chip-border)', background: 'var(--card-2)', ...(style || {}) }}>
-      <span style={{ width: 38, height: 38, borderRadius: 12, background: 'var(--tag-grey-bg)', flexShrink: 0,
-        display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Icon name="lock" size={18} color="var(--muted)" />
-      </span>
+    <button className="j-card j-press" onClick={onClick} style={{ width: '100%', textAlign: 'left', cursor: 'pointer', padding: '14px 16px',
+      display: 'flex', gap: 14, alignItems: 'center', ...(style || {}) }}>
+      <Icon name={icon} size={22} color="var(--blue)" style={{ flexShrink: 0 }} />
       <span style={{ flex: 1, minWidth: 0 }}>
-        <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontWeight: 500, fontSize: 'calc(15.5px * var(--tscale, 1))', color: 'var(--ink)' }}>{title}
-          <span className="j-pillbadge" style={{ marginLeft: 8, background: 'var(--tint-blue)', color: 'var(--blue)' }}>Plus</span>
-        </span>
-        <span style={{ display: 'block', fontSize: 'calc(13px * var(--tscale, 1))', color: 'var(--faint)', marginTop: 2 }}>{text}</span>
+        <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontWeight: 500, fontSize: 'calc(16px * var(--tscale, 1))', color: 'var(--ink)' }}>{title}</span>
+        {text && <span style={{ display: 'block', fontSize: 'calc(13px * var(--tscale, 1))', color: 'var(--muted)', marginTop: 2 }}>{text}</span>}
       </span>
-      <Icon name="chevronRight" size={16} color="var(--faint)" />
+      <Icon name="crown" size={20} color="var(--gold)" style={{ flexShrink: 0 }} />
     </button>
   );
 }
@@ -594,10 +592,12 @@ function LogList({ list, nav, showDate = false }) {
 
 // labelled section heading inside scroll areas
 function SectionLabel({ children, right }) {
+  /* Neutral shell (6 Aug): section headers are small, semibold and accent-coloured,
+     no longer uppercase-faint. One component restyles every screen's sections. */
   return (
-    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', margin: '0 0 10px' }}>
-      <span style={{ fontFamily: "'Outfit', system-ui", fontWeight: 500, fontSize: 'calc(13px * var(--tscale, 1))', letterSpacing: '0.06em',
-        textTransform: 'uppercase', color: 'var(--faint)' }}>{children}</span>
+    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', margin: '0 0 8px' }}>
+      <span style={{ fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 'calc(13px * var(--tscale, 1))', letterSpacing: '0.02em',
+        color: 'var(--blue)' }}>{children}</span>
       {right}
     </div>
   );

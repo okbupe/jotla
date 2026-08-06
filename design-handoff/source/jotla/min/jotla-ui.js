@@ -509,13 +509,17 @@ function DateField({
   }));
 }
 
-// A calm, honest locked card for Plus features in the free app: the feature is
-// visible and named, never hidden, and one tap shows what Plus is.
+// THE CROWN GATE (founder, 6 Aug, app-wide): in the FREE app a Plus-tier row
+// shows the solid gold crown in place of its control, with no "Plus" pill and
+// no lecture: the crown is the whole sentence. Tapping a crowned row ALWAYS
+// opens the Jotla Plus page. In the paid app the row renders its real control
+// instead (callers branch on nav.plus). Replaces the old dashed locked card.
 function PlusLockedCard({
   title,
   text,
   onClick,
-  style
+  style,
+  icon = 'lock'
 }) {
   return /*#__PURE__*/React.createElement("button", {
     className: "j-card j-press",
@@ -524,30 +528,20 @@ function PlusLockedCard({
       width: '100%',
       textAlign: 'left',
       cursor: 'pointer',
-      padding: 14,
+      padding: '14px 16px',
       display: 'flex',
-      gap: 12,
+      gap: 14,
       alignItems: 'center',
-      border: '1px dashed var(--chip-border)',
-      background: 'var(--card-2)',
       ...(style || {})
     }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      width: 38,
-      height: 38,
-      borderRadius: 12,
-      background: 'var(--tag-grey-bg)',
-      flexShrink: 0,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
-    }
   }, /*#__PURE__*/React.createElement(Icon, {
-    name: "lock",
-    size: 18,
-    color: "var(--muted)"
-  })), /*#__PURE__*/React.createElement("span", {
+    name: icon,
+    size: 22,
+    color: "var(--blue)",
+    style: {
+      flexShrink: 0
+    }
+  }), /*#__PURE__*/React.createElement("span", {
     style: {
       flex: 1,
       minWidth: 0
@@ -557,27 +551,23 @@ function PlusLockedCard({
       display: 'block',
       fontFamily: "'Outfit', system-ui",
       fontWeight: 500,
-      fontSize: 'calc(15.5px * var(--tscale, 1))',
+      fontSize: 'calc(16px * var(--tscale, 1))',
       color: 'var(--ink)'
     }
-  }, title, /*#__PURE__*/React.createElement("span", {
-    className: "j-pillbadge",
-    style: {
-      marginLeft: 8,
-      background: 'var(--tint-blue)',
-      color: 'var(--blue)'
-    }
-  }, "Plus")), /*#__PURE__*/React.createElement("span", {
+  }, title), text && /*#__PURE__*/React.createElement("span", {
     style: {
       display: 'block',
       fontSize: 'calc(13px * var(--tscale, 1))',
-      color: 'var(--faint)',
+      color: 'var(--muted)',
       marginTop: 2
     }
   }, text)), /*#__PURE__*/React.createElement(Icon, {
-    name: "chevronRight",
-    size: 16,
-    color: "var(--faint)"
+    name: "crown",
+    size: 20,
+    color: "var(--gold)",
+    style: {
+      flexShrink: 0
+    }
   }));
 }
 
@@ -1172,21 +1162,22 @@ function SectionLabel({
   children,
   right
 }) {
+  /* Neutral shell (6 Aug): section headers are small, semibold and accent-coloured,
+     no longer uppercase-faint. One component restyles every screen's sections. */
   return /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       alignItems: 'baseline',
       justifyContent: 'space-between',
-      margin: '0 0 10px'
+      margin: '0 0 8px'
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
       fontFamily: "'Outfit', system-ui",
-      fontWeight: 500,
+      fontWeight: 600,
       fontSize: 'calc(13px * var(--tscale, 1))',
-      letterSpacing: '0.06em',
-      textTransform: 'uppercase',
-      color: 'var(--faint)'
+      letterSpacing: '0.02em',
+      color: 'var(--blue)'
     }
   }, children), right);
 }

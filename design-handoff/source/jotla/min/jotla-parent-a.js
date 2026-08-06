@@ -15,50 +15,27 @@ function greeting() {
 // the cards (var(--line) + var(--card-shadow)) so the two tiles lift off the page
 // and read as siblings of the cards below them, not flat patches (founder's
 // seventh pass, item 39, 13 Jul 2026).
+/* The board's check-in tile (6 Aug): colour-carrying panel, bare icon, title in
+   the tile's own colour, sub muted. kind: 'blue' (Your day) | 'purple' (Dysregulation). */
 function ActionTile({
   icon,
   title,
   sub,
-  tint,
+  kind,
   ink,
   onClick
 }) {
   return /*#__PURE__*/React.createElement("button", {
     onClick: onClick,
-    className: "j-press",
-    style: {
-      flex: 1,
-      textAlign: 'left',
-      border: '1px solid var(--line)',
-      cursor: 'pointer',
-      background: tint,
-      borderRadius: 16,
-      padding: '14px 14px 16px',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 8,
-      minHeight: 56,
-      boxShadow: 'var(--card-shadow)'
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      width: 38,
-      height: 38,
-      borderRadius: 12,
-      background: 'var(--card)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      boxShadow: '0 4px 12px -8px rgba(20,40,80,0.4)'
-    }
-  }, icon), /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("span", {
+    className: 'j-ctile ' + (kind === 'purple' ? 'j-ctile-purple' : 'j-ctile-blue')
+  }, icon, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("span", {
     style: {
       display: 'block',
-      fontFamily: "'Cal Sans', system-ui",
-      fontWeight: 500,
-      fontSize: 'calc(16px * var(--tscale, 1))',
+      fontFamily: "'Outfit', system-ui",
+      fontWeight: 600,
+      fontSize: 'calc(15.5px * var(--tscale, 1))',
       color: ink,
-      lineHeight: 1.1
+      lineHeight: 1.15
     }
   }, title), /*#__PURE__*/React.createElement("span", {
     style: {
@@ -91,49 +68,43 @@ function TodayScreen({
       paddingTop: 14,
       paddingBottom: 120
     }
-  }, /*#__PURE__*/React.createElement("p", {
-    className: "j-eyebrow",
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "j-h1",
     style: {
       marginBottom: 6
     }
-  }, J.fmtLong(today)), /*#__PURE__*/React.createElement("h1", {
-    className: "j-h1",
-    style: {
-      marginBottom: 4
-    }
   }, greeting(), "."), /*#__PURE__*/React.createElement("p", {
-    className: "j-body",
+    className: "j-eyebrow",
     style: {
-      color: 'var(--muted)',
-      marginBottom: 20
+      marginBottom: 18
     }
-  }, isEmpty ? `${childName}'s record is brand new. Add the first line whenever you are ready.` : `Here is how ${childName}'s day is looking. Nothing to catch up on.`), /*#__PURE__*/React.createElement("div", {
+  }, J.fmtLong(today)), /*#__PURE__*/React.createElement(SectionLabel, null, "Check in"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
-      gap: 12,
+      gap: 10,
       marginBottom: 16
     }
   }, /*#__PURE__*/React.createElement(ActionTile, {
     icon: /*#__PURE__*/React.createElement(Icon, {
       name: "heart",
-      size: 20,
-      color: "var(--green)"
+      size: 23,
+      color: "var(--blue)"
     }),
     title: "Your day",
     sub: nav.plus ? 'Do it together with ' + childName : 'Hand the phone to ' + childName,
-    tint: "var(--tint-green)",
-    ink: "var(--green-ink)",
+    kind: "blue",
+    ink: "var(--blue)",
     onClick: () => nav.go('child')
   }), /*#__PURE__*/React.createElement(ActionTile, {
     icon: /*#__PURE__*/React.createElement(Icon, {
-      name: "note",
-      size: 20,
-      color: "var(--blue)"
+      name: "pulse",
+      size: 23,
+      color: "var(--dysreg)"
     }),
     title: "Dysregulation",
     sub: "Capture what happened",
-    tint: "var(--tint-blue)",
-    ink: "var(--blue)",
+    kind: "purple",
+    ink: "var(--dysreg)",
     onClick: () => nav.go(nav.plus ? 'handover' : 'gateintro')
   })), isEmpty ? /*#__PURE__*/React.createElement("div", {
     className: "j-card",
@@ -215,18 +186,7 @@ function TodayScreen({
   }, "A single line is plenty.")) : /*#__PURE__*/React.createElement(LogList, {
     list: todays,
     nav: nav
-  }), /*#__PURE__*/React.createElement("button", {
-    className: "j-btn j-btn-primary j-btn-lg",
-    style: {
-      marginTop: 16
-    },
-    onClick: () => nav.go('quicklog')
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "plus",
-    size: 22,
-    color: "#fff",
-    stroke: 2.2
-  }), " Add to today"))));
+  }))));
 }
 
 // ---------------- shared form atoms ----------------
@@ -1032,6 +992,7 @@ function QuickLogScreen({
     value: eMedia,
     onChange: setEMedia
   })) : /*#__PURE__*/React.createElement(PlusLockedCard, {
+    icon: "camera",
     title: "Add photos and videos",
     text: "Keep a photo or video with the note. Sometimes the picture is the evidence. Part of Plus.",
     onClick: () => nav.go('unlock')
@@ -1613,6 +1574,7 @@ function HandoverScreen({
     value: media,
     onChange: setMedia
   })) : /*#__PURE__*/React.createElement(PlusLockedCard, {
+    icon: "camera",
     title: "Add photos and videos",
     text: "Keep a photo or video with the note. Sometimes the picture is the evidence. Part of Plus.",
     onClick: () => nav.go('unlock')
