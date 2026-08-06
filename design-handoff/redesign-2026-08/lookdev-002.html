@@ -357,13 +357,18 @@
   .photopill svg { width: 17px; height: 17px; }
   /* colour and avatar sheet: the live 12-colour palette and glyph set */
   .sheetlab { font-size: 12.5px; font-weight: 600; color: var(--accent); margin-top: 10px; }
-  .swatches { display: flex; flex-wrap: wrap; gap: 10px; padding: 10px 2px 2px; }
-  .sw { width: 34px; height: 34px; border-radius: 50%; cursor: pointer; }
+  .swatches { display: flex; flex-wrap: wrap; gap: 9px; padding: 10px 2px 2px; }
+  .sw { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; }
   .sw.on { outline: 2px solid var(--text); outline-offset: 2px; }
-  .avopts { display: flex; flex-wrap: wrap; gap: 10px; padding: 10px 2px 6px; }
-  .avo { width: 40px; height: 40px; border-radius: 50%; background: #3A7BD4; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 17px; cursor: pointer; }
-  .avo svg { width: 20px; height: 20px; }
+  .avopts { display: flex; flex-wrap: wrap; gap: 9px; padding: 10px 2px 6px; }
+  .avo { width: 36px; height: 36px; border-radius: 50%; background: #3A7BD4; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 16px; cursor: pointer; }
+  .avo svg { width: 19px; height: 19px; }
   .avo.on { outline: 2px solid var(--text); outline-offset: 2px; }
+  .sheetbtns { display: flex; gap: 10px; margin-top: 12px; }
+  .sbtn { flex: 1; border: 0; border-radius: 999px; padding: 12px; font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .sbtn.cancel { background: var(--row); border: 1px solid var(--row-border); color: var(--muted); }
+  .phone:not(.light) .sbtn.cancel { border-color: var(--hair); }
+  .sbtn.done { background: var(--accent-fill); color: #fff; }
 
   /* menu icon picker */
   .optstrip { display: flex; gap: 10px; padding: 14px; border-radius: 18px; flex-wrap: wrap; justify-content: center; }
@@ -412,6 +417,9 @@
     <g id="i-shield"><path d="M12 3.5 19 6v5.5c0 4.6-3 7.6-7 9-4-1.4-7-4.4-7-9V6z"/></g>
     <g id="i-hand"><path d="M7.8 11.5V5.9a1.4 1.4 0 0 1 2.8 0v4.6m0-5.2a1.4 1.4 0 0 1 2.8 0v5.2m0-3.9a1.4 1.4 0 0 1 2.8 0v6.9"/><path d="M16.2 13.5V15a6 6 0 0 1-6 6 5.4 5.4 0 0 1-5.4-5.4V9.1a1.4 1.4 0 0 1 2.8 0"/></g>
     <g id="i-note"><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19z"/><path d="M14.5 6.5l3 3"/></g>
+    <g id="i-moon"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></g>
+    <g id="i-sun"><circle cx="12" cy="12" r="4"/><path d="M12 2.8v2M12 19.2v2M2.8 12h2M19.2 12h2M5.5 5.5l1.4 1.4M17.1 17.1l1.4 1.4M18.5 5.5l-1.4 1.4M6.9 17.1l-1.4 1.4"/></g>
+    <g id="i-music"><path d="M9 18V6l8-2v12"/><circle cx="7" cy="18" r="2.2"/><circle cx="15" cy="16" r="2.2"/></g>
     <g id="i-plus"><path d="M12 5v14M5 12h14"/></g>
     <g id="i-chevR"><path d="m9 5 7 7-7 7"/></g>
     <g id="i-chevL"><path d="m15 5-7 7 7 7"/></g>
@@ -1222,7 +1230,7 @@
 
 </div>
 
-<div class="board-title" style="margin-top:6px">Children and the child profile · Settings > Children > Sam · the colour palette and avatars are the live app's own</div>
+<div class="board-title" style="margin-top:6px">Children and the child profile · Settings > Children > Sam · 16 colours and 14 avatars (extends the live sets) · Done commits, Cancel reverts</div>
 
 <div class="board">
 
@@ -1324,12 +1332,13 @@
           <h2>Colour and avatar</h2>
           <div class="sheetlab">Colour</div>
           <div class="swatches">
-            <span class="sw" data-n="Amber" style="background:#F39C12"></span><span class="sw" data-n="Gold" style="background:#D9A300"></span><span class="sw" data-n="Orange" style="background:#EE7B2D"></span><span class="sw" data-n="Lime" style="background:#A0C81E"></span><span class="sw" data-n="Green" style="background:#27AE60"></span><span class="sw" data-n="Teal" style="background:#0FA3A3"></span><span class="sw on" data-n="Sky" style="background:#3A7BD4"></span><span class="sw" data-n="Indigo" style="background:#1A56A8"></span><span class="sw" data-n="Slate" style="background:#607C97"></span><span class="sw" data-n="Violet" style="background:#7C5CE0"></span><span class="sw" data-n="Plum" style="background:#A12FC0"></span><span class="sw" data-n="Pink" style="background:#D6479B"></span>
+            <span class="sw" data-n="Amber" style="background:#F39C12"></span><span class="sw" data-n="Gold" style="background:#D9A300"></span><span class="sw" data-n="Orange" style="background:#EE7B2D"></span><span class="sw" data-n="Lime" style="background:#A0C81E"></span><span class="sw" data-n="Green" style="background:#27AE60"></span><span class="sw" data-n="Mint" style="background:#3DBD8C"></span><span class="sw" data-n="Teal" style="background:#0FA3A3"></span><span class="sw" data-n="Cyan" style="background:#1FA8D6"></span><span class="sw on" data-n="Sky" style="background:#3A7BD4"></span><span class="sw" data-n="Indigo" style="background:#1A56A8"></span><span class="sw" data-n="Slate" style="background:#607C97"></span><span class="sw" data-n="Lavender" style="background:#9C8CEC"></span><span class="sw" data-n="Violet" style="background:#7C5CE0"></span><span class="sw" data-n="Plum" style="background:#A12FC0"></span><span class="sw" data-n="Pink" style="background:#D6479B"></span><span class="sw" data-n="Cocoa" style="background:#A9744F"></span>
           </div>
           <div class="sheetlab">Avatar</div>
           <div class="avopts">
-            <span class="avo on" data-n="the letter S">S</span><span class="avo" data-n="person"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-person"/></svg></span><span class="avo" data-n="heart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-heart"/></svg></span><span class="avo" data-n="star"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-star"/></svg></span><span class="avo" data-n="leaf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-leaf"/></svg></span><span class="avo" data-n="sparkle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-sparkle"/></svg></span><span class="avo" data-n="shield"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-shield"/></svg></span><span class="avo" data-n="bell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-bell"/></svg></span><span class="avo" data-n="hand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-hand"/></svg></span><span class="avo" data-n="house"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-today"/></svg></span><span class="avo" data-n="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-note"/></svg></span>
+            <span class="avo on" data-n="the letter S">S</span><span class="avo" data-n="person"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-person"/></svg></span><span class="avo" data-n="heart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-heart"/></svg></span><span class="avo" data-n="star"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-star"/></svg></span><span class="avo" data-n="leaf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-leaf"/></svg></span><span class="avo" data-n="sparkle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-sparkle"/></svg></span><span class="avo" data-n="shield"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-shield"/></svg></span><span class="avo" data-n="bell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-bell"/></svg></span><span class="avo" data-n="hand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-hand"/></svg></span><span class="avo" data-n="house"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-today"/></svg></span><span class="avo" data-n="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-note"/></svg></span><span class="avo" data-n="moon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-moon"/></svg></span><span class="avo" data-n="sun"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-sun"/></svg></span><span class="avo" data-n="music"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-music"/></svg></span>
           </div>
+          <div class="sheetbtns"><button class="sbtn cancel">Cancel</button><button class="sbtn done">Done</button></div>
         </div>
       </div>
     </div>
@@ -1374,12 +1383,13 @@
           <h2>Colour and avatar</h2>
           <div class="sheetlab">Colour</div>
           <div class="swatches">
-            <span class="sw" data-n="Amber" style="background:#F39C12"></span><span class="sw" data-n="Gold" style="background:#D9A300"></span><span class="sw" data-n="Orange" style="background:#EE7B2D"></span><span class="sw" data-n="Lime" style="background:#A0C81E"></span><span class="sw" data-n="Green" style="background:#27AE60"></span><span class="sw" data-n="Teal" style="background:#0FA3A3"></span><span class="sw on" data-n="Sky" style="background:#3A7BD4"></span><span class="sw" data-n="Indigo" style="background:#1A56A8"></span><span class="sw" data-n="Slate" style="background:#607C97"></span><span class="sw" data-n="Violet" style="background:#7C5CE0"></span><span class="sw" data-n="Plum" style="background:#A12FC0"></span><span class="sw" data-n="Pink" style="background:#D6479B"></span>
+            <span class="sw" data-n="Amber" style="background:#F39C12"></span><span class="sw" data-n="Gold" style="background:#D9A300"></span><span class="sw" data-n="Orange" style="background:#EE7B2D"></span><span class="sw" data-n="Lime" style="background:#A0C81E"></span><span class="sw" data-n="Green" style="background:#27AE60"></span><span class="sw" data-n="Mint" style="background:#3DBD8C"></span><span class="sw" data-n="Teal" style="background:#0FA3A3"></span><span class="sw" data-n="Cyan" style="background:#1FA8D6"></span><span class="sw on" data-n="Sky" style="background:#3A7BD4"></span><span class="sw" data-n="Indigo" style="background:#1A56A8"></span><span class="sw" data-n="Slate" style="background:#607C97"></span><span class="sw" data-n="Lavender" style="background:#9C8CEC"></span><span class="sw" data-n="Violet" style="background:#7C5CE0"></span><span class="sw" data-n="Plum" style="background:#A12FC0"></span><span class="sw" data-n="Pink" style="background:#D6479B"></span><span class="sw" data-n="Cocoa" style="background:#A9744F"></span>
           </div>
           <div class="sheetlab">Avatar</div>
           <div class="avopts">
-            <span class="avo on" data-n="the letter S">S</span><span class="avo" data-n="person"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-person"/></svg></span><span class="avo" data-n="heart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-heart"/></svg></span><span class="avo" data-n="star"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-star"/></svg></span><span class="avo" data-n="leaf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-leaf"/></svg></span><span class="avo" data-n="sparkle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-sparkle"/></svg></span><span class="avo" data-n="shield"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-shield"/></svg></span><span class="avo" data-n="bell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-bell"/></svg></span><span class="avo" data-n="hand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-hand"/></svg></span><span class="avo" data-n="house"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-today"/></svg></span><span class="avo" data-n="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-note"/></svg></span>
+            <span class="avo on" data-n="the letter S">S</span><span class="avo" data-n="person"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-person"/></svg></span><span class="avo" data-n="heart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-heart"/></svg></span><span class="avo" data-n="star"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-star"/></svg></span><span class="avo" data-n="leaf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-leaf"/></svg></span><span class="avo" data-n="sparkle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-sparkle"/></svg></span><span class="avo" data-n="shield"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-shield"/></svg></span><span class="avo" data-n="bell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-bell"/></svg></span><span class="avo" data-n="hand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-hand"/></svg></span><span class="avo" data-n="house"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-today"/></svg></span><span class="avo" data-n="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-note"/></svg></span><span class="avo" data-n="moon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-moon"/></svg></span><span class="avo" data-n="sun"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-sun"/></svg></span><span class="avo" data-n="music"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-music"/></svg></span>
           </div>
+          <div class="sheetbtns"><button class="sbtn cancel">Cancel</button><button class="sbtn done">Done</button></div>
         </div>
       </div>
     </div>
@@ -1735,7 +1745,7 @@
     });
   });
 
-  // colour and avatar sheet: the live palette and glyph set, edits apply to the big avatar
+  // colour and avatar sheet: live preview on the big avatar, Done commits, Cancel or the scrim reverts
   document.querySelectorAll('#child-dark, #child-light').forEach(function(phone){
     var layer = phone.querySelector('.sheetlayer[data-sheet="avatar"]');
     if (!layer) return;
@@ -1748,30 +1758,42 @@
         r.addEventListener('click', function(){ layer.classList.add('open'); });
       }
     });
-    layer.querySelector('.scrim').addEventListener('click', function(){ layer.classList.remove('open'); });
     var big = phone.querySelector('.bigav');
     var sub = row.querySelector('.sub');
-    var curColour = 'Sky', curAv = 'the letter S';
-    function apply(){ sub.textContent = curColour + ' · ' + curAv; }
+    var committed = { colour: 'Sky', col: '#3A7BD4', av: 'the letter S', avHTML: big.innerHTML };
+    var preview = { colour: committed.colour, col: committed.col, av: committed.av, avHTML: committed.avHTML };
+    function paint(p){
+      big.style.background = p.col;
+      big.innerHTML = p.avHTML;
+      layer.querySelectorAll('.avo').forEach(function(a){ a.style.background = p.col; });
+      layer.querySelectorAll('.sw').forEach(function(x){ x.classList.toggle('on', x.getAttribute('data-n') === p.colour); });
+      layer.querySelectorAll('.avo').forEach(function(x){ x.classList.toggle('on', x.getAttribute('data-n') === p.av); });
+    }
     layer.querySelectorAll('.sw').forEach(function(s){
       s.addEventListener('click', function(){
-        layer.querySelectorAll('.sw').forEach(function(x){ x.classList.remove('on'); });
-        s.classList.add('on');
-        curColour = s.getAttribute('data-n');
-        var col = s.style.background;
-        big.style.background = col;
-        layer.querySelectorAll('.avo').forEach(function(a){ a.style.background = col; });
-        apply();
+        preview.colour = s.getAttribute('data-n');
+        preview.col = s.style.background;
+        paint(preview);
       });
     });
     layer.querySelectorAll('.avo').forEach(function(a){
       a.addEventListener('click', function(){
-        layer.querySelectorAll('.avo').forEach(function(x){ x.classList.remove('on'); });
-        a.classList.add('on');
-        curAv = a.getAttribute('data-n');
-        big.innerHTML = a.innerHTML;
-        apply();
+        preview.av = a.getAttribute('data-n');
+        preview.avHTML = a.innerHTML;
+        paint(preview);
       });
+    });
+    function closeRevert(){
+      preview = { colour: committed.colour, col: committed.col, av: committed.av, avHTML: committed.avHTML };
+      paint(preview);
+      layer.classList.remove('open');
+    }
+    layer.querySelector('.scrim').addEventListener('click', closeRevert);
+    layer.querySelector('.sbtn.cancel').addEventListener('click', closeRevert);
+    layer.querySelector('.sbtn.done').addEventListener('click', function(){
+      committed = { colour: preview.colour, col: preview.col, av: preview.av, avHTML: preview.avHTML };
+      sub.textContent = committed.colour + ' · ' + committed.av;
+      layer.classList.remove('open');
     });
   });
 
