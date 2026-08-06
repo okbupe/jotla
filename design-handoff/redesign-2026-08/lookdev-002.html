@@ -88,6 +88,9 @@
   }
 
   .screen { flex: 1; overflow: hidden; padding: 22px 18px 0; display: flex; flex-direction: column; }
+  /* the app carries exactly two faces: Cal Sans for display, Outfit for everything else.
+     buttons do not inherit font by default, so force it */
+  .phone button { font-family: inherit; }
 
   /* type */
   .overline { font-size: 12.5px; font-weight: 600; letter-spacing: .09em; color: var(--faint); text-transform: uppercase; }
@@ -206,6 +209,7 @@
   .xbtn { width: 36px; height: 36px; border: 0; background: none; color: var(--muted); display: flex; align-items: center; justify-content: center; }
   .xbtn svg { width: 22px; height: 22px; }
   .pheadrow { display: flex; align-items: center; gap: 10px; }
+  .plusmark { font-style: italic; color: var(--plusink); }
   .pheadrow h1 { font-size: 23px; margin: 0; }
   .pheadrow .xbtn { margin-left: auto; margin-right: -8px; }
   .plusdisc-sm { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg,#3C2A72,#6E54D6); display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 14px -6px rgba(60,42,114,.5); flex: 0 0 34px; }
@@ -222,7 +226,9 @@
   .psub { color: var(--muted); font-size: 14.5px; margin-top: 5px; }
   .pinc { color: var(--accent); font-size: 13px; margin-top: 7px; display: inline-flex; gap: 6px; align-items: center; font-weight: 500; }
   .pinc svg { width: 15px; height: 15px; flex: 0 0 15px; }
-  .fcard { margin-top: 14px; text-align: center; }
+  /* the carousel floats centred in the space between the header and the pinned pricing */
+  .midwrap { flex: 1; display: flex; flex-direction: column; justify-content: center; min-height: 0; }
+  .fcard { width: 300px; margin: 0 auto; text-align: center; }
   .fcard .fic { width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg,#3C2A72,#6E54D6); display: flex; align-items: center; justify-content: center; margin: 0 auto 9px; }
   .fcard .fic svg { width: 21px; height: 21px; color: #fff; }
   .fcard .ft { font-size: 15.5px; font-weight: 600; }
@@ -243,7 +249,7 @@
   .termcard .ts { font-size: 12px; color: var(--faint); margin-top: 1px; }
   .bv { position: absolute; top: -9px; left: 50%; transform: translateX(-50%); background: #EBBA4D; color: #3A2A0C; font-size: 10.5px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
   .sameplus { text-align: center; color: var(--muted); font-size: 12.5px; margin-top: 11px; }
-  .ctagrad { margin-top: auto; width: 100%; border: 0; border-radius: 999px; padding: 14px; background: linear-gradient(135deg,#3C2A72,#6E54D6); color: #fff; font-family: inherit; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 9px; box-shadow: 0 14px 28px -10px rgba(60,42,114,.6); }
+  .ctagrad { margin-top: 12px; width: 100%; border: 0; border-radius: 999px; padding: 14px; background: linear-gradient(135deg,#3C2A72,#6E54D6); color: #fff; font-family: inherit; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 9px; box-shadow: 0 14px 28px -10px rgba(60,42,114,.6); }
   .ctagrad svg { width: 18px; height: 18px; }
   .reassure { text-align: center; color: var(--faint); font-size: 11.5px; margin-top: 9px; line-height: 1.4; }
   .restore { text-align: center; color: var(--accent); font-size: 13px; margin-top: 7px; font-weight: 500; }
@@ -861,7 +867,7 @@
         <button class="item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-menu-d"/></svg>Menu</button>
       </div>
 
-      <div class="sheetlayer">
+      <div class="sheetlayer" data-sheet="theme">
         <div class="scrim"></div>
         <div class="sheet">
           <div class="grab"></div>
@@ -869,6 +875,18 @@
           <div class="popt" data-t="light" style="margin-top:4px"><div class="radio"></div><div class="plab">Light</div></div>
           <div class="popt sel" data-t="dark"><div class="radio"></div><div class="plab">Dark</div></div>
           <div class="popt nb" data-t="system"><div class="radio"></div><div class="pbody"><div class="plab">System</div><div class="osub">Follows your phone</div></div></div>
+        </div>
+      </div>
+
+      <div class="sheetlayer" data-sheet="textsize">
+        <div class="scrim"></div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <h2>Text size</h2>
+          <div class="popt" data-s="Small" style="margin-top:4px"><div class="radio"></div><div class="plab" style="font-size:13px">Small</div></div>
+          <div class="popt sel" data-s="Standard"><div class="radio"></div><div class="plab">Standard</div></div>
+          <div class="popt" data-s="Large"><div class="radio"></div><div class="plab" style="font-size:17.5px">Large</div></div>
+          <div class="popt nb" data-s="Extra large"><div class="radio"></div><div class="plab" style="font-size:19.5px">Extra large</div></div>
         </div>
       </div>
     </div>
@@ -995,7 +1013,7 @@
         <button class="item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-menu-d"/></svg>Menu</button>
       </div>
 
-      <div class="sheetlayer">
+      <div class="sheetlayer" data-sheet="theme">
         <div class="scrim"></div>
         <div class="sheet">
           <div class="grab"></div>
@@ -1003,6 +1021,18 @@
           <div class="popt sel" data-t="light" style="margin-top:4px"><div class="radio"></div><div class="plab">Light</div></div>
           <div class="popt" data-t="dark"><div class="radio"></div><div class="plab">Dark</div></div>
           <div class="popt nb" data-t="system"><div class="radio"></div><div class="pbody"><div class="plab">System</div><div class="osub">Follows your phone</div></div></div>
+        </div>
+      </div>
+
+      <div class="sheetlayer" data-sheet="textsize">
+        <div class="scrim"></div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <h2>Text size</h2>
+          <div class="popt" data-s="Small" style="margin-top:4px"><div class="radio"></div><div class="plab" style="font-size:13px">Small</div></div>
+          <div class="popt sel" data-s="Standard"><div class="radio"></div><div class="plab">Standard</div></div>
+          <div class="popt" data-s="Large"><div class="radio"></div><div class="plab" style="font-size:17.5px">Large</div></div>
+          <div class="popt nb" data-s="Extra large"><div class="radio"></div><div class="plab" style="font-size:19.5px">Extra large</div></div>
         </div>
       </div>
     </div>
@@ -1021,22 +1051,22 @@
       <div class="screen">
         <div class="pheadrow">
           <div class="plusdisc-sm"><svg viewBox="0 0 24 24" fill="currentColor" style="color:#EBBA4D"><use href="#i-crown"/></svg></div>
-          <h1>Jotla Plus</h1>
+          <h1>Jotla <em class="plusmark">+Plus</em></h1>
           <button class="xbtn" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-close"/></svg></button>
         </div>
 
         <div class="psubwrap">
-          <div class="psub" style="margin-top:0">The tools to spot patterns and make your case.</div>
+          <div class="psub" style="margin-top:0">The tools to spot patterns<br>and make your case.</div>
         </div>
 
+        <div class="midwrap">
         <div class="fcard">
-          <div class="imgslot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-image"/></svg>Illustration placeholder · 354 x 158 · slide 1 of 5</div>
+          <div class="imgslot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-image"/></svg><span class="slotlab">Illustration placeholder · 300 x 158 · slide 1 of 5</span></div>
           <div class="ft">Patterns and Month View</div>
           <div class="fp">A calendar of green and amber days. Tap any day to read what happened behind it.</div>
           <div class="pdots"><span class="pdot on"></span><span class="pdot"></span><span class="pdot"></span><span class="pdot"></span><span class="pdot"></span></div>
         </div>
-
-        <div class="fsync"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-clock"/></svg>Family Sync, the record on every grown-up's phone, is part of Plus too. It is not switched on yet.</div>
+        </div>
 
         <div class="terms2">
           <div class="termcard">
@@ -1071,22 +1101,22 @@
       <div class="screen">
         <div class="pheadrow">
           <div class="plusdisc-sm"><svg viewBox="0 0 24 24" fill="currentColor" style="color:#EBBA4D"><use href="#i-crown"/></svg></div>
-          <h1>Jotla Plus</h1>
+          <h1>Jotla <em class="plusmark">+Plus</em></h1>
           <button class="xbtn" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-close"/></svg></button>
         </div>
 
         <div class="psubwrap">
-          <div class="psub" style="margin-top:0">The tools to spot patterns and make your case.</div>
+          <div class="psub" style="margin-top:0">The tools to spot patterns<br>and make your case.</div>
         </div>
 
+        <div class="midwrap">
         <div class="fcard">
-          <div class="imgslot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-image"/></svg>Illustration placeholder · 354 x 158 · slide 1 of 5</div>
+          <div class="imgslot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-image"/></svg><span class="slotlab">Illustration placeholder · 300 x 158 · slide 1 of 5</span></div>
           <div class="ft">Patterns and Month View</div>
           <div class="fp">A calendar of green and amber days. Tap any day to read what happened behind it.</div>
           <div class="pdots"><span class="pdot on"></span><span class="pdot"></span><span class="pdot"></span><span class="pdot"></span><span class="pdot"></span></div>
         </div>
-
-        <div class="fsync"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-clock"/></svg>Family Sync, the record on every grown-up's phone, is part of Plus too. It is not switched on yet.</div>
+        </div>
 
         <div class="terms2">
           <div class="termcard">
@@ -1324,30 +1354,62 @@
     });
   });
 
-  // theme sheet: the Theme row opens it, a tap applies instantly (no confirm button on picker sheets)
+  // picker sheets (Theme, Text size): the row opens its sheet, a tap applies instantly
   document.querySelectorAll('#menu-dark, #menu-light').forEach(function(phone){
-    var layer = phone.querySelector('.sheetlayer');
-    if (!layer) return;
-    var themeSub = null;
-    phone.querySelectorAll('.row').forEach(function(r){
-      var t = r.querySelector('.title');
-      if (t && t.textContent === 'Theme') {
-        themeSub = r.querySelector('.sub');
-        r.style.cursor = 'pointer';
-        r.addEventListener('click', function(){ layer.classList.add('open'); });
-      }
+    function wire(rowTitle, sheetName, apply){
+      var layer = phone.querySelector('.sheetlayer[data-sheet="' + sheetName + '"]');
+      if (!layer) return;
+      var sub = null;
+      phone.querySelectorAll('.row').forEach(function(r){
+        var t = r.querySelector('.title');
+        if (t && t.textContent === rowTitle) {
+          sub = r.querySelector('.sub');
+          r.style.cursor = 'pointer';
+          r.addEventListener('click', function(){ layer.classList.add('open'); });
+        }
+      });
+      layer.querySelector('.scrim').addEventListener('click', function(){ layer.classList.remove('open'); });
+      var opts = layer.querySelectorAll('.popt');
+      opts.forEach(function(o){
+        o.addEventListener('click', function(){
+          opts.forEach(function(x){ x.classList.remove('sel'); });
+          o.classList.add('sel');
+          apply(o, sub);
+        });
+      });
+    }
+    wire('Theme', 'theme', function(o, sub){
+      var k = o.getAttribute('data-t');
+      sub.textContent = k.charAt(0).toUpperCase() + k.slice(1);
+      if (k === 'light') phone.classList.add('light');
+      if (k === 'dark') phone.classList.remove('light');
+      // System follows the phone; the frame keeps its current look on the board
     });
-    layer.querySelector('.scrim').addEventListener('click', function(){ layer.classList.remove('open'); });
-    var opts = layer.querySelectorAll('.popt');
-    opts.forEach(function(o){
-      o.addEventListener('click', function(){
-        opts.forEach(function(x){ x.classList.remove('sel'); });
-        o.classList.add('sel');
-        var k = o.getAttribute('data-t');
-        themeSub.textContent = k.charAt(0).toUpperCase() + k.slice(1);
-        if (k === 'light') phone.classList.add('light');
-        if (k === 'dark') phone.classList.remove('light');
-        // System follows the phone; the frame keeps its current look on the board
+    wire('Text size', 'textsize', function(o, sub){
+      sub.textContent = o.getAttribute('data-s');
+    });
+  });
+
+  // plus carousel: the dots page the five launch slides
+  var SLIDES = [
+    { t: 'Patterns and Month View', c: 'A calendar of green and amber days. Tap any day to read what happened behind it.' },
+    { t: 'PDF Evidence Pack', c: 'Turn any stretch of the record into one dated PDF, ready to hand over.' },
+    { t: 'Family Sync', c: 'The record on every grown-up\'s phone. One of you logs it, both of you have it.' },
+    { t: 'Photos and Videos on Notes', c: 'Add the photo or the video to the note, so the day is shown as well as told.' },
+    { t: 'Dysregulation Mode', c: 'Five gentle questions in the hard moment, so nothing important is lost.' }
+  ];
+  document.querySelectorAll('#plus-dark, #plus-light').forEach(function(phone){
+    var card = phone.querySelector('.fcard');
+    if (!card) return;
+    var dots = card.querySelectorAll('.pdot');
+    dots.forEach(function(d, i){
+      d.style.cursor = 'pointer';
+      d.addEventListener('click', function(){
+        dots.forEach(function(x){ x.classList.remove('on'); });
+        d.classList.add('on');
+        card.querySelector('.ft').textContent = SLIDES[i].t;
+        card.querySelector('.fp').textContent = SLIDES[i].c;
+        card.querySelector('.slotlab').textContent = 'Illustration placeholder · 300 x 158 · slide ' + (i + 1) + ' of 5';
       });
     });
   });
