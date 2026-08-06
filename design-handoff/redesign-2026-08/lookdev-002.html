@@ -259,6 +259,10 @@
      (chevron or toggle) becomes the solid gold crown; tapping a crowned
      row always opens the Jotla Plus page */
   .crownmark { width: 20px; height: 20px; flex: 0 0 20px; color: var(--gold); }
+  /* denser rhythm for list-heavy sub-pages */
+  .dense .row { padding: 11px 16px; margin-bottom: 6px; }
+  .dense .section { margin: 13px 2px 6px; }
+  .dense .fsync { margin-top: 4px; }
 
   /* menu icon picker */
   .optstrip { display: flex; gap: 10px; padding: 14px; border-radius: 18px; flex-wrap: wrap; justify-content: center; }
@@ -765,7 +769,7 @@
         <div class="section">Your record</div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-cloudup"/></svg>
-          <div class="body"><div class="title">Backup and restore</div></div>
+          <div class="body"><div class="title">Backup and Restore</div></div>
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
         </div>
 
@@ -896,7 +900,7 @@
         <div class="section">Your record</div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-cloudup"/></svg>
-          <div class="body"><div class="title">Backup and restore</div></div>
+          <div class="body"><div class="title">Backup and Restore</div></div>
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
         </div>
 
@@ -1047,24 +1051,21 @@
 
 </div>
 
-<div class="board-title" style="margin-top:6px">Backup and restore · file export stays free, the parent's own Google Drive is the Plus section</div>
+<div class="board-title" style="margin-top:6px">Backup and Restore · file export stays free, the parent's own Google Drive is the Plus section</div>
 
 <div class="board">
 
   <!-- ============ BACKUP (dark) ============ -->
   <div class="frame-wrap">
     <div class="phone" id="backup-dark">
-      <div class="screen">
+      <div class="screen dense">
         <button class="backbtn" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevL"/></svg></button>
-        <h1 style="margin-top:2px">Backup and restore</h1>
+        <h1 style="margin-top:2px">Backup and Restore</h1>
 
         <div class="section">On this phone</div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-download"/></svg>
-          <div class="body">
-            <div class="title">Export my data</div>
-            <div class="sub">A file you keep, anywhere you choose. Free, always.</div>
-          </div>
+          <div class="body"><div class="title">Export my data</div></div>
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
         </div>
         <div class="row">
@@ -1087,11 +1088,28 @@
           <div class="body"><div class="title">Restore from your Drive</div></div>
           <svg class="crownmark" viewBox="0 0 24 24" fill="currentColor"><use href="#i-crown"/></svg>
         </div>
+
+        <div class="section">Dropbox</div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-cloudup"/></svg>
+          <div class="body">
+            <div class="title">Back up to Dropbox</div>
+            <div class="sub">Not backed up yet</div>
+          </div>
+          <svg class="crownmark" viewBox="0 0 24 24" fill="currentColor"><use href="#i-crown"/></svg>
+        </div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-clouddown"/></svg>
+          <div class="body"><div class="title">Restore from Dropbox</div></div>
+          <svg class="crownmark" viewBox="0 0 24 24" fill="currentColor"><use href="#i-crown"/></svg>
+        </div>
+
+        <div class="section">Automatic</div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-clock"/></svg>
           <div class="body">
             <div class="title">Auto backup</div>
-            <div class="sub">Backs up by itself when the record changes</div>
+            <div class="sub">Backs up when the record changes</div>
           </div>
           <svg class="crownmark" viewBox="0 0 24 24" fill="currentColor"><use href="#i-crown"/></svg>
         </div>
@@ -1104,34 +1122,24 @@
           <svg class="crownmark" viewBox="0 0 24 24" fill="currentColor"><use href="#i-crown"/></svg>
         </div>
 
-        <div class="fsync"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-lock"/></svg>Your backup lives in your own Google Drive, in a space only the app can read. Jotla has no servers and never sees your record.</div>
+        <div class="fsync"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-lock"/></svg>Backups live in your own Google Drive or Dropbox, in a space only the app can read. Jotla has no servers and never sees your record.</div>
       </div>
 
-      <div class="nav">
-        <button class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-today"/></svg>Today</button>
-        <button class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-calendar"/></svg>Month</button>
-        <button class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-doc"/></svg>Documents</button>
-        <button class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-search"/></svg>Find</button>
-        <button class="item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-menu-d"/></svg>Menu</button>
-      </div>
     </div>
-    <div class="frame-label">Backup and restore · dark</div>
+    <div class="frame-label">Backup and Restore · dark</div>
   </div>
 
   <!-- ============ BACKUP (light) ============ -->
   <div class="frame-wrap">
     <div class="phone light" id="backup-light">
-      <div class="screen">
+      <div class="screen dense">
         <button class="backbtn" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevL"/></svg></button>
-        <h1 style="margin-top:2px">Backup and restore</h1>
+        <h1 style="margin-top:2px">Backup and Restore</h1>
 
         <div class="section">On this phone</div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-download"/></svg>
-          <div class="body">
-            <div class="title">Export my data</div>
-            <div class="sub">A file you keep, anywhere you choose. Free, always.</div>
-          </div>
+          <div class="body"><div class="title">Export my data</div></div>
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
         </div>
         <div class="row">
@@ -1154,11 +1162,28 @@
           <div class="body"><div class="title">Restore from your Drive</div></div>
           <svg class="crownmark" viewBox="0 0 24 24" fill="currentColor"><use href="#i-crown"/></svg>
         </div>
+
+        <div class="section">Dropbox</div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-cloudup"/></svg>
+          <div class="body">
+            <div class="title">Back up to Dropbox</div>
+            <div class="sub">Not backed up yet</div>
+          </div>
+          <svg class="crownmark" viewBox="0 0 24 24" fill="currentColor"><use href="#i-crown"/></svg>
+        </div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-clouddown"/></svg>
+          <div class="body"><div class="title">Restore from Dropbox</div></div>
+          <svg class="crownmark" viewBox="0 0 24 24" fill="currentColor"><use href="#i-crown"/></svg>
+        </div>
+
+        <div class="section">Automatic</div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-clock"/></svg>
           <div class="body">
             <div class="title">Auto backup</div>
-            <div class="sub">Backs up by itself when the record changes</div>
+            <div class="sub">Backs up when the record changes</div>
           </div>
           <svg class="crownmark" viewBox="0 0 24 24" fill="currentColor"><use href="#i-crown"/></svg>
         </div>
@@ -1171,18 +1196,11 @@
           <svg class="crownmark" viewBox="0 0 24 24" fill="currentColor"><use href="#i-crown"/></svg>
         </div>
 
-        <div class="fsync"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-lock"/></svg>Your backup lives in your own Google Drive, in a space only the app can read. Jotla has no servers and never sees your record.</div>
+        <div class="fsync"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-lock"/></svg>Backups live in your own Google Drive or Dropbox, in a space only the app can read. Jotla has no servers and never sees your record.</div>
       </div>
 
-      <div class="nav">
-        <button class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-today"/></svg>Today</button>
-        <button class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-calendar"/></svg>Month</button>
-        <button class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-doc"/></svg>Documents</button>
-        <button class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-search"/></svg>Find</button>
-        <button class="item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-menu-d"/></svg>Menu</button>
-      </div>
     </div>
-    <div class="frame-label">Backup and restore · light</div>
+    <div class="frame-label">Backup and Restore · light</div>
   </div>
 
 </div>
