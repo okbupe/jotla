@@ -1145,6 +1145,20 @@
           <div class="popt nb" data-s="Extra large"><div class="radio"></div><div class="plab" style="font-size:19.5px">Extra large</div></div>
         </div>
       </div>
+
+      <div class="sheetlayer" data-sheet="reminder">
+        <div class="scrim"></div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <h2>Daily reminder</h2>
+          <div class="sheetsub">A gentle nudge to write the day down.</div>
+          <div class="popt sel" data-r="Off"><div class="radio"></div><div class="plab">Off</div></div>
+          <div class="popt" data-r="Morning · 08:00"><div class="radio"></div><div class="plab">Morning · 08:00</div></div>
+          <div class="popt" data-r="Evening · 20:00"><div class="radio"></div><div class="plab">Evening · 20:00</div></div>
+          <div class="popt nb" data-r="custom"><div class="radio"></div><div class="plab">Choose a time</div></div>
+          <div class="datefields"><div class="dfield"><div class="dlab">Time</div><div class="dval">20:30</div></div></div>
+        </div>
+      </div>
     </div>
     <div class="frame-label">Settings · dark</div>
   </div>
@@ -1240,6 +1254,20 @@
           <div class="popt sel" data-s="Standard"><div class="radio"></div><div class="plab">Standard</div></div>
           <div class="popt" data-s="Large"><div class="radio"></div><div class="plab" style="font-size:17.5px">Large</div></div>
           <div class="popt nb" data-s="Extra large"><div class="radio"></div><div class="plab" style="font-size:19.5px">Extra large</div></div>
+        </div>
+      </div>
+
+      <div class="sheetlayer" data-sheet="reminder">
+        <div class="scrim"></div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <h2>Daily reminder</h2>
+          <div class="sheetsub">A gentle nudge to write the day down.</div>
+          <div class="popt sel" data-r="Off"><div class="radio"></div><div class="plab">Off</div></div>
+          <div class="popt" data-r="Morning · 08:00"><div class="radio"></div><div class="plab">Morning · 08:00</div></div>
+          <div class="popt" data-r="Evening · 20:00"><div class="radio"></div><div class="plab">Evening · 20:00</div></div>
+          <div class="popt nb" data-r="custom"><div class="radio"></div><div class="plab">Choose a time</div></div>
+          <div class="datefields"><div class="dfield"><div class="dlab">Time</div><div class="dval">20:30</div></div></div>
         </div>
       </div>
     </div>
@@ -1894,6 +1922,12 @@
     });
     wire('Text size', 'textsize', function(o, sub){
       sub.textContent = o.getAttribute('data-s');
+    });
+    wire('Daily reminder', 'reminder', function(o, sub){
+      var k = o.getAttribute('data-r');
+      var fields = phone.querySelector('.sheetlayer[data-sheet="reminder"] .datefields');
+      fields.classList.toggle('show', k === 'custom');
+      sub.textContent = k === 'custom' ? '20:30' : k;
     });
   });
 
