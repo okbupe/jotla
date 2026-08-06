@@ -384,6 +384,9 @@
     <g id="i-lock"><rect x="5" y="10.5" width="14" height="9.5" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></g>
     <g id="i-trash"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6"/><path d="M14 11v6"/></g>
     <g id="i-restart"><path d="M3 4v6h6"/><path d="M3.8 14a9 9 0 1 0 2.2-9.2L3 8"/></g>
+    <g id="i-cog"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34 1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87 1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/></g>
+    <g id="i-play"><circle cx="12" cy="12" r="9"/><path d="M10.2 8.8v6.4l5.2-3.2z"/></g>
+    <g id="i-help"><circle cx="12" cy="12" r="9"/><path d="M9.6 9a2.4 2.4 0 0 1 4.66.8c0 1.6-2.26 2.2-2.26 3.2"/><path d="M12 16.6h.01"/></g>
     <g id="i-plus"><path d="M12 5v14M5 12h14"/></g>
     <g id="i-chevR"><path d="m9 5 7 7-7 7"/></g>
     <g id="i-chevL"><path d="m15 5-7 7 7 7"/></g>
@@ -762,7 +765,7 @@
 
 </div>
 
-<div class="board-title" style="margin-top:6px">Documents and Menu</div>
+<div class="board-title" style="margin-top:6px">Documents and Menu · Menu holds what parents reach for, the cog opens Settings</div>
 
 <div class="board">
 
@@ -837,7 +840,8 @@
           <div style="display:flex;align-items:center;gap:11px">
             <div class="avatar" style="width:34px;height:34px;flex:0 0 34px;font-size:15px">S</div>
             <h1 style="margin-top:0;font-size:26px">Sam</h1>
-          </div>        </div>
+          </div>
+          <button class="findbtn" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-cog"/></svg></button>        </div>
 
         <div class="plusticket" style="margin-top:16px">
           <svg viewBox="0 0 24 24" fill="currentColor" style="color:var(--ticket-crown);width:28px;height:28px;flex:0 0 28px"><use href="#i-crown"/></svg>
@@ -853,25 +857,6 @@
           <div class="body"><div class="title">Backup and Restore</div></div>
         </div>
 
-        <div class="section">App</div>
-        <div class="row">
-          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-palette"/></svg>
-          <div class="body">
-            <div class="title">Theme</div>
-            <div class="sub">Dark</div>
-          </div>
-        </div>
-        <div class="row">
-          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-textsize"/></svg>
-          <div class="body">
-            <div class="title">Text size</div>
-            <div class="sub">Standard</div>
-          </div>
-        </div>
-        <div class="row">
-          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-info"/></svg>
-          <div class="body"><div class="title">About Jotla</div></div>
-        </div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-trash"/></svg>
           <div class="body">
@@ -893,30 +878,8 @@
         <button class="item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-menu-d"/></svg>Menu</button>
       </div>
 
-      <div class="sheetlayer" data-sheet="theme">
-        <div class="scrim"></div>
-        <div class="sheet">
-          <div class="grab"></div>
-          <h2>Theme</h2>
-          <div class="popt" data-t="light" style="margin-top:4px"><div class="radio"></div><div class="plab">Light</div></div>
-          <div class="popt sel" data-t="dark"><div class="radio"></div><div class="plab">Dark</div></div>
-          <div class="popt nb" data-t="system"><div class="radio"></div><div class="pbody"><div class="plab">System</div><div class="osub">Follows your phone</div></div></div>
-        </div>
-      </div>
-
-      <div class="sheetlayer" data-sheet="textsize">
-        <div class="scrim"></div>
-        <div class="sheet">
-          <div class="grab"></div>
-          <h2>Text size</h2>
-          <div class="popt" data-s="Small" style="margin-top:4px"><div class="radio"></div><div class="plab" style="font-size:13px">Small</div></div>
-          <div class="popt sel" data-s="Standard"><div class="radio"></div><div class="plab">Standard</div></div>
-          <div class="popt" data-s="Large"><div class="radio"></div><div class="plab" style="font-size:17.5px">Large</div></div>
-          <div class="popt nb" data-s="Extra large"><div class="radio"></div><div class="plab" style="font-size:19.5px">Extra large</div></div>
-        </div>
-      </div>
     </div>
-    <div class="frame-label">Menu · dark · child, Plus, record, app, about</div>
+    <div class="frame-label">Menu · dark · arm's reach only, the cog opens Settings</div>
   </div>
 
   <!-- ============ DOCUMENTS (light) ============ -->
@@ -990,7 +953,8 @@
           <div style="display:flex;align-items:center;gap:11px">
             <div class="avatar" style="width:34px;height:34px;flex:0 0 34px;font-size:15px">S</div>
             <h1 style="margin-top:0;font-size:26px">Sam</h1>
-          </div>        </div>
+          </div>
+          <button class="findbtn" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-cog"/></svg></button>        </div>
 
         <div class="plusticket" style="margin-top:16px">
           <svg viewBox="0 0 24 24" fill="currentColor" style="color:var(--ticket-crown);width:28px;height:28px;flex:0 0 28px"><use href="#i-crown"/></svg>
@@ -1006,25 +970,6 @@
           <div class="body"><div class="title">Backup and Restore</div></div>
         </div>
 
-        <div class="section">App</div>
-        <div class="row">
-          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-palette"/></svg>
-          <div class="body">
-            <div class="title">Theme</div>
-            <div class="sub">Light</div>
-          </div>
-        </div>
-        <div class="row">
-          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-textsize"/></svg>
-          <div class="body">
-            <div class="title">Text size</div>
-            <div class="sub">Standard</div>
-          </div>
-        </div>
-        <div class="row">
-          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-info"/></svg>
-          <div class="body"><div class="title">About Jotla</div></div>
-        </div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-trash"/></svg>
           <div class="body">
@@ -1044,6 +989,170 @@
         <button class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-doc"/></svg>Documents</button>
         <button class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-search"/></svg>Find</button>
         <button class="item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-menu-d"/></svg>Menu</button>
+      </div>
+
+    </div>
+    <div class="frame-label">Menu · light</div>
+  </div>
+
+</div>
+
+<div class="board-title" style="margin-top:6px">Settings · everything else, one page deep behind the cog · App lock and Daily reminder adopted from the references, both free</div>
+
+<div class="board">
+
+  <!-- ============ SETTINGS (dark) ============ -->
+  <div class="frame-wrap">
+    <div class="phone" id="settings-dark">
+      <div class="screen dense">
+        <div style="display:flex;align-items:center;gap:6px">
+          <button class="backbtn" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevL"/></svg></button>
+          <h1 style="margin-top:0;font-size:23px">Settings</h1>
+        </div>
+
+        <div class="section">Appearance</div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-palette"/></svg>
+          <div class="body">
+            <div class="title">Theme</div>
+            <div class="sub">Dark</div>
+          </div>
+        </div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-textsize"/></svg>
+          <div class="body">
+            <div class="title">Text size</div>
+            <div class="sub">Standard</div>
+          </div>
+        </div>
+
+        <div class="section">Privacy</div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-lock"/></svg>
+          <div class="body">
+            <div class="title">App lock</div>
+            <div class="sub">Off</div>
+          </div>
+        </div>
+
+        <div class="section">Reminders</div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-bell"/></svg>
+          <div class="body">
+            <div class="title">Daily reminder</div>
+            <div class="sub">Off</div>
+          </div>
+        </div>
+
+        <div class="section">Help and about</div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-play"/></svg>
+          <div class="body"><div class="title">Take the tour</div></div>
+        </div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-help"/></svg>
+          <div class="body"><div class="title">Help</div></div>
+        </div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-info"/></svg>
+          <div class="body"><div class="title">About Jotla</div></div>
+        </div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-heart"/></svg>
+          <div class="body"><div class="title">Tell us what you think</div></div>
+        </div>
+
+        <div class="fsync"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-lock"/></svg>No account, and nothing leaves the phone. Jotla works without a login: everything stays on this device, and there is no cloud we can read.</div>
+      </div>
+
+      <div class="sheetlayer" data-sheet="theme">
+        <div class="scrim"></div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <h2>Theme</h2>
+          <div class="popt" data-t="light" style="margin-top:4px"><div class="radio"></div><div class="plab">Light</div></div>
+          <div class="popt sel" data-t="dark"><div class="radio"></div><div class="plab">Dark</div></div>
+          <div class="popt nb" data-t="system"><div class="radio"></div><div class="pbody"><div class="plab">System</div><div class="osub">Follows your phone</div></div></div>
+        </div>
+      </div>
+
+      <div class="sheetlayer" data-sheet="textsize">
+        <div class="scrim"></div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <h2>Text size</h2>
+          <div class="popt" data-s="Small" style="margin-top:4px"><div class="radio"></div><div class="plab" style="font-size:13px">Small</div></div>
+          <div class="popt sel" data-s="Standard"><div class="radio"></div><div class="plab">Standard</div></div>
+          <div class="popt" data-s="Large"><div class="radio"></div><div class="plab" style="font-size:17.5px">Large</div></div>
+          <div class="popt nb" data-s="Extra large"><div class="radio"></div><div class="plab" style="font-size:19.5px">Extra large</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="frame-label">Settings · dark</div>
+  </div>
+
+  <!-- ============ SETTINGS (light) ============ -->
+  <div class="frame-wrap">
+    <div class="phone light" id="settings-light">
+      <div class="screen dense">
+        <div style="display:flex;align-items:center;gap:6px">
+          <button class="backbtn" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevL"/></svg></button>
+          <h1 style="margin-top:0;font-size:23px">Settings</h1>
+        </div>
+
+        <div class="section">Appearance</div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-palette"/></svg>
+          <div class="body">
+            <div class="title">Theme</div>
+            <div class="sub">Light</div>
+          </div>
+        </div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-textsize"/></svg>
+          <div class="body">
+            <div class="title">Text size</div>
+            <div class="sub">Standard</div>
+          </div>
+        </div>
+
+        <div class="section">Privacy</div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-lock"/></svg>
+          <div class="body">
+            <div class="title">App lock</div>
+            <div class="sub">Off</div>
+          </div>
+        </div>
+
+        <div class="section">Reminders</div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-bell"/></svg>
+          <div class="body">
+            <div class="title">Daily reminder</div>
+            <div class="sub">Off</div>
+          </div>
+        </div>
+
+        <div class="section">Help and about</div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-play"/></svg>
+          <div class="body"><div class="title">Take the tour</div></div>
+        </div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-help"/></svg>
+          <div class="body"><div class="title">Help</div></div>
+        </div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-info"/></svg>
+          <div class="body"><div class="title">About Jotla</div></div>
+        </div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-heart"/></svg>
+          <div class="body"><div class="title">Tell us what you think</div></div>
+        </div>
+
+        <div class="fsync"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-lock"/></svg>No account, and nothing leaves the phone. Jotla works without a login: everything stays on this device, and there is no cloud we can read.</div>
       </div>
 
       <div class="sheetlayer" data-sheet="theme">
@@ -1069,7 +1178,7 @@
         </div>
       </div>
     </div>
-    <div class="frame-label">Menu · light</div>
+    <div class="frame-label">Settings · light</div>
   </div>
 
 </div>
@@ -1480,7 +1589,7 @@
   });
 
   // picker sheets (Theme, Text size): the row opens its sheet, a tap applies instantly
-  document.querySelectorAll('#menu-dark, #menu-light').forEach(function(phone){
+  document.querySelectorAll('#settings-dark, #settings-light').forEach(function(phone){
     function wire(rowTitle, sheetName, apply){
       var layer = phone.querySelector('.sheetlayer[data-sheet="' + sheetName + '"]');
       if (!layer) return;
