@@ -48,9 +48,7 @@
     --seg-on: #3A3835;
     --ok-border: rgba(232,163,61,.45);
     --gold: #EBBA4D;
-    --gold-bg1: rgba(235,186,77,.20); --gold-bg2: rgba(235,186,77,.07);
-    --gold-border: rgba(235,186,77,.50);
-    --gold-ink: #F0C55E; --gold-sub: #C9A254;
+    --ticket-bg: #EBBA4D; --ticket-ink: #3B2D0A; --ticket-sub: rgba(59,45,10,.78);
 
     width: 390px; height: 780px; background: var(--bg); color: var(--text);
     border-radius: 28px; overflow: hidden; position: relative;
@@ -81,9 +79,7 @@
     --seg-on: #FFFFFF;
     --ok-border: rgba(217,134,28,.40);
     --gold: #BE8E1E;
-    --gold-bg1: rgba(190,142,30,.15); --gold-bg2: rgba(190,142,30,.05);
-    --gold-border: rgba(190,142,30,.45);
-    --gold-ink: #7A5A10; --gold-sub: #9A7A2A;
+    --ticket-bg: #E9B94B; --ticket-ink: #3B2D0A; --ticket-sub: rgba(59,45,10,.78);
     box-shadow: 0 0 0 1px var(--ring), 0 24px 60px rgba(0,0,0,.18);
   }
 
@@ -188,22 +184,15 @@
   .addrow { background: none; border: 1px dashed var(--hair); border-radius: 14px; padding: 13px 16px; display: flex; align-items: center; gap: 14px; color: var(--accent); font-size: 15.5px; font-weight: 500; }
   .addrow svg { width: 20px; height: 20px; }
 
-  /* the Jotla Plus golden ticket: scalloped bite edges left and right,
-     the app's one loud element. The crown is the only solid icon. */
+  /* the Jotla Plus tab: SOLID gold, no border, no gimmicks.
+     The app's one loud element; the crown is the only solid icon. */
   .plusticket {
-    background: linear-gradient(135deg, var(--gold-bg1), var(--gold-bg2));
-    border: 1px solid var(--gold-border);
+    background: var(--ticket-bg);
     border-radius: 14px; padding: 17px 20px;
     display: flex; align-items: center; gap: 14px; margin-bottom: 8px;
-    -webkit-mask:
-      radial-gradient(5px at left, #0000 97%, #000) left / 51% 18px repeat-y,
-      radial-gradient(5px at right, #0000 97%, #000) right / 51% 18px repeat-y;
-    mask:
-      radial-gradient(5px at left, #0000 97%, #000) left / 51% 18px repeat-y,
-      radial-gradient(5px at right, #0000 97%, #000) right / 51% 18px repeat-y;
   }
-  .plusticket .title { color: var(--gold-ink); font-size: 16.5px; font-weight: 600; }
-  .plusticket .sub { color: var(--gold-sub); font-size: 13.5px; margin-top: 2px; }
+  .plusticket .title { color: var(--ticket-ink); font-size: 16.5px; font-weight: 600; }
+  .plusticket .sub { color: var(--ticket-sub); font-size: 13.5px; margin-top: 2px; }
 
   /* menu */
   .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--accent-tint); border: 1px solid var(--accent-border); color: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 17px; flex: 0 0 40px; }
@@ -703,7 +692,7 @@
         </div>
 
         <div class="plusticket" style="margin-top:16px">
-          <svg viewBox="0 0 24 24" fill="currentColor" style="color:var(--gold);width:28px;height:28px;flex:0 0 28px"><use href="#i-crown"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor" style="color:var(--ticket-ink);width:28px;height:28px;flex:0 0 28px"><use href="#i-crown"/></svg>
           <div class="body">
             <div class="title">Jotla Plus</div>
             <div class="sub">Get the best experience.</div>
@@ -841,7 +830,7 @@
         </div>
 
         <div class="plusticket" style="margin-top:16px">
-          <svg viewBox="0 0 24 24" fill="currentColor" style="color:var(--gold);width:28px;height:28px;flex:0 0 28px"><use href="#i-crown"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor" style="color:var(--ticket-ink);width:28px;height:28px;flex:0 0 28px"><use href="#i-crown"/></svg>
           <div class="body">
             <div class="title">Jotla Plus</div>
             <div class="sub">Get the best experience.</div>
