@@ -52,6 +52,7 @@
     --ticket-shadow: 0 10px 22px -6px rgba(38,24,84,.60);
     --plusink: #A18BEF; --plustint: rgba(110,84,214,.16);
     --tileblue: rgba(47,111,214,.26); --tilepurple: rgba(179,106,226,.22);
+    --aigold: #E6B85C;
 
     width: 390px; height: 780px; background: var(--bg); color: var(--text);
     border-radius: 28px; overflow: hidden; position: relative;
@@ -86,6 +87,7 @@
     --ticket-shadow: 0 10px 22px -8px rgba(60,42,114,.40);
     --plusink: #6E54D6; --plustint: rgba(110,84,214,.10);
     --tileblue: rgba(26,86,168,.15); --tilepurple: rgba(157,52,218,.14);
+    --aigold: #C9912F;
     box-shadow: 0 0 0 1px var(--ring), 0 24px 60px rgba(0,0,0,.18);
   }
 
@@ -214,6 +216,18 @@
   .pheadrow { display: flex; align-items: center; gap: 10px; }
   .plusmark { font-style: italic; color: var(--plusink); }
   .pheadrow .xbtn { margin-left: auto; margin-right: -8px; }
+  /* the tier selector: the Documents slider, worn in the paywall header.
+     each tier's selected state wears its own identity (live tier colours) */
+  .pheadrow .seg.tier { flex: 1; margin: 0 6px 0 8px; padding: 3px; }
+  .seg.tier button { min-height: 30px; font-size: 13px; }
+  .seg.tier button.on.plusOn { background: linear-gradient(135deg,#3C2A72,#6E54D6); color: #fff; }
+  .seg.tier button.on.aiOn { background: linear-gradient(135deg,#14294A,#1E5099); color: #E6B85C; }
+  .aimark { font-style: italic; color: var(--aigold); }
+  /* Jotla AI is not for sale yet: the coming card is the honest bottom (navy + gold + sparkle) */
+  .aicoming { border-radius: 16px; padding: 16px; background: linear-gradient(135deg,#14294A,#1E5099); color: #fff; text-align: center; box-shadow: 0 10px 22px -8px rgba(20,41,74,.55); }
+  .aicoming .cp { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; color: #E6B85C; letter-spacing: .05em; text-transform: uppercase; }
+  .aicoming .cp svg { width: 14px; height: 14px; }
+  .aicoming .cl { font-size: 13.5px; color: rgba(255,255,255,.9); margin-top: 8px; line-height: 1.5; }
   /* the wordmark lockup: Jotla big, +Plus smaller and raised, caption centred under it */
   .pbrand { text-align: center; margin-bottom: 16px; }
   .pbrand h1 { font-size: 31px; margin: 0; }
@@ -1408,6 +1422,10 @@
       <div class="screen">
         <div class="pheadrow">
           <div class="plusdisc-sm"><svg viewBox="0 0 24 24" fill="currentColor" style="color:#EBBA4D"><use href="#i-crown"/></svg></div>
+          <div class="seg tier">
+            <button class="on plusOn">Jotla Plus</button>
+            <button>Jotla AI</button>
+          </div>
           <button class="xbtn" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-close"/></svg></button>
         </div>
 
@@ -1424,6 +1442,7 @@
         </div>
         </div>
 
+        <div class="buyplus">
         <div class="terms2">
           <div class="termcard">
             <div class="tl">1 Month</div>
@@ -1445,6 +1464,14 @@
         <button class="ctagrad"><svg viewBox="0 0 24 24" fill="currentColor" style="color:#EBBA4D"><use href="#i-crown"/></svg>Get Jotla Plus</button>
         <div class="pinc mid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-check"/></svg>Everything in Free is included, always.</div>
         <div class="reassure">Plus renews automatically at the end of its term: £29 a month, £49 every 6 months or £79 a year, charged to your Google Play account until you cancel. Cancel any time in Subscriptions on Google Play, at least 24 hours before the term ends, and Plus stays on until the day it runs out. A subscription only ever switches off the paid tools.</div>
+        </div>
+
+        <div class="buyai" style="display:none">
+          <div class="aicoming">
+            <span class="cp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-sparkle"/></svg>Coming in 2027</span>
+            <div class="cl">£149 a year when it arrives, with Jotla Plus included. £149 in total, not one price on top of another.</div>
+          </div>
+        </div>
         <div class="linksrow"><span class="lk">Terms</span>·<span class="lk">Privacy</span>·<span class="lk">Restore</span>·<span class="lk">Help</span></div>
       </div>
     </div>
@@ -1457,6 +1484,10 @@
       <div class="screen">
         <div class="pheadrow">
           <div class="plusdisc-sm"><svg viewBox="0 0 24 24" fill="currentColor" style="color:#EBBA4D"><use href="#i-crown"/></svg></div>
+          <div class="seg tier">
+            <button class="on plusOn">Jotla Plus</button>
+            <button>Jotla AI</button>
+          </div>
           <button class="xbtn" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-close"/></svg></button>
         </div>
 
@@ -1473,6 +1504,7 @@
         </div>
         </div>
 
+        <div class="buyplus">
         <div class="terms2">
           <div class="termcard">
             <div class="tl">1 Month</div>
@@ -1494,6 +1526,14 @@
         <button class="ctagrad"><svg viewBox="0 0 24 24" fill="currentColor" style="color:#EBBA4D"><use href="#i-crown"/></svg>Get Jotla Plus</button>
         <div class="pinc mid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-check"/></svg>Everything in Free is included, always.</div>
         <div class="reassure">Plus renews automatically at the end of its term: £29 a month, £49 every 6 months or £79 a year, charged to your Google Play account until you cancel. Cancel any time in Subscriptions on Google Play, at least 24 hours before the term ends, and Plus stays on until the day it runs out. A subscription only ever switches off the paid tools.</div>
+        </div>
+
+        <div class="buyai" style="display:none">
+          <div class="aicoming">
+            <span class="cp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-sparkle"/></svg>Coming in 2027</span>
+            <div class="cl">£149 a year when it arrives, with Jotla Plus included. £149 in total, not one price on top of another.</div>
+          </div>
+        </div>
         <div class="linksrow"><span class="lk">Terms</span>·<span class="lk">Privacy</span>·<span class="lk">Restore</span>·<span class="lk">Help</span></div>
       </div>
     </div>
@@ -1805,20 +1845,49 @@
     { t: 'Photos and Videos on Notes', c: 'Add the photo or the video to the note, so the day is shown as well as told.' },
     { t: 'Dysregulation Mode', c: 'Five gentle questions in the hard moment, so nothing important is lost.' }
   ];
+  // Jotla AI slides: the live tier's honest list (nothing already-shipping goes on it)
+  var AI_SLIDES = [
+    { t: 'EHCP and SEND deadline tracker', c: 'Every deadline tracked, with what to do about a gap.' },
+    { t: 'On-device AI help', c: 'Ask about the record or the process. Answers stay on the phone.' },
+    { t: 'Current letter templates', c: 'The right letter for the moment, kept current with the law.' },
+    { t: 'Rights kept current', c: 'What you are entitled to, updated as the rules change.' },
+    { t: 'Voice capture', c: 'Say what happened and Jotla writes it down.' }
+  ];
   document.querySelectorAll('#plus-dark, #plus-light').forEach(function(phone){
     var card = phone.querySelector('.fcard');
     if (!card) return;
+    function tierSlides(){ return card.getAttribute('data-tier') === 'ai' ? AI_SLIDES : SLIDES; }
     var dots = card.querySelectorAll('.pdot');
+    function showSlide(i){
+      var slides = tierSlides();
+      dots.forEach(function(x, j){ x.classList.toggle('on', j === i); });
+      card.querySelector('.ft').textContent = slides[i].t;
+      card.querySelector('.fp').textContent = slides[i].c;
+      card.querySelector('.slotlab').textContent = 'Illustration placeholder · 300 x 158 · slide ' + (i + 1) + ' of 5';
+    }
     dots.forEach(function(d, i){
       d.style.cursor = 'pointer';
-      d.addEventListener('click', function(){
-        dots.forEach(function(x){ x.classList.remove('on'); });
-        d.classList.add('on');
-        card.querySelector('.ft').textContent = SLIDES[i].t;
-        card.querySelector('.fp').textContent = SLIDES[i].c;
-        card.querySelector('.slotlab').textContent = 'Illustration placeholder · 300 x 158 · slide ' + (i + 1) + ' of 5';
-      });
+      d.addEventListener('click', function(){ showSlide(i); });
     });
+    // the tier selector: each side wears its own identity when selected
+    var segBtns = phone.querySelectorAll('.seg.tier button');
+    var h1 = phone.querySelector('.pbrand h1');
+    var psub = phone.querySelector('.pbrand .psub');
+    function setTier(ai){
+      segBtns[0].classList.toggle('on', !ai);
+      segBtns[0].classList.toggle('plusOn', !ai);
+      segBtns[1].classList.toggle('on', ai);
+      segBtns[1].classList.toggle('aiOn', ai);
+      phone.querySelector('.buyplus').style.display = ai ? 'none' : '';
+      phone.querySelector('.buyai').style.display = ai ? '' : 'none';
+      h1.innerHTML = ai ? 'Jotla <em class="aimark">AI</em>' : 'Jotla <em class="plusmark">+Plus</em>';
+      psub.innerHTML = ai ? 'The deadlines, the rights and the letters,<br>kept current on your side.'
+                          : 'The tools to spot patterns<br>and make your case.';
+      card.setAttribute('data-tier', ai ? 'ai' : 'plus');
+      showSlide(0);
+    }
+    segBtns[0].addEventListener('click', function(){ setTier(false); });
+    segBtns[1].addEventListener('click', function(){ setTier(true); });
   });
 </script>
 </body>
