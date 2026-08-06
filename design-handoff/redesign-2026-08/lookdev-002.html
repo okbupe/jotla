@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+  /* the app's own display face: Cal Sans ships in ONE weight, Regular */
+  @font-face { font-family: 'Cal Sans'; src: url('CalSans-Regular.ttf') format('truetype'); font-weight: 400; font-display: swap; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     background: #141311; color: #EDEBE7;
@@ -45,6 +47,7 @@
     --seg-bg: rgba(255,255,255,.06);
     --seg-on: #3A3835;
     --ok-border: rgba(232,163,61,.45);
+    --gold: #EBBA4D;
 
     width: 390px; height: 780px; background: var(--bg); color: var(--text);
     border-radius: 28px; overflow: hidden; position: relative;
@@ -74,6 +77,7 @@
     --seg-bg: rgba(35,33,29,.06);
     --seg-on: #FFFFFF;
     --ok-border: rgba(217,134,28,.40);
+    --gold: #BE8E1E;
     box-shadow: 0 0 0 1px var(--ring), 0 24px 60px rgba(0,0,0,.18);
   }
 
@@ -81,7 +85,8 @@
 
   /* type */
   .overline { font-size: 12.5px; font-weight: 600; letter-spacing: .09em; color: var(--faint); text-transform: uppercase; }
-  h1 { font-size: 30px; font-weight: 700; letter-spacing: -.01em; margin-top: 6px; color: var(--text); }
+  /* screen titles: Cal Sans, normal weight (Bupe: not bold) */
+  h1 { font-family: 'Cal Sans', 'Outfit', system-ui, sans-serif; font-size: 30px; font-weight: 400; letter-spacing: 0; margin-top: 6px; color: var(--text); }
   .lede { font-size: 15.5px; color: var(--muted); margin-top: 6px; line-height: 1.45; }
   .section { font-size: 13px; font-weight: 600; color: var(--accent); letter-spacing: .02em; margin: 22px 2px 8px; }
 
@@ -232,6 +237,8 @@
     <g id="i-upload"><path d="M12 14V4M8 8l4-4 4 4"/><path d="M5 19.5h14"/></g>
     <g id="i-moon"><path d="M20 14.5A8 8 0 0 1 9.5 4 7 7 0 1 0 20 14.5Z"/></g>
     <g id="i-info"><circle cx="12" cy="12" r="8"/><path d="M12 11.2v4.6M12 7.9h.01"/></g>
+    <g id="i-crown"><path d="M4.6 15.5 3.4 7.6l4.8 3.2L12 5l3.8 5.8 4.8-3.2-1.2 7.9z"/><path d="M4.8 17.3h14.4a.9.9 0 0 1 0 1.8H4.8a.9.9 0 0 1 0-1.8z"/></g>
+    <g id="i-textsize"><path d="M3.5 18 8 6.5 12.5 18M5 14.2h6"/><path d="M14.5 18l3-7.5 3 7.5M15.6 15.5h3.8"/></g>
   </defs>
 </svg>
 
@@ -664,22 +671,15 @@
     <div class="phone" id="menu-dark">
       <div class="screen">
         <div class="toprow">
-          <h1 style="margin-top:0">Menu</h1>
+          <div style="display:flex;align-items:center;gap:11px">
+            <div class="avatar" style="width:34px;height:34px;flex:0 0 34px;font-size:15px">S</div>
+            <h1 style="margin-top:0;font-size:26px">Sam</h1>
+          </div>
           <button class="findbtn" aria-label="Find"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-search"/></svg></button>
         </div>
 
         <div class="row" style="margin-top:16px">
-          <div class="avatar">S</div>
-          <div class="body">
-            <div class="title">Sam</div>
-            <div class="sub">Oakfield Primary · Switch or edit child</div>
-          </div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
-        </div>
-
-        <div class="section">Jotla Plus</div>
-        <div class="row">
-          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-sparkle"/></svg>
+          <svg class="ic" viewBox="0 0 24 24" fill="currentColor" style="color:var(--gold)"><use href="#i-crown"/></svg>
           <div class="body">
             <div class="title">Jotla Plus</div>
             <div class="sub">Active on this phone.</div>
@@ -703,8 +703,16 @@
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-moon"/></svg>
           <div class="body">
-            <div class="title">Appearance</div>
-            <div class="sub">Dark · Standard text</div>
+            <div class="title">Theme</div>
+            <div class="sub">Dark</div>
+          </div>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
+        </div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-textsize"/></svg>
+          <div class="body">
+            <div class="title">Text size</div>
+            <div class="sub">Standard</div>
           </div>
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
         </div>
@@ -802,22 +810,15 @@
     <div class="phone light" id="menu-light">
       <div class="screen">
         <div class="toprow">
-          <h1 style="margin-top:0">Menu</h1>
+          <div style="display:flex;align-items:center;gap:11px">
+            <div class="avatar" style="width:34px;height:34px;flex:0 0 34px;font-size:15px">S</div>
+            <h1 style="margin-top:0;font-size:26px">Sam</h1>
+          </div>
           <button class="findbtn" aria-label="Find"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-search"/></svg></button>
         </div>
 
         <div class="row" style="margin-top:16px">
-          <div class="avatar">S</div>
-          <div class="body">
-            <div class="title">Sam</div>
-            <div class="sub">Oakfield Primary · Switch or edit child</div>
-          </div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
-        </div>
-
-        <div class="section">Jotla Plus</div>
-        <div class="row">
-          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-sparkle"/></svg>
+          <svg class="ic" viewBox="0 0 24 24" fill="currentColor" style="color:var(--gold)"><use href="#i-crown"/></svg>
           <div class="body">
             <div class="title">Jotla Plus</div>
             <div class="sub">Active on this phone.</div>
@@ -841,8 +842,16 @@
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-moon"/></svg>
           <div class="body">
-            <div class="title">Appearance</div>
-            <div class="sub">Light · Standard text</div>
+            <div class="title">Theme</div>
+            <div class="sub">Light</div>
+          </div>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
+        </div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-textsize"/></svg>
+          <div class="body">
+            <div class="title">Text size</div>
+            <div class="sub">Standard</div>
           </div>
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
         </div>

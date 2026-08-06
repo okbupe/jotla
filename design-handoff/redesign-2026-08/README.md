@@ -20,7 +20,10 @@ The shell goes neutral and the data gets the colour back. One accent (Jotla blue
 - **Month grid**: day tints are circles; the current day carries a 1.5px accent ring; tints appear only on days that hold data.
 - **The pulse icon is the standing Jotla symbol for dysregulation** (path `M3 12h4l2.5-7 4 14 2.5-7H21`, drawn in the set's grammar).
 - **Pill stroke law holds**: every tinted chip carries a 1px same-hue border (Dysregulation chip, Plus chip).
-- **Type stays Outfit.** The typeface is Jotla's character; the shell does the calming, not a font change.
+- **Type: screen titles are Cal Sans, Regular, never bold** (Bupe, 6 Aug; Cal Sans only ships one weight, which is the point). Body stays Outfit.
+- **Today header order**: the greeting leads ("Good afternoon."), the date sits under it in the small caps overline, and the status line ("Here is how Sam's day is looking...") is gone.
+- **Menu**: the screen title is the child, avatar plus name, not the word "Menu"; tapping it switches or edits the child. **Jotla Plus is the first row and looks unique: a SOLID gold crown icon** (the only solid icon and the only gold in the app). Then Your record (Export, Restore), App (**Theme**, showing just the current theme in grey, with three options: Light, Dark, System following the phone; **Text size**), About Jotla, and the "Jotla by SEN Help" endorsement as the footer.
+- **Documents**: title is just "Documents" (the old subtitle and the green banner explained the screen, the declutter took both); Day records / Documents segmented switch kept; "Add a document" is a dashed row under the list.
 
 ## Tokens
 
@@ -41,6 +44,7 @@ The shell goes neutral and the data gets the colour back. One accent (Jotla blue
 | good / mixed / hard | `#52B788` / `#E8A33D` / `#E5645C` |
 | dysregulation | `#B36AE2` (tint `.16`, border `.45`) |
 | no-note | `#55524C` |
+| gold (Plus crown only) | `#EBBA4D` |
 
 ### Light (first pass, in progress)
 
@@ -56,6 +60,7 @@ The shell goes neutral and the data gets the colour back. One accent (Jotla blue
 | good / mixed / hard | `#1F9D66` / `#D9861C` / `#D64541` (numerals darker: `#1A7A50` / `#9A5E13` / `#A93832`) |
 | dysregulation | `#9D34DA` (tint `.10`, border `.40`) |
 | no-note | `#C9C4BC` |
+| gold (Plus crown only) | `#BE8E1E` |
 
 ## What the build will touch (when green-lit)
 
