@@ -14,16 +14,16 @@ The shell goes neutral and the data gets the colour back. One accent (Jotla blue
 - **One big left-aligned title** per screen ("Good afternoon.", "August 2026"). No app header bar; the wordmark's homes are the splash and About (per the 4 Aug declutter).
 - **Section headers** are small, semibold, accent-coloured ("Check in", "Sam's day so far").
 - **FAB**: a circle, accent fill, bottom right. It replaces BOTH the centre nav "+" and the full-width "Add to today" button. One add affordance.
-- **Nav**: four tabs, `Today / Month / Documents / Menu`, original icon set (today house, calendar, doc). Active state is colour only (accent, stroke 2.2 vs 2). No pill or background behind the active icon.
+- **Nav**: five tabs, `Today / Month / Documents / Find / Menu` (Find placed between Documents and Menu, locked 2026-08-06 after trialling it against a corner icon). Original icon set (today house, calendar, doc, search). Active state is colour only (accent, stroke 2.2 vs 2). No pill or background behind the active icon.
 - **Menu icon**: four rounded squares (option D on the board; picked over sliders G and dots E in real nav context). Menu holds the child switcher, Settings, export, About, and the "by SEN Help" endorsement.
-- **Find**: a bare search icon top right of every screen. No box, no border, 22px. On Month it sits rightmost of the chevron cluster.
+- **Find**: lives in the nav (fifth tab). The earlier top-right corner icon is retired; screen headers carry no search.
 - **Month grid**: day tints are circles; the current day carries a 1.5px accent ring; tints appear only on days that hold data.
 - **The pulse icon is the standing Jotla symbol for dysregulation** (path `M3 12h4l2.5-7 4 14 2.5-7H21`, drawn in the set's grammar).
 - **Pill stroke law holds**: every tinted chip carries a 1px same-hue border (Dysregulation chip, Plus chip).
 - **Type: screen titles are Cal Sans, Regular, never bold** (Bupe, 6 Aug; Cal Sans only ships one weight, which is the point). Body stays Outfit.
 - **Today header order**: the greeting leads ("Good afternoon."), the date sits under it in the small caps overline, and the status line ("Here is how Sam's day is looking...") is gone.
 - **Menu**: the screen title is the child, avatar plus name, not the word "Menu"; tapping it switches or edits the child. **Jotla Plus is the first row and looks unique: a SOLID gold crown icon** (the only solid icon and the only gold in the app). Then Your record (Export, Restore), App (**Theme**, showing just the current theme in grey, with three options: Light, Dark, System following the phone; **Text size**), About Jotla, and the "Jotla by SEN Help" endorsement as the footer.
-- **Documents**: title is just "Documents" (the old subtitle and the green banner explained the screen, the declutter took both); Day records / Documents segmented switch kept; "Add a document" is a dashed row under the list.
+- **Documents**: title is just "Documents" (the old subtitle and the green banner explained the screen, the declutter took both); segmented switch kept with **Documents leading** (Documents / Day records, swapped 2026-08-06); "Add a document" is a dashed row under the list.
 
 ## Tokens
 
