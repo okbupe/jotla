@@ -224,7 +224,8 @@
   .seg.tier button.on.aiOn { background: linear-gradient(135deg,#14294A,#1E5099); color: #E6B85C; }
   .aimark { font-style: italic; color: var(--aigold); }
   /* Jotla AI is not for sale yet: the coming card is the honest bottom (navy + gold + sparkle) */
-  .aicoming { border-radius: 16px; padding: 16px; background: linear-gradient(135deg,#14294A,#1E5099); color: #fff; text-align: center; box-shadow: 0 10px 22px -8px rgba(20,41,74,.55); }
+  .terms2.ai .termcard.sel { border-color: #C9912F; background: rgba(230,184,92,.12); }
+  .aicoming { margin-top: 12px; border-radius: 16px; padding: 16px; background: linear-gradient(135deg,#14294A,#1E5099); color: #fff; text-align: center; box-shadow: 0 10px 22px -8px rgba(20,41,74,.55); }
   .aicoming .cp { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; color: #E6B85C; letter-spacing: .05em; text-transform: uppercase; }
   .aicoming .cp svg { width: 14px; height: 14px; }
   .aicoming .cl { font-size: 13.5px; color: rgba(255,255,255,.9); margin-top: 8px; line-height: 1.5; }
@@ -236,8 +237,9 @@
   .plusdisc-sm { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg,#3C2A72,#6E54D6); display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 14px -6px rgba(60,42,114,.5); flex: 0 0 34px; }
   .plusdisc-sm svg { width: 18px; height: 18px; }
   .psubwrap { margin-top: 10px; }
-  .imgslot { height: 158px; background: var(--seg-bg); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; color: var(--faint); font-size: 12px; margin-bottom: 11px; }
+  .imgslot { height: 158px; background: var(--seg-bg); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; color: var(--faint); font-size: 12px; margin-bottom: 11px; }
   .imgslot svg { width: 22px; height: 22px; }
+  .slotimg { width: 100%; height: 100%; object-fit: cover; display: block; }
   .linksrow { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 8px; margin-bottom: 16px; color: var(--faint); font-size: 12.5px; }
   .linksrow .lk { color: var(--accent); font-weight: 500; }
   .phero { text-align: center; margin-top: 2px; }
@@ -386,6 +388,12 @@
   .phone:not(.light) .sbtn.cancel { border-color: var(--hair); }
   .sbtn.done { background: var(--accent-fill); color: #fff; }
 
+  /* help page: question rows open in place */
+  .row.faq { flex-direction: column; align-items: stretch; gap: 0; cursor: pointer; }
+  .faq .fq { font-size: 15.5px; font-weight: 500; color: var(--text); }
+  .faq .fa { display: none; font-size: 13.5px; color: var(--muted); line-height: 1.5; margin-top: 8px; }
+  .faq.open .fa { display: block; }
+
   /* menu icon picker */
   .optstrip { display: flex; gap: 10px; padding: 14px; border-radius: 18px; flex-wrap: wrap; justify-content: center; }
   .optstrip.darkbg { background: #201F1D; }
@@ -438,6 +446,7 @@
     <g id="i-music"><path d="M9 18V6l8-2v12"/><circle cx="7" cy="18" r="2.2"/><circle cx="15" cy="16" r="2.2"/></g>
     <g id="i-dots9"><circle cx="6" cy="6" r="1.2"/><circle cx="12" cy="6" r="1.2"/><circle cx="18" cy="6" r="1.2"/><circle cx="6" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="18" cy="12" r="1.2"/><circle cx="6" cy="18" r="1.2"/><circle cx="12" cy="18" r="1.2"/><circle cx="18" cy="18" r="1.2"/></g>
     <g id="i-finger"><path d="M4.6 9A8 8 0 0 1 12 4a8 8 0 0 1 7.4 5"/><path d="M7 12a5 5 0 0 1 10 0v2a12 12 0 0 1-1 5"/><path d="M9.5 12a2.5 2.5 0 0 1 5 0v2c0 2.2-.3 4-.9 5.6"/><path d="M12 12.5v1.5c0 2.5-.4 4.6-1.2 6.4"/></g>
+    <g id="i-mail"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="m4.5 8 7.5 5 7.5-5"/></g>
     <g id="i-plus"><path d="M12 5v14M5 12h14"/></g>
     <g id="i-chevR"><path d="m9 5 7 7-7 7"/></g>
     <g id="i-chevL"><path d="m15 5-7 7 7 7"/></g>
@@ -1384,6 +1393,136 @@
 
 </div>
 
+<div class="board-title" style="margin-top:6px">Help and Support · Settings > Help · answers open in place, professional and to the point</div>
+
+<div class="board">
+
+  <!-- ============ HELP (dark) ============ -->
+  <div class="frame-wrap">
+    <div class="phone" id="help-dark">
+      <div class="screen dense">
+        <div style="display:flex;align-items:center;gap:6px">
+          <button class="backbtn" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevL"/></svg></button>
+          <h1 style="margin-top:0;font-size:23px">Help</h1>
+        </div>
+
+        <div class="section">The record</div>
+        <div class="row faq open"><div class="fq">Where does the record live?</div><div class="fa">On this phone. There is no account and no cloud copy unless you back up to your own Google Drive or Dropbox.</div></div>
+        <div class="row faq"><div class="fq">How do backups work?</div><div class="fa">Automatic backups go to your own Drive or Dropbox, in a space only the app can read. A manual export file is always free.</div></div>
+        <div class="row faq"><div class="fq">How do I move to a new phone?</div><div class="fa">Back up on the old phone, install Jotla on the new one, then restore from your Drive, Dropbox or the export file.</div></div>
+        <div class="row faq"><div class="fq">I deleted something. Can I get it back?</div><div class="fa">Deleted logs and documents wait in the Recycle Bin for 30 days. After that they clear themselves.</div></div>
+
+        <div class="section">Plus</div>
+        <div class="row faq"><div class="fq">What does Plus cost?</div><div class="fa">£29 for 1 month, £49 for 6 months or £79 for a year, through Google Play.</div></div>
+        <div class="row faq"><div class="fq">How do I cancel?</div><div class="fa">In Subscriptions on Google Play, any time. Plus stays on until the day it runs out.</div></div>
+        <div class="row faq"><div class="fq">What happens if I stop paying?</div><div class="fa">You keep every entry, the timeline, search, the export and the PDF of what you already logged. A subscription only switches off the paid tools.</div></div>
+
+        <div class="section">Privacy</div>
+        <div class="row faq"><div class="fq">How do I lock the app?</div><div class="fa">Settings, then App lock. A pattern or PIN, with fingerprint or face if your phone can.</div></div>
+
+        <div class="section">Still stuck</div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-mail"/></svg>
+          <div class="body"><div class="title">Contact support</div></div>
+        </div>
+      </div>
+
+    </div>
+    <div class="frame-label">Help · dark · tap a question</div>
+  </div>
+
+  <!-- ============ HELP (light) ============ -->
+  <div class="frame-wrap">
+    <div class="phone light" id="help-light">
+      <div class="screen dense">
+        <div style="display:flex;align-items:center;gap:6px">
+          <button class="backbtn" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevL"/></svg></button>
+          <h1 style="margin-top:0;font-size:23px">Help</h1>
+        </div>
+
+        <div class="section">The record</div>
+        <div class="row faq open"><div class="fq">Where does the record live?</div><div class="fa">On this phone. There is no account and no cloud copy unless you back up to your own Google Drive or Dropbox.</div></div>
+        <div class="row faq"><div class="fq">How do backups work?</div><div class="fa">Automatic backups go to your own Drive or Dropbox, in a space only the app can read. A manual export file is always free.</div></div>
+        <div class="row faq"><div class="fq">How do I move to a new phone?</div><div class="fa">Back up on the old phone, install Jotla on the new one, then restore from your Drive, Dropbox or the export file.</div></div>
+        <div class="row faq"><div class="fq">I deleted something. Can I get it back?</div><div class="fa">Deleted logs and documents wait in the Recycle Bin for 30 days. After that they clear themselves.</div></div>
+
+        <div class="section">Plus</div>
+        <div class="row faq"><div class="fq">What does Plus cost?</div><div class="fa">£29 for 1 month, £49 for 6 months or £79 for a year, through Google Play.</div></div>
+        <div class="row faq"><div class="fq">How do I cancel?</div><div class="fa">In Subscriptions on Google Play, any time. Plus stays on until the day it runs out.</div></div>
+        <div class="row faq"><div class="fq">What happens if I stop paying?</div><div class="fa">You keep every entry, the timeline, search, the export and the PDF of what you already logged. A subscription only switches off the paid tools.</div></div>
+
+        <div class="section">Privacy</div>
+        <div class="row faq"><div class="fq">How do I lock the app?</div><div class="fa">Settings, then App lock. A pattern or PIN, with fingerprint or face if your phone can.</div></div>
+
+        <div class="section">Still stuck</div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-mail"/></svg>
+          <div class="body"><div class="title">Contact support</div></div>
+        </div>
+      </div>
+
+    </div>
+    <div class="frame-label">Help · light</div>
+  </div>
+
+  <!-- ============ SUPPORT (dark) ============ -->
+  <div class="frame-wrap">
+    <div class="phone" id="support-dark">
+      <div class="screen dense">
+        <div style="display:flex;align-items:center;gap:6px">
+          <button class="backbtn" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevL"/></svg></button>
+          <h1 style="margin-top:0;font-size:23px">Support</h1>
+        </div>
+
+        <div class="row" style="margin-top:14px">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-mail"/></svg>
+          <div class="body">
+            <div class="title">Email us</div>
+            <div class="sub">hello@sen.help</div>
+          </div>
+        </div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-heart"/></svg>
+          <div class="body"><div class="title">Tell us what you think</div></div>
+        </div>
+
+        <div class="fsync"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-mail"/></svg>Replies come from a real person at SEN Help.</div>
+      </div>
+
+    </div>
+    <div class="frame-label">Support · dark</div>
+  </div>
+
+  <!-- ============ SUPPORT (light) ============ -->
+  <div class="frame-wrap">
+    <div class="phone light" id="support-light">
+      <div class="screen dense">
+        <div style="display:flex;align-items:center;gap:6px">
+          <button class="backbtn" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevL"/></svg></button>
+          <h1 style="margin-top:0;font-size:23px">Support</h1>
+        </div>
+
+        <div class="row" style="margin-top:14px">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-mail"/></svg>
+          <div class="body">
+            <div class="title">Email us</div>
+            <div class="sub">hello@sen.help</div>
+          </div>
+        </div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-heart"/></svg>
+          <div class="body"><div class="title">Tell us what you think</div></div>
+        </div>
+
+        <div class="fsync"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-mail"/></svg>Replies come from a real person at SEN Help.</div>
+      </div>
+
+    </div>
+    <div class="frame-label">Support · light</div>
+  </div>
+
+</div>
+
 <div class="board-title" style="margin-top:6px">Children and the child profile · Settings > Children > Sam · 14 colours and 14 avatars, matched grids · Done commits, Cancel reverts</div>
 
 <div class="board">
@@ -1575,7 +1714,7 @@
           <div class="psub">The tools to spot patterns<br>and make your case.</div>
         </div>
         <div class="fcard">
-          <div class="imgslot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-image"/></svg><span class="slotlab">Illustration placeholder · 300 x 158 · slide 1 of 5</span></div>
+          <div class="imgslot"><img class="slotimg" src="carousel/plus-1.png" alt=""></div>
           <div class="ft">Patterns and Month View</div>
           <div class="fp">A calendar of green and amber days. Tap any day to read what happened behind it.</div>
           <div class="pdots"><span class="pdot on"></span><span class="pdot"></span><span class="pdot"></span><span class="pdot"></span><span class="pdot"></span></div>
@@ -1607,9 +1746,27 @@
         </div>
 
         <div class="buyai" style="display:none">
+          <div class="terms2 ai">
+            <div class="termcard">
+              <div class="tl">1 Month</div>
+              <div class="tp">£59</div>
+              <div class="ts">a month</div>
+            </div>
+            <div class="termcard">
+              <div class="tl">6 Months</div>
+              <div class="tp">£99</div>
+              <div class="ts">for 6 months</div>
+            </div>
+            <div class="termcard sel">
+              <span class="bv">Best value</span>
+              <div class="tl">One Year</div>
+              <div class="tp">£149</div>
+              <div class="ts">less than £13 a month</div>
+            </div>
+          </div>
           <div class="aicoming">
             <span class="cp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-sparkle"/></svg>Coming in 2027</span>
-            <div class="cl">£149 a year when it arrives, with Jotla Plus included. £149 in total, not one price on top of another.</div>
+            <div class="cl">Jotla Plus is included in every term: one price, not one on top of another.</div>
           </div>
         </div>
         <div class="linksrow"><span class="lk">Terms</span>·<span class="lk">Privacy</span>·<span class="lk">Restore</span>·<span class="lk">Help</span></div>
@@ -1637,7 +1794,7 @@
           <div class="psub">The tools to spot patterns<br>and make your case.</div>
         </div>
         <div class="fcard">
-          <div class="imgslot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-image"/></svg><span class="slotlab">Illustration placeholder · 300 x 158 · slide 1 of 5</span></div>
+          <div class="imgslot"><img class="slotimg" src="carousel/plus-1.png" alt=""></div>
           <div class="ft">Patterns and Month View</div>
           <div class="fp">A calendar of green and amber days. Tap any day to read what happened behind it.</div>
           <div class="pdots"><span class="pdot on"></span><span class="pdot"></span><span class="pdot"></span><span class="pdot"></span><span class="pdot"></span></div>
@@ -1669,9 +1826,27 @@
         </div>
 
         <div class="buyai" style="display:none">
+          <div class="terms2 ai">
+            <div class="termcard">
+              <div class="tl">1 Month</div>
+              <div class="tp">£59</div>
+              <div class="ts">a month</div>
+            </div>
+            <div class="termcard">
+              <div class="tl">6 Months</div>
+              <div class="tp">£99</div>
+              <div class="ts">for 6 months</div>
+            </div>
+            <div class="termcard sel">
+              <span class="bv">Best value</span>
+              <div class="tl">One Year</div>
+              <div class="tp">£149</div>
+              <div class="ts">less than £13 a month</div>
+            </div>
+          </div>
           <div class="aicoming">
             <span class="cp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-sparkle"/></svg>Coming in 2027</span>
-            <div class="cl">£149 a year when it arrives, with Jotla Plus included. £149 in total, not one price on top of another.</div>
+            <div class="cl">Jotla Plus is included in every term: one price, not one on top of another.</div>
           </div>
         </div>
         <div class="linksrow"><span class="lk">Terms</span>·<span class="lk">Privacy</span>·<span class="lk">Restore</span>·<span class="lk">Help</span></div>
@@ -1983,21 +2158,26 @@
     });
   });
 
+  // help page: questions open in place
+  document.querySelectorAll('#help-dark .row.faq, #help-light .row.faq').forEach(function(r){
+    r.addEventListener('click', function(){ r.classList.toggle('open'); });
+  });
+
   // plus carousel: the dots page the five launch slides
   var SLIDES = [
-    { t: 'Patterns and Month View', c: 'A calendar of green and amber days. Tap any day to read what happened behind it.' },
-    { t: 'PDF Evidence Pack', c: 'Turn any stretch of the record into one dated PDF, ready to hand over.' },
-    { t: 'Family Sync', c: 'The record on every grown-up\'s phone. One of you logs it, both of you have it.' },
-    { t: 'Photos and Videos on Notes', c: 'Add the photo or the video to the note, so the day is shown as well as told.' },
-    { t: 'Dysregulation Mode', c: 'Five gentle questions in the hard moment, so nothing important is lost.' }
+    { t: 'Patterns and Month View', c: 'A calendar of green and amber days. Tap any day to read what happened behind it.', img: 'carousel/plus-1.png' },
+    { t: 'PDF Evidence Pack', c: 'Turn any stretch of the record into one dated PDF, ready to hand over.', img: 'carousel/plus-2.png' },
+    { t: 'Family Sync', c: 'The record on every grown-up\'s phone. One of you logs it, both of you have it.', img: 'carousel/plus-3.png' },
+    { t: 'Photos and Videos on Notes', c: 'Add the photo or the video to the note, so the day is shown as well as told.', img: 'carousel/plus-4.png' },
+    { t: 'Dysregulation Mode', c: 'Five gentle questions in the hard moment, so nothing important is lost.', img: 'carousel/plus-5.png' }
   ];
   // Jotla AI slides: the live tier's honest list (nothing already-shipping goes on it)
   var AI_SLIDES = [
-    { t: 'EHCP and SEND deadline tracker', c: 'Every deadline tracked, with what to do about a gap.' },
-    { t: 'On-device AI help', c: 'Ask about the record or the process. Answers stay on the phone.' },
-    { t: 'Current letter templates', c: 'The right letter for the moment, kept current with the law.' },
-    { t: 'Rights kept current', c: 'What you are entitled to, updated as the rules change.' },
-    { t: 'Voice capture', c: 'Say what happened and Jotla writes it down.' }
+    { t: 'EHCP and SEND deadline tracker', c: 'Every deadline tracked, with what to do about a gap.', img: 'carousel/ai-1.png' },
+    { t: 'On-device AI help', c: 'Ask about the record or the process. Answers stay on the phone.', img: 'carousel/ai-2.png' },
+    { t: 'Current letter templates', c: 'The right letter for the moment, kept current with the law.', img: 'carousel/ai-3.png' },
+    { t: 'Rights kept current', c: 'What you are entitled to, updated as the rules change.', img: 'carousel/ai-4.png' },
+    { t: 'Voice capture', c: 'Say what happened and Jotla writes it down.', img: 'carousel/ai-5.png' }
   ];
   document.querySelectorAll('#plus-dark, #plus-light').forEach(function(phone){
     var card = phone.querySelector('.fcard');
@@ -2009,7 +2189,7 @@
       dots.forEach(function(x, j){ x.classList.toggle('on', j === i); });
       card.querySelector('.ft').textContent = slides[i].t;
       card.querySelector('.fp').textContent = slides[i].c;
-      card.querySelector('.slotlab').textContent = 'Illustration placeholder · 300 x 158 · slide ' + (i + 1) + ' of 5';
+      card.querySelector('.slotimg').src = slides[i].img;
     }
     dots.forEach(function(d, i){
       d.style.cursor = 'pointer';
