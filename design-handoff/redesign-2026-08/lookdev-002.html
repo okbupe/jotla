@@ -48,7 +48,8 @@
     --seg-on: #3A3835;
     --ok-border: rgba(232,163,61,.45);
     --gold: #EBBA4D;
-    --ticket-bg: #6E54D6; --ticket-ink: #FFFFFF; --ticket-sub: rgba(255,255,255,.82); --ticket-crown: #EBBA4D;
+    --ticket-ink: #FFFFFF; --ticket-sub: rgba(255,255,255,.82); --ticket-crown: #EBBA4D;
+    --ticket-shadow: 0 10px 22px -6px rgba(38,24,84,.60);
 
     width: 390px; height: 780px; background: var(--bg); color: var(--text);
     border-radius: 28px; overflow: hidden; position: relative;
@@ -79,7 +80,8 @@
     --seg-on: #FFFFFF;
     --ok-border: rgba(217,134,28,.40);
     --gold: #BE8E1E;
-    --ticket-bg: #6E54D6; --ticket-ink: #FFFFFF; --ticket-sub: rgba(255,255,255,.82); --ticket-crown: #EBBA4D;
+    --ticket-ink: #FFFFFF; --ticket-sub: rgba(255,255,255,.82); --ticket-crown: #EBBA4D;
+    --ticket-shadow: 0 10px 22px -8px rgba(60,42,114,.40);
     box-shadow: 0 0 0 1px var(--ring), 0 24px 60px rgba(0,0,0,.18);
   }
 
@@ -184,10 +186,12 @@
   .addrow { background: none; border: 1px dashed var(--hair); border-radius: 14px; padding: 13px 16px; display: flex; align-items: center; gap: 14px; color: var(--accent); font-size: 15.5px; font-weight: 500; }
   .addrow svg { width: 20px; height: 20px; }
 
-  /* the Jotla Plus tab: SOLID gold, no border, no gimmicks.
-     The app's one loud element; the crown is the only solid icon. */
+  /* the Jotla Plus tab: the paywall tier's own gradient (PLUS_GRAD,
+     jotla-parent-b.jsx) with a drop shadow. The app's one loud element;
+     the golden crown is the only solid icon. */
   .plusticket {
-    background: var(--ticket-bg);
+    background: linear-gradient(135deg, #3C2A72 0%, #6E54D6 100%);
+    box-shadow: var(--ticket-shadow);
     border-radius: 14px; padding: 17px 20px;
     display: flex; align-items: center; gap: 14px; margin-bottom: 8px;
   }
