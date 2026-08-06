@@ -205,15 +205,25 @@
   .menufoot { text-align: center; color: var(--faint); font-size: 12.5px; margin-top: 22px; }
 
   /* the Jotla Plus page (paywall) */
-  .xbtn { width: 36px; height: 36px; border: 0; background: none; color: var(--muted); display: flex; align-items: center; justify-content: center; margin-left: -8px; }
+  .xbtn { width: 36px; height: 36px; border: 0; background: none; color: var(--muted); display: flex; align-items: center; justify-content: center; }
   .xbtn svg { width: 22px; height: 22px; }
+  .pheadrow { display: flex; align-items: center; gap: 10px; }
+  .pheadrow h1 { font-size: 23px; margin: 0; }
+  .pheadrow .xbtn { margin-left: auto; margin-right: -8px; }
+  .plusdisc-sm { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg,#3C2A72,#6E54D6); display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 14px -6px rgba(60,42,114,.5); flex: 0 0 34px; }
+  .plusdisc-sm svg { width: 18px; height: 18px; }
+  .psubwrap { margin-top: 10px; }
+  .imgslot { height: 158px; border: 1.5px dashed var(--nonote); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; color: var(--faint); font-size: 12px; margin-bottom: 11px; }
+  .imgslot svg { width: 22px; height: 22px; }
+  .linksrow { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 8px; color: var(--faint); font-size: 12.5px; }
+  .linksrow .lk { color: var(--accent); font-weight: 500; }
   .phero { text-align: center; margin-top: 2px; }
   .plusdisc { width: 54px; height: 54px; border-radius: 50%; background: linear-gradient(135deg,#3C2A72,#6E54D6); display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; box-shadow: 0 10px 22px -8px rgba(60,42,114,.55); }
   .plusdisc svg { width: 28px; height: 28px; }
   .phero h1 { font-size: 27px; margin: 0; }
-  .phero .psub { color: var(--muted); font-size: 14.5px; margin-top: 5px; }
-  .phero .pinc { color: var(--accent); font-size: 13px; margin-top: 7px; display: inline-flex; gap: 6px; align-items: center; font-weight: 500; }
-  .phero .pinc svg { width: 15px; height: 15px; }
+  .psub { color: var(--muted); font-size: 14.5px; margin-top: 5px; }
+  .pinc { color: var(--accent); font-size: 13px; margin-top: 7px; display: inline-flex; gap: 6px; align-items: center; font-weight: 500; }
+  .pinc svg { width: 15px; height: 15px; flex: 0 0 15px; }
   .fcard { background: var(--row); border: 1px solid var(--row-border); border-radius: 14px; padding: 14px 16px 12px; margin-top: 14px; text-align: center; }
   .fcard .fic { width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg,#3C2A72,#6E54D6); display: flex; align-items: center; justify-content: center; margin: 0 auto 9px; }
   .fcard .fic svg { width: 21px; height: 21px; color: #fff; }
@@ -298,6 +308,7 @@
     <g id="i-check"><path d="m5 12.5 4.5 4.5L19 7"/></g>
     <g id="i-clock"><circle cx="12" cy="12" r="8"/><path d="M12 8v4.2l2.6 1.8"/></g>
     <g id="i-close"><path d="M6 6l12 12M18 6 6 18"/></g>
+    <g id="i-image"><rect x="3" y="5" width="18" height="15" rx="2.5"/><circle cx="8.5" cy="10" r="1.6"/><path d="M4.5 18.5 10 12.5l4 4 2.5-2.5 3 3.5"/></g>
   </defs>
 </svg>
 
@@ -935,17 +946,19 @@
   <div class="frame-wrap">
     <div class="phone" id="plus-dark">
       <div class="screen">
-        <button class="xbtn" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-close"/></svg></button>
-
-        <div class="phero">
-          <div class="plusdisc"><svg viewBox="0 0 24 24" fill="currentColor" style="color:#EBBA4D"><use href="#i-crown"/></svg></div>
+        <div class="pheadrow">
+          <div class="plusdisc-sm"><svg viewBox="0 0 24 24" fill="currentColor" style="color:#EBBA4D"><use href="#i-crown"/></svg></div>
           <h1>Jotla Plus</h1>
-          <div class="psub">The tools to spot patterns and make your case.</div>
+          <button class="xbtn" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-close"/></svg></button>
+        </div>
+
+        <div class="psubwrap">
+          <div class="psub" style="margin-top:0">The tools to spot patterns and make your case.</div>
           <div class="pinc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-check"/></svg>Everything in Free is included, always.</div>
         </div>
 
         <div class="fcard">
-          <div class="fic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-calendar"/></svg></div>
+          <div class="imgslot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-image"/></svg>Illustration placeholder · 322 x 158 · slide 1 of 5</div>
           <div class="ft">Patterns and Month View</div>
           <div class="fp">A calendar of green and amber days. Tap any day to read what happened behind it.</div>
           <div class="pdots"><span class="pdot on"></span><span class="pdot"></span><span class="pdot"></span><span class="pdot"></span><span class="pdot"></span></div>
@@ -958,7 +971,7 @@
             <span class="bv">Best value</span>
             <div class="tl">The whole year</div>
             <div class="tp">£79</div>
-            <div class="ts">a year</div>
+            <div class="ts">£19 less than 6-monthly</div>
           </div>
           <div class="termcard">
             <div class="tl">6 months</div>
@@ -970,7 +983,7 @@
 
         <button class="ctagrad"><svg viewBox="0 0 24 24" fill="currentColor" style="color:#EBBA4D"><use href="#i-crown"/></svg>Get Jotla Plus</button>
         <div class="reassure">A subscription only ever switches off the paid tools. It never touches your history.</div>
-        <div class="restore">Restore purchase</div>
+        <div class="linksrow"><span class="lk">Privacy policy</span>·<span class="lk">Terms</span>·<span class="lk">Restore</span></div>
       </div>
     </div>
     <div class="frame-label">Jotla Plus · dark</div>
@@ -980,17 +993,19 @@
   <div class="frame-wrap">
     <div class="phone light" id="plus-light">
       <div class="screen">
-        <button class="xbtn" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-close"/></svg></button>
-
-        <div class="phero">
-          <div class="plusdisc"><svg viewBox="0 0 24 24" fill="currentColor" style="color:#EBBA4D"><use href="#i-crown"/></svg></div>
+        <div class="pheadrow">
+          <div class="plusdisc-sm"><svg viewBox="0 0 24 24" fill="currentColor" style="color:#EBBA4D"><use href="#i-crown"/></svg></div>
           <h1>Jotla Plus</h1>
-          <div class="psub">The tools to spot patterns and make your case.</div>
+          <button class="xbtn" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-close"/></svg></button>
+        </div>
+
+        <div class="psubwrap">
+          <div class="psub" style="margin-top:0">The tools to spot patterns and make your case.</div>
           <div class="pinc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-check"/></svg>Everything in Free is included, always.</div>
         </div>
 
         <div class="fcard">
-          <div class="fic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-calendar"/></svg></div>
+          <div class="imgslot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-image"/></svg>Illustration placeholder · 322 x 158 · slide 1 of 5</div>
           <div class="ft">Patterns and Month View</div>
           <div class="fp">A calendar of green and amber days. Tap any day to read what happened behind it.</div>
           <div class="pdots"><span class="pdot on"></span><span class="pdot"></span><span class="pdot"></span><span class="pdot"></span><span class="pdot"></span></div>
@@ -1003,7 +1018,7 @@
             <span class="bv">Best value</span>
             <div class="tl">The whole year</div>
             <div class="tp">£79</div>
-            <div class="ts">a year</div>
+            <div class="ts">£19 less than 6-monthly</div>
           </div>
           <div class="termcard">
             <div class="tl">6 months</div>
@@ -1015,7 +1030,7 @@
 
         <button class="ctagrad"><svg viewBox="0 0 24 24" fill="currentColor" style="color:#EBBA4D"><use href="#i-crown"/></svg>Get Jotla Plus</button>
         <div class="reassure">A subscription only ever switches off the paid tools. It never touches your history.</div>
-        <div class="restore">Restore purchase</div>
+        <div class="linksrow"><span class="lk">Privacy policy</span>·<span class="lk">Terms</span>·<span class="lk">Restore</span></div>
       </div>
     </div>
     <div class="frame-label">Jotla Plus · light</div>
