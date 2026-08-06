@@ -444,7 +444,7 @@ function QuickLogScreen({ nav, today, view, profile }) {
                 return (
                   <button key={c} className={'j-chip' + (n > 0 || openCat === c ? ' j-chip-on' : '')} onClick={() => openEditor(c)}>
                     {c}
-                    {n > 0 && <span style={{ minWidth: 20, height: 20, padding: '0 5px', borderRadius: 999, background: 'var(--blue)', color: '#fff', fontSize: 'calc(12px * var(--tscale, 1))', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{n}</span>}
+                    {n > 0 && <span style={{ minWidth: 20, height: 20, padding: '0 5px', borderRadius: 999, background: 'var(--fill)', color: '#fff', fontSize: 'calc(12px * var(--tscale, 1))', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{n}</span>}
                   </button>
                 );
               })}

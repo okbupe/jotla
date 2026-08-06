@@ -1786,7 +1786,7 @@ function SettingsScreen({ nav, profile, entries = [], docs = [], binCount = 0 })
           {feedbackCard}
 
           {/* privacy reassurance: no account, local lock, plain trust copy */}
-          <div style={{ background: 'var(--blue)', borderRadius: 18, padding: 20, marginBottom: 20, color: '#fff' }}>
+          <div style={{ background: 'var(--fill)', borderRadius: 18, padding: 20, marginBottom: 20, color: '#fff' }}>
             <Icon name="shield" size={26} color="#fff" style={{ marginBottom: 10 }} />
             <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(19px * var(--tscale, 1))', margin: '0 0 6px' }}>No account. Nothing leaves the phone.</p>
             <p style={{ fontSize: 'calc(15px * var(--tscale, 1))', lineHeight: 1.5, color: 'rgba(255,255,255,0.9)', margin: 0 }}>Jotla works without a login. Everything about your child stays on this device, behind your own lock. There is no cloud we can read, and we never receive or access your data.</p>

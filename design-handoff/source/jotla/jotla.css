@@ -1,56 +1,63 @@
 /* jotla.css: app styling layered on the SEN Help tokens (../styles.css).
    Scoped under .jotla-root. Cal Sans headings, Outfit body. No ultra-thin weights. */
 
+/* NEUTRAL SHELL (redesign 2026-08-06, design-handoff/redesign-2026-08/README.md):
+   the shell goes neutral and the data gets the colour back. One accent does all
+   the shell work; mood colours are the only other colour on screen. Light theme
+   is the warm-paper first pass; dark is LOCKED. Every pre-redesign var name is
+   kept so the whole app retokens at once. */
 .jotla-root {
-  --bg: #F7F9FC;          /* warm off-white */
-  --card: #ffffff;
+  --bg: #F7F5F2;          /* warm paper */
+  --card: #ffffff;        /* a row surface, not a floating card */
   --card-2: #ffffff;      /* nested surfaces / inputs */
-  --blue: #1A56A8;
+  --blue: #1A56A8;        /* the one accent */
   --blue-bright: #3A7BD4;
   --blue-deep: #0f3d7a;
-  --green: #27AE60;
-  /* Nudged down from #1e8a4c on 16 Jul: that was 4.38:1 on white, so it missed
-     WCAG AA everywhere it sat on a card rather than on --tint-green. */
-  --green-ink: #1c8449;
-  --amber: #F39C12;
-  /* The amber the other three inks already had. #F39C12 is ~2.1:1 on white, so it
-     cannot carry text; this is the same hue taken down to clear WCAG AA. */
-  --amber-ink: #8a5a00;
-  --red: #E74C3C;
-  --red-ink: #c0392b;
-  --ink: #14223b;
-  --body: #334155;
-  --muted: #51607a;
-  --faint: #7a8aa3;
-  --line: #e6ecf5;
-  --tint-blue: #EAF1FB;
-  --tint-green: #E7F6EE;
-  --tint-amber: #FCF1DC;
-  --tint-red: #FCEAE8;
+  --fill: #1A56A8;        /* button/FAB fill: on dark the accent is too light for white text */
+  --green: #1F9D66;
+  --green-ink: #1A7A50;
+  --amber: #D9861C;
+  --amber-ink: #9A5E13;
+  --red: #D64541;
+  --red-ink: #A93832;
+  --ink: #23211D;
+  --body: #45413B;
+  --muted: #6F6A62;
+  --faint: #97928A;
+  --line: rgba(35,33,29,0.08);
+  --tint-blue: rgba(26,86,168,0.10);
+  --tint-green: rgba(31,157,102,0.13);
+  --tint-amber: rgba(217,134,28,0.14);
+  --tint-red: rgba(214,69,65,0.12);
 
-  /* The dysregulation kind colour (12 Jul 2026): its own plum, distinct from
-     the moods, the gate blue and the Plus violet (from the avatar rainbow). */
-  --dysreg: #A12FC0;
-  --dysreg-ink: #8A28A5;
-  --tint-dysreg: #F6EAFA;
+  /* The dysregulation colour: its own purple, distinct from the moods. */
+  --dysreg: #9D34DA;
+  --dysreg-ink: #832BB4;
+  --tint-dysreg: rgba(157,52,218,0.10);
 
-  /* The Plus violet pill pair (wordmark +PLUS): the unlock screen's own
-     "You have Jotla Plus" surface under its #6E54D6 ink. */
-  --plus-tint: rgba(110,84,214,0.12);
+  /* Plus violet pair; the crown is the only gold in the app. */
+  --plus-tint: rgba(110,84,214,0.10);
   --plus-ink: #6E54D6;
+  --gold: #BE8E1E;
+  --aigold: #C9912F;
 
-  --chip-bg: #ffffff;          /* chip / icon-button surface */
-  --chip-border: #dbe4f1;
-  --photo-bg: #E8EEF7;
-  --tag-grey-bg: #EEF2F8;
-  --tag-grey-ink: #51607a;
-  --tag-blue-bg: #E8F0FB;
+  /* the two check-in tiles carry their own deeper panels */
+  --tileblue: rgba(26,86,168,0.15);
+  --tilepurple: rgba(157,52,218,0.14);
+  --nonote: #C9C4BC;
+
+  --chip-bg: #ffffff;
+  --chip-border: rgba(35,33,29,0.14);
+  --photo-bg: #EFECE7;
+  --tag-grey-bg: #EFECE7;
+  --tag-grey-ink: #6F6A62;
+  --tag-blue-bg: rgba(26,86,168,0.10);
   --tag-blue-ink: #1A56A8;
-  --tabbar-bg: rgba(255,255,255,0.92);
-  --header-bg: rgba(247,249,252,0.86);
+  --tabbar-bg: #F7F5F2;
+  --header-bg: rgba(247,245,242,0.86);
   --sheet-bg: #ffffff;
-  --card-shadow: 0 8px 22px -16px rgba(20,40,80,0.35);
-  --fade-grad: linear-gradient(to top, var(--bg) 74%, rgba(247,249,252,0));
+  --card-shadow: none;
+  --fade-grad: linear-gradient(to top, var(--bg) 74%, rgba(247,245,242,0));
 
   --f-display: 'Cal Sans', system-ui, sans-serif;
   --f-body: 'Outfit', system-ui, sans-serif;
@@ -170,52 +177,56 @@ button, input, select, textarea { font-family: inherit; }
    That is what both deck CTAs were doing. This gives them their own shape. */
 .j-btn-inline { width: auto; padding: 0 26px; }
 
-/* ---- dark theme ---- */
+/* ---- dark theme (LOCKED 2026-08-06): warm dark neutrals, never navy ---- */
 .jotla-root.j-dark {
-  --bg: #0E1726;
-  --card: #182338;
-  --card-2: #1F2C44;
-  --blue: #5B9BF0;
-  --blue-bright: #79B0F5;
-  --blue-deep: #3A7BD4;
-  --green: #46C97E;
-  --green-ink: #6BD699;
-  --amber: #F6B450;
-  /* inks go lighter on the dark theme, like the other three */
-  --amber-ink: #F9CE86;
-  --red: #F0705F;
-  --red-ink: #F58C7E;
-  --ink: #EAF0FA;
-  --body: #C2CDDE;
-  --muted: #9AA8BE;
-  --faint: #76859C;
-  --line: #2A3650;
-  --tint-blue: #1C2D49;
-  --tint-green: #163728;
-  --tint-amber: #3A2E18;
-  --tint-red: #3A1F1C;
+  --bg: #201F1D;
+  --card: #2E2D2A;
+  --card-2: #34332E;
+  --blue: #7CA9EF;
+  --blue-bright: #9FC0F4;
+  --blue-deep: #2F6FD6;
+  --fill: #2F6FD6;
+  --green: #52B788;
+  --green-ink: #9BD8BA;
+  --amber: #E8A33D;
+  --amber-ink: #EFC583;
+  --red: #E5645C;
+  --red-ink: #F0A09A;
+  --ink: #EDEBE7;
+  --body: #CFCBC3;
+  --muted: #A6A29B;
+  --faint: #7B7770;
+  --line: rgba(255,255,255,0.07);
+  --tint-blue: rgba(124,169,239,0.14);
+  --tint-green: rgba(82,183,136,0.16);
+  --tint-amber: rgba(232,163,61,0.15);
+  --tint-red: rgba(229,100,92,0.15);
 
-  /* Plum lifted for dark ground, the same relationship as blue -> #5B9BF0. */
-  --dysreg: #C86BDF;
-  --dysreg-ink: #DB9AEC;
-  --tint-dysreg: #3A1F44;
+  --dysreg: #B36AE2;
+  --dysreg-ink: #CFA3EC;
+  --tint-dysreg: rgba(179,106,226,0.16);
 
-  /* The Plus violet pair on dark ground (the JOTLA PLUS badge treatment). */
-  --plus-tint: rgba(205,187,247,0.18);
-  --plus-ink: #CDBBF7;
+  --plus-tint: rgba(110,84,214,0.16);
+  --plus-ink: #A18BEF;
+  --gold: #EBBA4D;
+  --aigold: #E6B85C;
 
-  --chip-bg: #1F2C44;
-  --chip-border: #324162;
-  --photo-bg: #22304A;
-  --tag-grey-bg: #263350;
-  --tag-grey-ink: #AAB7CD;
-  --tag-blue-bg: #1E3457;
-  --tag-blue-ink: #79B0F5;
-  --tabbar-bg: rgba(18,26,42,0.92);
-  --header-bg: rgba(14,23,38,0.86);
-  --sheet-bg: #182338;
-  --card-shadow: 0 10px 26px -16px rgba(0,0,0,0.6);
-  --fade-grad: linear-gradient(to top, var(--bg) 74%, rgba(14,23,38,0));
+  --tileblue: rgba(47,111,214,0.26);
+  --tilepurple: rgba(179,106,226,0.22);
+  --nonote: #55524C;
+
+  --chip-bg: #2E2D2A;
+  --chip-border: rgba(255,255,255,0.13);
+  --photo-bg: #34332E;
+  --tag-grey-bg: #35342F;
+  --tag-grey-ink: #A6A29B;
+  --tag-blue-bg: rgba(124,169,239,0.14);
+  --tag-blue-ink: #7CA9EF;
+  --tabbar-bg: #201F1D;
+  --header-bg: rgba(32,31,29,0.86);
+  --sheet-bg: #282725;
+  --card-shadow: none;
+  --fade-grad: linear-gradient(to top, var(--bg) 74%, rgba(32,31,29,0));
 }
 
 .jotla-root *, .jotla-root *::before, .jotla-root *::after { box-sizing: border-box; }
@@ -233,20 +244,24 @@ button, input, select, textarea { font-family: inherit; }
    sizes use the same calc() so the whole app follows the one dial. */
 .j-eyebrow { font-family: var(--f-body); font-weight: 500; font-size: calc(13px * var(--tscale, 1)); letter-spacing: 0.08em;
   text-transform: uppercase; color: var(--blue); margin: 0; }
-.j-h1 { font-family: var(--f-display); font-weight: 500; font-size: calc(30px * var(--tscale, 1)); line-height: 1.08;
-  letter-spacing: -0.01em; color: var(--ink); margin: 0; }
-.j-h2 { font-family: var(--f-display); font-weight: 500; font-size: calc(22px * var(--tscale, 1)); line-height: 1.12;
-  letter-spacing: -0.01em; color: var(--ink); margin: 0; }
-.j-h3 { font-family: var(--f-display); font-weight: 500; font-size: calc(18px * var(--tscale, 1)); line-height: 1.15; color: var(--ink); margin: 0; }
+/* Cal Sans ships one weight: titles are Regular, never bold (founder, 6 Aug) */
+.j-h1 { font-family: var(--f-display); font-weight: 400; font-size: calc(30px * var(--tscale, 1)); line-height: 1.08;
+  letter-spacing: 0; color: var(--ink); margin: 0; }
+.j-h2 { font-family: var(--f-display); font-weight: 400; font-size: calc(22px * var(--tscale, 1)); line-height: 1.12;
+  letter-spacing: 0; color: var(--ink); margin: 0; }
+.j-h3 { font-family: var(--f-display); font-weight: 400; font-size: calc(18px * var(--tscale, 1)); line-height: 1.15; color: var(--ink); margin: 0; }
 .j-body { font-family: var(--f-body); font-weight: 400; font-size: calc(16px * var(--tscale, 1)); line-height: 1.45; color: var(--body); margin: 0; }
 .j-sm { font-size: calc(14px * var(--tscale, 1)); line-height: 1.4; color: var(--muted); margin: 0; }
 .j-meta { font-size: calc(13px * var(--tscale, 1)); color: var(--faint); margin: 0; font-weight: 400; }
 .j-strong { font-weight: 500; color: var(--ink); }
 
-/* ---- card ---- */
-.j-card { background: var(--card); border-radius: 16px; border: 1px solid var(--line);
+/* ---- card: in the neutral shell a card is a flat row surface (14px, hairline, no shadow) ---- */
+.j-card { background: var(--card); border-radius: 14px; border: 1px solid var(--line);
   box-shadow: var(--card-shadow); }
 .j-card-pad { padding: 16px; }
+/* small semibold accent section header ("Check in", "Sam's day so far") */
+.j-section { font-family: var(--f-body); font-size: calc(13px * var(--tscale, 1)); font-weight: 600;
+  color: var(--blue); letter-spacing: 0.02em; margin: 22px 2px 8px; }
 
 /* ---- context card (quick log: Day / Where / When) ---- */
 /* one card per question (founder, 16 Jul 2026): the label sits above its current
@@ -280,8 +295,8 @@ button, input, select, textarea { font-family: inherit; }
   gap: 10px; width: 100%; white-space: nowrap; transition: transform .12s ease, background .15s ease, box-shadow .15s ease;
   -webkit-tap-highlight-color: transparent; }
 .j-btn:active { transform: scale(0.985); }
-.j-btn-primary { background: var(--blue); color: #fff; box-shadow: 0 10px 22px -10px rgba(26,86,168,0.6); }
-.j-btn-primary:active { background: var(--blue-deep); }
+.j-btn-primary { background: var(--fill); color: #fff; box-shadow: 0 10px 22px -10px rgba(26,86,168,0.45); }
+.j-btn-primary:active { filter: brightness(0.92); }
 .j-btn-ghost { background: var(--card); color: var(--blue); border: 1.5px solid var(--chip-border); box-shadow: none; }
 .j-btn-soft { background: var(--tint-blue); color: var(--blue); }
 .j-btn-green { background: var(--green); color: #fff; box-shadow: 0 10px 22px -10px rgba(39,174,96,0.55); }
@@ -303,12 +318,9 @@ button, input, select, textarea { font-family: inherit; }
 .j-tag-grey { background: var(--tag-grey-bg); color: var(--tag-grey-ink); }
 .j-tag-blue { background: var(--tag-blue-bg); color: var(--tag-blue-ink); }
 
-/* ---- app header (persistent) ---- */
-.j-appheader { display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding: 6px 18px; background: var(--header-bg); backdrop-filter: blur(14px);
-  border-bottom: 1px solid var(--line); position: relative; z-index: 8; }
-.j-iconbtn { width: 44px; height: 44px; border-radius: 14px; border: none; background: var(--chip-bg);
-  box-shadow: var(--card-shadow); cursor: pointer; flex-shrink: 0; display: flex; align-items: center;
+/* ---- icon buttons (the app header itself is gone: no persistent chrome, titles do the work) ---- */
+.j-iconbtn { width: 44px; height: 44px; border-radius: 14px; border: none; background: transparent;
+  box-shadow: none; color: var(--muted); cursor: pointer; flex-shrink: 0; display: flex; align-items: center;
   justify-content: center; -webkit-tap-highlight-color: transparent; transition: transform .12s ease; }
 .j-iconbtn:active { transform: scale(0.94); }
 .j-iconbtn-plain { background: transparent; box-shadow: none; }
@@ -317,23 +329,25 @@ button, input, select, textarea { font-family: inherit; }
   font-size: calc(17px * var(--tscale, 1)); color: #fff; -webkit-tap-highlight-color: transparent; transition: transform .12s ease; }
 .j-avatar:active { transform: scale(0.94); }
 
-/* ---- tab bar ---- */
-/* floats over the scrolling content and fades it out underneath,
-   the same effect as the pushed-screen action bars (--fade-grad) */
-.j-tabbar { display: flex; align-items: flex-end; justify-content: space-around;
-  padding: 8px 8px 40px; background: var(--fade-grad);
+/* ---- tab bar (redesign): five tabs on a solid ground, hairline top,
+   active state is COLOUR ONLY: no pill, no background behind the icon ---- */
+.j-tabbar { display: flex; align-items: center; justify-content: space-around;
+  padding: 10px 6px 16px; background: var(--tabbar-bg); border-top: 1px solid var(--line);
   position: absolute; left: 0; right: 0; bottom: 0; z-index: 40; }
 .j-tab { background: none; border: none; cursor: pointer; flex: 1; display: flex; flex-direction: column;
   align-items: center; gap: 4px; padding: 0; color: var(--faint); font-family: var(--f-body);
   font-size: calc(11px * var(--tscale, 1)); font-weight: 500; -webkit-tap-highlight-color: transparent; }
 .j-tab-on { color: var(--blue); }
-html.j-appmode .j-tabbar { padding-bottom: calc(env(safe-area-inset-bottom) + 14px); }
-.j-tab-log { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; background: none;
-  border: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.j-logfab { width: 56px; height: 56px; border-radius: 50%; background: var(--blue); color: #fff;
-  display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 22px -8px rgba(26,86,168,0.7);
-  transition: transform .12s ease; margin-top: -22px; }
-.j-tab-log:active .j-logfab { transform: scale(0.92); }
+html.j-appmode .j-tabbar { padding-bottom: calc(env(safe-area-inset-bottom) + 12px); }
+/* the ONE add affordance: a circular accent FAB floating bottom right,
+   replacing both the centre nav plus and the Add to today button */
+.j-fab { position: absolute; right: 18px; bottom: 92px; width: 56px; height: 56px; border: none;
+  border-radius: 50%; background: var(--fill); color: #fff; cursor: pointer; z-index: 39;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 8px 22px rgba(0,0,0,0.30); transition: transform .12s ease;
+  -webkit-tap-highlight-color: transparent; }
+.j-fab:active { transform: scale(0.92); }
+html.j-appmode .j-fab { bottom: calc(88px + env(safe-area-inset-bottom)); }
 
 /* ---- misc ---- */
 .j-divider { height: 1px; background: var(--line); border: none; margin: 0; }

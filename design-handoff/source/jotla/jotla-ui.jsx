@@ -324,7 +324,7 @@ function PushHeader({ title, subtitle, onBack, onClose, accent = '#1A56A8', bg =
     }}>
       {onBack && (
         <button onClick={onBack} aria-label="Back" className="j-press" style={{
-          width: 44, height: 44, borderRadius: '50%', border: 'none', background: 'var(--blue)',
+          width: 44, height: 44, borderRadius: '50%', border: 'none', background: 'var(--fill)',
           boxShadow: '0 10px 22px -8px rgba(26,86,168,0.7)', cursor: 'pointer', flexShrink: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}><Icon name="chevronLeft" size={22} color="#fff" /></button>
@@ -335,7 +335,7 @@ function PushHeader({ title, subtitle, onBack, onClose, accent = '#1A56A8', bg =
       </div>
       {onClose && (
         <button onClick={onClose} aria-label="Close" className="j-press" style={{
-          width: 44, height: 44, borderRadius: '50%', border: 'none', background: 'var(--blue)',
+          width: 44, height: 44, borderRadius: '50%', border: 'none', background: 'var(--fill)',
           boxShadow: '0 10px 22px -8px rgba(26,86,168,0.7)', cursor: 'pointer', flexShrink: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}><Icon name="close" size={20} color="#fff" /></button>
