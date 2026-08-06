@@ -3798,7 +3798,7 @@ function SettingsScreen({
     }, "A");
   })))), feedbackCard, /*#__PURE__*/React.createElement("div", {
     style: {
-      background: 'var(--blue)',
+      background: 'var(--fill)',
       borderRadius: 18,
       padding: 20,
       marginBottom: 20,

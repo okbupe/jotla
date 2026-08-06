@@ -1,14 +1,16 @@
 // jotla-app.jsx: shell: router, persistent header, tab bar, dark mode, profiles, persistence, scaling.
 const { useState: useStateApp, useEffect: useEffectApp, useRef: useRefApp, useCallback } = React;
 
+// Redesign nav (locked 2026-08-06): five tabs, Find between Documents and Menu,
+// no centre log button: the floating FAB is the one add affordance.
 const TAB_DEFS = [
   ['today', 'Today', 'today'],
   ['month', 'Month', 'calendar'],
-  ['__log', 'Log', 'plus'],
+  ['evidence', 'Documents', 'doc'],
   ['find', 'Find', 'search'],
-  ['settings', 'Settings', 'settings'],
+  ['settings', 'Menu', 'menu'],
 ];
-const TAB_NAMES = ['today', 'month', 'find', 'settings'];
+const TAB_NAMES = ['today', 'month', 'evidence', 'find', 'settings'];
 const NAV_KEY = 'jotla_nav_v3'; // v3: history remembers the tab as well as the view
 const ENTRIES_KEY = 'jotla_entries_v4'; // v4: the six-month generated sample record
 const DOCS_KEY = 'jotla_docs_v2';
@@ -91,50 +93,16 @@ function loadSeedAware(key, seeds, dateKey) {
 
 // ---------- persistent app header ----------
 // Tap the avatar to switch child; press and hold to open that child's options.
-function AppHeader({ profile, plus, onProfile, onOptions, onEvidence }) {
-  const holdRef = useRefApp(null);
-  const longRef = useRefApp(false);
-  const startHold = () => { longRef.current = false; holdRef.current = setTimeout(() => { longRef.current = true; onOptions(); }, 500); };
-  const clearHold = () => { if (holdRef.current) { clearTimeout(holdRef.current); holdRef.current = null; } };
-  const handleClick = () => { if (longRef.current) { longRef.current = false; return; } onProfile(); };
-  return (
-    <div className="j-appheader">
-      {/* DECLUTTER (founder, 4 Aug 2026; mirrored from native AppHeader.tsx): the
-          header no longer carries "by SEN Help" or the +PLUS pill. Both were
-          permanent, on every screen, telling a parent two things they already
-          know: whose app this is, and that they have paid for it. The
-          endorsement still belongs on the splash, the About screen and the
-          store listing, where someone is deciding whether to trust Jotla.
-          Plus status has a home that answers the question when it is actually
-          asked: settings, which reads "Active. Your record is always yours." */}
-      <Wordmark size={26} color="var(--blue)" sub={false} />
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <button className="j-iconbtn j-iconbtn-plain" aria-label="Documents" onClick={onEvidence}>
-          <Icon name="doc" size={23} color="var(--blue)" />
-        </button>
-        <button className="j-avatar" aria-label="Switch child, or hold to edit" title="Tap to switch child, hold to edit"
-          onClick={handleClick} onPointerDown={startHold} onPointerUp={clearHold} onPointerLeave={clearHold} onPointerCancel={clearHold}
-          style={{ background: 'transparent', padding: 0, overflow: 'hidden', touchAction: 'none' }}>
-          <ChildAvatar profile={profile} size={44} />
-        </button>
-      </div>
-    </div>
-  );
-}
+// The persistent app header is GONE (redesign, 6 Aug): no chrome above the
+// screens. Each screen leads with its own big Cal Sans title; the wordmark's
+// homes are the splash and About; the child lives as the Menu tab's title;
+// Documents is a tab of its own.
 
-// ---------- tab bar with central round Log button ----------
-function TabBar({ active, onTab, onLog }) {
+// ---------- tab bar: five tabs, colour-only active state ----------
+function TabBar({ active, onTab }) {
   return (
     <div className="j-tabbar">
       {TAB_DEFS.map(([name, label, icon]) => {
-        if (name === '__log') {
-          return (
-            <button key="log" className="j-tab-log" onClick={onLog} aria-label="Quick log">
-              <span className="j-logfab"><Icon name="plus" size={28} color="#fff" stroke={2.4} /></span>
-              <span style={{ fontSize: 'calc(11px * var(--tscale, 1))', fontWeight: 500, color: 'var(--blue)' }}>{label}</span>
-            </button>
-          );
-        }
         const on = active === name;
         return (
           <button key={name} className={'j-tab' + (on ? ' j-tab-on' : '')} onClick={() => onTab(name)}>
@@ -567,7 +535,11 @@ function App({ appMode }) {
   const [entries, setEntries] = useStateApp(() => loadSeedAware(ENTRIES_KEY, J.SEED_ENTRIES, 'date'));
   const [docs, setDocs] = useStateApp(() => loadSeedAware(DOCS_KEY, J.SEED_DOCS, 'received'));
   const prefs0 = loadJSON(PREF_KEY, { dark: false, profileId: J.CHILD.id, plus: false, childCfg: {}, customProfiles: [], deletedIds: [] });
-  const [dark, setDark] = useStateApp(!!prefs0.dark);
+  // Theme (redesign, 6 Aug): Light / Dark / System. Old prefs carried a dark
+  // boolean; it migrates to the explicit mode and keeps the parent's choice.
+  const [themeMode, setThemeMode] = useStateApp(prefs0.theme || (prefs0.dark ? 'dark' : 'light'));
+  const [sysDark, setSysDark] = useStateApp(() => !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches));
+  const dark = themeMode === 'dark' || (themeMode === 'system' && sysDark);
   // Dynamic type: 1 / 1.12 / 1.25, applied as --tscale on the root so every
   // calc()-based font size in the app follows the one dial (build 1.8.0).
   const [tscale, setTscale] = useStateApp(prefs0.tscale || 1);
@@ -589,7 +561,16 @@ function App({ appMode }) {
   useEffectApp(() => { if (J.SEED_SHIFTING) saveJSON(SEED_ANCHOR_KEY, J.TODAY_ISO); }, []);
   useEffectApp(() => { saveJSON(ENTRIES_KEY, entries); }, [entries]);
   useEffectApp(() => { saveJSON(DOCS_KEY, docs); }, [docs]);
-  useEffectApp(() => { saveJSON(PREF_KEY, { dark, tscale, profileId, plus, childCfg, customProfiles, deletedIds, backupReminderMonth }); }, [dark, tscale, profileId, plus, childCfg, customProfiles, deletedIds, backupReminderMonth]);
+  useEffectApp(() => { saveJSON(PREF_KEY, { theme: themeMode, dark, tscale, profileId, plus, childCfg, customProfiles, deletedIds, backupReminderMonth }); }, [themeMode, dark, tscale, profileId, plus, childCfg, customProfiles, deletedIds, backupReminderMonth]);
+
+  // System theme follows the phone live while the mode is 'system'.
+  useEffectApp(() => {
+    if (!window.matchMedia) return;
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = (e) => setSysDark(e.matches);
+    if (mq.addEventListener) mq.addEventListener('change', onChange); else if (mq.addListener) mq.addListener(onChange);
+    return () => { if (mq.removeEventListener) mq.removeEventListener('change', onChange); else if (mq.removeListener) mq.removeListener(onChange); };
+  }, []);
 
   // On open: purge Bin items past 30 days, and once a month nudge a backup
   // (founder ask, 15 Jul 2026). The nudge shows on the first open of a new month;
@@ -722,7 +703,9 @@ function App({ appMode }) {
         alert('Restored ' + (child.name || 'the child') + "'s record: " + newEntries.length + ' moments and ' + newDocs.length + ' documents from the file.');
       } catch (err) { alert('Could not restore from that file.'); }
     },
-    toggleDark: () => setDark(d => !d),
+    theme: themeMode,
+    setTheme: setThemeMode,
+    toggleDark: () => setThemeMode(dark ? 'light' : 'dark'),
     dark,
     tscale,
     setTscale,
@@ -888,13 +871,17 @@ function App({ appMode }) {
 
   return (
     <div className={'jotla-root' + (dark ? ' j-dark' : '') + (appMode ? ' j-app' : '')} style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative', paddingTop: appMode ? 'max(env(safe-area-inset-top), 12px)' : 50, background: isChild ? '#FFF6EC' : 'var(--bg)', '--tscale': tscale }}>
-      {!isFullscreen && !noChild && <AppHeader profile={profile} plus={plus} onProfile={() => setProfileOpen(true)} onOptions={() => setChildOptOpen(true)} onEvidence={() => nav.go('evidence')} />}
       <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
         <div key={view.name + (view.id || view.date || '') + profileId} style={{ position: 'absolute', inset: 0 }}>
           <ScreenBoundary>{window.__JOTLA_TEST_THROW ? <CrashProbe /> : screen}</ScreenBoundary>
         </div>
       </div>
-      {isTab && !noChild && <TabBar active={tab} onTab={nav.setTab} onLog={() => nav.go('quicklog')} />}
+      {isTab && !noChild && (
+        <button className="j-fab" aria-label="Quick log" onClick={() => nav.go('quicklog')}>
+          <Icon name="plus" size={26} color="#fff" stroke={2.4} />
+        </button>
+      )}
+      {isTab && !noChild && <TabBar active={tab} onTab={nav.setTab} />}
       {exitHint && (
         <div style={{ position: 'absolute', left: 0, right: 0, bottom: 'calc(96px + env(safe-area-inset-bottom))',
           display: 'flex', justifyContent: 'center', pointerEvents: 'none', zIndex: 80 }}>

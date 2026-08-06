@@ -171,6 +171,191 @@ function Icon({
     }),
     moon: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
       d: "M20 14.5A8 8 0 0 1 9.5 4 7 7 0 1 0 20 14.5Z"
+    })),
+    /* ---- redesign kit (2026-08-06 neutral shell) ---- */
+    menu: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("rect", {
+      x: "4",
+      y: "4",
+      width: "7",
+      height: "7",
+      rx: "2"
+    }), /*#__PURE__*/React.createElement("rect", {
+      x: "13",
+      y: "4",
+      width: "7",
+      height: "7",
+      rx: "2"
+    }), /*#__PURE__*/React.createElement("rect", {
+      x: "4",
+      y: "13",
+      width: "7",
+      height: "7",
+      rx: "2"
+    }), /*#__PURE__*/React.createElement("rect", {
+      x: "13",
+      y: "13",
+      width: "7",
+      height: "7",
+      rx: "2"
+    })),
+    /* the standing Jotla symbol for dysregulation */
+    pulse: /*#__PURE__*/React.createElement("path", {
+      d: "M3 12h4l2.5-7 4 14 2.5-7H21"
+    }),
+    /* the Plus gate: the app's ONLY solid icon, and the only gold */
+    crown: /*#__PURE__*/React.createElement("path", {
+      d: "M3.6 18 2.6 8.6l4.9 3.3L12 5.6l4.5 6.3 4.9-3.3-1 9.4a1.4 1.4 0 0 1-1.4 1.2H5a1.4 1.4 0 0 1-1.4-1.2z",
+      fill: color,
+      stroke: "none"
+    }),
+    palette: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+      d: "M12 3.5a8.5 8.5 0 0 0 0 17c1.2 0 1.9-.7 1.9-1.6 0-.8-.5-1.2-.5-2 0-1 .8-1.7 1.9-1.7H17a4.5 4.5 0 0 0 4.5-4.5c0-4.1-4.3-7.2-9.5-7.2z"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "7.5",
+      cy: "11",
+      r: "1.05"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "10.5",
+      cy: "7.5",
+      r: "1.05"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "14.5",
+      cy: "7.5",
+      r: "1.05"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "17.5",
+      cy: "11",
+      r: "1.05"
+    })),
+    textsize: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+      d: "M4 18 9 6l5 12M5.7 14h6.6"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M15.5 18l2.6-6 2.6 6M16.5 15.9h3.2"
+    })),
+    trash: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+      d: "M3.5 6h17"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M8.5 6V4.5A1.5 1.5 0 0 1 10 3h4a1.5 1.5 0 0 1 1.5 1.5V6"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M18.5 6v13a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2V6"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M10 10.5v6M14 10.5v6"
+    })),
+    restart: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+      d: "M3.5 4.5v5.5H9"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M4.2 14a8 8 0 1 0 1.9-8.6L3.5 8"
+    })),
+    cloudup: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+      d: "M7 18.5a4.5 4.5 0 0 1-.6-8.95 6 6 0 0 1 11.6 1.6A3.9 3.9 0 0 1 17.5 18.5"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M12 20v-6.5M9.2 16l2.8-2.8 2.8 2.8"
+    })),
+    clouddown: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+      d: "M7 18.5a4.5 4.5 0 0 1-.6-8.95 6 6 0 0 1 11.6 1.6A3.9 3.9 0 0 1 17.5 18.5"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M12 13v6.5M9.2 17l2.8 2.8 2.8-2.8"
+    })),
+    mail: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("rect", {
+      x: "3",
+      y: "5.5",
+      width: "18",
+      height: "13",
+      rx: "2.5"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "m4.5 8 7.5 5 7.5-5"
+    })),
+    help: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("circle", {
+      cx: "12",
+      cy: "12",
+      r: "8.5"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M9.7 9.2a2.3 2.3 0 0 1 4.47.75c0 1.55-2.17 2.1-2.17 3.05"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M12 16.4h.01"
+    })),
+    info: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("circle", {
+      cx: "12",
+      cy: "12",
+      r: "8.5"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M12 11v5M12 7.6h.01"
+    })),
+    finger: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+      d: "M5 9.2A7.6 7.6 0 0 1 12 4.6a7.6 7.6 0 0 1 7 4.6"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M7.4 12.2a4.7 4.7 0 0 1 9.4 0v1.9a11.4 11.4 0 0 1-.95 4.7"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M9.8 12.2a2.35 2.35 0 0 1 4.7 0v1.9c0 2.1-.3 3.8-.85 5.3"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M12 12.7v1.4c0 2.4-.4 4.4-1.15 6.05"
+    })),
+    dots9: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("circle", {
+      cx: "6",
+      cy: "6",
+      r: "1.15"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "12",
+      cy: "6",
+      r: "1.15"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "18",
+      cy: "6",
+      r: "1.15"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "6",
+      cy: "12",
+      r: "1.15"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "12",
+      cy: "12",
+      r: "1.15"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "18",
+      cy: "12",
+      r: "1.15"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "6",
+      cy: "18",
+      r: "1.15"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "12",
+      cy: "18",
+      r: "1.15"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "18",
+      cy: "18",
+      r: "1.15"
+    })),
+    upload: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+      d: "M12 14V4M8 7.5l4-4 4 4"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M5 19.5h14"
+    })),
+    person: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("circle", {
+      cx: "12",
+      cy: "8",
+      r: "3.6"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M5.5 20a6.5 6.5 0 0 1 13 0"
+    })),
+    sun: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("circle", {
+      cx: "12",
+      cy: "12",
+      r: "4"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M12 2.8v2M12 19.2v2M2.8 12h2M19.2 12h2M5.5 5.5l1.4 1.4M17.1 17.1l1.4 1.4M18.5 5.5l-1.4 1.4M6.9 17.1l-1.4 1.4"
+    })),
+    music: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+      d: "M9 18V6l8-2v12"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "7",
+      cy: "18",
+      r: "2.2"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "15",
+      cy: "16",
+      r: "2.2"
     }))
   };
   return /*#__PURE__*/React.createElement("svg", common, paths[name] || null);

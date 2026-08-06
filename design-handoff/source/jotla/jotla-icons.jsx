@@ -37,6 +37,27 @@ function Icon({ name, size = 24, color = 'currentColor', stroke = 2, fill = fals
     video: <><rect x="3" y="6.5" width="13" height="11" rx="2.5" /><path d="m16 10.5 5-3v9l-5-3z" /></>,
     attach: <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />,
     moon: <><path d="M20 14.5A8 8 0 0 1 9.5 4 7 7 0 1 0 20 14.5Z" /></>,
+    /* ---- redesign kit (2026-08-06 neutral shell) ---- */
+    menu: <><rect x="4" y="4" width="7" height="7" rx="2" /><rect x="13" y="4" width="7" height="7" rx="2" /><rect x="4" y="13" width="7" height="7" rx="2" /><rect x="13" y="13" width="7" height="7" rx="2" /></>,
+    /* the standing Jotla symbol for dysregulation */
+    pulse: <path d="M3 12h4l2.5-7 4 14 2.5-7H21" />,
+    /* the Plus gate: the app's ONLY solid icon, and the only gold */
+    crown: <path d="M3.6 18 2.6 8.6l4.9 3.3L12 5.6l4.5 6.3 4.9-3.3-1 9.4a1.4 1.4 0 0 1-1.4 1.2H5a1.4 1.4 0 0 1-1.4-1.2z" fill={color} stroke="none" />,
+    palette: <><path d="M12 3.5a8.5 8.5 0 0 0 0 17c1.2 0 1.9-.7 1.9-1.6 0-.8-.5-1.2-.5-2 0-1 .8-1.7 1.9-1.7H17a4.5 4.5 0 0 0 4.5-4.5c0-4.1-4.3-7.2-9.5-7.2z" /><circle cx="7.5" cy="11" r="1.05" /><circle cx="10.5" cy="7.5" r="1.05" /><circle cx="14.5" cy="7.5" r="1.05" /><circle cx="17.5" cy="11" r="1.05" /></>,
+    textsize: <><path d="M4 18 9 6l5 12M5.7 14h6.6" /><path d="M15.5 18l2.6-6 2.6 6M16.5 15.9h3.2" /></>,
+    trash: <><path d="M3.5 6h17" /><path d="M8.5 6V4.5A1.5 1.5 0 0 1 10 3h4a1.5 1.5 0 0 1 1.5 1.5V6" /><path d="M18.5 6v13a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2V6" /><path d="M10 10.5v6M14 10.5v6" /></>,
+    restart: <><path d="M3.5 4.5v5.5H9" /><path d="M4.2 14a8 8 0 1 0 1.9-8.6L3.5 8" /></>,
+    cloudup: <><path d="M7 18.5a4.5 4.5 0 0 1-.6-8.95 6 6 0 0 1 11.6 1.6A3.9 3.9 0 0 1 17.5 18.5" /><path d="M12 20v-6.5M9.2 16l2.8-2.8 2.8 2.8" /></>,
+    clouddown: <><path d="M7 18.5a4.5 4.5 0 0 1-.6-8.95 6 6 0 0 1 11.6 1.6A3.9 3.9 0 0 1 17.5 18.5" /><path d="M12 13v6.5M9.2 17l2.8 2.8 2.8-2.8" /></>,
+    mail: <><rect x="3" y="5.5" width="18" height="13" rx="2.5" /><path d="m4.5 8 7.5 5 7.5-5" /></>,
+    help: <><circle cx="12" cy="12" r="8.5" /><path d="M9.7 9.2a2.3 2.3 0 0 1 4.47.75c0 1.55-2.17 2.1-2.17 3.05" /><path d="M12 16.4h.01" /></>,
+    info: <><circle cx="12" cy="12" r="8.5" /><path d="M12 11v5M12 7.6h.01" /></>,
+    finger: <><path d="M5 9.2A7.6 7.6 0 0 1 12 4.6a7.6 7.6 0 0 1 7 4.6" /><path d="M7.4 12.2a4.7 4.7 0 0 1 9.4 0v1.9a11.4 11.4 0 0 1-.95 4.7" /><path d="M9.8 12.2a2.35 2.35 0 0 1 4.7 0v1.9c0 2.1-.3 3.8-.85 5.3" /><path d="M12 12.7v1.4c0 2.4-.4 4.4-1.15 6.05" /></>,
+    dots9: <><circle cx="6" cy="6" r="1.15" /><circle cx="12" cy="6" r="1.15" /><circle cx="18" cy="6" r="1.15" /><circle cx="6" cy="12" r="1.15" /><circle cx="12" cy="12" r="1.15" /><circle cx="18" cy="12" r="1.15" /><circle cx="6" cy="18" r="1.15" /><circle cx="12" cy="18" r="1.15" /><circle cx="18" cy="18" r="1.15" /></>,
+    upload: <><path d="M12 14V4M8 7.5l4-4 4 4" /><path d="M5 19.5h14" /></>,
+    person: <><circle cx="12" cy="8" r="3.6" /><path d="M5.5 20a6.5 6.5 0 0 1 13 0" /></>,
+    sun: <><circle cx="12" cy="12" r="4" /><path d="M12 2.8v2M12 19.2v2M2.8 12h2M19.2 12h2M5.5 5.5l1.4 1.4M17.1 17.1l1.4 1.4M18.5 5.5l-1.4 1.4M6.9 17.1l-1.4 1.4" /></>,
+    music: <><path d="M9 18V6l8-2v12" /><circle cx="7" cy="18" r="2.2" /><circle cx="15" cy="16" r="2.2" /></>,
   };
   return <svg {...common}>{paths[name] || null}</svg>;
 }

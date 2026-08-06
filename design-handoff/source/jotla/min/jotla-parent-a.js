@@ -964,7 +964,7 @@ function QuickLogScreen({
         height: 20,
         padding: '0 5px',
         borderRadius: 999,
-        background: 'var(--blue)',
+        background: 'var(--fill)',
         color: '#fff',
         fontSize: 'calc(12px * var(--tscale, 1))',
         display: 'inline-flex',

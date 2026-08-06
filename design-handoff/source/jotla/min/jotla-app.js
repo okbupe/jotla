@@ -5,8 +5,11 @@ const {
   useRef: useRefApp,
   useCallback
 } = React;
-const TAB_DEFS = [['today', 'Today', 'today'], ['month', 'Month', 'calendar'], ['__log', 'Log', 'plus'], ['find', 'Find', 'search'], ['settings', 'Settings', 'settings']];
-const TAB_NAMES = ['today', 'month', 'find', 'settings'];
+
+// Redesign nav (locked 2026-08-06): five tabs, Find between Documents and Menu,
+// no centre log button: the floating FAB is the one add affordance.
+const TAB_DEFS = [['today', 'Today', 'today'], ['month', 'Month', 'calendar'], ['evidence', 'Documents', 'doc'], ['find', 'Find', 'search'], ['settings', 'Menu', 'menu']];
+const TAB_NAMES = ['today', 'month', 'evidence', 'find', 'settings'];
 const NAV_KEY = 'jotla_nav_v3'; // v3: history remembers the tab as well as the view
 const ENTRIES_KEY = 'jotla_entries_v4'; // v4: the six-month generated sample record
 const DOCS_KEY = 'jotla_docs_v2';
@@ -197,106 +200,19 @@ function loadSeedAware(key, seeds, dateKey) {
 
 // ---------- persistent app header ----------
 // Tap the avatar to switch child; press and hold to open that child's options.
-function AppHeader({
-  profile,
-  plus,
-  onProfile,
-  onOptions,
-  onEvidence
-}) {
-  const holdRef = useRefApp(null);
-  const longRef = useRefApp(false);
-  const startHold = () => {
-    longRef.current = false;
-    holdRef.current = setTimeout(() => {
-      longRef.current = true;
-      onOptions();
-    }, 500);
-  };
-  const clearHold = () => {
-    if (holdRef.current) {
-      clearTimeout(holdRef.current);
-      holdRef.current = null;
-    }
-  };
-  const handleClick = () => {
-    if (longRef.current) {
-      longRef.current = false;
-      return;
-    }
-    onProfile();
-  };
-  return /*#__PURE__*/React.createElement("div", {
-    className: "j-appheader"
-  }, /*#__PURE__*/React.createElement(Wordmark, {
-    size: 26,
-    color: "var(--blue)",
-    sub: false
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: 10
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    className: "j-iconbtn j-iconbtn-plain",
-    "aria-label": "Documents",
-    onClick: onEvidence
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "doc",
-    size: 23,
-    color: "var(--blue)"
-  })), /*#__PURE__*/React.createElement("button", {
-    className: "j-avatar",
-    "aria-label": "Switch child, or hold to edit",
-    title: "Tap to switch child, hold to edit",
-    onClick: handleClick,
-    onPointerDown: startHold,
-    onPointerUp: clearHold,
-    onPointerLeave: clearHold,
-    onPointerCancel: clearHold,
-    style: {
-      background: 'transparent',
-      padding: 0,
-      overflow: 'hidden',
-      touchAction: 'none'
-    }
-  }, /*#__PURE__*/React.createElement(ChildAvatar, {
-    profile: profile,
-    size: 44
-  }))));
-}
+// The persistent app header is GONE (redesign, 6 Aug): no chrome above the
+// screens. Each screen leads with its own big Cal Sans title; the wordmark's
+// homes are the splash and About; the child lives as the Menu tab's title;
+// Documents is a tab of its own.
 
-// ---------- tab bar with central round Log button ----------
+// ---------- tab bar: five tabs, colour-only active state ----------
 function TabBar({
   active,
-  onTab,
-  onLog
+  onTab
 }) {
   return /*#__PURE__*/React.createElement("div", {
     className: "j-tabbar"
   }, TAB_DEFS.map(([name, label, icon]) => {
-    if (name === '__log') {
-      return /*#__PURE__*/React.createElement("button", {
-        key: "log",
-        className: "j-tab-log",
-        onClick: onLog,
-        "aria-label": "Quick log"
-      }, /*#__PURE__*/React.createElement("span", {
-        className: "j-logfab"
-      }, /*#__PURE__*/React.createElement(Icon, {
-        name: "plus",
-        size: 28,
-        color: "#fff",
-        stroke: 2.4
-      })), /*#__PURE__*/React.createElement("span", {
-        style: {
-          fontSize: 'calc(11px * var(--tscale, 1))',
-          fontWeight: 500,
-          color: 'var(--blue)'
-        }
-      }, label));
-    }
     const on = active === name;
     return /*#__PURE__*/React.createElement("button", {
       key: name,
@@ -1410,7 +1326,11 @@ function App({
     customProfiles: [],
     deletedIds: []
   });
-  const [dark, setDark] = useStateApp(!!prefs0.dark);
+  // Theme (redesign, 6 Aug): Light / Dark / System. Old prefs carried a dark
+  // boolean; it migrates to the explicit mode and keeps the parent's choice.
+  const [themeMode, setThemeMode] = useStateApp(prefs0.theme || (prefs0.dark ? 'dark' : 'light'));
+  const [sysDark, setSysDark] = useStateApp(() => !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches));
+  const dark = themeMode === 'dark' || themeMode === 'system' && sysDark;
   // Dynamic type: 1 / 1.12 / 1.25, applied as --tscale on the root so every
   // calc()-based font size in the app follows the one dial (build 1.8.0).
   const [tscale, setTscale] = useStateApp(prefs0.tscale || 1);
@@ -1452,6 +1372,7 @@ function App({
   }, [docs]);
   useEffectApp(() => {
     saveJSON(PREF_KEY, {
+      theme: themeMode,
       dark,
       tscale,
       profileId,
@@ -1461,7 +1382,18 @@ function App({
       deletedIds,
       backupReminderMonth
     });
-  }, [dark, tscale, profileId, plus, childCfg, customProfiles, deletedIds, backupReminderMonth]);
+  }, [themeMode, dark, tscale, profileId, plus, childCfg, customProfiles, deletedIds, backupReminderMonth]);
+
+  // System theme follows the phone live while the mode is 'system'.
+  useEffectApp(() => {
+    if (!window.matchMedia) return;
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = e => setSysDark(e.matches);
+    if (mq.addEventListener) mq.addEventListener('change', onChange);else if (mq.addListener) mq.addListener(onChange);
+    return () => {
+      if (mq.removeEventListener) mq.removeEventListener('change', onChange);else if (mq.removeListener) mq.removeListener(onChange);
+    };
+  }, []);
 
   // On open: purge Bin items past 30 days, and once a month nudge a backup
   // (founder ask, 15 Jul 2026). The nudge shows on the first open of a new month;
@@ -1723,7 +1655,9 @@ function App({
         alert('Could not restore from that file.');
       }
     },
-    toggleDark: () => setDark(d => !d),
+    theme: themeMode,
+    setTheme: setThemeMode,
+    toggleDark: () => setThemeMode(dark ? 'light' : 'dark'),
     dark,
     tscale,
     setTscale,
@@ -2110,13 +2044,7 @@ function App({
       background: isChild ? '#FFF6EC' : 'var(--bg)',
       '--tscale': tscale
     }
-  }, !isFullscreen && !noChild && /*#__PURE__*/React.createElement(AppHeader, {
-    profile: profile,
-    plus: plus,
-    onProfile: () => setProfileOpen(true),
-    onOptions: () => setChildOptOpen(true),
-    onEvidence: () => nav.go('evidence')
-  }), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1,
       position: 'relative',
@@ -2128,10 +2056,18 @@ function App({
       position: 'absolute',
       inset: 0
     }
-  }, /*#__PURE__*/React.createElement(ScreenBoundary, null, window.__JOTLA_TEST_THROW ? /*#__PURE__*/React.createElement(CrashProbe, null) : screen))), isTab && !noChild && /*#__PURE__*/React.createElement(TabBar, {
+  }, /*#__PURE__*/React.createElement(ScreenBoundary, null, window.__JOTLA_TEST_THROW ? /*#__PURE__*/React.createElement(CrashProbe, null) : screen))), isTab && !noChild && /*#__PURE__*/React.createElement("button", {
+    className: "j-fab",
+    "aria-label": "Quick log",
+    onClick: () => nav.go('quicklog')
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "plus",
+    size: 26,
+    color: "#fff",
+    stroke: 2.4
+  })), isTab && !noChild && /*#__PURE__*/React.createElement(TabBar, {
     active: tab,
-    onTab: nav.setTab,
-    onLog: () => nav.go('quicklog')
+    onTab: nav.setTab
   }), exitHint && /*#__PURE__*/React.createElement("div", {
     style: {
       position: 'absolute',
