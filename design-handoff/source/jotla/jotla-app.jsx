@@ -99,7 +99,15 @@ function AppHeader({ profile, plus, onProfile, onOptions, onEvidence }) {
   const handleClick = () => { if (longRef.current) { longRef.current = false; return; } onProfile(); };
   return (
     <div className="j-appheader">
-      <Wordmark size={26} color="var(--blue)" subColor="var(--faint)" plus={plus} />
+      {/* DECLUTTER (founder, 4 Aug 2026; mirrored from native AppHeader.tsx): the
+          header no longer carries "by SEN Help" or the +PLUS pill. Both were
+          permanent, on every screen, telling a parent two things they already
+          know: whose app this is, and that they have paid for it. The
+          endorsement still belongs on the splash, the About screen and the
+          store listing, where someone is deciding whether to trust Jotla.
+          Plus status has a home that answers the question when it is actually
+          asked: settings, which reads "Active. Your record is always yours." */}
+      <Wordmark size={26} color="var(--blue)" sub={false} />
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <button className="j-iconbtn j-iconbtn-plain" aria-label="Documents" onClick={onEvidence}>
           <Icon name="doc" size={23} color="var(--blue)" />

@@ -187,7 +187,9 @@ function MonthScreen({ nav, entries, view }) {
     <div className="j-screen">
       <div className="j-scroll j-fade">
         <div className="j-pad" style={{ paddingTop: 14, paddingBottom: 120 }}>
-          <TabTitle title={monthLabel} sub="Tap any day to read it back."
+          {/* DECLUTTER (founder, 4 Aug 2026): "Tap any day to read it back."
+              is gone. It explained a calendar to someone looking at a calendar. */}
+          <TabTitle title={monthLabel}
             right={<div style={{ display: 'flex', gap: 8 }}>{monthNavBtn('prev')}{monthNavBtn('next')}</div>} />
 
           {/* month patterns are a Plus feature: free sees the honest locked card,
@@ -244,13 +246,21 @@ function MonthScreen({ nav, entries, view }) {
             </div>
           </div>
 
-          {/* quiet swipe hint */}
-          <p style={{ textAlign: 'center', marginTop: 10, marginBottom: 0, fontSize: 'calc(12.5px * var(--tscale, 1))', fontWeight: 500,
-            color: 'var(--faint)', opacity: 0.75 }}>‹  swipe left and right  ›</p>
+          {/* DECLUTTER (founder, 4 Aug 2026; mirrored from native MonthScreen):
+              the "‹ swipe left and right ›" line is gone. The month already had
+              two working affordances for the same gesture sitting a few pixels
+              away: the prev/next chevrons beside the title, and the grid itself,
+              which follows the finger. */}
 
-          {/* legend */}
+          {/* legend. ONE WORD FOR THE MIDDLE MOOD (4 Aug 2026): 'ok' reads
+              "Mixed day" here, matching MOODS in jotla-data and the graph
+              directly below, which already said "Mixed". The four legend dots
+              and the graph bars stay DIFFERENT keys and should not be merged:
+              the legend explains the day tints on the calendar (a day with no
+              note being a real fourth state), while the graph's fourth bar
+              counts dysregulation moments, which is not a day colour at all. */}
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 12 }}>
-            {[['good', 'Good day'], ['ok', 'Up and down'], ['hard', 'Hard day'], ['none', 'No note']].map(([k, l]) => (
+            {[['good', 'Good day'], ['ok', 'Mixed day'], ['hard', 'Hard day'], ['none', 'No note']].map(([k, l]) => (
               <span key={k} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 'calc(12.5px * var(--tscale, 1))', color: 'var(--faint)' }}>
                 <MoodDot mood={k} size={9} /> {l}
               </span>
@@ -285,7 +295,7 @@ function DayScreen({ nav, entries, date }) {
               padding: '8px 14px', borderRadius: 999, background: window.moodTint(mood) }}>
               <MoodDot mood={mood} size={10} />
               <span style={{ fontSize: 'calc(14px * var(--tscale, 1))', fontWeight: 500, color: window.MOOD_COLOURS[mood] }}>
-                {mood === 'good' ? 'A good day overall' : mood === 'ok' ? 'Up and down' : 'A hard day'}
+                {mood === 'good' ? 'A good day overall' : mood === 'ok' ? 'A mixed day' : 'A hard day'}
               </span>
             </div>
           )}

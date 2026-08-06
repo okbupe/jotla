@@ -86,8 +86,7 @@ function FindScreen({
       paddingBottom: 120
     }
   }, /*#__PURE__*/React.createElement(TabTitle, {
-    title: "Find",
-    sub: "Search across everything you have noted."
+    title: "Find"
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',

@@ -308,9 +308,15 @@ const CATEGORIES = ['Mornings', 'Eating', 'Play', 'Transitions', 'Lunch hall', '
 const BEHAVIOURS = ['Crying', 'Hitting out', 'Running off', 'Refusing', 'Stomping', 'Withdrawing', 'Screaming'];
 
 // Moods in order good -> hard for the face row
+//
+// ONE WORD FOR THE MIDDLE MOOD (founder, 4 Aug 2026; mirrored from native
+// domain/types.ts): 'ok' was "Up and down" here and in the Month legend, but
+// "Mixed" in FIND_MOODS below and in both graphs. One thing, two names, across
+// the app. "Mixed" wins on the count and is the shorter word. Vocabulary only:
+// the 'ok' mood itself is untouched, so every stored entry keeps its key.
 const MOODS = [
   { key: 'good', label: 'Good day' },
-  { key: 'ok',   label: 'Up and down' },
+  { key: 'ok',   label: 'Mixed day' },
   { key: 'hard', label: 'Hard day' },
 ];
 

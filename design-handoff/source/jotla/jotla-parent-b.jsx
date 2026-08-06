@@ -47,7 +47,13 @@ function FindScreen({ nav, entries, view }) {
     <div className="j-screen">
       <div className="j-scroll j-fade" ref={scrollRef}>
         <div className="j-pad" style={{ paddingTop: 14, paddingBottom: 120 }}>
-          <TabTitle title="Find" sub="Search across everything you have noted." />
+          {/* DECLUTTER (founder, 4 Aug 2026; mirrored from native FindScreen):
+              "Search across everything you have noted." is gone. The screen was
+              explaining itself four times over: a title reading Find, this line,
+              a magnifying glass, and the field's own "Search your notes"
+              placeholder, which is the one that survives because it sits inside
+              the thing it describes. */}
+          <TabTitle title="Find" />
 
           {/* search bar */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--card-2)', border: '1.5px solid var(--chip-border)',

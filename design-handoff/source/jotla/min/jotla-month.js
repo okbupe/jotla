@@ -280,7 +280,6 @@ function MonthScreen({
     }
   }, /*#__PURE__*/React.createElement(TabTitle, {
     title: monthLabel,
-    sub: "Tap any day to read it back.",
     right: /*#__PURE__*/React.createElement("div", {
       style: {
         display: 'flex',
@@ -400,24 +399,14 @@ function MonthScreen({
         size: 6
       }));
     }));
-  }))), /*#__PURE__*/React.createElement("p", {
-    style: {
-      textAlign: 'center',
-      marginTop: 10,
-      marginBottom: 0,
-      fontSize: 'calc(12.5px * var(--tscale, 1))',
-      fontWeight: 500,
-      color: 'var(--faint)',
-      opacity: 0.75
-    }
-  }, "\u2039  swipe left and right  \u203A"), /*#__PURE__*/React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       gap: 16,
       justifyContent: 'center',
       marginTop: 12
     }
-  }, [['good', 'Good day'], ['ok', 'Up and down'], ['hard', 'Hard day'], ['none', 'No note']].map(([k, l]) => /*#__PURE__*/React.createElement("span", {
+  }, [['good', 'Good day'], ['ok', 'Mixed day'], ['hard', 'Hard day'], ['none', 'No note']].map(([k, l]) => /*#__PURE__*/React.createElement("span", {
     key: k,
     style: {
       display: 'inline-flex',
@@ -486,7 +475,7 @@ function DayScreen({
       fontWeight: 500,
       color: window.MOOD_COLOURS[mood]
     }
-  }, mood === 'good' ? 'A good day overall' : mood === 'ok' ? 'Up and down' : 'A hard day')), list.length === 0 ? /*#__PURE__*/React.createElement("div", {
+  }, mood === 'good' ? 'A good day overall' : mood === 'ok' ? 'A mixed day' : 'A hard day')), list.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: {
       padding: '28px 0',
       textAlign: 'center'

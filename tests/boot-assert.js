@@ -562,7 +562,20 @@ function ok(name, cond) {
   await page5.goto(URL_APP, { waitUntil: 'networkidle' });
   await page5.waitForTimeout(1200);
 
-  ok('header wordmark wears the +PLUS pill', (await page5.locator('.j-appheader').innerText()).includes('+PLUS'));
+  // DECLUTTER (founder, 4 Aug 2026): this assertion is INVERTED from
+  // "header wordmark wears the +PLUS pill". This context runs with plus:true,
+  // which is exactly the case where the pill used to appear, so asserting its
+  // absence here proves the declutter holds where it would otherwise show.
+  // The endorsement goes with it; both stay available in Wordmark for the
+  // splash, About and store artwork.
+  // The two checks below are NEGATIVE, and after the declutter the header holds
+  // no text at all (just the logotype SVG and two icon buttons), so on their own
+  // they would also pass if the header rendered nothing. The positive anchor
+  // first is what stops that: the logotype must still be there.
+  const headerPlus = await page5.locator('.j-appheader').innerText();
+  ok('header still renders the Jotla logotype', await page5.locator('.j-appheader svg[aria-label="Jotla"]').isVisible());
+  ok('header drops the +PLUS pill even when Plus is active', !headerPlus.includes('+PLUS'));
+  ok('header drops the "by SEN Help" endorsement', !headerPlus.includes('by SEN Help'));
   // item 34 (1.10.0): Plus frames the check-in as a two-of-you thing
   const todayPlus = await page5.locator('#root').innerText();
   ok("Plus Your day tile reads 'Do it together'", todayPlus.includes('Do it together with Sam'));
