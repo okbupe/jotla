@@ -118,7 +118,6 @@
   .row .body { flex: 1; min-width: 0; }
   .row .title { font-size: 16.5px; font-weight: 500; color: var(--text); }
   .row .sub { font-size: 13.5px; color: var(--muted); margin-top: 2px; }
-  .chev { color: var(--faint); width: 18px; height: 18px; flex: 0 0 18px; }
 
   /* entry */
   .entry { background: var(--row); border: 1px solid var(--row-border); border-radius: 14px; padding: 15px 16px; margin-bottom: 8px; }
@@ -263,6 +262,33 @@
   .dense .row { padding: 11px 16px; margin-bottom: 6px; }
   .dense .section { margin: 13px 2px 6px; }
   .dense .fsync { margin-top: 4px; }
+
+  /* bottom sheet: the neutral shell's first modal (export period picker) */
+  .sheetlayer { position: absolute; inset: 0; display: none; z-index: 5; }
+  .sheetlayer.open { display: block; }
+  .scrim { position: absolute; inset: 0; background: rgba(0,0,0,.44); }
+  .phone.light .scrim { background: rgba(23,21,18,.30); }
+  .sheet {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    background: var(--surface); border-radius: 22px 22px 0 0;
+    padding: 10px 18px 20px; box-shadow: 0 -10px 30px rgba(0,0,0,.25);
+  }
+  .grab { width: 36px; height: 4px; border-radius: 999px; background: var(--hair); margin: 0 auto 12px; }
+  .sheet h2 { font-family: 'Cal Sans','Outfit',system-ui,sans-serif; font-size: 20px; font-weight: 400; color: var(--text); }
+  .sheetsub { font-size: 13px; color: var(--muted); margin-top: 2px; margin-bottom: 4px; }
+  .popt { display: flex; align-items: center; gap: 12px; padding: 13px 2px; border-bottom: 1px solid var(--hair); cursor: pointer; }
+  .popt.nb { border-bottom: 0; }
+  .popt .radio { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--faint); flex: 0 0 20px; position: relative; }
+  .popt.sel .radio { border-color: var(--accent); }
+  .popt.sel .radio::after { content: ''; position: absolute; inset: 3px; border-radius: 50%; background: var(--accent); }
+  .popt .plab { font-size: 15.5px; color: var(--text); }
+  .datefields { display: none; gap: 10px; padding: 2px 0 14px 32px; }
+  .datefields.show { display: flex; }
+  .dfield { flex: 1; background: var(--row); border: 1px solid var(--row-border); border-radius: 12px; padding: 9px 12px; }
+  .phone:not(.light) .dfield { border-color: var(--hair); }
+  .dlab { font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--faint); font-weight: 600; }
+  .dval { font-size: 15px; color: var(--text); margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .exportcta { margin-top: 12px; width: 100%; border: 0; border-radius: 999px; padding: 14px; background: var(--accent-fill); color: #fff; font-family: inherit; font-size: 16px; font-weight: 600; cursor: pointer; }
 
   /* menu icon picker */
   .optstrip { display: flex; gap: 10px; padding: 14px; border-radius: 18px; flex-wrap: wrap; justify-content: center; }
@@ -421,7 +447,6 @@
             <div class="title">Your day</div>
             <div class="sub">Hand the phone to Sam</div>
           </div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
         </div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-pulse"/></svg>
@@ -429,7 +454,6 @@
             <div class="title">Dysregulation</div>
             <div class="sub">Capture what happened</div>
           </div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
         </div>
 
         <div class="section">Sam's day so far</div>
@@ -556,7 +580,6 @@
             <div class="title">Your day</div>
             <div class="sub">Hand the phone to Sam</div>
           </div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
         </div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-pulse"/></svg>
@@ -564,7 +587,6 @@
             <div class="title">Dysregulation</div>
             <div class="sub">Capture what happened</div>
           </div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
         </div>
 
         <div class="section">Sam's day so far</div>
@@ -702,7 +724,6 @@
             <div class="sub">Plan · Oakfield Primary · 28 Jan 2026</div>
             <span class="chip action">Check it is happening half-termly</span>
           </div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
         </div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-doc"/></svg>
@@ -710,7 +731,6 @@
             <div class="title">Acknowledgement of assessment request</div>
             <div class="sub">Letter · Local Authority · 21 Jan 2026</div>
           </div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
         </div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-doc"/></svg>
@@ -718,7 +738,6 @@
             <div class="title">Request for an EHC needs assessment</div>
             <div class="sub">Letter · Local Authority · 14 Jan 2026</div>
           </div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
         </div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-doc"/></svg>
@@ -726,7 +745,6 @@
             <div class="title">Settling-in review meeting notes</div>
             <div class="sub">Email · Oakfield Primary · 9 Jan 2026</div>
           </div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
         </div>
 
         <div class="addrow">
@@ -770,7 +788,6 @@
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-cloudup"/></svg>
           <div class="body"><div class="title">Backup and Restore</div></div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
         </div>
 
         <div class="section">App</div>
@@ -780,7 +797,6 @@
             <div class="title">Theme</div>
             <div class="sub">Dark</div>
           </div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
         </div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-textsize"/></svg>
@@ -788,12 +804,10 @@
             <div class="title">Text size</div>
             <div class="sub">Standard</div>
           </div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
         </div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-info"/></svg>
           <div class="body"><div class="title">About Jotla</div></div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
         </div>
 
         <div class="menufoot">Jotla by SEN Help · Early test build</div>
@@ -833,7 +847,6 @@
             <div class="sub">Plan · Oakfield Primary · 28 Jan 2026</div>
             <span class="chip action">Check it is happening half-termly</span>
           </div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
         </div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-doc"/></svg>
@@ -841,7 +854,6 @@
             <div class="title">Acknowledgement of assessment request</div>
             <div class="sub">Letter · Local Authority · 21 Jan 2026</div>
           </div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
         </div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-doc"/></svg>
@@ -849,7 +861,6 @@
             <div class="title">Request for an EHC needs assessment</div>
             <div class="sub">Letter · Local Authority · 14 Jan 2026</div>
           </div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
         </div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-doc"/></svg>
@@ -857,7 +868,6 @@
             <div class="title">Settling-in review meeting notes</div>
             <div class="sub">Email · Oakfield Primary · 9 Jan 2026</div>
           </div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
         </div>
 
         <div class="addrow">
@@ -901,7 +911,6 @@
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-cloudup"/></svg>
           <div class="body"><div class="title">Backup and Restore</div></div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
         </div>
 
         <div class="section">App</div>
@@ -911,7 +920,6 @@
             <div class="title">Theme</div>
             <div class="sub">Light</div>
           </div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
         </div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-textsize"/></svg>
@@ -919,12 +927,10 @@
             <div class="title">Text size</div>
             <div class="sub">Standard</div>
           </div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
         </div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-info"/></svg>
           <div class="body"><div class="title">About Jotla</div></div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
         </div>
 
         <div class="menufoot">Jotla by SEN Help · Early test build</div>
@@ -1051,7 +1057,7 @@
 
 </div>
 
-<div class="board-title" style="margin-top:6px">Backup and Restore · file export stays free, the parent's own Google Drive is the Plus section</div>
+<div class="board-title" style="margin-top:6px">Backup and Restore · file export stays free, the parent's own Google Drive is the Plus section · tap Export my data for the period sheet</div>
 
 <div class="board">
 
@@ -1068,12 +1074,10 @@
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-download"/></svg>
           <div class="body"><div class="title">Export my data</div></div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
         </div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-upload"/></svg>
           <div class="body"><div class="title">Restore from an export</div></div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
         </div>
 
         <div class="section">Google Drive</div>
@@ -1127,6 +1131,20 @@
         <div class="fsync"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-lock"/></svg>Backups live in your own Google Drive or Dropbox, in a space only the app can read. Jotla has no servers and never sees your record.</div>
       </div>
 
+      <div class="sheetlayer">
+        <div class="scrim"></div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <h2>Export my data</h2>
+          <div class="sheetsub">Saves a file on this phone.</div>
+          <div class="popt sel" data-k="all"><div class="radio"></div><div class="plab">The whole record</div></div>
+          <div class="popt" data-k="7"><div class="radio"></div><div class="plab">Last 7 days</div></div>
+          <div class="popt" data-k="30"><div class="radio"></div><div class="plab">Last 30 days</div></div>
+          <div class="popt nb" data-k="custom"><div class="radio"></div><div class="plab">Choose dates</div></div>
+          <div class="datefields"><div class="dfield"><div class="dlab">From</div><div class="dval">1 Jul 2026</div></div><div class="dfield"><div class="dlab">To</div><div class="dval">6 Aug 2026</div></div></div>
+          <button class="exportcta">Export</button>
+        </div>
+      </div>
     </div>
     <div class="frame-label">Backup and Restore · dark</div>
   </div>
@@ -1144,12 +1162,10 @@
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-download"/></svg>
           <div class="body"><div class="title">Export my data</div></div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
         </div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-upload"/></svg>
           <div class="body"><div class="title">Restore from an export</div></div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevR"/></svg>
         </div>
 
         <div class="section">Google Drive</div>
@@ -1203,11 +1219,50 @@
         <div class="fsync"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-lock"/></svg>Backups live in your own Google Drive or Dropbox, in a space only the app can read. Jotla has no servers and never sees your record.</div>
       </div>
 
+      <div class="sheetlayer">
+        <div class="scrim"></div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <h2>Export my data</h2>
+          <div class="sheetsub">Saves a file on this phone.</div>
+          <div class="popt sel" data-k="all"><div class="radio"></div><div class="plab">The whole record</div></div>
+          <div class="popt" data-k="7"><div class="radio"></div><div class="plab">Last 7 days</div></div>
+          <div class="popt" data-k="30"><div class="radio"></div><div class="plab">Last 30 days</div></div>
+          <div class="popt nb" data-k="custom"><div class="radio"></div><div class="plab">Choose dates</div></div>
+          <div class="datefields"><div class="dfield"><div class="dlab">From</div><div class="dval">1 Jul 2026</div></div><div class="dfield"><div class="dlab">To</div><div class="dval">6 Aug 2026</div></div></div>
+          <button class="exportcta">Export</button>
+        </div>
+      </div>
     </div>
     <div class="frame-label">Backup and Restore · light</div>
   </div>
 
 </div>
 
+<script>
+  // export period sheet: the "Export my data" row opens it, the scrim closes it,
+  // Choose dates reveals the range fields
+  document.querySelectorAll('#backup-dark, #backup-light').forEach(function(phone){
+    var layer = phone.querySelector('.sheetlayer');
+    if (!layer) return;
+    phone.querySelectorAll('.row').forEach(function(r){
+      var t = r.querySelector('.title');
+      if (t && t.textContent === 'Export my data') {
+        r.style.cursor = 'pointer';
+        r.addEventListener('click', function(){ layer.classList.add('open'); });
+      }
+    });
+    layer.querySelector('.scrim').addEventListener('click', function(){ layer.classList.remove('open'); });
+    var opts = layer.querySelectorAll('.popt');
+    var dates = layer.querySelector('.datefields');
+    opts.forEach(function(o){
+      o.addEventListener('click', function(){
+        opts.forEach(function(x){ x.classList.remove('sel'); });
+        o.classList.add('sel');
+        dates.classList.toggle('show', o.getAttribute('data-k') === 'custom');
+      });
+    });
+  });
+</script>
 </body>
 </html>
