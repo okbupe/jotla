@@ -343,6 +343,10 @@
   .popt .pbody { flex: 1; }
   .popt .osub { font-size: 12.5px; color: var(--muted); margin-top: 1px; }
 
+  /* child page: value rows, switcher check, careful actions in the hard colour */
+  .selcheck { color: var(--accent); width: 20px; height: 20px; flex: 0 0 20px; }
+  .row.danger .title, .row.danger .ic { color: var(--hard); }
+
   /* menu icon picker */
   .optstrip { display: flex; gap: 10px; padding: 14px; border-radius: 18px; flex-wrap: wrap; justify-content: center; }
   .optstrip.darkbg { background: #201F1D; }
@@ -379,6 +383,7 @@
     <g id="i-camera"><path d="M4 8.5h3l1.3-2h7.4L17 8.5h3a1.5 1.5 0 0 1 1.5 1.5v8A1.5 1.5 0 0 1 20 19.5H4A1.5 1.5 0 0 1 2.5 18v-8A1.5 1.5 0 0 1 4 8.5Z"/><circle cx="12" cy="13.5" r="3.2"/></g>
     <g id="i-lock"><rect x="5" y="10.5" width="14" height="9.5" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></g>
     <g id="i-trash"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6"/><path d="M14 11v6"/></g>
+    <g id="i-restart"><path d="M3 4v6h6"/><path d="M3.8 14a9 9 0 1 0 2.2-9.2L3 8"/></g>
     <g id="i-plus"><path d="M12 5v14M5 12h14"/></g>
     <g id="i-chevR"><path d="m9 5 7 7-7 7"/></g>
     <g id="i-chevL"><path d="m15 5-7 7 7 7"/></g>
@@ -1065,6 +1070,100 @@
       </div>
     </div>
     <div class="frame-label">Menu · light</div>
+  </div>
+
+</div>
+
+<div class="board-title" style="margin-top:6px">The child page · its own page, not a drawer · details, switcher, careful actions</div>
+
+<div class="board">
+
+  <!-- ============ CHILD (dark) ============ -->
+  <div class="frame-wrap">
+    <div class="phone" id="child-dark">
+      <div class="screen dense">
+        <div style="display:flex;align-items:center;gap:6px">
+          <button class="backbtn" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevL"/></svg></button>
+          <div class="avatar" style="width:28px;height:28px;flex:0 0 28px;font-size:13px">S</div>
+          <h1 style="margin-top:0;font-size:23px">Sam</h1>
+        </div>
+
+        <div class="section">Details</div>
+        <div class="row"><div class="body"><div class="title">Name</div><div class="sub">Sam</div></div></div>
+        <div class="row"><div class="body"><div class="title">School</div><div class="sub">Oakfield Primary</div></div></div>
+        <div class="row"><div class="body"><div class="title">Year</div><div class="sub">Year 2</div></div></div>
+        <div class="row"><div class="body"><div class="title">Colour and avatar</div><div class="sub">Blue · the letter S</div></div></div>
+
+        <div class="section">Children</div>
+        <div class="row">
+          <div class="avatar" style="width:34px;height:34px;flex:0 0 34px;font-size:15px">S</div>
+          <div class="body"><div class="title">Sam</div></div>
+          <svg class="selcheck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-check"/></svg>
+        </div>
+        <div class="addrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><use href="#i-plus"/></svg>
+          Add another child
+        </div>
+
+        <div class="section" style="color:var(--hard)">Careful</div>
+        <div class="row danger">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-restart"/></svg>
+          <div class="body"><div class="title">Start the record again</div></div>
+        </div>
+        <div class="row danger">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-trash"/></svg>
+          <div class="body"><div class="title">Remove Sam from this phone</div></div>
+        </div>
+
+        <div class="fsync"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-lock"/></svg>Both offer a backup first and need a clear confirm. Sam's record never leaves this phone without you.</div>
+      </div>
+
+    </div>
+    <div class="frame-label">Child · dark</div>
+  </div>
+
+  <!-- ============ CHILD (light) ============ -->
+  <div class="frame-wrap">
+    <div class="phone light" id="child-light">
+      <div class="screen dense">
+        <div style="display:flex;align-items:center;gap:6px">
+          <button class="backbtn" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevL"/></svg></button>
+          <div class="avatar" style="width:28px;height:28px;flex:0 0 28px;font-size:13px">S</div>
+          <h1 style="margin-top:0;font-size:23px">Sam</h1>
+        </div>
+
+        <div class="section">Details</div>
+        <div class="row"><div class="body"><div class="title">Name</div><div class="sub">Sam</div></div></div>
+        <div class="row"><div class="body"><div class="title">School</div><div class="sub">Oakfield Primary</div></div></div>
+        <div class="row"><div class="body"><div class="title">Year</div><div class="sub">Year 2</div></div></div>
+        <div class="row"><div class="body"><div class="title">Colour and avatar</div><div class="sub">Blue · the letter S</div></div></div>
+
+        <div class="section">Children</div>
+        <div class="row">
+          <div class="avatar" style="width:34px;height:34px;flex:0 0 34px;font-size:15px">S</div>
+          <div class="body"><div class="title">Sam</div></div>
+          <svg class="selcheck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-check"/></svg>
+        </div>
+        <div class="addrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><use href="#i-plus"/></svg>
+          Add another child
+        </div>
+
+        <div class="section" style="color:var(--hard)">Careful</div>
+        <div class="row danger">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-restart"/></svg>
+          <div class="body"><div class="title">Start the record again</div></div>
+        </div>
+        <div class="row danger">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-trash"/></svg>
+          <div class="body"><div class="title">Remove Sam from this phone</div></div>
+        </div>
+
+        <div class="fsync"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-lock"/></svg>Both offer a backup first and need a clear confirm. Sam's record never leaves this phone without you.</div>
+      </div>
+
+    </div>
+    <div class="frame-label">Child · light</div>
   </div>
 
 </div>
