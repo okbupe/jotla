@@ -24,7 +24,7 @@ The shell goes neutral and the data gets the colour back. One accent (Jotla blue
 - **No trailing arrows on rows, app-wide (Bupe, 6 Aug).** A row is tappable as a whole; nothing decorates its right edge. The only trailing marks are live values (Theme's current value, backup status) and the gold crown on Plus rows in the free app. Month's previous and next buttons are pagers, not row furniture, and keep their arrows.
 - **Bottom sheets (pattern set by the export flow, 6 Aug).** The shell's modal: a scrim over the screen, a surface-coloured sheet rising from the bottom with a 22px top radius, a grab handle, a Cal Sans title at 20px, one grey sub-line, radio option rows split by hairlines, and a full-width accent-fill action button. **Export my data opens the period sheet**: The whole record (default) / Last 7 days / Last 30 days / Choose dates, which expands From and To date fields; Export is the one confirmation tap. Every period is free, no crowns in this sheet: the free-export promise covers any slice of the record. (Date ranges on the PDF Evidence Pack stay a separate Plus candidate.)
 - **The Theme picker is a radio sheet** (Bupe, 6 Aug): Light / Dark / System, System carrying the sub-line "Follows your phone". A tap applies instantly and updates the Theme row's value; picker sheets carry no confirm button, action sheets (Export) carry exactly one.
-- **Check in is two tiles side by side** (Bupe, 6 Aug): Your day on the accent tint, Dysregulation on its purple tint, icon and title in the tile's colour, 1px same-hue borders. The check-in actions are the one place the shell lends colour to controls, because they are the doors to the data itself.
+- **Check in is two tiles side by side** (Bupe, 6 Aug): Your day on a deep blue panel, Dysregulation on a deep plum, dedicated `--tileblue` / `--tilepurple` tokens sitting deeper than the chip tints, icon and title in the tile's colour. No stroke: the tiles carry a drop shadow instead and are the app's one shadowed, borderless surface (Bupe's call, a deliberate exception to the hairline-over-elevation rule; the pill stroke law still governs chips and pills). The check-in actions are the one place the shell lends colour to controls, because they are the doors to the data itself.
 - **The Month patterns lock is a blurred preview below the calendar** (Bupe, 6 Aug): the analytics shape blurred behind a soft veil carrying the solid gold crown, "Month patterns" and the feature line. The shape is two graphs: the mood bars, then a shorter purple row underneath for the dysregulation dimension, then the counts line ("9 good · 4 mixed · 5 hard · 6 dysregulation"). The old Plus row above the calendar is gone. Tapping the preview opens the Jotla Plus page (crown gate).
 - **Document types are colour-coded pills** in the vault row sub-line (Bupe, 6 Aug): Plan in accent blue, Letter in amber, Email in green, pill stroke law applied. First mapping, open to reshuffle; Letter currently shares amber with the action chip.
 - **The Plus page's "Everything in Free is included, always." sits between the CTA and the renewal text** (Bupe, 6 Aug), centred with its check mark.
@@ -56,6 +56,7 @@ The shell goes neutral and the data gets the colour back. One accent (Jotla blue
 | dysregulation | `#B36AE2` (tint `.16`, border `.45`) |
 | no-note | `#55524C` |
 | gold (Plus crown only) | `#EBBA4D` |
+| tile blue / tile purple (check-in tiles) | `rgba(47,111,214,.26)` / `rgba(179,106,226,.22)` |
 
 ### Light (first pass, in progress)
 
@@ -72,6 +73,7 @@ The shell goes neutral and the data gets the colour back. One accent (Jotla blue
 | dysregulation | `#9D34DA` (tint `.10`, border `.40`) |
 | no-note | `#C9C4BC` |
 | gold (Plus crown only) | `#BE8E1E` |
+| tile blue / tile purple (check-in tiles) | `rgba(26,86,168,.15)` / `rgba(157,52,218,.14)` |
 
 ## What the build will touch (when green-lit)
 

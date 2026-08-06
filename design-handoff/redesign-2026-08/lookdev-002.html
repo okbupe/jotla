@@ -51,6 +51,7 @@
     --ticket-ink: #FFFFFF; --ticket-sub: rgba(255,255,255,.82); --ticket-crown: #EBBA4D;
     --ticket-shadow: 0 10px 22px -6px rgba(38,24,84,.60);
     --plusink: #A18BEF; --plustint: rgba(110,84,214,.16);
+    --tileblue: rgba(47,111,214,.26); --tilepurple: rgba(179,106,226,.22);
 
     width: 390px; height: 780px; background: var(--bg); color: var(--text);
     border-radius: 28px; overflow: hidden; position: relative;
@@ -84,6 +85,7 @@
     --ticket-ink: #FFFFFF; --ticket-sub: rgba(255,255,255,.82); --ticket-crown: #EBBA4D;
     --ticket-shadow: 0 10px 22px -8px rgba(60,42,114,.40);
     --plusink: #6E54D6; --plustint: rgba(110,84,214,.10);
+    --tileblue: rgba(26,86,168,.15); --tilepurple: rgba(157,52,218,.14);
     box-shadow: 0 0 0 1px var(--ring), 0 24px 60px rgba(0,0,0,.18);
   }
 
@@ -301,13 +303,15 @@
 
   /* today: the two check-in actions side by side, each carrying its colour */
   .checkin2 { display: flex; gap: 10px; }
-  .ctile { flex: 1; border-radius: 14px; padding: 13px 14px; display: flex; flex-direction: column; gap: 9px; }
+  /* no stroke on the tiles: they are the app's one shadowed surface (Bupe, 6 Aug) */
+  .ctile { flex: 1; border-radius: 14px; padding: 13px 14px; display: flex; flex-direction: column; gap: 9px; box-shadow: 0 6px 16px rgba(0,0,0,.30); }
+  .phone.light .ctile { box-shadow: 0 6px 16px rgba(35,33,29,.12); }
   .ctile .cic { width: 23px; height: 23px; }
   .ctile .ct { font-size: 15.5px; font-weight: 600; }
   .ctile .cs { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
-  .ctile.yourday { background: var(--accent-tint); border: 1px solid var(--accent-border); }
+  .ctile.yourday { background: var(--tileblue); }
   .ctile.yourday .cic, .ctile.yourday .ct { color: var(--accent); }
-  .ctile.dysregt { background: var(--dysreg-tint); border: 1px solid var(--dysreg-border); }
+  .ctile.dysregt { background: var(--tilepurple); }
   .ctile.dysregt .cic, .ctile.dysregt .ct { color: var(--dysreg); }
 
   /* month: locked-patterns preview below the calendar: blurred analytics, crown veil (tap opens Plus) */
