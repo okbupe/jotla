@@ -1009,6 +1009,33 @@ function ok(name, cond) {
   ok('removing a chip sticks', (await page9.locator('button[aria-label="Remove Mrs Price"]').count()) === 0);
   ok('an add on the profile page sticks', (await page9.locator('button[aria-label="Remove Miss Bell"]').count()) === 1);
   ok('the teachers chip persisted too', (await page9.locator('button[aria-label="Remove teachers"]').count()) === 1);
+
+  // the Careful rows and their sheets (Bupe, 7 Aug): no grey sub-lines on the
+  // rows, and the guarded sheet shows in FULL on a standard phone in both
+  // modes. Delete carries a third consequence row, so it is the tall case and
+  // the one that was scrolling; measured, not eyeballed.
+  {
+    const rowText = await page9.locator('#root').innerText();
+    ok('no sub-line under Reset this child', rowText.includes('Reset this child')
+      && !rowText.includes('Clear all logs and documents, keep'));
+    ok('no sub-line under Delete this child', rowText.includes('Delete this child')
+      && !rowText.includes('Permanently remove Nia'));
+    const sheetFit = async (row) => {
+      await page9.getByText(row, { exact: true }).first().click();
+      await page9.waitForTimeout(500);
+      const m = await page9.locator('.j-sheet').last().evaluate(el => ({ s: el.scrollHeight, c: el.clientHeight }));
+      await page9.locator('.j-sheet-scrim').last().click({ position: { x: 5, y: 5 } });
+      await page9.waitForTimeout(400);
+      return m;
+    };
+    const reset = await sheetFit('Reset this child');
+    ok('the reset sheet shows in full, no scroll (' + reset.s + '/' + reset.c + ')', reset.s <= reset.c + 1);
+    const del = await sheetFit('Delete this child');
+    ok('the delete sheet shows in full, no scroll (' + del.s + '/' + del.c + ')', del.s <= del.c + 1);
+    // negative control: the tall case is genuinely tall, so a fit is a real
+    // measurement and not an empty or unrendered sheet.
+    ok('the delete sheet is the taller of the two, and both rendered', del.s > reset.s && reset.s > 400);
+  }
   await page9.locator('button[aria-label="Back"]').first().click();
   await page9.waitForTimeout(400);
 

@@ -3787,13 +3787,11 @@ function ChildProfileScreen({
     icon: "restart",
     danger: true,
     title: "Reset this child",
-    sub: 'Clear all logs and documents, keep ' + profile.name + "'s profile",
     onClick: () => setDangerMode('reset')
   }), canDelete && /*#__PURE__*/React.createElement(MRow, {
     icon: "trash",
     danger: true,
     title: "Delete this child",
-    sub: 'Permanently remove ' + profile.name + "'s record",
     onClick: () => setDangerMode('delete')
   }), /*#__PURE__*/React.createElement(FootNote, null, "Both offer a backup first and need a clear confirm. ", profile.name, "'s record never leaves this phone without you."))), avSheet && /*#__PURE__*/React.createElement("div", {
     className: "j-sheet-scrim",

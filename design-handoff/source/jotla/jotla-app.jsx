@@ -362,23 +362,26 @@ function DeleteChildSheet({ profile, entries, docs, onConfirm, onClose, mode = '
     <div className="j-sheet-scrim" onClick={onClose} style={{ zIndex: 40 }}>
       <div className="j-sheet" onClick={e => e.stopPropagation()} style={{ maxHeight: '92%', overflowY: 'auto' }}>
         <div className="j-sheet-grab" />
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
-          <span style={{ width: 56, height: 56, borderRadius: '50%', background: RED_TINT,
+        {/* Sized so the TALLEST case (delete: three consequence rows) shows in
+            full without scrolling on a standard phone, which is what reset
+            already did (Bupe, 7 Aug). Trim here before adding anything. */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
+          <span style={{ width: 44, height: 44, borderRadius: '50%', background: RED_TINT,
             display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Icon name="shield" size={28} color={RED} />
+            <Icon name="shield" size={23} color={RED} />
           </span>
         </div>
 
         {stage === 'warn' ? (
           <React.Fragment>
-            <h2 className="j-h2" style={{ textAlign: 'center', marginBottom: 6 }}>{titleWarn}</h2>
-            <p className="j-body" style={{ textAlign: 'center', color: 'var(--muted)', marginBottom: 18 }}>
+            <h2 className="j-h2" style={{ textAlign: 'center', marginBottom: 4 }}>{titleWarn}</h2>
+            <p className="j-body" style={{ textAlign: 'center', color: 'var(--muted)', marginBottom: 12 }}>
               {leadWarn}
             </p>
 
-            <div style={{ border: '1px solid rgba(231,76,60,0.3)', borderRadius: 16, overflow: 'hidden', marginBottom: 16 }}>
+            <div style={{ border: '1px solid rgba(231,76,60,0.3)', borderRadius: 16, overflow: 'hidden', marginBottom: 12 }}>
               {consequences.map(([h, b], i) => (
-                <div key={i} style={{ display: 'flex', gap: 12, padding: '13px 14px', alignItems: 'flex-start',
+                <div key={i} style={{ display: 'flex', gap: 12, padding: '10px 14px', alignItems: 'flex-start',
                   borderBottom: i < consequences.length - 1 ? '1px solid var(--line)' : 'none', background: i === 0 ? RED_TINT : 'transparent' }}>
                   <Icon name="close" size={18} color={RED} style={{ flexShrink: 0, marginTop: 2 }} />
                   <div>
@@ -390,7 +393,7 @@ function DeleteChildSheet({ profile, entries, docs, onConfirm, onClose, mode = '
             </div>
 
             {/* backup escape hatch */}
-            <div style={{ background: 'var(--tint-blue)', borderRadius: 16, padding: 14, marginBottom: 18 }}>
+            <div style={{ background: 'var(--tint-blue)', borderRadius: 16, padding: 12, marginBottom: 14 }}>
               <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: backedUp ? 12 : 0 }}>
                 <Icon name="download" size={20} color="var(--blue)" style={{ flexShrink: 0, marginTop: 2 }} />
                 <p className="j-body" style={{ fontSize: 'calc(14.5px * var(--tscale, 1))', color: 'var(--blue)' }}>
@@ -402,7 +405,7 @@ function DeleteChildSheet({ profile, entries, docs, onConfirm, onClose, mode = '
                     <Icon name="check" size={18} color="var(--green)" /> Backup saved to your device. You can re-save it.
                     <button onClick={backup} className="j-press" style={{ marginLeft: 'auto', border: 'none', background: 'none', cursor: 'pointer', color: 'var(--blue)', fontSize: 'calc(13.5px * var(--tscale, 1))', fontWeight: 600 }}>Save again</button>
                   </div>
-                : <button className="j-btn j-btn-soft" onClick={backup} style={{ marginTop: 12, minHeight: 48 }}>
+                : <button className="j-btn j-btn-soft" onClick={backup} style={{ marginTop: 10, minHeight: 48 }}>
                     <Icon name="download" size={19} color="var(--blue)" /> {'Back up ' + name + "'s record"}
                   </button>}
             </div>

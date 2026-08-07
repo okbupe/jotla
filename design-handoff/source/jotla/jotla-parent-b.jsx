@@ -1823,10 +1823,10 @@ function ChildProfileScreen({ nav, profile, entries = [], docs = [] }) {
           <AdultsEditor profile={profile} onChange={nav.setChild} />
 
           <SectionLabel><span style={{ color: 'var(--red)' }}>Careful</span></SectionLabel>
-          <MRow icon="restart" danger title="Reset this child" sub={'Clear all logs and documents, keep ' + profile.name + "'s profile"}
-            onClick={() => setDangerMode('reset')} />
-          {canDelete && <MRow icon="trash" danger title="Delete this child" sub={'Permanently remove ' + profile.name + "'s record"}
-            onClick={() => setDangerMode('delete')} />}
+          {/* No sub-lines on the two Careful rows (Bupe, 7 Aug): the titles say it,
+              and the guarded sheet spells out the consequences in full. */}
+          <MRow icon="restart" danger title="Reset this child" onClick={() => setDangerMode('reset')} />
+          {canDelete && <MRow icon="trash" danger title="Delete this child" onClick={() => setDangerMode('delete')} />}
           <FootNote>Both offer a backup first and need a clear confirm. {profile.name}'s record never leaves this phone without you.</FootNote>
         </div>
       </div>

@@ -840,12 +840,12 @@ function DeleteChildSheet({
     style: {
       display: 'flex',
       justifyContent: 'center',
-      marginBottom: 14
+      marginBottom: 10
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
-      width: 56,
-      height: 56,
+      width: 44,
+      height: 44,
       borderRadius: '50%',
       background: RED_TINT,
       display: 'flex',
@@ -854,34 +854,34 @@ function DeleteChildSheet({
     }
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "shield",
-    size: 28,
+    size: 23,
     color: RED
   }))), stage === 'warn' ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", {
     className: "j-h2",
     style: {
       textAlign: 'center',
-      marginBottom: 6
+      marginBottom: 4
     }
   }, titleWarn), /*#__PURE__*/React.createElement("p", {
     className: "j-body",
     style: {
       textAlign: 'center',
       color: 'var(--muted)',
-      marginBottom: 18
+      marginBottom: 12
     }
   }, leadWarn), /*#__PURE__*/React.createElement("div", {
     style: {
       border: '1px solid rgba(231,76,60,0.3)',
       borderRadius: 16,
       overflow: 'hidden',
-      marginBottom: 16
+      marginBottom: 12
     }
   }, consequences.map(([h, b], i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       display: 'flex',
       gap: 12,
-      padding: '13px 14px',
+      padding: '10px 14px',
       alignItems: 'flex-start',
       borderBottom: i < consequences.length - 1 ? '1px solid var(--line)' : 'none',
       background: i === 0 ? RED_TINT : 'transparent'
@@ -911,8 +911,8 @@ function DeleteChildSheet({
     style: {
       background: 'var(--tint-blue)',
       borderRadius: 16,
-      padding: 14,
-      marginBottom: 18
+      padding: 12,
+      marginBottom: 14
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -968,7 +968,7 @@ function DeleteChildSheet({
     className: "j-btn j-btn-soft",
     onClick: backup,
     style: {
-      marginTop: 12,
+      marginTop: 10,
       minHeight: 48
     }
   }, /*#__PURE__*/React.createElement(Icon, {
