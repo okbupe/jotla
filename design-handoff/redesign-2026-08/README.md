@@ -2,7 +2,7 @@
 
 Direction set by the founder on 2026-08-06 after reviewing Todoist's dark Android app (his reference screenshots live in Vision, `Gemini Gems/Demo`). The board that carries every decision below is [`lookdev-002.html`](lookdev-002.html): open it in a browser, dark pair on top, light pair below, Menu icon options and the D/G/E nav comparison above the frames.
 
-**Status: dark theme LOCKED. Light theme first pass, still being worked. Build not started.** The live prototype and the native app still wear the old look until the build lands; the two-track rule applies when it does.
+**Status: dark theme LOCKED. Light theme first pass. THE WEB BUILD SHIPPED 7 Aug 2026** (app build 2.0.0, sw v2.0.0, boot-assert 240/240 green with a proven negative control, live at https://okbupe.github.io/jotla/). The native mirror is the outstanding half of the two-track rule.
 
 ## The one-line direction
 
