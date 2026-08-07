@@ -45,6 +45,9 @@
   --tileblue: rgba(26,86,168,0.15);
   --tilepurple: rgba(157,52,218,0.14);
   --nonote: #C9C4BC;
+  /* the quick-log context cards need a SOLID ground so their ink contrast is
+     honest and measurable (translucent tints report false ratios) */
+  --ctx-bg: #EAEDF3;
 
   --chip-bg: #ffffff;
   --chip-border: rgba(35,33,29,0.14);
@@ -214,6 +217,7 @@ button, input, select, textarea { font-family: inherit; }
   --tileblue: rgba(47,111,214,0.26);
   --tilepurple: rgba(179,106,226,0.22);
   --nonote: #55524C;
+  --ctx-bg: #393E46;
 
   --chip-bg: #2E2D2A;
   --chip-border: rgba(255,255,255,0.13);
@@ -287,7 +291,7 @@ button, input, select, textarea { font-family: inherit; }
    plum = dysregulation, amber/red = a hard mood), so a colour per question would
    collide with a meaning that already exists. */
 .j-ctx { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-  padding: 10px 6px; cursor: pointer; text-align: center; background: var(--tint-blue);
+  padding: 10px 6px; cursor: pointer; text-align: center; background: var(--ctx-bg);
   transition: transform .12s ease, box-shadow .15s ease, border-color .15s ease;
   -webkit-tap-highlight-color: transparent; }
 .j-ctx:active { transform: scale(0.97); }

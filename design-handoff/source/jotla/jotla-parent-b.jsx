@@ -1157,6 +1157,99 @@ function UnlockScreen({ nav }) {
   );
 }
 
+function InfoPage({ nav, title, subtitle, children }) {
+  return (
+    <div className="j-screen">
+      <PushHeader title={title} subtitle={subtitle} onBack={() => nav.back()} />
+      <div className="j-scroll j-fade">
+        <div className="j-pad" style={{ paddingTop: 4, paddingBottom: 40, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// One explainer card: icon disc, Cal Sans heading, optional status pill on
+// the right, then paragraphs.
+function InfoBlock({ icon, title, pill, children }) {
+  return (
+    <div className="j-card" style={{ padding: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10, flexWrap: 'wrap' }}>
+        <span style={{ width: 38, height: 38, borderRadius: 11, background: 'var(--tint-blue)', flexShrink: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name={icon} size={20} color="var(--blue)" />
+        </span>
+        <span className="j-h3" style={{ flexShrink: 1 }}>{title}</span>
+        {pill}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// A body paragraph inside a block, muted exactly like the old info sheets.
+function InfoP({ children, last = false }) {
+  return <p className="j-body" style={{ color: 'var(--muted)', marginBottom: last ? 0 : 10 }}>{children}</p>;
+}
+
+// The grey status pill the Settings rows use for not-yet features.
+function PlannedPill({ label = 'Planned' }) {
+  return <span className="j-pillbadge" style={{ background: 'var(--tag-grey-bg)', color: 'var(--muted)' }}>{label}</span>;
+}
+
+// One planned-feature row on the About page: title beside its status pill,
+// then a one-line note.
+function PlanRow({ title, note, pill = 'Planned' }) {
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <span style={{ fontFamily: "'Outfit', system-ui", fontWeight: 500, fontSize: 'calc(15.5px * var(--tscale, 1))', color: 'var(--ink)' }}>{title}</span>
+        <PlannedPill label={pill} />
+      </div>
+      <p className="j-sm" style={{ marginTop: 2 }}>{note}</p>
+    </div>
+  );
+}
+
+// About Jotla: THE information page. Structure mirrors the native
+// InfoAboutScreen (4ca5829); the copy is this build's own, merged and deduped
+// from the three folded pages. Every claim traces to this build's code:
+//  - Version: window.JOTLA_BUILD (jotla-ui.jsx), the same number the Settings
+//    footer prints. No typeface credit line (dropped 12 Jul 2026, founder).
+//  - Mission and dates blocks: the folded mission page's copy. "Same day" and
+//    "Added later" are the exact rendered labels (EntryScreen, Day view, the
+//    PDF pack legend); the kind is decided once at save and edits keep a
+//    wording history (nav.updateEntry). No legal-advice claim is made
+//    anywhere; the honest line says so plainly instead.
+//  - "We never send your record anywhere": there is no upload in this source
+//    (no fetch, no XMLHttpRequest, no sendBeacon, no sockets; verified before
+//    this copy was written). The promise is about what WE do: the doors below
+//    move copies only when the parent opens them.
+//  - Where the record lives: localStorage under jotla_* keys (jotla-app.jsx
+//    load/saveJSON); photos and vault files are data URLs inside it, so they
+//    ride the export too. Clearing site data taking the record, the storage
+//    limit, the 2 MB pick-time refusal (DOC_FILE_CAP) and the quota alert
+//    (saveJSON) are all real code paths. No phone-backup claim: that story is
+//    the native app's, not this browser build's.
+//  - Exactly three record-content doors exist, all user-driven: the export
+//    download (SettingsScreen exportData + the DeleteChildSheet backup), the
+//    printable day record (openPrintPack, Plus), and the gate-note teacher
+//    email (mailto draft). Videos are never copied in (the picker keeps a
+//    caption, never the file); "Jotla can only know an export was run" is the
+//    backup health line's own honesty.
+//  - Restore from an export is LIVE in this build (nav.importBackup), so it
+//    sits under Where the record lives, not on the coming board.
+//  - Child mode: leaving it takes a deliberate grown-up press-and-hold
+//    (HoldButton / ChildExitPill) and the system Back is swallowed while it
+//    is open (the popstate handler re-arms), so "safe by design" is code truth.
+//  - Deleting: entry and document deletes sit behind confirms and cannot be
+//    undone; removing a child is the guarded backup-first type-DELETE flow,
+//    and the last child can never be removed (nav.deleteChild).
+//  - The live-now list names only what this build really contains; the
+//    Planned rows mirror the Unlock screen honestly. Plus copy: the Unlock
+//    screen's own hero line and price note, verbatim fragments.
+
 function InfoAboutScreen({ nav }) {
   const FEEDBACK_HREF = 'mailto:hello@sen.help?subject=' + encodeURIComponent('Jotla prototype feedback')
     + '&body=' + encodeURIComponent('What I was trying to do:\n\nWhat I think, or what happened:\n\nWhich screen:\n\nMy phone / browser:\n');
@@ -1543,7 +1636,6 @@ function ChildProfileScreen({ nav, profile, entries = [], docs = [] }) {
   const Cropper = window.PhotoCropper;
   const canDelete = (nav.profiles || []).length > 1;
   const shown = { ...profile, figure: pvFigure || profile.figure, glyph: pvGlyph || profile.glyph };
-  const colourKey = (fig) => { const c = (J.AVATAR_COLOURS || []).find(x => x.figure === fig); return c ? c.key.charAt(0).toUpperCase() + c.key.slice(1) : 'Sky'; };
   const openSheet = () => { setPvFigure(profile.figure); setPvGlyph(profile.glyph || 'initial'); setAvSheet(true); };
   return (
     <div className="j-screen">

@@ -145,7 +145,7 @@ function ok(name, cond) {
     const root = getComputedStyle(document.querySelector('.jotla-root'));
     const asRgb = name => { const p = document.createElement('div'); p.style.color = root.getPropertyValue(name).trim();
       document.body.appendChild(p); const v = getComputedStyle(p).color; p.remove(); return v; };
-    return { bg: getComputedStyle(card).backgroundColor, tint: asRgb('--tint-blue'), white: asRgb('--card'),
+    return { bg: getComputedStyle(card).backgroundColor, tint: asRgb('--ctx-bg'), white: asRgb('--card'),
       q: getComputedStyle(card.querySelector('.j-ctx-q')).color, a: getComputedStyle(card.querySelector('.j-ctx-a')).color,
       blue: asRgb('--blue'), muted: asRgb('--muted') };
   });
@@ -577,11 +577,8 @@ function ok(name, cond) {
   ok('Settings gains App lock and the Daily reminder', cogNow.includes('App lock') && cogNow.includes('Daily reminder'));
   ok('the three old info pages are out of the bundle', await page4.evaluate(() =>
     typeof window.InfoMissionScreen === 'undefined' && typeof window.InfoPrivacyScreen === 'undefined' && typeof window.InfoDataScreen === 'undefined'));
-  await page4.locator('button[aria-label="Back"]').first().click();
-  await page4.waitForTimeout(400);
-  await page4.locator('button[aria-label="Settings"]').first().click();
-  await page4.waitForTimeout(450);
   await page4.getByText('About Jotla', { exact: true }).first().click();
+  await page4.waitForTimeout(700);
   await page4.waitForTimeout(500);
   const aboutText = await page4.locator('#root').innerText();
   ok('About carries the live build number', aboutText.includes('Early test build 2.0.0'));
@@ -689,11 +686,11 @@ function ok(name, cond) {
   page6.on('pageerror', e => errors6.push(String(e)));
   await page6.goto(URL_APP, { waitUntil: 'networkidle' });
   await page6.waitForTimeout(1200);
-  await page6.locator('button[aria-label="Documents"]').click();
+  await page6.getByText('Documents', { exact: true }).last().click();
   await page6.waitForTimeout(500);
   await page6.getByText('Documents', { exact: true }).first().click();
   await page6.waitForTimeout(400);
-  await page6.getByText('Add document').first().click();
+  await page6.getByText('Add a document').first().click();
   await page6.waitForTimeout(500);
   const addFree = await page6.locator('#root').innerText();
   ok('free Add document shows the locked vault-upload card', addFree.includes('Add the document itself') && addFree.includes('Keep the letter with its details. Part of Plus.'));
@@ -715,11 +712,11 @@ function ok(name, cond) {
   });
   await page7.goto(URL_APP, { waitUntil: 'networkidle' });
   await page7.waitForTimeout(1200);
-  await page7.locator('button[aria-label="Documents"]').click();
+  await page7.getByText('Documents', { exact: true }).last().click();
   await page7.waitForTimeout(500);
   await page7.getByText('Documents', { exact: true }).first().click();
   await page7.waitForTimeout(400);
-  await page7.getByText('Add document').first().click();
+  await page7.getByText('Add a document').first().click();
   await page7.waitForTimeout(500);
   const addPlus = await page7.locator('#root').innerText();
   ok('Plus Add document offers the live upload tiles', addPlus.includes('Capture') && addPlus.includes('Pick a file'));
@@ -901,11 +898,13 @@ function ok(name, cond) {
   await page9.waitForTimeout(1200);
 
   // onboarding gathers the circle
-  await page9.locator('button[aria-label="Switch child, or hold to edit"]').click();
-  await page9.waitForTimeout(400);
-  // The tab bar overlays the bottom sliver of the profile sheet (z 40 over 30),
-  // so tap the upper half of the row, exactly where a thumb lands.
-  await page9.locator('button:has-text("Add a child")').click({ position: { x: 60, y: 14 } });
+  await page9.getByText('Menu', { exact: true }).last().click();
+  await page9.waitForTimeout(450);
+  await page9.locator('button[aria-label="Settings"]').first().click();
+  await page9.waitForTimeout(450);
+  await page9.getByText('Children', { exact: true }).first().click();
+  await page9.waitForTimeout(450);
+  await page9.getByText('Add another child', { exact: true }).click();
   await page9.waitForTimeout(500);
   const addChildText = await page9.locator('#root').innerText();
   ok('onboarding offers the optional adults section', addChildText.includes('The adults around them') && addChildText.includes('one-tap answers'));
@@ -924,13 +923,12 @@ function ok(name, cond) {
   await page9.getByText('Skip', { exact: true }).first().click(); // leave the tour
   await page9.waitForTimeout(500);
 
-  // the child editor round-trips the circle
+  // the child PROFILE PAGE round-trips the circle (redesign: page, not sheet)
   await page9.getByText('Menu', { exact: true }).last().click();
   await page9.waitForTimeout(450);
-  await page9.getByText('Edit name, school, colour and avatar').click();
+  await page9.locator('button[aria-label^="Open Nia"]').first().click();
   await page9.waitForTimeout(450);
-  // Bring the sheet's lower fields clear of the tab bar overlay before acting.
-  await page9.locator('.j-sheet').evaluate(el => { el.scrollTop = el.scrollHeight; });
+  await page9.locator('.j-scroll').first().evaluate(el => { el.scrollTop = el.scrollHeight; });
   await page9.waitForTimeout(250);
   ok('edit sheet grows the adults section', (await page9.locator('#root').innerText()).includes('The adults around Nia'));
   ok('a name still in the box counted on Create', (await page9.locator('button[aria-label="Remove Mr Okafor"]').count()) === 1);
@@ -940,19 +938,22 @@ function ok(name, cond) {
   await page9.locator('input[aria-label="Add an adult"]').fill('Miss Bell');
   await page9.getByText('Add', { exact: true }).first().click();
   await page9.waitForTimeout(250);
-  // 'teachers' stays in the box (Done must count it) AND collides with a
-  // generic chip word, so child mode must never show it twice.
+  // 'teachers' collides with a generic chip word, so child mode must never
+  // show it twice. (The page commits on Add: the old still-in-the-box-on-Done
+  // rule belonged to the sheet's Done button, which no longer exists.)
   await page9.locator('input[aria-label="Add an adult"]').fill('teachers');
-  await page9.getByText('Done', { exact: true }).click();
+  await page9.getByText('Add', { exact: true }).first().click();
+  await page9.waitForTimeout(250);
+  await page9.locator('button[aria-label="Back"]').first().click();
   await page9.waitForTimeout(450);
-  await page9.getByText('Edit name, school, colour and avatar').click();
+  await page9.locator('button[aria-label^="Open Nia"]').first().click();
   await page9.waitForTimeout(450);
-  await page9.locator('.j-sheet').evaluate(el => { el.scrollTop = el.scrollHeight; });
+  await page9.locator('.j-scroll').first().evaluate(el => { el.scrollTop = el.scrollHeight; });
   await page9.waitForTimeout(250);
   ok('removing a chip sticks', (await page9.locator('button[aria-label="Remove Mrs Price"]').count()) === 0);
-  ok('an add in the edit sheet sticks', (await page9.locator('button[aria-label="Remove Miss Bell"]').count()) === 1);
-  ok('a name still in the box counts on Done', (await page9.locator('button[aria-label="Remove teachers"]').count()) === 1);
-  await page9.getByText('Done', { exact: true }).click();
+  ok('an add on the profile page sticks', (await page9.locator('button[aria-label="Remove Miss Bell"]').count()) === 1);
+  ok('the teachers chip persisted too', (await page9.locator('button[aria-label="Remove teachers"]').count()) === 1);
+  await page9.locator('button[aria-label="Back"]').first().click();
   await page9.waitForTimeout(400);
 
   // child mode: the named adults lead the who-chips, deduped against the generics
@@ -1012,7 +1013,7 @@ function ok(name, cond) {
   await page10.waitForTimeout(1200);
 
   // item 39: the two Today action tiles now wear the card border + drop shadow
-  const tileCss = await page10.locator('button.j-press:has-text("Dysregulation")').first().evaluate(el => {
+  const tileCss = await page10.locator('button.j-ctile:has-text("Dysregulation")').first().evaluate(el => {
     const s = getComputedStyle(el);
     return { shadow: s.boxShadow, borderW: parseFloat(s.borderTopWidth), borderStyle: s.borderTopStyle };
   });
@@ -1023,9 +1024,13 @@ function ok(name, cond) {
   // item 36: pick a real photo for a NEW child through the actual UI (file input
   // -> crop step -> Use photo), then prove it renders as an <img> everywhere a
   // child is shown, rides an export, and clears back to the glyph.
-  await page10.locator('button[aria-label="Switch child, or hold to edit"]').click();
-  await page10.waitForTimeout(400);
-  await page10.locator('button:has-text("Add a child")').click({ position: { x: 60, y: 14 } });
+  await page10.getByText('Menu', { exact: true }).last().click();
+  await page10.waitForTimeout(450);
+  await page10.locator('button[aria-label="Settings"]').first().click();
+  await page10.waitForTimeout(450);
+  await page10.getByText('Children', { exact: true }).first().click();
+  await page10.waitForTimeout(450);
+  await page10.getByText('Add another child', { exact: true }).click();
   await page10.waitForTimeout(500);
   ok('Add child starts on the glyph (no photo <img> yet)', (await page10.locator('.j-screen img[src^="data:image"]').count()) === 0);
   // drive the hidden photo file input with a real PNG built in the page
@@ -1051,33 +1056,41 @@ function ok(name, cond) {
   await page10.waitForTimeout(600);
   await page10.getByText('Skip', { exact: true }).first().click();
   await page10.waitForTimeout(500);
-  ok('the photo shows in the header avatar', (await page10.locator('.j-appheader img[src^="data:image"]').count()) === 1);
+  // the header is gone: the child's photo now leads the Menu title
   await page10.getByText('Menu', { exact: true }).last().click();
   await page10.waitForTimeout(450);
-  ok('the photo shows on the Settings profile card', (await page10.locator('img[src^="data:image"]').count()) >= 1);
+  ok('the photo leads the Menu title', (await page10.locator('img[src^="data:image"]').count()) >= 1);
 
   // the export carries the photo (web reality: the data URL rides inside the
   // export file, unlike native, where media never leaves the phone)
+  await page10.getByText('Backup and Restore', { exact: true }).first().click();
+  await page10.waitForTimeout(500);
+  await page10.getByText('Export my data', { exact: false }).first().click();
+  await page10.waitForTimeout(400);
   const [download] = await Promise.all([
     page10.waitForEvent('download'),
-    page10.getByText('Export my data', { exact: false }).first().click(),
+    page10.getByText('Export', { exact: true }).last().click(),
   ]);
   const exportJson = require('fs').readFileSync(await download.path(), 'utf8');
   let exported = null; try { exported = JSON.parse(exportJson); } catch (e) {}
   ok('the export carries the child photo as a data URL',
     !!exported && !!exported.child && typeof exported.child.photo === 'string' && exported.child.photo.startsWith('data:image'));
 
-  // clearing the photo falls back to the coloured glyph
-  await page10.getByText('Edit name, school, colour and avatar').click();
+  // clearing the photo falls back to the coloured glyph, on the profile page now
+  await page10.locator('button[aria-label="Back"]').first().click();
+  await page10.waitForTimeout(400);
+  await page10.locator('button[aria-label^="Open Pip"]').first().click();
   await page10.waitForTimeout(450);
-  ok('the edit sheet offers Remove while a photo is set', await page10.getByText('Remove', { exact: true }).first().isVisible());
+  ok('the profile offers Remove while a photo is set', await page10.getByText('Remove', { exact: true }).first().isVisible());
   await page10.getByText('Remove', { exact: true }).first().click();
   await page10.waitForTimeout(300);
   ok('removing the photo clears every <img> (glyph fallback)', (await page10.locator('img[src^="data:image"]').count()) === 0);
-  await page10.getByText('Done', { exact: true }).click();
+  await page10.locator('button[aria-label="Back"]').first().click();
   await page10.waitForTimeout(400);
 
   // item 38: the About coming board carries the honest Google Drive row
+  await page10.locator('button[aria-label="Settings"]').first().click();
+  await page10.waitForTimeout(450);
   await page10.getByText('About Jotla', { exact: true }).first().click();
   await page10.waitForTimeout(500);
   const aboutText13 = await page10.locator('#root').innerText();
@@ -1097,7 +1110,9 @@ function ok(name, cond) {
   await page11.waitForTimeout(1200);
   await page11.getByText('Menu', { exact: true }).last().click();
   await page11.waitForTimeout(450);
-  ok('a fresh device starts with no imported photo', (await page11.locator('.j-appheader img[src^="data:image"]').count()) === 0);
+  ok('a fresh device starts with no imported photo', (await page11.locator('img[src^="data:image"]').count()) === 0);
+  await page11.getByText('Backup and Restore', { exact: true }).first().click();
+  await page11.waitForTimeout(500);
   // feed the captured export straight into the live Restore file input
   await page11.evaluate((jsonStr) => {
     const f = new File([jsonStr], 'jotla-pip-export.json', { type: 'application/json' });
@@ -1107,7 +1122,9 @@ function ok(name, cond) {
     input.dispatchEvent(new Event('change', { bubbles: true }));
   }, exportJson);
   await page11.waitForTimeout(800);
-  ok('the imported child brings its photo back as an <img>', (await page11.locator('.j-appheader img[src^="data:image"]').count()) === 1);
+  await page11.locator('button[aria-label="Back"]').first().click();
+  await page11.waitForTimeout(450);
+  ok('the imported child brings its photo back as an <img>', (await page11.locator('img[src^="data:image"]').count()) >= 1);
   ok('no uncaught page errors across suite 13b', errors11.length === 0);
   await ctx11.close();
 
@@ -1204,9 +1221,13 @@ function ok(name, cond) {
   await page12.waitForTimeout(400);
 
   // item 44 verify-only: with a photo in place, Change photo + Remove share one row
-  await page12.locator('button[aria-label="Switch child, or hold to edit"]').click();
-  await page12.waitForTimeout(400);
-  await page12.locator('button:has-text("Add a child")').click({ position: { x: 60, y: 14 } });
+  await page12.getByText('Menu', { exact: true }).last().click();
+  await page12.waitForTimeout(450);
+  await page12.locator('button[aria-label="Settings"]').first().click();
+  await page12.waitForTimeout(450);
+  await page12.getByText('Children', { exact: true }).first().click();
+  await page12.waitForTimeout(450);
+  await page12.getByText('Add another child', { exact: true }).click();
   await page12.waitForTimeout(500);
   await page12.evaluate(async () => {
     const c = document.createElement('canvas'); c.width = 24; c.height = 24;
@@ -1336,13 +1357,17 @@ function ok(name, cond) {
   // every size, and the middle one is where a linear assumption would quietly fail:
   // wrapping is a step function, so Large can need proportionally more than either
   // neighbour. Only measuring the ends would miss it.
-  for (const scale of ['Standard text', 'Large text', 'Extra large text']) {
+  for (const scale of ['Standard', 'Large', 'Extra large']) {
     // Fresh load per pass: Tips' Skip goes back to the Dysregulation screen, not
-    // home, so the tab bar is not there to find Settings on the second lap.
+    // home, so the tab bar is not there to find the cog on the second lap.
     await page15.goto(URL_APP, { waitUntil: 'networkidle' });
     await page15.waitForTimeout(1000);
     await page15.getByText('Menu', { exact: true }).last().click();
     await page15.waitForTimeout(450);
+    await page15.locator('button[aria-label="Settings"]').first().click();
+    await page15.waitForTimeout(450);
+    await page15.getByText('Text size', { exact: true }).first().click();
+    await page15.waitForTimeout(350);
     await page15.locator(`[role="radio"][aria-label="${scale}"]`).click();
     await page15.waitForTimeout(300);
     await page15.getByText('Take the tour', { exact: false }).first().click();
@@ -1361,6 +1386,8 @@ function ok(name, cond) {
     ok(`tour/${scale}: the illustration never collapses`, Math.min(...tour.map(r => r.img)) >= 96);
     await page15.locator('button:has-text("Skip")').first().click();
     await page15.waitForTimeout(500);
+    await page15.getByText('Today', { exact: true }).last().click();
+    await page15.waitForTimeout(450);
 
     await page15.getByText('Dysregulation', { exact: false }).first().click();
     await page15.waitForTimeout(600);
@@ -1422,7 +1449,11 @@ function ok(name, cond) {
   await page15.waitForTimeout(1000);
   await page15.getByText('Menu', { exact: true }).last().click();
   await page15.waitForTimeout(450);
-  await page15.locator('[role="radio"][aria-label="Extra large text"]').click();
+  await page15.locator('button[aria-label="Settings"]').first().click();
+  await page15.waitForTimeout(450);
+  await page15.getByText('Text size', { exact: true }).first().click();
+  await page15.waitForTimeout(350);
+  await page15.locator('[role="radio"][aria-label="Extra large"]').click();
   await page15.waitForTimeout(300);
   await page15.getByText('Take the tour', { exact: false }).first().click();
   await page15.waitForTimeout(700);
