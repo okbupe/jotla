@@ -265,6 +265,36 @@ function openPrintPack(childLabel, rangeLabel, list) {
   return true;
 }
 
+// One document as a clean printable record (founder question, 7 Aug: "what are
+// they supposed to do with it?"). The answer: read it, edit it, and take it
+// back out. This is the taking-out: the details, the action, the history and
+// any photos on one page, through the same print-to-PDF door the day record
+// uses. Attached FILES cannot ride a print page; they open full from the
+// document's own page, so here they are listed by name. Free for every tier:
+// saved data is never held hostage. Documents stay OUT of the day-record PDF
+// on purpose until Bupe decides otherwise (open question, logged 7 Aug).
+function openPrintDoc(d, attachments) {
+  const J = window.JOTLA;
+  const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const row = (l, v) => v ? '<p style="margin:6px 0;font-size:13px;"><strong>' + esc(l) + ':</strong> ' + esc(v) + '</p>' : '';
+  const photos = attachments.filter(m => m.kind === 'photo');
+  const files = attachments.filter(m => m.kind === 'file');
+  const w = window.open('', '_blank');
+  if (!w) {
+    alert('Your browser blocked the new tab. Allow pop-ups for this page and try again.');
+    return false;
+  }
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Jotla document record</title></head>' + '<body style="font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#14223b;max-width:720px;margin:24px auto;padding:0 16px;">' + '<p style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8892a6;margin:0 0 6px;">Document record · Jotla</p>' + '<h1 style="font-size:22px;margin:0 0 2px;">' + esc(d.title) + '</h1>' + '<p style="font-size:12.5px;margin:0 0 14px;color:#5b6780;">' + esc(d.type) + ' · from ' + esc(d.from) + ' · Prepared ' + esc(J.fmtShort(J.TODAY_ISO)) + ' ' + esc(J.TODAY_ISO.slice(0, 4)) + '</p>' + row('Received', J.fmtLong(d.received) + ' ' + d.received.slice(0, 4)) + row('About', d.about) + row('Action needed', d.action) + (d.editedOn ? '<p style="margin:6px 0;font-size:11.5px;color:#8892a6;">Details last edited ' + esc(J.fmtShort(d.editedOn)) + '. Earlier details stay on the record below.</p>' : '') + (d.history && d.history.length ? '<div style="margin-top:10px;padding:10px 14px;background:#f5f7fb;border-radius:8px;">' + '<p style="margin:0 0 4px;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:#8892a6;">What it said before</p>' + d.history.map(h => '<p style="margin:4px 0;font-size:12px;">Until ' + esc(J.fmtShort(h.on)) + ' ' + esc(h.on.slice(0, 4)) + ': ' + esc(h.title) + (h.about ? ' · ' + esc(h.about) : '') + (h.action ? ' · Action: ' + esc(h.action) : '') + '</p>').join('') + '</div>' : '') + (files.length ? '<p style="margin:12px 0 0;font-size:12px;color:#5b6780;">Attached file' + (files.length > 1 ? 's' : '') + ' (open from the document in Jotla): ' + files.map(m => esc(m.name || 'File')).join(', ') + '</p>' : '') + photos.map(m => '<img src="' + m.dataUrl + '" style="display:block;width:100%;margin-top:14px;border-radius:8px;page-break-inside:avoid;" alt="Photo of the document">').join('') + '</body></html>');
+  w.document.close();
+  w.focus();
+  setTimeout(() => {
+    try {
+      w.print();
+    } catch (e) {}
+  }, 500);
+  return true;
+}
+
 // How many things ride a document row: the media attachments plus the older
 // single "scan" photo earlier builds kept (still honoured, never migrated away
 // silently).
@@ -275,12 +305,48 @@ function docAttachedCount(doc) {
 // A document log card (file layout). When the document itself is kept (12 Jul
 // 2026), a small paperclip count rides the meta row, so the parent can see
 // which letters carry their file at a glance.
+// One silhouette per document type (founder, 7 Aug: "make the icons match the
+// document"), echoing the type pill's colour so a row reads at a glance.
+function docTypeStyle(type) {
+  return {
+    Letter: {
+      icon: 'mail',
+      bg: 'var(--tint-amber)',
+      fg: 'var(--amber)'
+    },
+    Email: {
+      icon: 'at',
+      bg: 'var(--tint-green)',
+      fg: 'var(--green-ink)'
+    },
+    Plan: {
+      icon: 'clipboard',
+      bg: 'var(--tint-blue)',
+      fg: 'var(--blue)'
+    },
+    Report: {
+      icon: 'doc',
+      bg: 'var(--tag-grey-bg)',
+      fg: 'var(--muted)'
+    },
+    Assessment: {
+      icon: 'chart',
+      bg: 'var(--tag-grey-bg)',
+      fg: 'var(--muted)'
+    }
+  }[type] || {
+    icon: 'folder',
+    bg: 'var(--tag-grey-bg)',
+    fg: 'var(--muted)'
+  };
+}
 function DocCard({
   doc,
   onClick
 }) {
   const J = window.JOTLA;
   const attached = docAttachedCount(doc);
+  const ts = docTypeStyle(doc.type);
   return /*#__PURE__*/React.createElement("div", {
     className: "j-card j-press",
     onClick: onClick,
@@ -296,16 +362,16 @@ function DocCard({
       width: 46,
       height: 46,
       borderRadius: 12,
-      background: 'var(--tint-blue)',
+      background: ts.bg,
       flexShrink: 0,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center'
     }
   }, /*#__PURE__*/React.createElement(Icon, {
-    name: "doc",
+    name: ts.icon,
     size: 22,
-    color: "var(--blue)"
+    color: ts.fg
   })), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1,
@@ -1683,16 +1749,16 @@ function DocScreen({
       width: 52,
       height: 52,
       borderRadius: 14,
-      background: 'var(--tint-blue)',
+      background: docTypeStyle(d.type).bg,
       flexShrink: 0,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center'
     }
   }, /*#__PURE__*/React.createElement(Icon, {
-    name: "doc",
+    name: docTypeStyle(d.type).icon,
     size: 26,
-    color: "var(--blue)"
+    color: docTypeStyle(d.type).fg
   })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
     className: "j-h3",
     style: {
@@ -1843,7 +1909,17 @@ function DocScreen({
     style: {
       fontSize: 'calc(15px * var(--tscale, 1))'
     }
-  }, h.title, h.about ? ' · ' + h.about : '', h.action ? ' · Action: ' + h.action : '')))), /*#__PURE__*/React.createElement("div", {
+  }, h.title, h.about ? ' · ' + h.about : '', h.action ? ' · Action: ' + h.action : '')))), /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-ghost",
+    style: {
+      color: 'var(--blue)'
+    },
+    onClick: () => openPrintDoc(d, attachments)
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "download",
+    size: 18,
+    color: "var(--blue)"
+  }), " Print or save as PDF"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       gap: 10
@@ -2024,12 +2100,68 @@ function TermCard({
   }, per));
 }
 function UnlockScreen({
-  nav
+  nav,
+  initialTier
 }) {
-  const [tier, setTier] = useStateB('plus'); // plus | ai
+  const [tier, setTier] = useStateB(initialTier === 'ai' ? 'ai' : 'plus'); // plus | ai
   const [slide, setSlide] = useStateB(0);
   const slides = tier === 'ai' ? AI_SLIDES : PLUS_SLIDES;
-  const s = slides[Math.min(slide, slides.length - 1)];
+  // The feature rail follows the finger (founder, 7 Aug: dots alone are not a
+  // carousel). Pointer events cover touch and mouse in one path; touch-action
+  // pan-y leaves vertical scrolling with the page and the horizontal axis with
+  // us. Drag is live px offset on top of the slide's own -100% step; release
+  // snaps to the nearest slide, with a short throw counting as intent.
+  // The live gesture rides a REF, never state closures: a fast flick lands
+  // down-move-up inside one frame, before React re-renders, and handlers
+  // reading state would see stale zeros and drop the swipe (found empirically,
+  // 7 Aug). State only mirrors the ref for rendering the rail.
+  const [drag, setDrag] = useStateB(0);
+  const [dragging, setDragging] = useStateB(false);
+  const swipe = useRefB({
+    x: 0,
+    y: 0,
+    horiz: null,
+    on: false,
+    dx: 0,
+    t: 0
+  });
+  const onDown = e => {
+    swipe.current = {
+      x: e.clientX,
+      y: e.clientY,
+      horiz: null,
+      on: true,
+      dx: 0,
+      t: e.timeStamp
+    };
+    setDragging(true);
+    setDrag(0);
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch (x) {}
+  };
+  const onMove = e => {
+    const s = swipe.current;
+    if (!s.on) return;
+    const dx = e.clientX - s.x,
+      dy = e.clientY - s.y;
+    if (s.horiz === null && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) s.horiz = Math.abs(dx) > Math.abs(dy);
+    if (!s.horiz) return;
+    // past either end the rail resists instead of scrolling into nothing
+    const atEdge = slide === 0 && dx > 0 || slide === slides.length - 1 && dx < 0;
+    s.dx = atEdge ? dx * 0.35 : dx;
+    setDrag(s.dx);
+  };
+  const onUp = e => {
+    const s = swipe.current;
+    if (!s.on) return;
+    s.on = false;
+    setDragging(false);
+    // a long pull or a short sharp flick both count as intent
+    const flick = Math.abs(s.dx) > 18 && e.timeStamp - s.t < 250;
+    if (Math.abs(s.dx) > 55 || flick) setSlide(v => Math.max(0, Math.min(slides.length - 1, v + (s.dx < 0 ? 1 : -1))));
+    setDrag(0);
+  };
   const seg = (id, label) => {
     const on = tier === id;
     return /*#__PURE__*/React.createElement("button", {
@@ -2076,17 +2208,17 @@ function UnlockScreen({
       width: 34,
       height: 34,
       borderRadius: '50%',
-      background: PLUS_GRAD,
+      background: tier === 'ai' ? PREMIUM_GRAD : PLUS_GRAD,
       flexShrink: 0,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      boxShadow: '0 6px 14px -6px rgba(60,42,114,0.5)'
+      boxShadow: tier === 'ai' ? '0 6px 14px -6px rgba(20,41,74,0.5)' : '0 6px 14px -6px rgba(60,42,114,0.5)'
     }
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "crown",
     size: 18,
-    color: "#EBBA4D"
+    color: tier === 'ai' ? '#E6B85C' : '#EBBA4D'
   })), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1,
@@ -2120,7 +2252,7 @@ function UnlockScreen({
       flex: 1,
       display: 'flex',
       flexDirection: 'column',
-      justifyContent: 'center',
+      justifyContent: 'flex-start',
       minHeight: 0,
       padding: '14px 0'
     }
@@ -2157,7 +2289,8 @@ function UnlockScreen({
     className: "j-sm",
     style: {
       marginTop: 6,
-      lineHeight: 1.4
+      lineHeight: 1.4,
+      minHeight: 'calc(37px * var(--tscale, 1))'
     }
   }, tier === 'ai' ? /*#__PURE__*/React.createElement(React.Fragment, null, "The deadlines, the rights and the letters,", /*#__PURE__*/React.createElement("br", null), "kept current on your side.") : /*#__PURE__*/React.createElement(React.Fragment, null, "The tools to spot patterns", /*#__PURE__*/React.createElement("br", null), "and make your case."))), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -2166,9 +2299,34 @@ function UnlockScreen({
       margin: '0 auto',
       textAlign: 'center'
     }
+  }, /*#__PURE__*/React.createElement("div", {
+    onPointerDown: onDown,
+    onPointerMove: onMove,
+    onPointerUp: onUp,
+    onPointerCancel: onUp,
+    style: {
+      overflow: 'hidden',
+      touchAction: 'pan-y',
+      cursor: dragging ? 'grabbing' : 'grab',
+      userSelect: 'none',
+      WebkitUserSelect: 'none'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      transform: 'translateX(calc(' + -slide * 100 + '% + ' + drag + 'px))',
+      transition: dragging ? 'none' : 'transform .3s cubic-bezier(.25,.8,.35,1)'
+    }
+  }, slides.map((x, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      flex: '0 0 100%',
+      minWidth: 0
+    }
   }, /*#__PURE__*/React.createElement("img", {
-    src: s.img,
+    src: x.img,
     alt: "",
+    draggable: false,
     style: {
       width: '100%',
       height: 158,
@@ -2185,14 +2343,15 @@ function UnlockScreen({
       color: 'var(--ink)',
       margin: '11px 0 0'
     }
-  }, s.t), /*#__PURE__*/React.createElement("p", {
+  }, x.t), /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 'calc(13px * var(--tscale, 1))',
       color: 'var(--muted)',
       lineHeight: 1.45,
-      margin: '4px 0 0'
+      margin: '4px 0 0',
+      minHeight: 'calc(38px * var(--tscale, 1))'
     }
-  }, s.c), /*#__PURE__*/React.createElement("div", {
+  }, x.c))))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       gap: 6,
@@ -2302,7 +2461,7 @@ function UnlockScreen({
       lineHeight: 1.45,
       margin: '8px 0 0'
     }
-  }, "Plus renews automatically at the end of its term: \xA329 a month, \xA349 every 6 months or \xA379 a year, charged to your Google Play account until you cancel. Cancel any time in Subscriptions on Google Play, at least 24 hours before the term ends, and Plus stays on until the day it runs out. A subscription only ever switches off the paid tools.")) : /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  }, "Plus renews automatically at the end of its term: \xA329 a month, \xA349 every 6 months or \xA379 a year, charged to your Google Play account until you cancel. Cancel any time in Subscriptions on Google Play, at least 24 hours before the term ends, and Plus stays on until the day it runs out. A subscription only ever switches off the paid tools.", /*#__PURE__*/React.createElement("br", null), "It never touches your history.")) : /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       gap: 10
@@ -3083,7 +3242,7 @@ function SettingsScreen({
     name: "settings",
     size: 23,
     color: "var(--muted)"
-  }))), /*#__PURE__*/React.createElement("button", {
+  }))), !nav.plus ? /*#__PURE__*/React.createElement("button", {
     className: "j-press",
     onClick: () => nav.go('unlock'),
     style: {
@@ -3127,7 +3286,53 @@ function SettingsScreen({
       color: 'rgba(255,255,255,0.82)',
       marginTop: 2
     }
-  }, nav.plus ? 'Active. Your record is always yours.' : 'Get the best experience.'))), /*#__PURE__*/React.createElement(SectionLabel, null, "Your record"), /*#__PURE__*/React.createElement(MRow, {
+  }, "Get the best experience."))) : /*#__PURE__*/React.createElement("button", {
+    className: "j-press",
+    onClick: () => nav.go('unlock', {
+      tier: 'ai'
+    }),
+    style: {
+      width: '100%',
+      textAlign: 'left',
+      border: 'none',
+      cursor: 'pointer',
+      background: PREMIUM_GRAD,
+      borderRadius: 16,
+      padding: 16,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 14,
+      boxShadow: '0 10px 22px -8px rgba(20,41,74,0.5)',
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "sparkle",
+    size: 28,
+    color: "#E6B85C",
+    style: {
+      flexShrink: 0
+    }
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      flex: 1,
+      minWidth: 0
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'block',
+      fontFamily: "'Outfit', system-ui",
+      fontWeight: 600,
+      fontSize: 'calc(16.5px * var(--tscale, 1))',
+      color: '#fff'
+    }
+  }, "Jotla AI"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'block',
+      fontSize: 'calc(13px * var(--tscale, 1))',
+      color: 'rgba(255,255,255,0.82)',
+      marginTop: 2
+    }
+  }, "Arriving 2027. See what it will do."))), /*#__PURE__*/React.createElement(SectionLabel, null, "Your record"), /*#__PURE__*/React.createElement(MRow, {
     icon: "cloudup",
     title: "Backup and Restore",
     onClick: () => nav.go('backup')
@@ -3190,7 +3395,27 @@ function AppSettingsScreen({
     title: "Children",
     sub: kids,
     onClick: () => nav.go('children')
-  }), /*#__PURE__*/React.createElement(SectionLabel, null, "Appearance"), /*#__PURE__*/React.createElement(MRow, {
+  }), nav.plus && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SectionLabel, null, "Membership"), /*#__PURE__*/React.createElement(MRow, {
+    iconEl: /*#__PURE__*/React.createElement(Icon, {
+      name: "crown",
+      size: 22,
+      color: "var(--gold)",
+      style: {
+        flexShrink: 0
+      }
+    }),
+    title: "Jotla Plus",
+    sub: "Everything unlocked on this phone",
+    trailing: /*#__PURE__*/React.createElement("span", {
+      className: "j-pillbadge",
+      style: {
+        background: 'var(--tint-green)',
+        color: 'var(--green-ink)',
+        border: '1px solid var(--green)'
+      }
+    }, "Active"),
+    onClick: () => nav.go('unlock')
+  })), /*#__PURE__*/React.createElement(SectionLabel, null, "Appearance"), /*#__PURE__*/React.createElement(MRow, {
     icon: "palette",
     title: "Theme",
     sub: themeLabel,

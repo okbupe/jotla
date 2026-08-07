@@ -55,6 +55,11 @@ function Icon({ name, size = 24, color = 'currentColor', stroke = 2, fill = fals
     finger: <><path d="M5 9.2A7.6 7.6 0 0 1 12 4.6a7.6 7.6 0 0 1 7 4.6" /><path d="M7.4 12.2a4.7 4.7 0 0 1 9.4 0v1.9a11.4 11.4 0 0 1-.95 4.7" /><path d="M9.8 12.2a2.35 2.35 0 0 1 4.7 0v1.9c0 2.1-.3 3.8-.85 5.3" /><path d="M12 12.7v1.4c0 2.4-.4 4.4-1.15 6.05" /></>,
     dots9: <><circle cx="6" cy="6" r="1.15" /><circle cx="12" cy="6" r="1.15" /><circle cx="18" cy="6" r="1.15" /><circle cx="6" cy="12" r="1.15" /><circle cx="12" cy="12" r="1.15" /><circle cx="18" cy="12" r="1.15" /><circle cx="6" cy="18" r="1.15" /><circle cx="12" cy="18" r="1.15" /><circle cx="18" cy="18" r="1.15" /></>,
     upload: <><path d="M12 14V4M8 7.5l4-4 4 4" /><path d="M5 19.5h14" /></>,
+    /* the Documents kit: one silhouette per document type (7 Aug) */
+    at: <><circle cx="12" cy="12" r="3.4" /><path d="M15.4 12v1.3a2.3 2.3 0 0 0 4.6 0V12a8 8 0 1 0-3.1 6.3" /></>,
+    clipboard: <><rect x="5" y="4.5" width="14" height="16" rx="2.5" /><rect x="9" y="3" width="6" height="3.5" rx="1.2" /><path d="M9 11.5h6M9 15h6" /></>,
+    chart: <><path d="M4 20h16" /><path d="M7 20v-6M12 20V7M17 20v-9" /></>,
+    folder: <><path d="M3.5 7a2 2 0 0 1 2-2h4l2 2.5h7a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z" /></>,
     person: <><circle cx="12" cy="8" r="3.6" /><path d="M5.5 20a6.5 6.5 0 0 1 13 0" /></>,
     sun: <><circle cx="12" cy="12" r="4" /><path d="M12 2.8v2M12 19.2v2M2.8 12h2M19.2 12h2M5.5 5.5l1.4 1.4M17.1 17.1l1.4 1.4M18.5 5.5l-1.4 1.4M6.9 17.1l-1.4 1.4" /></>,
     music: <><path d="M9 18V6l8-2v12" /><circle cx="7" cy="18" r="2.2" /><circle cx="15" cy="16" r="2.2" /></>,

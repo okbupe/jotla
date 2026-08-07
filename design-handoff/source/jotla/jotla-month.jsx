@@ -2,8 +2,11 @@
 const { useState: useStateM } = React;
 
 function TabTitle({ title, sub, right }) {
+  // The title and the corner icon share one line: centre-align the pair so the
+  // glyph's optical middle sits level with the title (founder, 7 Aug: the
+  // flex-end version left the word visibly below the icon line).
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 16 }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
       <div>
         <h1 className="j-h1" style={{ fontSize: 'calc(28px * var(--tscale, 1))' }}>{title}</h1>
         {sub && <p className="j-sm" style={{ marginTop: 4 }}>{sub}</p>}

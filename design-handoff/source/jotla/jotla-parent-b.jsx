@@ -175,6 +175,44 @@ function openPrintPack(childLabel, rangeLabel, list) {
   return true;
 }
 
+// One document as a clean printable record (founder question, 7 Aug: "what are
+// they supposed to do with it?"). The answer: read it, edit it, and take it
+// back out. This is the taking-out: the details, the action, the history and
+// any photos on one page, through the same print-to-PDF door the day record
+// uses. Attached FILES cannot ride a print page; they open full from the
+// document's own page, so here they are listed by name. Free for every tier:
+// saved data is never held hostage. Documents stay OUT of the day-record PDF
+// on purpose until Bupe decides otherwise (open question, logged 7 Aug).
+function openPrintDoc(d, attachments) {
+  const J = window.JOTLA;
+  const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const row = (l, v) => v ? '<p style="margin:6px 0;font-size:13px;"><strong>' + esc(l) + ':</strong> ' + esc(v) + '</p>' : '';
+  const photos = attachments.filter(m => m.kind === 'photo');
+  const files = attachments.filter(m => m.kind === 'file');
+  const w = window.open('', '_blank');
+  if (!w) { alert('Your browser blocked the new tab. Allow pop-ups for this page and try again.'); return false; }
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Jotla document record</title></head>'
+    + '<body style="font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#14223b;max-width:720px;margin:24px auto;padding:0 16px;">'
+    + '<p style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8892a6;margin:0 0 6px;">Document record · Jotla</p>'
+    + '<h1 style="font-size:22px;margin:0 0 2px;">' + esc(d.title) + '</h1>'
+    + '<p style="font-size:12.5px;margin:0 0 14px;color:#5b6780;">' + esc(d.type) + ' · from ' + esc(d.from)
+    + ' · Prepared ' + esc(J.fmtShort(J.TODAY_ISO)) + ' ' + esc(J.TODAY_ISO.slice(0, 4)) + '</p>'
+    + row('Received', J.fmtLong(d.received) + ' ' + d.received.slice(0, 4))
+    + row('About', d.about) + row('Action needed', d.action)
+    + (d.editedOn ? '<p style="margin:6px 0;font-size:11.5px;color:#8892a6;">Details last edited ' + esc(J.fmtShort(d.editedOn)) + '. Earlier details stay on the record below.</p>' : '')
+    + (d.history && d.history.length ? '<div style="margin-top:10px;padding:10px 14px;background:#f5f7fb;border-radius:8px;">'
+      + '<p style="margin:0 0 4px;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:#8892a6;">What it said before</p>'
+      + d.history.map(h => '<p style="margin:4px 0;font-size:12px;">Until ' + esc(J.fmtShort(h.on)) + ' ' + esc(h.on.slice(0, 4)) + ': '
+        + esc(h.title) + (h.about ? ' · ' + esc(h.about) : '') + (h.action ? ' · Action: ' + esc(h.action) : '') + '</p>').join('') + '</div>' : '')
+    + (files.length ? '<p style="margin:12px 0 0;font-size:12px;color:#5b6780;">Attached file' + (files.length > 1 ? 's' : '') + ' (open from the document in Jotla): '
+      + files.map(m => esc(m.name || 'File')).join(', ') + '</p>' : '')
+    + photos.map(m => '<img src="' + m.dataUrl + '" style="display:block;width:100%;margin-top:14px;border-radius:8px;page-break-inside:avoid;" alt="Photo of the document">').join('')
+    + '</body></html>');
+  w.document.close(); w.focus();
+  setTimeout(() => { try { w.print(); } catch (e) {} }, 500);
+  return true;
+}
+
 // How many things ride a document row: the media attachments plus the older
 // single "scan" photo earlier builds kept (still honoured, never migrated away
 // silently).
@@ -185,14 +223,27 @@ function docAttachedCount(doc) {
 // A document log card (file layout). When the document itself is kept (12 Jul
 // 2026), a small paperclip count rides the meta row, so the parent can see
 // which letters carry their file at a glance.
+// One silhouette per document type (founder, 7 Aug: "make the icons match the
+// document"), echoing the type pill's colour so a row reads at a glance.
+function docTypeStyle(type) {
+  return {
+    Letter: { icon: 'mail', bg: 'var(--tint-amber)', fg: 'var(--amber)' },
+    Email: { icon: 'at', bg: 'var(--tint-green)', fg: 'var(--green-ink)' },
+    Plan: { icon: 'clipboard', bg: 'var(--tint-blue)', fg: 'var(--blue)' },
+    Report: { icon: 'doc', bg: 'var(--tag-grey-bg)', fg: 'var(--muted)' },
+    Assessment: { icon: 'chart', bg: 'var(--tag-grey-bg)', fg: 'var(--muted)' },
+  }[type] || { icon: 'folder', bg: 'var(--tag-grey-bg)', fg: 'var(--muted)' };
+}
+
 function DocCard({ doc, onClick }) {
   const J = window.JOTLA;
   const attached = docAttachedCount(doc);
+  const ts = docTypeStyle(doc.type);
   return (
     <div className="j-card j-press" onClick={onClick} style={{ padding: 14, cursor: 'pointer', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-      <span style={{ width: 46, height: 46, borderRadius: 12, background: 'var(--tint-blue)', flexShrink: 0,
+      <span style={{ width: 46, height: 46, borderRadius: 12, background: ts.bg, flexShrink: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Icon name="doc" size={22} color="var(--blue)" />
+        <Icon name={ts.icon} size={22} color={ts.fg} />
       </span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
@@ -869,8 +920,8 @@ function DocScreen({ nav, docs, id }) {
       <div className="j-scroll j-fade">
         <div className="j-pad" style={{ paddingTop: 4, paddingBottom: 28, display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-            <span style={{ width: 52, height: 52, borderRadius: 14, background: 'var(--tint-blue)', flexShrink: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="doc" size={26} color="var(--blue)" /></span>
+            <span style={{ width: 52, height: 52, borderRadius: 14, background: docTypeStyle(d.type).bg, flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name={docTypeStyle(d.type).icon} size={26} color={docTypeStyle(d.type).fg} /></span>
             <div>
               <p className="j-h3" style={{ fontSize: 'calc(19px * var(--tscale, 1))' }}>{d.title}</p>
               <p className="j-meta" style={{ marginTop: 2 }}>{d.type} · from {d.from}</p>
@@ -937,6 +988,11 @@ function DocScreen({ nav, docs, id }) {
             </div>
           )}
 
+          {/* the way back OUT: one tap turns the record into a printable page
+              (Print, then Save as PDF). Free on every tier, like all viewing. */}
+          <button className="j-btn j-btn-ghost" style={{ color: 'var(--blue)' }} onClick={() => openPrintDoc(d, attachments)}>
+            <Icon name="download" size={18} color="var(--blue)" /> Print or save as PDF
+          </button>
           <div style={{ display: 'flex', gap: 10 }}>
             <button className="j-btn j-btn-ghost" style={{ flex: 1, color: 'var(--blue)' }} onClick={() => setEditing(true)}>
               <Icon name="note" size={18} color="var(--blue)" /> Edit
@@ -1023,11 +1079,48 @@ function TermCard({ label, price, per, sel, gold, badge }) {
   );
 }
 
-function UnlockScreen({ nav }) {
-  const [tier, setTier] = useStateB('plus'); // plus | ai
+function UnlockScreen({ nav, initialTier }) {
+  const [tier, setTier] = useStateB(initialTier === 'ai' ? 'ai' : 'plus'); // plus | ai
   const [slide, setSlide] = useStateB(0);
   const slides = tier === 'ai' ? AI_SLIDES : PLUS_SLIDES;
-  const s = slides[Math.min(slide, slides.length - 1)];
+  // The feature rail follows the finger (founder, 7 Aug: dots alone are not a
+  // carousel). Pointer events cover touch and mouse in one path; touch-action
+  // pan-y leaves vertical scrolling with the page and the horizontal axis with
+  // us. Drag is live px offset on top of the slide's own -100% step; release
+  // snaps to the nearest slide, with a short throw counting as intent.
+  // The live gesture rides a REF, never state closures: a fast flick lands
+  // down-move-up inside one frame, before React re-renders, and handlers
+  // reading state would see stale zeros and drop the swipe (found empirically,
+  // 7 Aug). State only mirrors the ref for rendering the rail.
+  const [drag, setDrag] = useStateB(0);
+  const [dragging, setDragging] = useStateB(false);
+  const swipe = useRefB({ x: 0, y: 0, horiz: null, on: false, dx: 0, t: 0 });
+  const onDown = (e) => {
+    swipe.current = { x: e.clientX, y: e.clientY, horiz: null, on: true, dx: 0, t: e.timeStamp };
+    setDragging(true); setDrag(0);
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch (x) {}
+  };
+  const onMove = (e) => {
+    const s = swipe.current;
+    if (!s.on) return;
+    const dx = e.clientX - s.x, dy = e.clientY - s.y;
+    if (s.horiz === null && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) s.horiz = Math.abs(dx) > Math.abs(dy);
+    if (!s.horiz) return;
+    // past either end the rail resists instead of scrolling into nothing
+    const atEdge = (slide === 0 && dx > 0) || (slide === slides.length - 1 && dx < 0);
+    s.dx = atEdge ? dx * 0.35 : dx;
+    setDrag(s.dx);
+  };
+  const onUp = (e) => {
+    const s = swipe.current;
+    if (!s.on) return;
+    s.on = false;
+    setDragging(false);
+    // a long pull or a short sharp flick both count as intent
+    const flick = Math.abs(s.dx) > 18 && (e.timeStamp - s.t) < 250;
+    if (Math.abs(s.dx) > 55 || flick) setSlide(v => Math.max(0, Math.min(slides.length - 1, v + (s.dx < 0 ? 1 : -1))));
+    setDrag(0);
+  };
   const seg = (id, label) => {
     const on = tier === id;
     return (
@@ -1044,9 +1137,11 @@ function UnlockScreen({ nav }) {
 
           {/* header: crown disc, the tier selector, X */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ width: 34, height: 34, borderRadius: '50%', background: PLUS_GRAD, flexShrink: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 14px -6px rgba(60,42,114,0.5)' }}>
-              <Icon name="crown" size={18} color="#EBBA4D" />
+            {/* the corner crown wears the open tier's colours (founder, 7 Aug) */}
+            <span style={{ width: 34, height: 34, borderRadius: '50%', background: tier === 'ai' ? PREMIUM_GRAD : PLUS_GRAD, flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: tier === 'ai' ? '0 6px 14px -6px rgba(20,41,74,0.5)' : '0 6px 14px -6px rgba(60,42,114,0.5)' }}>
+              <Icon name="crown" size={18} color={tier === 'ai' ? '#E6B85C' : '#EBBA4D'} />
             </span>
             <div style={{ flex: 1, display: 'flex', gap: 4, padding: 3, borderRadius: 999, background: 'var(--tag-grey-bg)' }}>
               {seg('plus', 'Jotla Plus')}{seg('ai', 'Jotla AI')}
@@ -1057,24 +1152,38 @@ function UnlockScreen({ nav }) {
             </button>
           </div>
 
-          {/* the wordmark lockup and carousel float centred in the middle space */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: 0, padding: '14px 0' }}>
+          {/* The lockup, caption, rail and dots hold FIXED positions (founder,
+              7 Aug): anchored from the top, never re-centred, so nothing shifts
+              when a tier or slide changes. Every variable-height text below
+              them carries a two-line floor for the same reason. */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', minHeight: 0, padding: '14px 0' }}>
             <div style={{ textAlign: 'center', marginBottom: 14 }}>
               <h1 style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 400, fontSize: 'calc(31px * var(--tscale, 1))', color: 'var(--ink)', margin: 0 }}>
                 Jotla {tier === 'ai'
                   ? <em style={{ fontStyle: 'italic', color: 'var(--aigold)', fontSize: 'calc(20px * var(--tscale, 1))', position: 'relative', top: -7 }}>AI</em>
                   : <em style={{ fontStyle: 'italic', color: 'var(--plus-ink)', fontSize: 'calc(20px * var(--tscale, 1))', position: 'relative', top: -7 }}>+Plus</em>}
               </h1>
-              <p className="j-sm" style={{ marginTop: 6, lineHeight: 1.4 }}>
+              <p className="j-sm" style={{ marginTop: 6, lineHeight: 1.4, minHeight: 'calc(37px * var(--tscale, 1))' }}>
                 {tier === 'ai' ? <>The deadlines, the rights and the letters,<br />kept current on your side.</>
                   : <>The tools to spot patterns<br />and make your case.</>}
               </p>
             </div>
 
             <div style={{ width: 300, maxWidth: '100%', margin: '0 auto', textAlign: 'center' }}>
-              <img src={s.img} alt="" style={{ width: '100%', height: 158, objectFit: 'cover', borderRadius: 12, display: 'block', background: 'var(--tag-grey-bg)' }} />
-              <p style={{ fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 'calc(15.5px * var(--tscale, 1))', color: 'var(--ink)', margin: '11px 0 0' }}>{s.t}</p>
-              <p style={{ fontSize: 'calc(13px * var(--tscale, 1))', color: 'var(--muted)', lineHeight: 1.45, margin: '4px 0 0' }}>{s.c}</p>
+              <div onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
+                style={{ overflow: 'hidden', touchAction: 'pan-y', cursor: dragging ? 'grabbing' : 'grab',
+                  userSelect: 'none', WebkitUserSelect: 'none' }}>
+                <div style={{ display: 'flex', transform: 'translateX(calc(' + (-slide * 100) + '% + ' + drag + 'px))',
+                  transition: dragging ? 'none' : 'transform .3s cubic-bezier(.25,.8,.35,1)' }}>
+                  {slides.map((x, i) => (
+                    <div key={i} style={{ flex: '0 0 100%', minWidth: 0 }}>
+                      <img src={x.img} alt="" draggable={false} style={{ width: '100%', height: 158, objectFit: 'cover', borderRadius: 12, display: 'block', background: 'var(--tag-grey-bg)' }} />
+                      <p style={{ fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 'calc(15.5px * var(--tscale, 1))', color: 'var(--ink)', margin: '11px 0 0' }}>{x.t}</p>
+                      <p style={{ fontSize: 'calc(13px * var(--tscale, 1))', color: 'var(--muted)', lineHeight: 1.45, margin: '4px 0 0', minHeight: 'calc(38px * var(--tscale, 1))' }}>{x.c}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
               <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginTop: 10 }}>
                 {slides.map((x, i) => (
                   <button key={i} onClick={() => setSlide(i)} aria-label={'Slide ' + (i + 1)} style={{ width: i === slide ? 18 : 7, height: 7,
@@ -1115,7 +1224,7 @@ function UnlockScreen({ nav }) {
                 <p style={{ textAlign: 'center', color: 'var(--faint)', fontSize: 'calc(11.5px * var(--tscale, 1))', lineHeight: 1.45, margin: '8px 0 0' }}>
                   Plus renews automatically at the end of its term: £29 a month, £49 every 6 months or £79 a year, charged to your Google Play
                   account until you cancel. Cancel any time in Subscriptions on Google Play, at least 24 hours before the term ends, and Plus
-                  stays on until the day it runs out. A subscription only ever switches off the paid tools.
+                  stays on until the day it runs out. A subscription only ever switches off the paid tools.<br />It never touches your history.
                 </p>
               </div>
             )
@@ -1494,18 +1603,34 @@ function SettingsScreen({ nav, profile, entries = [], docs = [], binCount = 0 })
             </button>
           </div>
 
-          {/* Jotla Plus: the one unique surface, the paywall's own gradient with
-              the solid gold crown (the app's only solid icon, its only gold) */}
-          <button className="j-press" onClick={() => nav.go('unlock')} style={{ width: '100%', textAlign: 'left', border: 'none',
-            cursor: 'pointer', background: PLUS_GRAD, borderRadius: 16, padding: 16, display: 'flex', alignItems: 'center',
-            gap: 14, boxShadow: '0 10px 22px -8px rgba(38,24,84,0.5)', marginBottom: 14 }}>
-            <Icon name="crown" size={28} color="#EBBA4D" style={{ flexShrink: 0 }} />
-            <span style={{ flex: 1, minWidth: 0 }}>
-              <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 'calc(16.5px * var(--tscale, 1))', color: '#fff' }}>Jotla Plus</span>
-              <span style={{ display: 'block', fontSize: 'calc(13px * var(--tscale, 1))', color: 'rgba(255,255,255,0.82)', marginTop: 2 }}>
-                {nav.plus ? 'Active. Your record is always yours.' : 'Get the best experience.'}</span>
-            </span>
-          </button>
+          {/* The one unique surface (founder, 7 Aug): the ticket slot always
+              sells the NEXT tier up. Free sees the purple Jotla Plus ticket;
+              a Plus owner's "active" state moves into Settings > Membership,
+              and this slot turns into the Jotla AI ticket in the AI page's own
+              navy and gold. */}
+          {!nav.plus ? (
+            <button className="j-press" onClick={() => nav.go('unlock')} style={{ width: '100%', textAlign: 'left', border: 'none',
+              cursor: 'pointer', background: PLUS_GRAD, borderRadius: 16, padding: 16, display: 'flex', alignItems: 'center',
+              gap: 14, boxShadow: '0 10px 22px -8px rgba(38,24,84,0.5)', marginBottom: 14 }}>
+              <Icon name="crown" size={28} color="#EBBA4D" style={{ flexShrink: 0 }} />
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 'calc(16.5px * var(--tscale, 1))', color: '#fff' }}>Jotla Plus</span>
+                <span style={{ display: 'block', fontSize: 'calc(13px * var(--tscale, 1))', color: 'rgba(255,255,255,0.82)', marginTop: 2 }}>
+                  Get the best experience.</span>
+              </span>
+            </button>
+          ) : (
+            <button className="j-press" onClick={() => nav.go('unlock', { tier: 'ai' })} style={{ width: '100%', textAlign: 'left', border: 'none',
+              cursor: 'pointer', background: PREMIUM_GRAD, borderRadius: 16, padding: 16, display: 'flex', alignItems: 'center',
+              gap: 14, boxShadow: '0 10px 22px -8px rgba(20,41,74,0.5)', marginBottom: 14 }}>
+              <Icon name="sparkle" size={28} color="#E6B85C" style={{ flexShrink: 0 }} />
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 'calc(16.5px * var(--tscale, 1))', color: '#fff' }}>Jotla AI</span>
+                <span style={{ display: 'block', fontSize: 'calc(13px * var(--tscale, 1))', color: 'rgba(255,255,255,0.82)', marginTop: 2 }}>
+                  Arriving 2027. See what it will do.</span>
+              </span>
+            </button>
+          )}
 
           <SectionLabel>Your record</SectionLabel>
           <MRow icon="cloudup" title="Backup and Restore" onClick={() => nav.go('backup')} />
@@ -1538,6 +1663,19 @@ function AppSettingsScreen({ nav }) {
           {/* Children leads, un-labelled, the way the old settings led with the child card */}
           <MRow iconEl={<ChildAvatar profile={(nav.profiles || [])[0]} size={26} />} title="Children" sub={kids}
             onClick={() => nav.go('children')} />
+
+          {/* An owned tier lives here as a quiet status row (founder, 7 Aug:
+              the Menu ticket only ever sells the next tier up) */}
+          {nav.plus && (
+            <>
+              <SectionLabel>Membership</SectionLabel>
+              {/* the crown keeps its one colour: gold, never row-blue */}
+              <MRow iconEl={<Icon name="crown" size={22} color="var(--gold)" style={{ flexShrink: 0 }} />}
+                title="Jotla Plus" sub="Everything unlocked on this phone"
+                trailing={<span className="j-pillbadge" style={{ background: 'var(--tint-green)', color: 'var(--green-ink)', border: '1px solid var(--green)' }}>Active</span>}
+                onClick={() => nav.go('unlock')} />
+            </>
+          )}
 
           <SectionLabel>Appearance</SectionLabel>
           <MRow icon="palette" title="Theme" sub={themeLabel} onClick={() => setSheet('theme')} />

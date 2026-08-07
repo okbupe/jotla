@@ -2064,7 +2064,8 @@ function App({
       break;
     case 'unlock':
       screen = /*#__PURE__*/React.createElement(UnlockScreen, {
-        nav: nav
+        nav: nav,
+        initialTier: view.tier
       });
       break;
     case 'day':
@@ -2132,7 +2133,7 @@ function App({
       position: 'absolute',
       inset: 0
     }
-  }, /*#__PURE__*/React.createElement(ScreenBoundary, null, window.__JOTLA_TEST_THROW ? /*#__PURE__*/React.createElement(CrashProbe, null) : screen))), isTab && !noChild && /*#__PURE__*/React.createElement("button", {
+  }, /*#__PURE__*/React.createElement(ScreenBoundary, null, window.__JOTLA_TEST_THROW ? /*#__PURE__*/React.createElement(CrashProbe, null) : screen))), isTab && !noChild && !(view.name === 'evidence' && view.ev && view.ev.tab === 'records') && /*#__PURE__*/React.createElement("button", {
     className: "j-fab",
     "aria-label": "Quick log",
     onClick: () => nav.go('quicklog')

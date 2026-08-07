@@ -891,7 +891,7 @@ function App({ appMode }) {
     case 'child': screen = <ChildScreen nav={nav} profile={profile} />; break;
     case 'addchild': screen = <AddChildScreen nav={nav} />; break;
     case 'tour': screen = <TourScreen nav={nav} profile={profile} />; break;
-    case 'unlock': screen = <UnlockScreen nav={nav} />; break;
+    case 'unlock': screen = <UnlockScreen nav={nav} initialTier={view.tier} />; break;
     case 'day': screen = <DayScreen nav={nav} entries={myEntries} date={view.date} />; break;
     case 'entry': screen = <EntryScreen nav={nav} entries={myEntries} id={view.id} />; break;
     case 'doc': screen = <DocScreen nav={nav} docs={myDocs} id={view.id} />; break;
@@ -909,7 +909,11 @@ function App({ appMode }) {
           <ScreenBoundary>{window.__JOTLA_TEST_THROW ? <CrashProbe /> : screen}</ScreenBoundary>
         </div>
       </div>
-      {isTab && !noChild && (
+      {/* The FAB steps aside on Documents > Day records: that view carries its
+          own bottom CTA in the same corner zone, and two floating actions
+          overlapping is worse than one missing (founder, 7 Aug). The sub-tab
+          rides the view via nav.remember, so this reacts as it changes. */}
+      {isTab && !noChild && !(view.name === 'evidence' && view.ev && view.ev.tab === 'records') && (
         <button className="j-fab" aria-label="Quick log" onClick={() => nav.go('quicklog')}>
           <Icon name="plus" size={26} color="#fff" stroke={2.4} />
         </button>

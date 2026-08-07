@@ -3,7 +3,7 @@ const { useState, useRef, useEffect, useLayoutEffect } = React;
 
 // The single source of the visible build number. Bump this every release
 // (and keep sw.js VERSION in step) so the Settings footer can never lie.
-window.JOTLA_BUILD = '2.0.0';
+window.JOTLA_BUILD = '2.0.1';
 
 // The app's data epoch: the earliest day a log can land on (Quick log's own
 // minimum day, and how far back the Month calendar pages). One home here, on

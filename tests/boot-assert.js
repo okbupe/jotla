@@ -581,7 +581,10 @@ function ok(name, cond) {
   await page4.waitForTimeout(700);
   await page4.waitForTimeout(500);
   const aboutText = await page4.locator('#root').innerText();
-  ok('About carries the live build number', aboutText.includes('Early test build 2.0.0'));
+  // Anchored to the bundle's own declared build, not a pinned string, so a
+  // version bump cannot break this while the page and bundle still agree.
+  const liveBuild = await page4.evaluate(() => window.JOTLA_BUILD);
+  ok('About carries the live build number', !!liveBuild && aboutText.includes('Early test build ' + liveBuild));
   ok('About drops the fonts credit line', !aboutText.includes('Typefaces'));
   ok('About owns the mission story', aboutText.includes('Nobody gives them the tool'));
   ok('About says the privacy promise exactly once', (aboutText.match(/We never send your record anywhere/g) || []).length === 1);
@@ -646,16 +649,43 @@ function ok(name, cond) {
   ok('Plus month graph shows the four-bar story', /How .+ looked/.test(monthPlus)
     && monthPlus.includes('Dysregulation') && !/\bGate\b/.test(monthPlus));
 
-  // the Plus feature list gains Photos and Videos on Notes
+  // the Plus feature list gains Photos and Videos on Notes.
+  // A Plus owner's Menu ticket sells the NEXT tier up (Jotla AI in its navy
+  // and gold); the owned tier becomes a quiet Active row in Settings >
+  // Membership, which is now the way to the paywall (founder, 7 Aug).
   await page5.getByText('Menu', { exact: true }).last().click();
   await page5.waitForTimeout(450);
+  const menuPlus = await page5.locator('#root').innerText();
+  ok("a Plus owner's Menu ticket sells Jotla AI", menuPlus.includes('Jotla AI') && menuPlus.includes('Arriving 2027'));
+  ok("the purple Plus ticket is gone from an owner's Menu", !menuPlus.includes('Jotla Plus'));
+  await page5.locator('button[aria-label="Settings"]').first().click();
+  await page5.waitForTimeout(450);
+  const setPlus = await page5.locator('#root').innerText();
+  ok('Settings carries the Membership row, marked Active', setPlus.includes('Membership') && setPlus.includes('Jotla Plus') && setPlus.includes('Active'));
   await page5.getByText('Jotla Plus', { exact: true }).first().click();
   await page5.waitForTimeout(600);
   await page5.locator('button[aria-label="Slide 4"]').first().click();
   await page5.waitForTimeout(350);
   ok('the paywall carousel lists Photos and Videos on Notes', (await page5.locator('#root').innerText()).includes('Photos and Videos on Notes'));
+  // Finger swipe (7 Aug): a dispatched touch drag must advance the rail. This
+  // exact dispatch FAILED against the state-closure handlers and passes against
+  // the ref-based ones, so the probe is empirically proven able to fail. The
+  // suite sits on Slide 4 (index 3, -300%); a left swipe lands -400%.
+  const swipeResult = await page5.evaluate(() => new Promise(res => {
+    const track = [...document.querySelectorAll('div')].find(d => d.style && d.style.transform && d.style.transform.includes('translateX'));
+    const wrap = track.parentElement; const r = wrap.getBoundingClientRect(); const y = r.top + 60;
+    const before = track.style.transform;
+    const fire = (t, x) => wrap.dispatchEvent(new PointerEvent(t, { bubbles: true, cancelable: true, pointerId: 7, clientX: x, clientY: y, isPrimary: true, pointerType: 'touch' }));
+    fire('pointerdown', r.left + 250); fire('pointermove', r.left + 200); fire('pointermove', r.left + 140); fire('pointerup', r.left + 140);
+    setTimeout(() => res({ before, after: track.style.transform }), 350);
+  }));
+  ok('a finger swipe advances the feature rail', swipeResult.before.includes('-300%') && swipeResult.after.includes('-400%'));
   await page5.locator('button[aria-label="Close"]').first().click();
   await page5.waitForTimeout(400);
+  // Close lands back on Settings (a pushed page, no tab bar): one more Back
+  // returns to the Menu tab before the suite reaches for the tab bar again.
+  await page5.locator('button[aria-label="Back"]').first().click();
+  await page5.waitForTimeout(450);
 
   // child mode goes dynamic on Plus: More under Next, question cards
   await page5.getByText('Today', { exact: true }).last().click();
@@ -688,8 +718,19 @@ function ok(name, cond) {
   await page6.waitForTimeout(1200);
   await page6.getByText('Documents', { exact: true }).last().click();
   await page6.waitForTimeout(500);
-  await page6.getByText('Documents', { exact: true }).first().click();
+  // The FAB steps aside on Day records (7 Aug): its corner belongs to the
+  // Create PDF bar there. The SAME selector must count 0 on records and 1
+  // back on Documents inside one run, so a dead selector or an unwired
+  // condition each fail one side: the pair is its own negative control.
+  // (role-scoped: the page's own h1 also says "Documents", and a text locator
+  //  would land on it as a silent no-op instead of the segment button)
+  await page6.getByRole('button', { name: 'Day records', exact: true }).first().click();
+  await page6.waitForTimeout(500);
+  ok('the FAB steps aside on Day records', (await page6.locator('.j-fab').count()) === 0);
+  ok('Day records still shows the crowned Create PDF bar', (await page6.getByText('Create PDF is part of Plus').count()) === 1);
+  await page6.getByRole('button', { name: 'Documents', exact: true }).first().click();
   await page6.waitForTimeout(400);
+  ok('the FAB returns on the Documents view', (await page6.locator('.j-fab').count()) === 1);
   await page6.getByText('Add a document').first().click();
   await page6.waitForTimeout(500);
   const addFree = await page6.locator('#root').innerText();

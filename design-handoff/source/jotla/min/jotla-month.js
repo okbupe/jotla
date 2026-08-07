@@ -8,10 +8,13 @@ function TabTitle({
   sub,
   right
 }) {
+  // The title and the corner icon share one line: centre-align the pair so the
+  // glyph's optical middle sits level with the title (founder, 7 Aug: the
+  // flex-end version left the word visibly below the icon line).
   return /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
-      alignItems: 'flex-end',
+      alignItems: 'center',
       justifyContent: 'space-between',
       marginBottom: 16
     }

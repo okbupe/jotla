@@ -332,6 +332,37 @@ function Icon({
     }), /*#__PURE__*/React.createElement("path", {
       d: "M5 19.5h14"
     })),
+    /* the Documents kit: one silhouette per document type (7 Aug) */
+    at: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("circle", {
+      cx: "12",
+      cy: "12",
+      r: "3.4"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M15.4 12v1.3a2.3 2.3 0 0 0 4.6 0V12a8 8 0 1 0-3.1 6.3"
+    })),
+    clipboard: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("rect", {
+      x: "5",
+      y: "4.5",
+      width: "14",
+      height: "16",
+      rx: "2.5"
+    }), /*#__PURE__*/React.createElement("rect", {
+      x: "9",
+      y: "3",
+      width: "6",
+      height: "3.5",
+      rx: "1.2"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M9 11.5h6M9 15h6"
+    })),
+    chart: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+      d: "M4 20h16"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M7 20v-6M12 20V7M17 20v-9"
+    })),
+    folder: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+      d: "M3.5 7a2 2 0 0 1 2-2h4l2 2.5h7a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"
+    })),
     person: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("circle", {
       cx: "12",
       cy: "8",
