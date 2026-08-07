@@ -598,10 +598,9 @@ function PushHeader({
     style: {
       width: 44,
       height: 44,
-      borderRadius: '50%',
+      marginLeft: -10,
       border: 'none',
-      background: 'var(--fill)',
-      boxShadow: '0 10px 22px -8px rgba(26,86,168,0.7)',
+      background: 'none',
       cursor: 'pointer',
       flexShrink: 0,
       display: 'flex',
@@ -610,8 +609,8 @@ function PushHeader({
     }
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "chevronLeft",
-    size: 22,
-    color: "#fff"
+    size: 23,
+    color: "var(--muted)"
   })), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1,
@@ -620,8 +619,8 @@ function PushHeader({
   }, title && /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "'Cal Sans', system-ui",
-      fontWeight: 500,
-      fontSize: 'calc(19px * var(--tscale, 1))',
+      fontWeight: 400,
+      fontSize: 'calc(23px * var(--tscale, 1))',
       color: 'var(--ink)',
       lineHeight: 1.1
     }
@@ -638,10 +637,9 @@ function PushHeader({
     style: {
       width: 44,
       height: 44,
-      borderRadius: '50%',
+      marginRight: -10,
       border: 'none',
-      background: 'var(--fill)',
-      boxShadow: '0 10px 22px -8px rgba(26,86,168,0.7)',
+      background: 'none',
       cursor: 'pointer',
       flexShrink: 0,
       display: 'flex',
@@ -650,8 +648,8 @@ function PushHeader({
     }
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "close",
-    size: 20,
-    color: "#fff"
+    size: 22,
+    color: "var(--muted)"
   })));
 }
 function moodTint(mood) {

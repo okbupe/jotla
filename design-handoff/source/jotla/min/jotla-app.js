@@ -346,7 +346,9 @@ function ProfileSheet({
 }
 
 // ---------- child options / details sheet ----------
-const CHILD_GLYPHS = ['person', 'heart', 'star', 'leaf', 'sparkle', 'shield', 'bell', 'hand', 'today', 'note'];
+// Redesign (6 Aug): the initial leads as the default avatar, and moon, sun and
+// music join the set: 14 avatars matching the 14 colours.
+const CHILD_GLYPHS = ['initial', 'person', 'heart', 'star', 'leaf', 'sparkle', 'shield', 'bell', 'hand', 'today', 'note', 'moon', 'sun', 'music'];
 function ChildOptionsSheet({
   profile,
   entries = [],
@@ -1116,7 +1118,7 @@ function BinScreen({
   return /*#__PURE__*/React.createElement("div", {
     className: "j-screen"
   }, /*#__PURE__*/React.createElement(PushHeader, {
-    title: "Bin",
+    title: "Recycle Bin",
     subtitle: "Deleted logs and documents, kept for 30 days",
     onBack: () => nav.back()
   }), /*#__PURE__*/React.createElement("div", {
@@ -1339,6 +1341,16 @@ function App({
   const [customProfiles, setCustomProfiles] = useStateApp(prefs0.customProfiles || []);
   const [deletedIds, setDeletedIds] = useStateApp(prefs0.deletedIds || []);
   const [backupReminderMonth, setBackupReminderMonth] = useStateApp(prefs0.backupReminderMonth || '');
+  // Redesign settings (6 Aug): App lock and the Daily reminder, both free. On the
+  // web prototype these hold the parent's choice; enforcement and the real
+  // notification are native-build work.
+  const [appLock, setAppLock] = useStateApp(prefs0.appLock || {
+    on: false,
+    method: 'Pattern',
+    bio: false,
+    question: false
+  });
+  const [reminder, setReminder] = useStateApp(prefs0.reminder || 'Off');
   const [profileId, setProfileId] = useStateApp(prefs0.profileId || J.CHILD.id);
   const [profileOpen, setProfileOpen] = useStateApp(false);
   const [childOptOpen, setChildOptOpen] = useStateApp(false);
@@ -1380,9 +1392,24 @@ function App({
       childCfg,
       customProfiles,
       deletedIds,
-      backupReminderMonth
+      backupReminderMonth,
+      appLock,
+      reminder
     });
-  }, [themeMode, dark, tscale, profileId, plus, childCfg, customProfiles, deletedIds, backupReminderMonth]);
+  }, [themeMode, dark, tscale, profileId, plus, childCfg, customProfiles, deletedIds, backupReminderMonth, appLock, reminder]);
+
+  // The chrome outside the app root follows the theme too: the safe-area strip,
+  // the desktop frame ground and the browser UI colour must all sit on the
+  // locked warm dark grey in dark mode, never a light flash.
+  useEffectApp(() => {
+    const bgc = dark ? '#201F1D' : '#F7F5F2';
+    try {
+      document.documentElement.style.background = bgc;
+      if (document.body) document.body.style.background = appMode ? bgc : dark ? '#161513' : '#EBE8E3';
+      const m = document.querySelector('meta[name="theme-color"]');
+      if (m) m.setAttribute('content', bgc);
+    } catch (e) {}
+  }, [dark, appMode]);
 
   // System theme follows the phone live while the mode is 'system'.
   useEffectApp(() => {
@@ -1659,6 +1686,13 @@ function App({
     setTheme: setThemeMode,
     toggleDark: () => setThemeMode(dark ? 'light' : 'dark'),
     dark,
+    appLock,
+    setAppLock,
+    reminder,
+    setReminder,
+    profiles,
+    profileId,
+    pickChild: id => setProfileId(id),
     tscale,
     setTscale,
     plus,
@@ -1930,6 +1964,48 @@ function App({
         entries: myEntries,
         docs: myDocs,
         binCount: binEntries.length + binDocs.length
+      });
+      break;
+    // The settings system behind the cog (redesign, 6-7 Aug)
+    case 'appsettings':
+      screen = /*#__PURE__*/React.createElement(AppSettingsScreen, {
+        nav: nav
+      });
+      break;
+    case 'children':
+      screen = /*#__PURE__*/React.createElement(ChildrenScreen, {
+        nav: nav
+      });
+      break;
+    case 'childprofile':
+      screen = /*#__PURE__*/React.createElement(ChildProfileScreen, {
+        nav: nav,
+        profile: profile,
+        entries: myEntries,
+        docs: myDocs
+      });
+      break;
+    case 'applock':
+      screen = /*#__PURE__*/React.createElement(AppLockScreen, {
+        nav: nav
+      });
+      break;
+    case 'backup':
+      screen = /*#__PURE__*/React.createElement(BackupScreen, {
+        nav: nav,
+        profile: profile,
+        entries: myEntries,
+        docs: myDocs
+      });
+      break;
+    case 'help':
+      screen = /*#__PURE__*/React.createElement(HelpScreen, {
+        nav: nav
+      });
+      break;
+    case 'support':
+      screen = /*#__PURE__*/React.createElement(SupportScreen, {
+        nav: nav
       });
       break;
     case 'quicklog':

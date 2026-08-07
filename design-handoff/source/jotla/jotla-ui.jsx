@@ -320,23 +320,25 @@ function PushHeader({ title, subtitle, onBack, onClose, accent = '#1A56A8', bg =
       display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px 10px',
       background: bg, position: 'sticky', top: 0, zIndex: 5,
     }}>
+      {/* bare chevron, no background, no shadow (founder, 7 Aug); title inline
+          beside it at the pushed-page scale, Cal Sans Regular */}
       {onBack && (
         <button onClick={onBack} aria-label="Back" className="j-press" style={{
-          width: 44, height: 44, borderRadius: '50%', border: 'none', background: 'var(--fill)',
-          boxShadow: '0 10px 22px -8px rgba(26,86,168,0.7)', cursor: 'pointer', flexShrink: 0,
+          width: 44, height: 44, marginLeft: -10, border: 'none', background: 'none',
+          cursor: 'pointer', flexShrink: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}><Icon name="chevronLeft" size={22} color="#fff" /></button>
+        }}><Icon name="chevronLeft" size={23} color="var(--muted)" /></button>
       )}
       <div style={{ flex: 1, minWidth: 0 }}>
-        {title && <div style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(19px * var(--tscale, 1))', color: 'var(--ink)', lineHeight: 1.1 }}>{title}</div>}
+        {title && <div style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 400, fontSize: 'calc(23px * var(--tscale, 1))', color: 'var(--ink)', lineHeight: 1.1 }}>{title}</div>}
         {subtitle && <div style={{ fontSize: 'calc(13px * var(--tscale, 1))', color: 'var(--faint)', marginTop: 1 }}>{subtitle}</div>}
       </div>
       {onClose && (
         <button onClick={onClose} aria-label="Close" className="j-press" style={{
-          width: 44, height: 44, borderRadius: '50%', border: 'none', background: 'var(--fill)',
-          boxShadow: '0 10px 22px -8px rgba(26,86,168,0.7)', cursor: 'pointer', flexShrink: 0,
+          width: 44, height: 44, marginRight: -10, border: 'none', background: 'none',
+          cursor: 'pointer', flexShrink: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}><Icon name="close" size={20} color="#fff" /></button>
+        }}><Icon name="close" size={22} color="var(--muted)" /></button>
       )}
     </div>
   );

@@ -799,6 +799,15 @@ const AVATAR_COLOURS = [{
 }, {
   key: 'pink',
   figure: '#D6479B'
+},
+// Redesign additions (6 Aug): two more hues so colours match the 14-avatar
+// grid. Still no red anywhere: red stays the alert colour.
+{
+  key: 'lavender',
+  figure: '#9C8CEC'
+}, {
+  key: 'cocoa',
+  figure: '#A9744F'
 }];
 
 // "Today" is the device's real current date, so the calendar always knows the day.

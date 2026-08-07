@@ -280,8 +280,9 @@ function jHexA(hex, a) {
   return `rgba(${n >> 16 & 255}, ${n >> 8 & 255}, ${n & 255}, ${a})`;
 }
 
-// Child avatar: a simple line-art glyph (person / heart / star / leaf) in the chosen brand hue.
-// The disc is a translucent tint of that hue, so it follows light and dark mode automatically.
+// Child avatar (redesign, 6 Aug): white initial-or-glyph on the SOLID figure
+// colour, the same in both themes: the child's colour is the child's colour.
+// glyph 'initial' draws the first letter of their name; a photo replaces both.
 function ChildAvatar({
   profile,
   size = 44,
@@ -289,7 +290,7 @@ function ChildAvatar({
   style = {}
 }) {
   const line = profile && profile.figure || '#3A7BD4';
-  const glyph = profile && profile.glyph || 'person';
+  const glyph = profile && profile.glyph || 'initial';
   const photo = profile && profile.photo;
   if (photo) {
     return /*#__PURE__*/React.createElement("span", {
@@ -314,12 +315,21 @@ function ChildAvatar({
       }
     }));
   }
-  const inner = glyph === 'person' ? /*#__PURE__*/React.createElement("svg", {
+  const letter = (profile && (profile.initial || (profile.name || '').charAt(0)) || 'J').toUpperCase();
+  const inner = glyph === 'initial' ? /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontFamily: "'Outfit', system-ui",
+      fontWeight: 600,
+      color: '#fff',
+      fontSize: Math.round(size * 0.42),
+      lineHeight: 1
+    }
+  }, letter) : glyph === 'person' ? /*#__PURE__*/React.createElement("svg", {
     width: Math.round(size * 0.6),
     height: Math.round(size * 0.6),
     viewBox: "0 0 24 24",
     fill: "none",
-    stroke: line,
+    stroke: "#fff",
     strokeWidth: "1.9",
     strokeLinecap: "round",
     strokeLinejoin: "round",
@@ -336,7 +346,7 @@ function ChildAvatar({
   })) : /*#__PURE__*/React.createElement(Icon, {
     name: glyph,
     size: Math.round(size * 0.52),
-    color: line,
+    color: "#fff",
     stroke: 1.9
   });
   return /*#__PURE__*/React.createElement("span", {
@@ -344,13 +354,13 @@ function ChildAvatar({
       width: size,
       height: size,
       borderRadius: '50%',
-      background: jHexA(line, 0.18),
+      background: line,
       flexShrink: 0,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       overflow: 'hidden',
-      boxShadow: ring ? `inset 0 0 0 1.5px ${jHexA(line, 0.3)}` : 'none',
+      boxShadow: ring ? 'inset 0 0 0 1.5px rgba(255,255,255,0.22)' : 'none',
       ...style
     }
   }, inner);

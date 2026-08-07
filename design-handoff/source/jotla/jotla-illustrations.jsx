@@ -161,11 +161,12 @@ function jHexA(hex, a) {
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
 }
 
-// Child avatar: a simple line-art glyph (person / heart / star / leaf) in the chosen brand hue.
-// The disc is a translucent tint of that hue, so it follows light and dark mode automatically.
+// Child avatar (redesign, 6 Aug): white initial-or-glyph on the SOLID figure
+// colour, the same in both themes: the child's colour is the child's colour.
+// glyph 'initial' draws the first letter of their name; a photo replaces both.
 function ChildAvatar({ profile, size = 44, ring = true, style = {} }) {
   const line = (profile && profile.figure) || '#3A7BD4';
-  const glyph = (profile && profile.glyph) || 'person';
+  const glyph = (profile && profile.glyph) || 'initial';
   const photo = profile && profile.photo;
   if (photo) {
     return (
@@ -175,17 +176,21 @@ function ChildAvatar({ profile, size = 44, ring = true, style = {} }) {
       </span>
     );
   }
-  const inner = glyph === 'person' ? (
+  const letter = ((profile && (profile.initial || (profile.name || '').charAt(0))) || 'J').toUpperCase();
+  const inner = (glyph === 'initial') ? (
+      <span style={{ fontFamily: "'Outfit', system-ui", fontWeight: 600, color: '#fff',
+        fontSize: Math.round(size * 0.42), lineHeight: 1 }}>{letter}</span>
+    ) : glyph === 'person' ? (
       <svg width={Math.round(size * 0.6)} height={Math.round(size * 0.6)} viewBox="0 0 24 24" fill="none"
-        stroke={line} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ display: 'block' }}>
+        stroke="#fff" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ display: 'block' }}>
         <circle cx="12" cy="8.6" r="3.7" />
         <path d="M5.5 19.5 C5.5 14.8 18.5 14.8 18.5 19.5" />
       </svg>
-    ) : <Icon name={glyph} size={Math.round(size * 0.52)} color={line} stroke={1.9} />;
+    ) : <Icon name={glyph} size={Math.round(size * 0.52)} color="#fff" stroke={1.9} />;
   return (
-    <span style={{ width: size, height: size, borderRadius: '50%', background: jHexA(line, 0.18), flexShrink: 0,
+    <span style={{ width: size, height: size, borderRadius: '50%', background: line, flexShrink: 0,
       display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
-      boxShadow: ring ? `inset 0 0 0 1.5px ${jHexA(line, 0.3)}` : 'none', ...style }}>
+      boxShadow: ring ? 'inset 0 0 0 1.5px rgba(255,255,255,0.22)' : 'none', ...style }}>
       {inner}
     </span>
   );

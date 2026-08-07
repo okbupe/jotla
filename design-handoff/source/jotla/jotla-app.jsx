@@ -152,7 +152,9 @@ function ProfileSheet({ profiles, activeId, onPick, onAddChild, onClose }) {
 }
 
 // ---------- child options / details sheet ----------
-const CHILD_GLYPHS = ['person', 'heart', 'star', 'leaf', 'sparkle', 'shield', 'bell', 'hand', 'today', 'note'];
+// Redesign (6 Aug): the initial leads as the default avatar, and moon, sun and
+// music join the set: 14 avatars matching the 14 colours.
+const CHILD_GLYPHS = ['initial', 'person', 'heart', 'star', 'leaf', 'sparkle', 'shield', 'bell', 'hand', 'today', 'note', 'moon', 'sun', 'music'];
 function ChildOptionsSheet({ profile, entries = [], docs = [], canDelete = true, onChange, onDelete, onReset, onResetAll, onClose }) {
   const J = window.JOTLA;
   const [dangerMode, setDangerMode] = useStateApp(null); // null | 'delete' | 'reset' | 'resetAll'
@@ -460,7 +462,7 @@ function BinScreen({ nav, entries = [], docs = [], today }) {
   const subStyle = { display: 'block', fontSize: 'calc(12.5px * var(--tscale, 1))', color: 'var(--faint)', marginTop: 1 };
   return (
     <div className="j-screen">
-      <PushHeader title="Bin" subtitle="Deleted logs and documents, kept for 30 days" onBack={() => nav.back()} />
+      <PushHeader title="Recycle Bin" subtitle="Deleted logs and documents, kept for 30 days" onBack={() => nav.back()} />
       <div className="j-scroll j-fade">
         <div className="j-pad" style={{ paddingTop: 4, paddingBottom: 120 }}>
           {empty ? (
@@ -548,6 +550,11 @@ function App({ appMode }) {
   const [customProfiles, setCustomProfiles] = useStateApp(prefs0.customProfiles || []);
   const [deletedIds, setDeletedIds] = useStateApp(prefs0.deletedIds || []);
   const [backupReminderMonth, setBackupReminderMonth] = useStateApp(prefs0.backupReminderMonth || '');
+  // Redesign settings (6 Aug): App lock and the Daily reminder, both free. On the
+  // web prototype these hold the parent's choice; enforcement and the real
+  // notification are native-build work.
+  const [appLock, setAppLock] = useStateApp(prefs0.appLock || { on: false, method: 'Pattern', bio: false, question: false });
+  const [reminder, setReminder] = useStateApp(prefs0.reminder || 'Off');
   const [profileId, setProfileId] = useStateApp(prefs0.profileId || J.CHILD.id);
   const [profileOpen, setProfileOpen] = useStateApp(false);
   const [childOptOpen, setChildOptOpen] = useStateApp(false);
@@ -561,7 +568,20 @@ function App({ appMode }) {
   useEffectApp(() => { if (J.SEED_SHIFTING) saveJSON(SEED_ANCHOR_KEY, J.TODAY_ISO); }, []);
   useEffectApp(() => { saveJSON(ENTRIES_KEY, entries); }, [entries]);
   useEffectApp(() => { saveJSON(DOCS_KEY, docs); }, [docs]);
-  useEffectApp(() => { saveJSON(PREF_KEY, { theme: themeMode, dark, tscale, profileId, plus, childCfg, customProfiles, deletedIds, backupReminderMonth }); }, [themeMode, dark, tscale, profileId, plus, childCfg, customProfiles, deletedIds, backupReminderMonth]);
+  useEffectApp(() => { saveJSON(PREF_KEY, { theme: themeMode, dark, tscale, profileId, plus, childCfg, customProfiles, deletedIds, backupReminderMonth, appLock, reminder }); }, [themeMode, dark, tscale, profileId, plus, childCfg, customProfiles, deletedIds, backupReminderMonth, appLock, reminder]);
+
+  // The chrome outside the app root follows the theme too: the safe-area strip,
+  // the desktop frame ground and the browser UI colour must all sit on the
+  // locked warm dark grey in dark mode, never a light flash.
+  useEffectApp(() => {
+    const bgc = dark ? '#201F1D' : '#F7F5F2';
+    try {
+      document.documentElement.style.background = bgc;
+      if (document.body) document.body.style.background = appMode ? bgc : (dark ? '#161513' : '#EBE8E3');
+      const m = document.querySelector('meta[name="theme-color"]');
+      if (m) m.setAttribute('content', bgc);
+    } catch (e) {}
+  }, [dark, appMode]);
 
   // System theme follows the phone live while the mode is 'system'.
   useEffectApp(() => {
@@ -707,6 +727,11 @@ function App({ appMode }) {
     setTheme: setThemeMode,
     toggleDark: () => setThemeMode(dark ? 'light' : 'dark'),
     dark,
+    appLock, setAppLock,
+    reminder, setReminder,
+    profiles,
+    profileId,
+    pickChild: (id) => setProfileId(id),
     tscale,
     setTscale,
     plus,
@@ -844,6 +869,14 @@ function App({ appMode }) {
     case 'evidence': screen = <EvidenceScreen nav={nav} entries={myEntries} docs={myDocs} profile={profile} navView={view} />; break;
     case 'adddoc': screen = <AddDocScreen nav={nav} />; break;
     case 'settings': screen = <SettingsScreen nav={nav} profile={profile} entries={myEntries} docs={myDocs} binCount={binEntries.length + binDocs.length} />; break;
+    // The settings system behind the cog (redesign, 6-7 Aug)
+    case 'appsettings': screen = <AppSettingsScreen nav={nav} />; break;
+    case 'children': screen = <ChildrenScreen nav={nav} />; break;
+    case 'childprofile': screen = <ChildProfileScreen nav={nav} profile={profile} entries={myEntries} docs={myDocs} />; break;
+    case 'applock': screen = <AppLockScreen nav={nav} />; break;
+    case 'backup': screen = <BackupScreen nav={nav} profile={profile} entries={myEntries} docs={myDocs} />; break;
+    case 'help': screen = <HelpScreen nav={nav} />; break;
+    case 'support': screen = <SupportScreen nav={nav} />; break;
     case 'quicklog': screen = <QuickLogScreen nav={nav} today={today} view={view} profile={profile} />; break;
     // The old infomission/infoprivacy/infodata pages are gone: About is the one
     // information page (founder consolidation, 12 Jul 2026 sixth pass). The old

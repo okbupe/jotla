@@ -10,6 +10,9 @@ function FindScreen({ nav, entries, view }) {
   // and the scroll position is captured when a note is opened, restored on return.
   const saved = (view && view.find) || {};
   const [q, setQ] = useStateB(saved.q || '');
+  // The search field hides behind the corner magnifier (founder, 7 Aug): the
+  // title row carries a bare search icon top right; tapping it summons the field.
+  const [showQ, setShowQ] = useStateB(!!saved.q);
   const [themes, setThemes] = useStateB(saved.themes || []);
   const [moods, setMoods] = useStateB(saved.moods || []);
   const [setting, setSetting] = useStateB(saved.setting || 'Any');
@@ -53,15 +56,20 @@ function FindScreen({ nav, entries, view }) {
               a magnifying glass, and the field's own "Search your notes"
               placeholder, which is the one that survives because it sits inside
               the thing it describes. */}
-          <TabTitle title="Find" />
+          <TabTitle title="Find" right={
+            <button className="j-iconbtn" aria-label="Search your notes" onClick={() => setShowQ(v => { if (v) setQ(''); return !v; })}>
+              <Icon name="search" size={22} color={showQ ? 'var(--blue)' : 'var(--muted)'} />
+            </button>} />
 
-          {/* search bar */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--card-2)', border: '1.5px solid var(--chip-border)',
-            borderRadius: 14, padding: '0 14px', height: 52, marginBottom: 16 }}>
-            <Icon name="search" size={20} color="var(--faint)" />
-            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search your notes"
-              style={{ flex: 1, border: 'none', outline: 'none', fontFamily: "'Outfit', system-ui", fontSize: 'calc(16px * var(--tscale, 1))', color: 'var(--ink)', background: 'transparent' }} />
-          </div>
+          {/* the field appears when the corner magnifier is tapped */}
+          {showQ && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--card-2)', border: '1.5px solid var(--chip-border)',
+              borderRadius: 14, padding: '0 14px', height: 52, marginBottom: 16 }}>
+              <Icon name="search" size={20} color="var(--faint)" />
+              <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search your notes" autoFocus
+                style={{ flex: 1, border: 'none', outline: 'none', fontFamily: "'Outfit', system-ui", fontSize: 'calc(16px * var(--tscale, 1))', color: 'var(--ink)', background: 'transparent' }} />
+            </div>
+          )}
 
           {/* Filters are the Plus half of Find; plain keyword search stays free. */}
           {nav.plus ? (
@@ -218,6 +226,13 @@ function EvidenceScreen({ nav, entries, docs, profile, navView }) {
   // lands the parent back on the Documents list where they left it.
   const saved = (navView && navView.ev) || {};
   const [view, setView] = useStateB(saved.tab || 'documents'); // documents leads (founder, 6 Aug)
+  // Corner search (founder, 7 Aug): the magnifier sits top right and summons a
+  // field that filters the document list by title, sender or type.
+  const [docQ, setDocQ] = useStateB('');
+  const [showDocQ, setShowDocQ] = useStateB(false);
+  const docsShown = docQ.trim()
+    ? docs.filter(d => (d.title + ' ' + d.from + ' ' + d.type).toLowerCase().includes(docQ.trim().toLowerCase()))
+    : docs;
   const [range, setRange] = useStateB(saved.range || { preset: 'Last 3 weeks', from: '', to: '' });
   const [themes, setThemes] = useStateB(saved.themes || []);
   const [done, setDone] = useStateB(false);
@@ -253,7 +268,20 @@ function EvidenceScreen({ nav, entries, docs, profile, navView }) {
           shows what it is. */}
       <div className="j-scroll j-fade" ref={scrollRef}>
         <div className="j-pad" style={{ paddingTop: 14, paddingBottom: 120 }}>
-          <TabTitle title="Documents" />
+          <TabTitle title="Documents" right={
+            <button className="j-iconbtn" aria-label="Search documents"
+              onClick={() => { setView('documents'); setShowDocQ(v => { if (v) setDocQ(''); return !v; }); }}>
+              <Icon name="search" size={22} color={showDocQ ? 'var(--blue)' : 'var(--muted)'} />
+            </button>} />
+
+          {showDocQ && view === 'documents' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--card-2)', border: '1.5px solid var(--chip-border)',
+              borderRadius: 14, padding: '0 14px', height: 52, marginBottom: 16 }}>
+              <Icon name="search" size={20} color="var(--faint)" />
+              <input value={docQ} onChange={e => setDocQ(e.target.value)} placeholder="Search documents" autoFocus
+                style={{ flex: 1, border: 'none', outline: 'none', fontFamily: "'Outfit', system-ui", fontSize: 'calc(16px * var(--tscale, 1))', color: 'var(--ink)', background: 'transparent' }} />
+            </div>
+          )}
 
           {/* segmented switch: Documents leads (founder, 6 Aug) */}
           <div style={{ display: 'flex', gap: 4, padding: 4, borderRadius: 999, background: 'var(--tag-grey-bg)', marginBottom: 20 }}>
@@ -307,11 +335,11 @@ function EvidenceScreen({ nav, entries, docs, profile, navView }) {
 
           {view === 'documents' && (
             <>
-              <SectionLabel right={<span className="j-meta">{docs.length} saved</span>}>Your documents</SectionLabel>
+              <SectionLabel right={<span className="j-meta">{docsShown.length} {docQ.trim() ? 'found' : 'saved'}</span>}>Your documents</SectionLabel>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {docs.length === 0
-                  ? <div className="j-card" style={{ padding: 22, textAlign: 'center' }}><p className="j-sm">No documents yet. Add the first letter or report and never lose it again.</p></div>
-                  : docs.map(d => <DocCard key={d.id} doc={d} onClick={() => openDoc(d.id)} />)}
+                {docsShown.length === 0
+                  ? <div className="j-card" style={{ padding: 22, textAlign: 'center' }}><p className="j-sm">{docQ.trim() ? 'Nothing matches that search.' : 'No documents yet. Add the first letter or report and never lose it again.'}</p></div>
+                  : docsShown.map(d => <DocCard key={d.id} doc={d} onClick={() => openDoc(d.id)} />)}
                 {/* the add affordance is a dashed row under the list (6 Aug), not a bottom bar */}
                 <button className="j-press" onClick={() => nav.go('adddoc')}
                   style={{ border: '1px dashed var(--chip-border)', background: 'none', borderRadius: 14, padding: '13px 16px',
@@ -1626,202 +1654,604 @@ function recordSizeBytes() {
   return n;
 }
 
-function SettingsScreen({ nav, profile, entries = [], docs = [], binCount = 0 }) {
-  const J = window.JOTLA;
-  const childName = (profile && profile.name) || 'your child';
-  const [backupMeta, setBackupMeta] = useStateB(() => {
-    try { return JSON.parse(localStorage.getItem(BACKUP_META_KEY)) || null; } catch (e) { return null; }
-  });
-  const recordBytes = React.useMemo(recordSizeBytes, [entries, docs, backupMeta]);
-  const exportDue = !backupMeta || !backupMeta.lastExportAt
-    || (Date.now() - new Date(backupMeta.lastExportAt).getTime()) > 30 * 86400000;
-  const FEEDBACK_HREF = 'mailto:hello@sen.help?subject=' + encodeURIComponent('Jotla prototype feedback')
-    + '&body=' + encodeURIComponent('What I was trying to do:\n\nWhat I think, or what happened:\n\nWhich screen:\n\nMy phone / browser:\n');
+/* ==================== THE MENU / SETTINGS SYSTEM (redesign, 6-7 Aug 2026) ====================
+   Menu (the tab) holds what parents reach for: the child, Plus, Backup and
+   Restore, the Recycle Bin. Everything else lives one page deep behind the cog:
+   Settings > Children / Appearance / Privacy / Reminders / Help and about.
+   The crown gate rules every paid row: in the free app the solid gold crown
+   replaces the control and tapping opens the Jotla Plus page. */
 
-  const feedbackCard = (
-    <button className="j-press" onClick={() => { window.location.assign(FEEDBACK_HREF); }} style={{ width: '100%', textAlign: 'left',
-      border: 'none', cursor: 'pointer', background: 'var(--tint-green)', borderRadius: 18, padding: 18, marginBottom: 20,
-      display: 'flex', alignItems: 'center', gap: 14 }}>
-      <span style={{ width: 42, height: 42, borderRadius: 12, background: 'var(--card)', flexShrink: 0,
-        display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Icon name="heart" size={22} color="var(--green)" />
+const FEEDBACK_HREF = 'mailto:hello@sen.help?subject=' + encodeURIComponent('Jotla prototype feedback')
+  + '&body=' + encodeURIComponent('What I was trying to do:\n\nWhat I think, or what happened:\n\nWhich screen:\n\nMy phone / browser:\n');
+
+// A standalone menu row: one flat card per row, no trailing arrow (rows are
+// tappable as a whole, 6 Aug). `trailing` carries a live value, a toggle, a
+// count, or the gold crown.
+function MRow({ icon, iconEl, title, sub, onClick, trailing, danger, style }) {
+  return (
+    <button className="j-card j-press" onClick={onClick} style={{ width: '100%', textAlign: 'left',
+      cursor: onClick ? 'pointer' : 'default', padding: '14px 16px', display: 'flex', gap: 14,
+      alignItems: 'center', marginBottom: 10, ...(style || {}) }}>
+      {iconEl || (icon ? <Icon name={icon} size={22} color={danger ? 'var(--red)' : 'var(--blue)'} style={{ flexShrink: 0 }} /> : null)}
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontWeight: 500,
+          fontSize: 'calc(16px * var(--tscale, 1))', color: danger ? 'var(--red)' : 'var(--ink)' }}>{title}</span>
+        {sub && <span style={{ display: 'block', fontSize: 'calc(13px * var(--tscale, 1))', color: 'var(--muted)', marginTop: 2 }}>{sub}</span>}
       </span>
-      <span style={{ flex: 1 }}>
-        <span style={{ display: 'block', fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(17px * var(--tscale, 1))', color: 'var(--green-ink)' }}>Tell us what you think</span>
-        <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 'calc(13px * var(--tscale, 1))', color: 'var(--muted)', marginTop: 2 }}>This is an early test, and your feedback shapes it. Opens your email.</span>
-      </span>
-      <Icon name="chevronRight" size={18} color="var(--green-ink)" />
+      {trailing}
     </button>
   );
-  const plusCard = (
-    <>
-      <SectionLabel>Jotla Plus</SectionLabel>
-      <button className="j-press" onClick={() => nav.go('unlock')} style={{ width: '100%', textAlign: 'left', border: 'none', cursor: 'pointer',
-        background: PREMIUM_GRAD, borderRadius: 18, padding: 18, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 14,
-        color: '#fff', boxShadow: '0 14px 30px -14px rgba(20,40,80,0.7)' }}>
-        <span style={{ width: 42, height: 42, borderRadius: 12, background: 'rgba(230,184,92,0.18)', flexShrink: 0,
-          display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name="sparkle" size={22} color={PREMIUM_GOLD} />
-        </span>
-        <span style={{ flex: 1 }}>
-          <span style={{ display: 'block', fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(17px * var(--tscale, 1))', color: '#fff' }}>Patterns, filters and PDF pack</span>
-          <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 'calc(13px * var(--tscale, 1))', color: 'rgba(255,255,255,0.78)', marginTop: 2 }}>
-            {nav.plus ? 'Active. Your record is always yours.' : 'See what Plus adds. ' + PLUS_PRICE + ' ' + PLUS_PERIOD + '.'}</span>
-        </span>
-        {nav.plus
-          ? <span className="j-pillbadge" style={{ background: 'rgba(230,184,92,0.22)', color: PREMIUM_GOLD }}>Active</span>
-          : <Icon name="chevronRight" size={18} color="rgba(255,255,255,0.8)" />}
-      </button>
-    </>
+}
+
+// Picker sheet: radio rows, a tap applies instantly (no confirm button on pickers).
+function RadioSheet({ title, subtitle, options, activeKey, onPick, onClose, footer }) {
+  return (
+    <div className="j-sheet-scrim" onClick={onClose}>
+      <div className="j-sheet" onClick={e => e.stopPropagation()}>
+        <div className="j-sheet-grab" />
+        <h2 className="j-h2" style={{ marginBottom: subtitle ? 4 : 10 }}>{title}</h2>
+        {subtitle && <p className="j-sm" style={{ marginBottom: 8 }}>{subtitle}</p>}
+        {options.map((o, i) => (
+          <button key={o.key} onClick={() => onPick(o.key)} className="j-press" style={{ width: '100%', display: 'flex',
+            alignItems: 'center', gap: 12, padding: '13px 2px', background: 'none', border: 'none',
+            borderBottom: i < options.length - 1 ? '1px solid var(--line)' : 'none', cursor: 'pointer', textAlign: 'left' }}>
+            <span style={{ width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
+              border: '2px solid ' + (activeKey === o.key ? 'var(--blue)' : 'var(--faint)'),
+              display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {activeKey === o.key && <span style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--blue)' }} />}
+            </span>
+            <span style={{ flex: 1 }}>
+              <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontWeight: 500, color: 'var(--ink)',
+                fontSize: o.size || 'calc(15.5px * var(--tscale, 1))' }}>{o.label}</span>
+              {o.sub && <span style={{ display: 'block', fontSize: 'calc(12.5px * var(--tscale, 1))', color: 'var(--muted)', marginTop: 1 }}>{o.sub}</span>}
+            </span>
+          </button>
+        ))}
+        {footer}
+      </div>
+    </div>
   );
+}
 
-  const exportData = () => {
-    try {
-      const payload = { app: 'Jotla', exportedAt: new Date().toISOString(), child: profile, entries, documents: docs };
-      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = 'jotla-' + childName.replace(/\s+/g, '-').toLowerCase() + '-export.json';
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1500);
-      const meta = { lastExportAt: new Date().toISOString() };
-      try { localStorage.setItem(BACKUP_META_KEY, JSON.stringify(meta)); } catch (e) {}
-      setBackupMeta(meta);
-    } catch (e) { alert('Sorry, the export could not be created on this device.'); }
-  };
-  const onImportFile = (e) => {
-    const f = e.target.files && e.target.files[0]; e.target.value = '';
-    if (!f) return;
-    const r = new FileReader();
-    r.onload = () => { try { nav.importBackup(JSON.parse(r.result)); } catch (err) { alert('That file could not be read as a Jotla backup.'); } };
-    r.readAsText(f);
-  };
+// A quiet footnote line with a small leading icon (the honesty line pattern).
+function FootNote({ icon = 'lock', children }) {
+  return (
+    <p style={{ display: 'flex', gap: 7, alignItems: 'flex-start', color: 'var(--faint)',
+      fontSize: 'calc(12.5px * var(--tscale, 1))', lineHeight: 1.45, margin: '4px 2px 0' }}>
+      <Icon name={icon} size={14} color="var(--faint)" style={{ flexShrink: 0, marginTop: 2 }} />
+      <span>{children}</span>
+    </p>
+  );
+}
 
+// ---------------- THE MENU TAB ----------------
+// Route name stays 'settings' so saved navigation states never strand; the
+// screen itself is the redesigned Menu.
+function SettingsScreen({ nav, profile, entries = [], docs = [], binCount = 0 }) {
   return (
     <div className="j-screen">
       <div className="j-scroll j-fade">
         <div className="j-pad" style={{ paddingTop: 14, paddingBottom: 120 }}>
-          <TabTitle title="Settings" />
+          {/* the title IS the child; the cog opens Settings (the Todoist pattern) */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 18 }}>
+            <button className="j-press" onClick={() => nav.go('childprofile')} aria-label={'Open ' + profile.name + "'s profile"}
+              style={{ display: 'flex', alignItems: 'center', gap: 11, background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}>
+              <ChildAvatar profile={profile} size={36} />
+              <h1 className="j-h1" style={{ fontSize: 'calc(26px * var(--tscale, 1))' }}>{profile.name}</h1>
+            </button>
+            <button className="j-iconbtn" aria-label="Settings" onClick={() => nav.go('appsettings')}>
+              <Icon name="settings" size={23} color="var(--muted)" />
+            </button>
+          </div>
 
-          {/* active profile */}
-          <button className="j-card j-press" onClick={() => nav.editChild()} style={{ width: '100%', padding: 14, marginBottom: 20, display: 'flex',
-            alignItems: 'center', gap: 14, cursor: 'pointer', textAlign: 'left', border: '1px solid var(--line)' }}>
-            <ChildAvatar profile={profile} size={48} />
-            <span style={{ flex: 1 }}>
-              <span style={{ display: 'block', fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(18px * var(--tscale, 1))', color: 'var(--ink)' }}>{childName}</span>
-              <span style={{ display: 'block', fontSize: 'calc(13.5px * var(--tscale, 1))', color: 'var(--faint)', marginTop: 1 }}>Edit name, school, colour and avatar</span>
+          {/* Jotla Plus: the one unique surface, the paywall's own gradient with
+              the solid gold crown (the app's only solid icon, its only gold) */}
+          <button className="j-press" onClick={() => nav.go('unlock')} style={{ width: '100%', textAlign: 'left', border: 'none',
+            cursor: 'pointer', background: PLUS_GRAD, borderRadius: 16, padding: 16, display: 'flex', alignItems: 'center',
+            gap: 14, boxShadow: '0 10px 22px -8px rgba(38,24,84,0.5)' }}>
+            <Icon name="crown" size={28} color="#EBBA4D" style={{ flexShrink: 0 }} />
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 'calc(16.5px * var(--tscale, 1))', color: '#fff' }}>Jotla Plus</span>
+              <span style={{ display: 'block', fontSize: 'calc(13px * var(--tscale, 1))', color: 'rgba(255,255,255,0.82)', marginTop: 2 }}>
+                {nav.plus ? 'Active. Your record is always yours.' : 'Get the best experience.'}</span>
             </span>
-            <Icon name="chevronRight" size={18} color="var(--faint)" />
           </button>
 
-          {/* The upgrade card sits high only while there is a level to go up to.
-              Once Plus is owned it moves to the bottom of Settings (and when the
-              AI tier exists, that upsell will take this high slot). */}
-          {!nav.plus && plusCard}
+          <SectionLabel>Your record</SectionLabel>
+          <MRow icon="cloudup" title="Backup and Restore" onClick={() => nav.go('backup')} />
+          <MRow icon="trash" title="Recycle Bin" sub="Kept for 30 days" onClick={() => nav.go('bin')}
+            trailing={binCount > 0 ? <span className="j-pillbadge" style={{ background: 'var(--tag-grey-bg)', color: 'var(--muted)' }}>{binCount}</span> : null} />
 
-          <SectionLabel>Backup and export</SectionLabel>
-          <div className="j-card" style={{ marginBottom: 20, overflow: 'hidden' }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 16px', borderBottom: '1px solid var(--line)' }}>
-              <span aria-hidden="true" style={{ width: 8, height: 8, borderRadius: '50%', marginTop: 5, flexShrink: 0,
-                background: exportDue ? '#F39C12' : 'var(--green)' }} />
-              <span style={{ fontFamily: "'Outfit', system-ui", fontSize: 'calc(13.5px * var(--tscale, 1))', color: 'var(--muted)', lineHeight: 1.45 }}>
-                {backupHealthLine(backupMeta)}
-                {exportDue ? ' A copy every few weeks is good insurance.' : ''}
-                {recordBytes > BACKUP_SIZE_SOFT_CAP
-                  ? ' Your record is about ' + Math.round(recordBytes / 1048576) + ' MB. Big records can press against this browser\'s storage limit, so saved copies matter more now.'
-                  : ''}
-              </span>
-            </div>
-            {/* Where the record lives and the planned encrypted export both
-                explain themselves on the About page now (founder consolidation,
-                12 Jul 2026): this card keeps only the real actions. */}
-            <SettingsRow icon={<Icon name="download" size={20} color="var(--blue)" />} title="Export my data"
-              sub={'A plain copy of ' + childName + "'s whole record. Always free."} onClick={exportData}
-              right={<span className="j-pillbadge" style={{ background: 'var(--tint-green)', color: 'var(--green-ink)' }}>Free</span>} />
-            <label className="j-press" style={{ width: '100%', textAlign: 'left', border: 'none',
-              background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14,
-              padding: '14px 16px' }}>
-              <span style={{ width: 38, height: 38, borderRadius: 11, background: 'var(--tint-blue)', flexShrink: 0,
-                display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="attach" size={20} color="var(--blue)" /></span>
-              <span style={{ flex: 1 }}>
-                <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 'calc(16px * var(--tscale, 1))', fontWeight: 500, color: 'var(--ink)' }}>Restore from an export</span>
-                <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 'calc(13px * var(--tscale, 1))', color: 'var(--faint)', marginTop: 1 }}>Bring back a record from an exported file.</span>
-              </span>
-              <Icon name="chevronRight" size={18} color="var(--faint)" />
-              <input type="file" accept="application/json,.json" style={{ display: 'none' }} onChange={onImportFile} />
-            </label>
-          </div>
+          <p className="j-meta" style={{ textAlign: 'center', marginTop: 26 }}>Jotla by SEN Help · Test build {window.JOTLA_BUILD}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+/* SectionLabel needs a little air above it on this screen */
+
+// ---------------- SETTINGS (behind the cog) ----------------
+function AppSettingsScreen({ nav }) {
+  const J = window.JOTLA;
+  const [sheet, setSheet] = useStateB(null); // null | 'theme' | 'size' | 'reminder'
+  const [customTime, setCustomTime] = useStateB('20:00');
+  const [remCustom, setRemCustom] = useStateB(false);
+  const themeLabel = nav.theme === 'system' ? 'System' : (nav.theme === 'dark' ? 'Dark' : 'Light');
+  const sizeLabel = ({ '0.9': 'Small', '1': 'Standard', '1.12': 'Large', '1.25': 'Extra large' })[String(nav.tscale)] || 'Standard';
+  const kids = (nav.profiles || []).map(p => p.name).join(', ');
+  return (
+    <div className="j-screen">
+      <PushHeader title="Settings" onBack={() => nav.back()} />
+      <div className="j-scroll j-fade">
+        <div className="j-pad" style={{ paddingTop: 2, paddingBottom: 40 }}>
+
+          {/* Children leads, un-labelled, the way the old settings led with the child card */}
+          <MRow iconEl={<ChildAvatar profile={(nav.profiles || [])[0]} size={26} />} title="Children" sub={kids}
+            onClick={() => nav.go('children')} />
 
           <SectionLabel>Appearance</SectionLabel>
-          <div className="j-card" style={{ marginBottom: 20, overflow: 'hidden' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px' }}>
-              <span style={{ width: 38, height: 38, borderRadius: 11, background: 'var(--tint-blue)', flexShrink: 0,
-                display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="moon" size={20} color="var(--blue)" /></span>
-              <span style={{ flex: 1 }}>
-                <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 'calc(16px * var(--tscale, 1))', fontWeight: 500, color: 'var(--ink)' }}>Dark mode</span>
-                <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 'calc(13px * var(--tscale, 1))', color: 'var(--faint)', marginTop: 1 }}>Easier on the eyes at night.</span>
-              </span>
-              <Toggle on={nav.dark} onChange={() => nav.toggleDark()} label="Dark mode" />
+          <MRow icon="palette" title="Theme" sub={themeLabel} onClick={() => setSheet('theme')} />
+          <MRow icon="textsize" title="Text size" sub={sizeLabel} onClick={() => setSheet('size')} />
+
+          <SectionLabel>Privacy</SectionLabel>
+          <MRow icon="lock" title="App lock" sub={nav.appLock && nav.appLock.on ? 'On' : 'Off'} onClick={() => nav.go('applock')} />
+
+          <SectionLabel>Reminders</SectionLabel>
+          <MRow icon="bell" title="Daily reminder" sub={nav.reminder || 'Off'} onClick={() => { setRemCustom(false); setSheet('reminder'); }} />
+
+          <SectionLabel>Help and about</SectionLabel>
+          <MRow icon="play" title="Take the tour" onClick={() => nav.go('tour')} />
+          <MRow icon="help" title="Help" onClick={() => nav.go('help')} />
+          <MRow icon="info" title="About Jotla" onClick={() => nav.go('infoabout')} />
+          <MRow icon="heart" title="Tell us what you think" onClick={() => window.location.assign(FEEDBACK_HREF)} />
+
+          <FootNote>No account, and nothing leaves the phone. Jotla works without a login: everything stays on this device, and there is no cloud we can read.</FootNote>
+        </div>
+      </div>
+
+      {sheet === 'theme' && (
+        <RadioSheet title="Theme" activeKey={nav.theme} onClose={() => setSheet(null)}
+          options={[{ key: 'light', label: 'Light' }, { key: 'dark', label: 'Dark' }, { key: 'system', label: 'System', sub: 'Follows your phone' }]}
+          onPick={(k) => { nav.setTheme(k); setSheet(null); }} />
+      )}
+      {sheet === 'size' && (
+        <RadioSheet title="Text size" activeKey={String(nav.tscale)} onClose={() => setSheet(null)}
+          options={[
+            { key: '0.9', label: 'Small', size: '13px' },
+            { key: '1', label: 'Standard', size: '15.5px' },
+            { key: '1.12', label: 'Large', size: '17.5px' },
+            { key: '1.25', label: 'Extra large', size: '19.5px' },
+          ]}
+          onPick={(k) => { nav.setTscale(parseFloat(k)); setSheet(null); }} />
+      )}
+      {sheet === 'reminder' && (
+        <RadioSheet title="Daily reminder" subtitle="A gentle nudge to write the day down."
+          activeKey={remCustom ? 'custom' : (['Off', 'Morning · 08:00', 'Evening · 20:00'].includes(nav.reminder) ? nav.reminder : 'custom')}
+          onClose={() => setSheet(null)}
+          options={[
+            { key: 'Off', label: 'Off' },
+            { key: 'Morning · 08:00', label: 'Morning · 08:00' },
+            { key: 'Evening · 20:00', label: 'Evening · 20:00' },
+            { key: 'custom', label: 'Choose a time' },
+          ]}
+          onPick={(k) => { if (k === 'custom') { setRemCustom(true); return; } nav.setReminder(k); setSheet(null); }}
+          footer={remCustom ? (
+            <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+              <input type="time" className="j-input" value={customTime} onChange={e => setCustomTime(e.target.value)} style={{ flex: 1 }} />
+              <button className="j-btn j-btn-primary" style={{ width: 'auto', minHeight: 48, padding: '0 22px' }}
+                onClick={() => { nav.setReminder(customTime); setSheet(null); }}>Set</button>
             </div>
-            {/* Text size: the whole app scales from this one dial (--tscale). The three
-                sample "A"s stay fixed-size on purpose, so the choice reads even at Standard. */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderTop: '1px solid var(--line)' }}>
-              <span style={{ width: 38, height: 38, borderRadius: 11, background: 'var(--tint-blue)', flexShrink: 0,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 20, color: 'var(--blue)' }} aria-hidden="true">A</span>
-              <span style={{ flex: 1 }}>
-                <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 'calc(16px * var(--tscale, 1))', fontWeight: 500, color: 'var(--ink)' }}>Text size</span>
-                <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontSize: 'calc(13px * var(--tscale, 1))', color: 'var(--faint)', marginTop: 1 }}>Everything in the app follows it.</span>
-              </span>
-              <span role="radiogroup" aria-label="Text size" style={{ display: 'inline-flex', gap: 6 }}>
-                {[{ v: 1, label: 'Standard text', fs: 14 }, { v: 1.12, label: 'Large text', fs: 17 }, { v: 1.25, label: 'Extra large text', fs: 20 }].map(o => {
-                  const on = Math.abs((nav.tscale || 1) - o.v) < 0.01;
-                  return (
-                    <button key={o.v} role="radio" aria-checked={on} aria-label={o.label} onClick={() => nav.setTscale(o.v)}
-                      className="j-press" style={{ width: 40, height: 40, borderRadius: 12, cursor: 'pointer',
-                        border: on ? '1.5px solid var(--blue)' : '1.5px solid var(--chip-border)',
-                        background: on ? 'var(--tint-blue)' : 'var(--chip-bg)',
-                        color: on ? 'var(--blue)' : 'var(--muted)',
-                        fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: o.fs,
-                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>A</button>
-                  );
-                })}
-              </span>
-            </div>
-          </div>
+          ) : null} />
+      )}
+    </div>
+  );
+}
 
-          {feedbackCard}
-
-          {/* privacy reassurance: no account, local lock, plain trust copy */}
-          <div style={{ background: 'var(--fill)', borderRadius: 18, padding: 20, marginBottom: 20, color: '#fff' }}>
-            <Icon name="shield" size={26} color="#fff" style={{ marginBottom: 10 }} />
-            <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(19px * var(--tscale, 1))', margin: '0 0 6px' }}>No account. Nothing leaves the phone.</p>
-            <p style={{ fontSize: 'calc(15px * var(--tscale, 1))', lineHeight: 1.5, color: 'rgba(255,255,255,0.9)', margin: 0 }}>Jotla works without a login. Everything about your child stays on this device, behind your own lock. There is no cloud we can read, and we never receive or access your data.</p>
-          </div>
-
-          <SectionLabel>About</SectionLabel>
-          <div className="j-card" style={{ marginBottom: 20, overflow: 'hidden' }}>
-            <SettingsRow icon={<Icon name="hand" size={20} color="var(--blue)" />} title="Take the tour"
-              sub="A one-minute walkthrough of the whole app." onClick={() => nav.go('tour')} />
-            <SettingsRow icon={<Icon name="star" size={20} color="var(--blue)" />} title="About Jotla"
-              sub="What it is, your privacy, where the record lives, what is coming." onClick={() => nav.go('infoabout')} last />
-          </div>
-
-          {/* The Bin sits right at the bottom (founder ask, 15 Jul 2026): a deleted
-              log or document waits here 30 days before it clears itself. */}
-          <SectionLabel>Bin</SectionLabel>
-          <div className="j-card" style={{ marginBottom: 20, overflow: 'hidden' }}>
-            <SettingsRow icon={<Icon name="close" size={20} color="var(--blue)" />} title="Recently deleted"
-              sub="Restore a deleted log or document, or empty the Bin." onClick={() => nav.go('bin')}
-              right={binCount > 0 ? <span className="j-pillbadge" style={{ background: 'var(--tag-grey-bg)', color: 'var(--muted)' }}>{binCount}</span> : undefined} last />
-          </div>
-
-          {nav.plus && plusCard}
-
-          <p className="j-meta" style={{ textAlign: 'center' }}>Jotla by SEN Help · Test build {window.JOTLA_BUILD}</p>
+// ---------------- CHILDREN ----------------
+function ChildrenScreen({ nav }) {
+  const list = nav.profiles || [];
+  return (
+    <div className="j-screen">
+      <PushHeader title="Children" onBack={() => nav.back()} />
+      <div className="j-scroll j-fade">
+        <div className="j-pad" style={{ paddingTop: 2, paddingBottom: 40 }}>
+          <SectionLabel>On this phone</SectionLabel>
+          {list.map(p => (
+            <MRow key={p.id} iconEl={<ChildAvatar profile={p} size={34} />} title={p.name}
+              sub={[p.year, p.school].filter(Boolean).join(' · ') || null}
+              onClick={() => { nav.pickChild(p.id); nav.go('childprofile'); }}
+              trailing={p.id === nav.profileId ? <Icon name="check" size={20} color="var(--blue)" stroke={2.2} /> : null} />
+          ))}
+          <button className="j-press" onClick={() => nav.go('addchild')}
+            style={{ width: '100%', border: '1px dashed var(--chip-border)', background: 'none', borderRadius: 14,
+              padding: '13px 16px', display: 'flex', alignItems: 'center', gap: 12, color: 'var(--blue)', cursor: 'pointer',
+              fontFamily: "'Outfit', system-ui", fontWeight: 500, fontSize: 'calc(15.5px * var(--tscale, 1))' }}>
+            <Icon name="plus" size={20} color="var(--blue)" stroke={2.2} /> Add another child
+          </button>
+          <FootNote>Each child keeps their own private record on this phone. The tick shows whose record the app is on.</FootNote>
         </div>
       </div>
     </div>
   );
 }
 
-Object.assign(window, { FindScreen, EvidenceScreen, AddDocScreen, DocScreen, UnlockScreen, SettingsScreen, InfoAboutScreen });
+// ---------------- THE CHILD PROFILE (a page, not a drawer) ----------------
+function ChildProfileScreen({ nav, profile, entries = [], docs = [] }) {
+  const J = window.JOTLA;
+  const [dangerMode, setDangerMode] = useStateB(null); // null | 'reset' | 'delete'
+  const [cropSrc, setCropSrc] = useStateB(null);
+  const [avSheet, setAvSheet] = useStateB(false);
+  const [pvFigure, setPvFigure] = useStateB(null); // preview values while the edit sheet is open
+  const [pvGlyph, setPvGlyph] = useStateB(null);
+  const Cropper = window.PhotoCropper;
+  const canDelete = (nav.profiles || []).length > 1;
+  const shown = { ...profile, figure: pvFigure || profile.figure, glyph: pvGlyph || profile.glyph };
+  const colourKey = (fig) => { const c = (J.AVATAR_COLOURS || []).find(x => x.figure === fig); return c ? c.key.charAt(0).toUpperCase() + c.key.slice(1) : 'Sky'; };
+  const openSheet = () => { setPvFigure(profile.figure); setPvGlyph(profile.glyph || 'initial'); setAvSheet(true); };
+  return (
+    <div className="j-screen">
+      <PushHeader title="" onBack={() => nav.back()} />
+      <div className="j-scroll j-fade">
+        <div className="j-pad" style={{ paddingTop: 0, paddingBottom: 40 }}>
+
+          {/* the identity block: the child's image big and central */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 6 }}>
+            <ChildAvatar profile={avSheet ? shown : profile} size={88} />
+            <h1 className="j-h2" style={{ fontFamily: "'Cal Sans', system-ui", fontSize: 'calc(26px * var(--tscale, 1))', marginTop: 10 }}>{profile.name}</h1>
+            <p className="j-sm" style={{ marginTop: 2 }}>{[profile.year, profile.school].filter(Boolean).join(' · ')}</p>
+            <div style={{ display: 'flex', gap: 10, marginTop: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+              <label className="j-press" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '9px 14px', borderRadius: 999,
+                cursor: 'pointer', background: 'var(--tint-blue)', border: '1px solid rgba(26,86,168,0.30)', color: 'var(--blue)',
+                fontSize: 'calc(14px * var(--tscale, 1))', fontWeight: 500 }}>
+                <Icon name="camera" size={17} color="var(--blue)" /> {profile.photo ? 'Change photo' : 'Upload a photo'}
+                <input type="file" accept="image/*" style={{ display: 'none' }}
+                  onChange={e => { const f = e.target.files && e.target.files[0]; if (f) window.fileToDataURL(f, url => setCropSrc(url)); e.target.value = ''; }} />
+              </label>
+              {profile.photo && (
+                <button className="j-press" onClick={() => nav.setChild({ photo: null })} style={{ display: 'inline-flex', alignItems: 'center', gap: 7,
+                  padding: '9px 14px', borderRadius: 999, cursor: 'pointer', background: 'var(--card)', border: '1px solid var(--chip-border)',
+                  color: 'var(--muted)', fontSize: 'calc(14px * var(--tscale, 1))', fontWeight: 500 }}>
+                  <Icon name="close" size={16} color="var(--muted)" /> Remove
+                </button>
+              )}
+            </div>
+          </div>
+
+          <SectionLabel>Details</SectionLabel>
+          <div className="j-card" style={{ padding: 16, marginBottom: 10 }}>
+            <FieldLabel>Name</FieldLabel>
+            <input className="j-input" value={profile.name} onChange={e => nav.setChild({ name: e.target.value })} style={{ marginBottom: 14 }} />
+            <FieldLabel>School or setting</FieldLabel>
+            <input className="j-input" value={profile.school} onChange={e => nav.setChild({ school: e.target.value })} style={{ marginBottom: 14 }} />
+            <FieldLabel>Year group</FieldLabel>
+            <input className="j-input" value={profile.year} onChange={e => nav.setChild({ year: e.target.value })} />
+          </div>
+          <MRow icon="palette" title="Colour and avatar"
+            sub={colourKey(profile.figure) + ' · ' + ((profile.glyph || 'initial') === 'initial' ? 'the letter ' + ((profile.initial || (profile.name || 'J').charAt(0)).toUpperCase()) : (profile.glyph === 'today' ? 'house' : profile.glyph))}
+            onClick={openSheet} />
+
+          <SectionLabel>The adults around {(profile.name || '').trim() || 'them'}</SectionLabel>
+          <AdultsEditor profile={profile} onChange={nav.setChild} />
+
+          <SectionLabel><span style={{ color: 'var(--red)' }}>Careful</span></SectionLabel>
+          <MRow icon="restart" danger title="Reset this child" sub={'Clear all logs and documents, keep ' + profile.name + "'s profile"}
+            onClick={() => setDangerMode('reset')} />
+          {canDelete && <MRow icon="trash" danger title="Delete this child" sub={'Permanently remove ' + profile.name + "'s record"}
+            onClick={() => setDangerMode('delete')} />}
+          <FootNote>Both offer a backup first and need a clear confirm. {profile.name}'s record never leaves this phone without you.</FootNote>
+        </div>
+      </div>
+
+      {/* the colour and avatar edit sheet: live preview, Done commits, Cancel reverts */}
+      {avSheet && (
+        <div className="j-sheet-scrim" onClick={() => setAvSheet(false)}>
+          <div className="j-sheet" onClick={e => e.stopPropagation()} style={{ maxHeight: '86%', overflowY: 'auto' }}>
+            <div className="j-sheet-grab" />
+            <h2 className="j-h2" style={{ marginBottom: 10 }}>Colour and avatar</h2>
+            <SectionLabel>Colour</SectionLabel>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
+              {(J.AVATAR_COLOURS || []).map(c => (
+                <button key={c.key} onClick={() => setPvFigure(c.figure)} aria-label={'Colour ' + c.key} className="j-press"
+                  style={{ width: 37, height: 37, borderRadius: '50%', cursor: 'pointer', background: c.figure,
+                    border: '3px solid var(--card)', boxShadow: pvFigure === c.figure ? '0 0 0 2px var(--ink)' : 'inset 0 0 0 1px rgba(0,0,0,0.08)' }} />
+              ))}
+            </div>
+            <SectionLabel>Avatar</SectionLabel>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 18 }}>
+              {CHILD_GLYPHS.map(g => (
+                <button key={g} onClick={() => setPvGlyph(g)} aria-label={'Avatar ' + g} className="j-press"
+                  style={{ width: 44, height: 44, borderRadius: '50%', cursor: 'pointer', padding: 0, border: 'none',
+                    background: 'transparent', boxShadow: pvGlyph === g ? '0 0 0 2px var(--ink)' : 'none' }}>
+                  <ChildAvatar profile={{ ...profile, figure: pvFigure || profile.figure, glyph: g, photo: null }} size={44} ring={false} />
+                </button>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className="j-btn j-btn-ghost" style={{ flex: 1 }} onClick={() => setAvSheet(false)}>Cancel</button>
+              <button className="j-btn j-btn-primary" style={{ flex: 1 }}
+                onClick={() => { nav.setChild({ figure: pvFigure, glyph: pvGlyph }); setAvSheet(false); }}>Done</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {dangerMode && <DeleteChildSheet mode={dangerMode} profile={profile} entries={entries} docs={docs}
+        onClose={() => setDangerMode(null)}
+        onConfirm={() => { const m = dangerMode; setDangerMode(null);
+          if (m === 'reset') { nav.resetChild(nav.profileId); }
+          else { nav.deleteChild(nav.profileId); nav.setTab('settings'); } }} />}
+      {cropSrc && <Cropper src={cropSrc} onDone={url => { nav.setChild({ photo: url }); setCropSrc(null); }} onCancel={() => setCropSrc(null)} />}
+    </div>
+  );
+}
+
+// the adults chip editor, lifted from the old details sheet
+function AdultsEditor({ profile, onChange }) {
+  const [draft, setDraft] = useStateB('');
+  const adults = profile.adults || [];
+  const add = () => {
+    const n = draft.trim();
+    if (!n) return;
+    if (!adults.some(a => a.toLowerCase() === n.toLowerCase())) onChange({ adults: [...adults, n] });
+    setDraft('');
+  };
+  return (
+    <div className="j-card" style={{ padding: 16, marginBottom: 10 }}>
+      {adults.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
+          {adults.map(a => (
+            <button key={a} className="j-press" onClick={() => onChange({ adults: adults.filter(x => x !== a) })} aria-label={'Remove ' + a}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: '1.5px solid var(--chip-border)',
+                background: 'var(--card)', borderRadius: 999, padding: '8px 14px', cursor: 'pointer',
+                fontFamily: "'Outfit', system-ui", fontWeight: 500, fontSize: 'calc(14.5px * var(--tscale, 1))', color: 'var(--ink)' }}>
+              {a} <Icon name="close" size={14} color="var(--faint)" />
+            </button>
+          ))}
+        </div>
+      )}
+      <div style={{ display: 'flex', gap: 10, alignItems: 'stretch' }}>
+        <input className="j-input" value={draft} onChange={e => setDraft(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); add(); } }}
+          placeholder="Mrs Price, Mr Okafor the TA..." aria-label="Add an adult" style={{ flex: 1, minWidth: 0 }} />
+        <button className="j-btn j-btn-soft" onClick={add} disabled={!draft.trim()}
+          style={{ width: 'auto', flexShrink: 0, padding: '0 22px', ...(draft.trim() ? {} : { opacity: 0.5, cursor: 'default' }) }}>Add</button>
+      </div>
+    </div>
+  );
+}
+
+// ---------------- APP LOCK (free: privacy is never paywalled) ----------------
+// The web prototype holds the parent's choices; the real lock screen, pattern
+// entry and biometrics are native-build work.
+function AppLockScreen({ nav }) {
+  const al = nav.appLock || { on: false, method: 'Pattern', bio: false, question: false };
+  const [methodSheet, setMethodSheet] = useStateB(false);
+  const [qSheet, setQSheet] = useStateB(false);
+  const [qDraft, setQDraft] = useStateB('');
+  const [aDraft, setADraft] = useStateB('');
+  const set = (patch) => nav.setAppLock({ ...al, ...patch });
+  return (
+    <div className="j-screen">
+      <PushHeader title="App lock" onBack={() => nav.back()} />
+      <div className="j-scroll j-fade">
+        <div className="j-pad" style={{ paddingTop: 2, paddingBottom: 40 }}>
+          <MRow icon="lock" title="App lock" sub="Asked for every time Jotla opens"
+            onClick={() => set({ on: !al.on })}
+            trailing={<Toggle on={al.on} onChange={() => set({ on: !al.on })} label="App lock" />} />
+
+          <SectionLabel>Unlock with</SectionLabel>
+          <MRow icon="dots9" title="Pattern or PIN" sub={al.method} onClick={() => setMethodSheet(true)} />
+          <MRow icon="finger" title="Fingerprint or face" sub="When your phone can"
+            onClick={() => set({ bio: !al.bio })}
+            trailing={<Toggle on={al.bio} onChange={() => set({ bio: !al.bio })} label="Fingerprint or face" />} />
+
+          <SectionLabel>If you forget</SectionLabel>
+          <MRow icon="help" title="Security question" sub={al.question ? 'Set' : 'Not set yet'} onClick={() => setQSheet(true)} />
+
+          <FootNote>The lock, the pattern and your answer stay on this phone and are checked nowhere else. Jotla cannot reset a lock for you, so set the question.</FootNote>
+        </div>
+      </div>
+
+      {methodSheet && (
+        <RadioSheet title="Unlock with" activeKey={al.method} onClose={() => setMethodSheet(false)}
+          options={[{ key: 'Pattern', label: 'Pattern', sub: 'Join the dots' }, { key: 'PIN', label: 'PIN', sub: 'Four digits or more' }]}
+          onPick={(k) => { set({ method: k }); setMethodSheet(false); }} />
+      )}
+      {qSheet && (
+        <div className="j-sheet-scrim" onClick={() => setQSheet(false)}>
+          <div className="j-sheet" onClick={e => e.stopPropagation()}>
+            <div className="j-sheet-grab" />
+            <h2 className="j-h2" style={{ marginBottom: 4 }}>Security question</h2>
+            <p className="j-sm" style={{ marginBottom: 14 }}>The answer is checked on this phone only. Pick something only you would answer the same way every time.</p>
+            <FieldLabel>Question</FieldLabel>
+            <input className="j-input" value={qDraft} onChange={e => setQDraft(e.target.value)} placeholder="For example: my first teacher's surname" style={{ marginBottom: 14 }} />
+            <FieldLabel>Answer</FieldLabel>
+            <input className="j-input" value={aDraft} onChange={e => setADraft(e.target.value)} style={{ marginBottom: 18 }} />
+            <button className="j-btn j-btn-primary" disabled={!qDraft.trim() || !aDraft.trim()}
+              style={(!qDraft.trim() || !aDraft.trim()) ? { opacity: 0.5, cursor: 'default' } : {}}
+              onClick={() => { if (qDraft.trim() && aDraft.trim()) { set({ question: true }); setQSheet(false); } }}>Save</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------- BACKUP AND RESTORE ----------------
+function BackupScreen({ nav, profile, entries = [], docs = [] }) {
+  const J = window.JOTLA;
+  const [meta, setMeta] = useStateB(() => {
+    try { return JSON.parse(localStorage.getItem(BACKUP_META_KEY)) || null; } catch (e) { return null; }
+  });
+  const [expSheet, setExpSheet] = useStateB(false);
+  const [period, setPeriod] = useStateB('all'); // all | 7 | 30 | custom
+  const [fromD, setFromD] = useStateB('');
+  const [toD, setToD] = useStateB('');
+  const daysAgoISO = (n) => {
+    const d = new Date(J.TODAY_ISO + 'T12:00:00'); d.setDate(d.getDate() - n);
+    return d.toISOString().slice(0, 10);
+  };
+  const doExport = () => {
+    let from = null, to = null;
+    if (period === '7') from = daysAgoISO(6);
+    else if (period === '30') from = daysAgoISO(29);
+    else if (period === 'custom') { from = fromD || null; to = toD || null; }
+    try {
+      const inR = (d) => d && (!from || d >= from) && (!to || d <= to);
+      const es = period === 'all' ? entries : entries.filter(e => inR(e.date));
+      const ds = period === 'all' ? docs : docs.filter(d => inR(d.received));
+      const payload = { app: 'Jotla', exportedAt: new Date().toISOString(), child: profile, entries: es, documents: ds };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'jotla-' + ((profile && profile.name) || 'record').replace(/\s+/g, '-').toLowerCase() + '-export.json';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+      const stamp = { lastExportAt: new Date().toISOString() };
+      try { localStorage.setItem(BACKUP_META_KEY, JSON.stringify(stamp)); } catch (e) {}
+      setMeta(stamp); setExpSheet(false);
+    } catch (e) { alert('Sorry, the export could not be created on this device.'); }
+  };
+  const onImportFile = (e) => {
+    const f = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = () => { try { nav.importBackup(JSON.parse(r.result)); } catch (err) { alert('That file could not be read as a Jotla backup.'); } };
+    r.readAsText(f);
+  };
+  const lastExport = meta && meta.lastExportAt
+    ? 'Last export ' + J.fmtShort(meta.lastExportAt.slice(0, 10)) + ' ' + meta.lastExportAt.slice(0, 4)
+    : 'Not exported yet';
+  const crown = <Icon name="crown" size={20} color="var(--gold)" style={{ flexShrink: 0 }} />;
+  return (
+    <div className="j-screen">
+      <PushHeader title="Backup and Restore" onBack={() => nav.back()} />
+      <div className="j-scroll j-fade">
+        <div className="j-pad" style={{ paddingTop: 2, paddingBottom: 40 }}>
+          <SectionLabel>On this phone</SectionLabel>
+          <MRow icon="download" title="Export my data" sub={lastExport} onClick={() => setExpSheet(true)} />
+          <label className="j-card j-press" style={{ width: '100%', textAlign: 'left', cursor: 'pointer', padding: '14px 16px',
+            display: 'flex', gap: 14, alignItems: 'center', marginBottom: 10 }}>
+            <Icon name="upload" size={22} color="var(--blue)" style={{ flexShrink: 0 }} />
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontWeight: 500, fontSize: 'calc(16px * var(--tscale, 1))', color: 'var(--ink)' }}>Restore from an export</span>
+            </span>
+            <input type="file" accept="application/json,.json" style={{ display: 'none' }} onChange={onImportFile} />
+          </label>
+
+          {/* the parent's own cloud, all Plus: the crown gate opens the paywall */}
+          <SectionLabel>Google Drive</SectionLabel>
+          <MRow icon="cloudup" title="Back up to your Drive" sub="Not backed up yet" onClick={() => nav.go('unlock')} trailing={crown} />
+          <MRow icon="clouddown" title="Restore from your Drive" onClick={() => nav.go('unlock')} trailing={crown} />
+
+          <SectionLabel>Dropbox</SectionLabel>
+          <MRow icon="cloudup" title="Back up to Dropbox" sub="Not backed up yet" onClick={() => nav.go('unlock')} trailing={crown} />
+          <MRow icon="clouddown" title="Restore from Dropbox" onClick={() => nav.go('unlock')} trailing={crown} />
+
+          <SectionLabel>Automatic</SectionLabel>
+          <MRow icon="clock" title="Auto backup" sub="Backs up when the record changes" onClick={() => nav.go('unlock')} trailing={crown} />
+          <MRow icon="bell" title="Backup reminder" sub="Every week" onClick={() => nav.go('unlock')} trailing={crown} />
+
+          <FootNote>Backups live in your own Google Drive or Dropbox, in a space only the app can read. Jotla has no servers and never sees your record.</FootNote>
+        </div>
+      </div>
+
+      {expSheet && (
+        <RadioSheet title="Export my data" subtitle="Saves a file on this phone." activeKey={period} onClose={() => setExpSheet(false)}
+          options={[
+            { key: 'all', label: 'The whole record' },
+            { key: '7', label: 'Last 7 days' },
+            { key: '30', label: 'Last 30 days' },
+            { key: 'custom', label: 'Choose dates' },
+          ]}
+          onPick={(k) => setPeriod(k)}
+          footer={(
+            <div>
+              {period === 'custom' && (
+                <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+                  <label style={{ flex: 1 }}>
+                    <span className="j-meta" style={{ display: 'block', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em', fontSize: 'calc(10.5px * var(--tscale, 1))' }}>From</span>
+                    <input type="date" className="j-input" value={fromD} onChange={e => setFromD(e.target.value)} />
+                  </label>
+                  <label style={{ flex: 1 }}>
+                    <span className="j-meta" style={{ display: 'block', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em', fontSize: 'calc(10.5px * var(--tscale, 1))' }}>To</span>
+                    <input type="date" className="j-input" value={toD} onChange={e => setToD(e.target.value)} />
+                  </label>
+                </div>
+              )}
+              <button className="j-btn j-btn-primary" style={{ marginTop: 14 }} onClick={doExport}>Export</button>
+            </div>
+          )} />
+      )}
+    </div>
+  );
+}
+
+// ---------------- HELP ----------------
+const HELP_QA = [
+  ['The record', [
+    ['Where does the record live?', 'On this phone. There is no account and no cloud copy unless you back up to your own Google Drive or Dropbox.'],
+    ['How do backups work?', 'Automatic backups go to your own Drive or Dropbox, in a space only the app can read. A manual export file is always free.'],
+    ['How do I move to a new phone?', 'Back up on the old phone, install Jotla on the new one, then restore from your Drive, Dropbox or the export file.'],
+    ['I deleted something. Can I get it back?', 'Deleted logs and documents wait in the Recycle Bin for 30 days. After that they clear themselves.'],
+  ]],
+  ['Plus', [
+    ['What does Plus cost?', '£29 for 1 month, £49 for 6 months or £79 for a year, through Google Play.'],
+    ['How do I cancel?', 'In Subscriptions on Google Play, any time. Plus stays on until the day it runs out.'],
+    ['What happens if I stop paying?', 'You keep every entry, the timeline, search, the export and the PDF of what you already logged. A subscription only switches off the paid tools.'],
+  ]],
+  ['Privacy', [
+    ['How do I lock the app?', 'Settings, then App lock. A pattern or PIN, with fingerprint or face if your phone can.'],
+  ]],
+];
+
+function HelpScreen({ nav }) {
+  const [open, setOpen] = useStateB({ 'The record:0': true });
+  const toggle = (k) => setOpen(o => ({ ...o, [k]: !o[k] }));
+  return (
+    <div className="j-screen">
+      <PushHeader title="Help" onBack={() => nav.back()} />
+      <div className="j-scroll j-fade">
+        <div className="j-pad" style={{ paddingTop: 2, paddingBottom: 40 }}>
+          {HELP_QA.map(([section, qas]) => (
+            <React.Fragment key={section}>
+              <SectionLabel>{section}</SectionLabel>
+              {qas.map(([q, a], i) => {
+                const k = section + ':' + i;
+                return (
+                  <button key={k} className="j-card j-press" onClick={() => toggle(k)} style={{ width: '100%', textAlign: 'left',
+                    cursor: 'pointer', padding: '14px 16px', marginBottom: 10, display: 'block' }}>
+                    <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontWeight: 500, fontSize: 'calc(15.5px * var(--tscale, 1))', color: 'var(--ink)' }}>{q}</span>
+                    {open[k] && <span style={{ display: 'block', fontSize: 'calc(13.5px * var(--tscale, 1))', color: 'var(--muted)', lineHeight: 1.5, marginTop: 8 }}>{a}</span>}
+                  </button>
+                );
+              })}
+            </React.Fragment>
+          ))}
+          <SectionLabel>Still stuck</SectionLabel>
+          <MRow icon="mail" title="Contact support" onClick={() => nav.go('support')} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------- SUPPORT ----------------
+function SupportScreen({ nav }) {
+  return (
+    <div className="j-screen">
+      <PushHeader title="Support" onBack={() => nav.back()} />
+      <div className="j-scroll j-fade">
+        <div className="j-pad" style={{ paddingTop: 2, paddingBottom: 40 }}>
+          <MRow icon="mail" title="Email us" sub="hello@sen.help" onClick={() => window.location.assign('mailto:hello@sen.help?subject=' + encodeURIComponent('Jotla'))} />
+          <MRow icon="heart" title="Tell us what you think" onClick={() => window.location.assign(FEEDBACK_HREF)} />
+          <FootNote icon="mail">Replies come from a real person at SEN Help.</FootNote>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { FindScreen, EvidenceScreen, AddDocScreen, DocScreen, UnlockScreen, SettingsScreen, InfoAboutScreen,
+  AppSettingsScreen, ChildrenScreen, ChildProfileScreen, AppLockScreen, BackupScreen, HelpScreen, SupportScreen, MRow, RadioSheet });
