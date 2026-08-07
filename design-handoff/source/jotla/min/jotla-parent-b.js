@@ -183,7 +183,7 @@ function FindScreen({
     },
     icon: "filter",
     title: "Filters",
-    text: "Theme, mood, place and dates. Keyword search is always free."
+    text: /*#__PURE__*/React.createElement(React.Fragment, null, "Theme, mood, place and dates.", /*#__PURE__*/React.createElement("br", null), "Keyword search is always free.")
   }), /*#__PURE__*/React.createElement("div", {
     className: "j-card",
     style: {
@@ -1890,22 +1890,25 @@ function DocScreen({
 
 // ---------------- Jotla Plus (the three-layer money model) ----------------
 
-// The money model (decisions/log.md, 2026-07-14, Bupe's money gate):
+// The money model (decisions/log.md, 2026-08-06, Bupe's money gate; supersedes
+// the 14 Jul annual-only rule):
 //   Free      £0 forever.
-//   Plus      £79 a year (Best value), or £49 for 6 months. No monthly plan.
-//             Family Sync is inside it.
-//   Jotla AI  £149 a year, coming 2027, and it INCLUDES Plus (£149 in total,
-//             not £79 + £149). It replaces the old "Living Companion" tier.
+//   Plus      £29 for 1 month, £49 for 6 months, £79 for a year (Best value).
+//             The £29 month is the anchor: two months (£58) already beats the
+//             6-month term, so the monthly door cannot be gamed. Family Sync is
+//             inside Plus and sells as launch-state (decisions 2026-08-06).
+//   Jotla AI  coming 2027, INDICATIVE ladder £59 / £99 / £149 with Plus
+//             included (£149 in total, not £79 + £149). Visible on the paywall
+//             with no buy button until it exists.
 // There is no one-time price and no lifetime buyout of any kind. The old
 // buy-once copy (pay once, yours to keep, no subscription, no timers) is
 // retired with it and must not come back.
+const MONTH_PRICE = '£29';
 const PLUS_PRICE = '£79';
 const PLUS_PERIOD = 'a year';
 const TERM_PRICE = '£49';
 const TERM_PERIOD = 'for 6 months';
 const AI_PRICE = '£149';
-// Repriced 2026-07-17 (Bupe, money gate) from £49 Plus / £79 AI. The £49 six-
-// month term is the low-commitment door that keeps the £79 annual affordable.
 
 // Free is a calm, flat darker blue. Plus has its own purple identity. The premium
 // navy + gold look (and the sparkle) dresses Jotla AI and the Settings upsell card.
@@ -1917,1199 +1920,502 @@ const PREMIUM_GRAD = 'linear-gradient(135deg, #14294A 0%, #1E5099 100%)';
 const PREMIUM_GOLD = '#E6B85C';
 const PREMIUM_GOLD_DEEP = '#C9912F';
 
-// A simple check list used on each tier page.
-function CheckList({
-  items,
-  color,
-  tint,
-  dark
+// ==================== THE PAYWALL (redesign, 6-7 Aug 2026) ====================
+// Both tiers behind one selector: Jotla Plus (purple) and Jotla AI (navy+gold,
+// coming 2027, real price tabs, NO buy button before it exists). Real carousel
+// art rides each tier. No fake discounts, no strikethroughs, no invented trial:
+// the honest-marketing lock. Pricing decided 6 Aug: £29 / £49 / £79, and the
+// indicative AI ladder £59 / £99 / £149 with Plus included.
+const PLUS_SLIDES = [{
+  t: 'Patterns and Month View',
+  c: 'A calendar of green and amber days. Tap any day to read what happened behind it.',
+  img: 'art/plus-1.jpg'
+}, {
+  t: 'PDF Evidence Pack',
+  c: 'Turn any stretch of the record into one dated PDF, ready to hand over.',
+  img: 'art/plus-2.jpg'
+}, {
+  t: 'Family Sync',
+  c: "The record on every grown-up's phone. One of you logs it, both of you have it.",
+  img: 'art/plus-3.jpg'
+}, {
+  t: 'Photos and Videos on Notes',
+  c: 'Add the photo or the video to the note, so the day is shown as well as told.',
+  img: 'art/plus-4.jpg'
+}, {
+  t: 'Dysregulation Mode',
+  c: 'Five gentle questions in the hard moment, so nothing important is lost.',
+  img: 'art/plus-5.jpg'
+}];
+const AI_SLIDES = [{
+  t: 'EHCP and SEND deadline tracker',
+  c: 'Every deadline tracked, with what to do about a gap.',
+  img: 'art/ai-1.jpg'
+}, {
+  t: 'On-device AI help',
+  c: 'Ask about the record or the process. Answers stay on the phone.',
+  img: 'art/ai-2.jpg'
+}, {
+  t: 'Current letter templates',
+  c: 'The right letter for the moment, kept current with the law.',
+  img: 'art/ai-3.jpg'
+}, {
+  t: 'Rights kept current',
+  c: 'What you are entitled to, updated as the rules change.',
+  img: 'art/ai-4.jpg'
+}, {
+  t: 'Voice capture',
+  c: 'Say what happened and Jotla writes it down.',
+  img: 'art/ai-5.jpg'
+}];
+function TermCard({
+  label,
+  price,
+  per,
+  sel,
+  gold,
+  badge
 }) {
   return /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 11
-    }
-  }, items.map(it => /*#__PURE__*/React.createElement("div", {
-    key: it,
-    style: {
-      display: 'flex',
-      gap: 11,
-      alignItems: 'flex-start'
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      width: 20,
-      height: 20,
-      borderRadius: '50%',
-      background: tint,
-      flexShrink: 0,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginTop: 1
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "check",
-    size: 13,
-    color: color
-  })), /*#__PURE__*/React.createElement("span", {
     style: {
       flex: 1,
       minWidth: 0,
-      fontSize: 'calc(15.5px * var(--tscale, 1))',
-      lineHeight: 1.4,
-      color: dark ? 'rgba(255,255,255,0.92)' : 'var(--body)'
+      borderRadius: 14,
+      padding: '13px 10px 11px',
+      textAlign: 'center',
+      position: 'relative',
+      background: sel ? gold ? 'rgba(230,184,92,0.12)' : 'var(--plus-tint)' : 'var(--card)',
+      border: '1.5px solid ' + (sel ? gold ? '#C9912F' : '#6E54D6' : 'var(--line)')
     }
-  }, it))));
-}
-
-// A detailed Plus feature: a formal bottom-line sentence, then a plain "what it looks like" line.
-function PlusFeature({
-  icon,
-  title,
-  formal,
-  plain
-}) {
-  return /*#__PURE__*/React.createElement("div", {
-    className: "j-card",
+  }, badge && /*#__PURE__*/React.createElement("span", {
     style: {
-      padding: 16
+      position: 'absolute',
+      top: -9,
+      left: '50%',
+      transform: 'translateX(-50%)',
+      background: '#EBBA4D',
+      color: '#3A2A0C',
+      fontSize: 'calc(10.5px * var(--tscale, 1))',
+      fontWeight: 700,
+      padding: '3px 9px',
+      borderRadius: 999,
+      whiteSpace: 'nowrap'
     }
-  }, /*#__PURE__*/React.createElement("div", {
+  }, badge), /*#__PURE__*/React.createElement("div", {
     style: {
-      display: 'flex',
-      gap: 12,
-      alignItems: 'center',
-      marginBottom: 10
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      width: 40,
-      height: 40,
-      borderRadius: 12,
-      background: PLUS_GRAD,
-      flexShrink: 0,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
-    }
-  }, icon), /*#__PURE__*/React.createElement("p", {
-    className: "j-h3"
-  }, title)), /*#__PURE__*/React.createElement("p", {
-    className: "j-body",
-    style: {
-      fontSize: 'calc(15.5px * var(--tscale, 1))',
-      marginBottom: 10
-    }
-  }, formal), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      gap: 8,
-      alignItems: 'flex-start',
-      background: 'var(--plus-tint)',
-      borderRadius: 12,
-      padding: '10px 12px'
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "arrowRight",
-    size: 16,
-    color: "var(--plus-ink)",
-    style: {
-      marginTop: 2,
-      flexShrink: 0
-    }
-  }), /*#__PURE__*/React.createElement("p", {
-    className: "j-sm",
-    style: {
-      color: 'var(--plus-ink)'
-    }
-  }, plain)));
-}
-const FREE_ITEMS = ['Daily logging and the quick log', 'The child walkthrough', 'Your basic timeline', 'Plain keyword search of your own notes', 'Raw data export', 'Appeal-deadline safety reminders'];
-// Jotla AI (2027) carries what the old third tier carried: the statutory
-// content that has to be kept current, plus the on-device help.
-// HONESTY (14 Jul 2026): "A document vault" and "Multiple children" were struck
-// from this list. Both already ship today, so advertising them as a future paid
-// feature would sell a parent something she already has. Nothing goes on this
-// list that a parent can already use. Check that before adding to it.
-const AI_ITEMS = ['EHCP and SEND deadline tracker', 'What to do about a gap', 'Rights kept current', 'Current letter templates', 'On-device AI help', 'Fresh scene and symbol packs', 'Voice capture'];
-
-// The no-ransom promise, in the parent's own words. Plus is now a yearly
-// subscription, so this matters MORE, not less: a year ending must never cost
-// a parent a single line of what they wrote. This list is what survives a
-// lapse, always, and it is shown at the same weight as the price.
-const NO_RANSOM_ITEMS = ['Every entry you have written', 'Your full timeline', 'Plain keyword search', 'Raw export of everything', 'The PDF of everything you have already logged', 'Appeal-deadline safety reminders, with or without a subscription'];
-const PAGE_STYLE = {
-  flex: '0 0 100%',
-  width: '100%',
-  height: '100%',
-  scrollSnapAlign: 'start',
-  overflowY: 'auto',
-  overflowX: 'hidden'
-};
-
-// ---- Page 1: Free ----
-function FreePage() {
-  return /*#__PURE__*/React.createElement("div", {
-    style: PAGE_STYLE
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "j-pad",
-    style: {
-      paddingTop: 6,
-      paddingBottom: 150
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "j-pillbadge",
-    style: {
-      background: 'var(--tint-blue)',
-      color: 'var(--blue)'
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "check",
-    size: 13,
-    color: "var(--blue)"
-  }), " Free, forever"), /*#__PURE__*/React.createElement("h1", {
-    className: "j-h1",
-    style: {
-      margin: '12px 0 8px'
-    }
-  }, "Everything you need to keep a record"), /*#__PURE__*/React.createElement("p", {
-    className: "j-body",
-    style: {
+      fontSize: 'calc(12.5px * var(--tscale, 1))',
       color: 'var(--muted)',
-      marginBottom: 18
-    }
-  }, "No cost. No account. It never expires."), /*#__PURE__*/React.createElement("div", {
-    className: "j-card",
-    style: {
-      padding: 18,
-      marginBottom: 16
-    }
-  }, /*#__PURE__*/React.createElement(CheckList, {
-    items: FREE_ITEMS,
-    color: "var(--blue)",
-    tint: "var(--tint-blue)"
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: 'var(--tint-blue)',
-      borderRadius: 16,
-      padding: 16,
-      display: 'flex',
-      gap: 12,
-      alignItems: 'flex-start'
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "shield",
-    size: 22,
-    color: "var(--blue)",
-    style: {
-      flexShrink: 0,
-      marginTop: 2
-    }
-  }), /*#__PURE__*/React.createElement("p", {
-    className: "j-body",
-    style: {
-      fontSize: 'calc(15px * var(--tscale, 1))',
-      color: 'var(--blue)'
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
       fontWeight: 500
     }
-  }, "Your record is yours."), " Logging and export stay free forever, and anything you have saved stays yours even if you cancel."))));
-}
-
-// The back-to-school promotion kit was RETIRED 2026-07-17 (Bupe) when Plus moved
-// to £79 a year plus a £49 six-month term. The term now does, honestly and
-// permanently, the job a first-year discount did, so Jotla ships no dormant
-// discount kit. The old kit is in git history if it is ever wanted again.
-
-// ---- Page 2: Jotla Plus (premium) ----
-// The no-ransom promise sits directly under the price, at the same visual
-// weight, because it is the other half of the price. A parent has to be able
-// to see, before they pay, that a year ending never costs them their record.
-function PlusPage() {
-  return /*#__PURE__*/React.createElement("div", {
-    style: PAGE_STYLE
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "j-pad",
-    style: {
-      paddingTop: 6,
-      paddingBottom: 150
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      borderRadius: 20,
-      padding: '22px 20px',
-      background: PLUS_GRAD,
-      color: '#fff',
-      marginBottom: 18,
-      boxShadow: '0 18px 38px -18px rgba(60,42,114,0.7)'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: 8,
-      flexWrap: 'wrap'
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: 6,
-      padding: '5px 12px',
-      borderRadius: 999,
-      background: 'rgba(205,187,247,0.18)',
-      border: `1px solid ${PLUS_ACCENT}`,
-      color: PLUS_ACCENT,
-      fontSize: 'calc(12px * var(--tscale, 1))',
-      fontWeight: 600,
-      letterSpacing: '0.08em'
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "star",
-    size: 13,
-    color: PLUS_ACCENT
-  }), " JOTLA PLUS")), /*#__PURE__*/React.createElement("p", {
+  }, label), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "'Cal Sans', system-ui",
-      fontWeight: 500,
-      fontSize: 'calc(24px * var(--tscale, 1))',
-      lineHeight: 1.14,
-      margin: '14px 0 0'
-    }
-  }, "The tools to help you spot patterns and make your case"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      alignItems: 'baseline',
-      gap: 8,
-      marginTop: 16,
-      flexWrap: 'wrap'
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontFamily: "'Cal Sans', system-ui",
-      fontWeight: 500,
-      fontSize: 'calc(40px * var(--tscale, 1))',
-      color: PLUS_ACCENT
-    }
-  }, PLUS_PRICE), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 'calc(14px * var(--tscale, 1))',
-      color: 'rgba(255,255,255,0.82)'
-    }
-  }, PLUS_PERIOD), /*#__PURE__*/React.createElement("span", {
-    style: {
-      marginLeft: 'auto',
-      fontSize: 'calc(12.5px * var(--tscale, 1))',
-      fontWeight: 700,
-      color: '#3A2A0C',
-      background: PREMIUM_GOLD,
-      padding: '4px 10px',
-      borderRadius: 999
-    }
-  }, "Best value")), /*#__PURE__*/React.createElement("p", {
-    style: {
-      fontSize: 'calc(13.5px * var(--tscale, 1))',
-      color: 'rgba(255,255,255,0.82)',
-      margin: '8px 0 0'
-    }
-  }, "or ", TERM_PRICE, " ", TERM_PERIOD, ", if you would rather start with a shorter run."), /*#__PURE__*/React.createElement("p", {
-    style: {
-      fontSize: 'calc(13.5px * var(--tscale, 1))',
-      color: 'rgba(255,255,255,0.75)',
-      margin: '4px 0 0'
-    }
-  }, "Paid up front, never monthly. Cancel any time. If it ever ends, you keep everything.")), /*#__PURE__*/React.createElement("div", {
-    className: "j-card",
-    style: {
-      padding: 18,
-      marginBottom: 18,
-      borderColor: 'var(--plus-ink)'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      gap: 12,
-      alignItems: 'center',
-      marginBottom: 10
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      width: 40,
-      height: 40,
-      borderRadius: 12,
-      background: 'var(--plus-tint)',
-      flexShrink: 0,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "shield",
-    size: 22,
-    color: "var(--plus-ink)"
-  })), /*#__PURE__*/React.createElement("p", {
-    className: "j-h3"
-  }, "If your year ends, you keep everything")), /*#__PURE__*/React.createElement("p", {
-    className: "j-body",
-    style: {
-      fontSize: 'calc(15.5px * var(--tscale, 1))',
-      marginBottom: 12
-    }
-  }, "Your record is never held to ransom. If Plus ends, for any reason at all, whether you cancel, let it lapse, or a card quietly expires, you lose nothing you have written."), /*#__PURE__*/React.createElement(CheckList, {
-    items: NO_RANSOM_ITEMS,
-    color: "var(--plus-ink)",
-    tint: "var(--plus-tint)"
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      gap: 8,
-      alignItems: 'flex-start',
-      background: 'var(--plus-tint)',
-      borderRadius: 12,
-      padding: '10px 12px',
-      marginTop: 12
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "arrowRight",
-    size: 16,
-    color: "var(--plus-ink)",
-    style: {
-      marginTop: 2,
-      flexShrink: 0
-    }
-  }), /*#__PURE__*/React.createElement("p", {
-    className: "j-sm",
-    style: {
-      color: 'var(--plus-ink)'
-    }
-  }, "A subscription only ever switches off the paid tools. It never touches your history."))), /*#__PURE__*/React.createElement("div", {
-    className: "j-card",
-    style: {
-      padding: 14,
-      marginBottom: 18,
-      display: 'flex',
-      gap: 10,
-      alignItems: 'center',
-      background: 'var(--tint-blue)',
-      border: 'none'
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "check",
-    size: 18,
-    color: "var(--blue)",
-    style: {
-      flexShrink: 0
-    }
-  }), /*#__PURE__*/React.createElement("p", {
-    className: "j-body",
-    style: {
-      fontSize: 'calc(14.5px * var(--tscale, 1))',
-      color: 'var(--blue)'
-    }
-  }, "Everything in Free is included, always.")), /*#__PURE__*/React.createElement(SectionLabel, null, "What Plus adds"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 12
-    }
-  }, /*#__PURE__*/React.createElement(PlusFeature, {
-    icon: /*#__PURE__*/React.createElement(Icon, {
-      name: "calendar",
-      size: 22,
-      color: "#fff"
-    }),
-    title: "Patterns and Month View",
-    formal: "See the shape of your child's months. Patterns and the Month view turn a year of single days into a clear picture of good days and hard days, so trends you could never spot across separate notes become obvious.",
-    plain: "A calendar of green and amber days. Tap any day to read what happened behind it."
-  }), /*#__PURE__*/React.createElement(PlusFeature, {
-    icon: /*#__PURE__*/React.createElement(Icon, {
-      name: "filter",
-      size: 22,
-      color: "#fff"
-    }),
-    title: "Deep Filtering",
-    formal: "Find the exact entries that prove your point. Combine theme, behaviour, setting and dates in one search, so you can pull together every relevant moment in seconds instead of reading back through months.",
-    plain: "Pick 'lunch hall' plus 'running off' plus 'this term' and get just those days, in order."
-  }), /*#__PURE__*/React.createElement(PlusFeature, {
-    icon: /*#__PURE__*/React.createElement(Icon, {
-      name: "note",
-      size: 22,
-      color: "#fff"
-    }),
-    title: "Dysregulation Mode",
-    formal: "Capture a hard moment as fact, while you are still standing there. It gives you the five questions to ask, takes the answers as plain notes, and puts them in order: what led up to it, what happened, and what helped. You walk away with a usable record, not just 'a hard afternoon'.",
-    plain: "Teacher mentions a tough afternoon. You tap 'Dysregulation', read the questions, tap the answers. Done in under two minutes."
-  }), /*#__PURE__*/React.createElement(PlusFeature, {
-    icon: /*#__PURE__*/React.createElement(Icon, {
-      name: "attach",
-      size: 22,
-      color: "#fff"
-    }),
-    title: "Photos and Videos on Notes",
-    formal: "Keep the picture with the fact. Capture a photo or video, or attach one from your library, and it stays with the note on this phone. Sometimes the picture is the evidence.",
-    plain: "A mark at pick-up: capture it with a dysregulation note and it sits with that day's record, ready when you need it."
-  }), /*#__PURE__*/React.createElement(PlusFeature, {
-    icon: /*#__PURE__*/React.createElement(Icon, {
-      name: "doc",
-      size: 22,
-      color: "#fff"
-    }),
-    title: "PDF Evidence Pack",
-    formal: "Hand over a clean, dated record when it counts. The evidence pack lays out your chosen entries as a clear, dated document, each with the day it was logged and whether it was written the same day or added later. It is built around the formats tribunals and professionals already use.",
-    plain: "Choose your dates and themes, and get a tidy PDF you can email or print for an assessment, review or tribunal."
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "j-card",
-    style: {
-      padding: 14,
-      marginTop: 12,
-      display: 'flex',
-      gap: 10,
-      alignItems: 'flex-start'
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "clock",
-    size: 18,
-    color: "var(--muted)",
-    style: {
-      flexShrink: 0,
-      marginTop: 2
-    }
-  }), /*#__PURE__*/React.createElement("p", {
-    className: "j-sm"
-  }, "Family Sync, the record on every grown-up's phone, is part of Plus too. It is not switched on yet, and nothing here pretends it is."))));
-}
-
-// ---- Page 3: Jotla AI (2027, coming soon) ----
-// This replaces the old "Living Companion" tier. It is £149 a year and it
-// INCLUDES Plus: a parent on Jotla AI pays £149 in total, not £79 plus £149.
-function AiPage() {
-  return /*#__PURE__*/React.createElement("div", {
-    style: PAGE_STYLE
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "j-pad",
-    style: {
-      paddingTop: 6,
-      paddingBottom: 150
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      borderRadius: 20,
-      padding: '22px 20px',
-      background: PREMIUM_GRAD,
-      color: '#fff',
-      marginBottom: 18,
-      boxShadow: '0 18px 38px -18px rgba(20,40,80,0.7)'
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: 6,
-      padding: '5px 12px',
-      borderRadius: 999,
-      background: 'rgba(230,184,92,0.16)',
-      border: `1px solid ${PREMIUM_GOLD}`,
-      color: PREMIUM_GOLD,
-      fontSize: 'calc(12px * var(--tscale, 1))',
-      fontWeight: 600,
-      letterSpacing: '0.08em'
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "sparkle",
-    size: 13,
-    color: PREMIUM_GOLD
-  }), " Coming in 2027"), /*#__PURE__*/React.createElement("p", {
-    style: {
-      fontFamily: "'Cal Sans', system-ui",
-      fontWeight: 500,
+      fontWeight: 400,
       fontSize: 'calc(26px * var(--tscale, 1))',
-      lineHeight: 1.12,
-      color: '#fff',
-      margin: '14px 0 6px'
+      color: 'var(--ink)',
+      marginTop: 3
     }
-  }, "Jotla AI"), /*#__PURE__*/React.createElement("div", {
+  }, price), /*#__PURE__*/React.createElement("div", {
     style: {
-      display: 'flex',
-      alignItems: 'baseline',
-      gap: 8,
-      marginTop: 12
+      fontSize: 'calc(11.5px * var(--tscale, 1))',
+      color: 'var(--faint)',
+      marginTop: 1
     }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontFamily: "'Cal Sans', system-ui",
-      fontWeight: 500,
-      fontSize: 'calc(40px * var(--tscale, 1))',
-      color: PREMIUM_GOLD
-    }
-  }, AI_PRICE), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 'calc(14px * var(--tscale, 1))',
-      color: 'rgba(255,255,255,0.82)'
-    }
-  }, PLUS_PERIOD)), /*#__PURE__*/React.createElement("p", {
-    style: {
-      fontSize: 'calc(13.5px * var(--tscale, 1))',
-      color: 'rgba(255,255,255,0.82)',
-      margin: '4px 0 0'
-    }
-  }, "Jotla Plus is included. ", AI_PRICE, " ", PLUS_PERIOD, " is the whole price, not one price on top of another.")), /*#__PURE__*/React.createElement("p", {
-    className: "j-body",
-    style: {
-      color: 'var(--muted)',
-      marginBottom: 18
-    }
-  }, "The things that keep working for you, current and maintained over time. The deadline tracker, the route guidance, the templates and the content all stay up to date, so you are never working from old information."), /*#__PURE__*/React.createElement("div", {
-    className: "j-card",
-    style: {
-      padding: 18,
-      marginBottom: 16,
-      borderColor: `${PREMIUM_GOLD}55`
-    }
-  }, /*#__PURE__*/React.createElement(CheckList, {
-    items: AI_ITEMS,
-    color: PREMIUM_GOLD_DEEP,
-    tint: `${PREMIUM_GOLD}26`
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: `${PREMIUM_GOLD}1F`,
-      borderRadius: 16,
-      padding: 16,
-      display: 'flex',
-      gap: 12,
-      alignItems: 'flex-start'
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "leaf",
-    size: 22,
-    color: PREMIUM_GOLD_DEEP,
-    style: {
-      flexShrink: 0,
-      marginTop: 2
-    }
-  }), /*#__PURE__*/React.createElement("p", {
-    className: "j-body",
-    style: {
-      fontSize: 'calc(15px * var(--tscale, 1))',
-      color: 'var(--body)'
-    }
-  }, "We will let you know when it arrives. Nothing you have to do, nothing changes for you until then, and your free tools stay free."))));
+  }, per));
 }
 function UnlockScreen({
   nav
 }) {
-  const owned = nav.plus;
-  const [bought, setBought] = useStateB(false);
-  const [confirmPlus, setConfirmPlus] = useStateB(false);
-  const [confirmFree, setConfirmFree] = useStateB(false);
-  const [droppedFree, setDroppedFree] = useStateB(false);
-  const [idx, setIdx] = useStateB(0);
-  const pagerRef = useRefB(null);
-  const goTo = i => {
-    const el = pagerRef.current;
-    if (!el) return;
-    el.scrollTo({
-      left: i * el.clientWidth,
-      behavior: 'smooth'
-    });
-    setIdx(i);
-  };
-  const onScroll = () => {
-    const el = pagerRef.current;
-    if (!el) return;
-    const i = Math.round(el.scrollLeft / el.clientWidth);
-    if (i !== idx) setIdx(i);
-  };
-  const TABS = [{
-    label: 'Free',
-    onBg: FREE_BLUE,
-    dotOn: FREE_BLUE
-  }, {
-    label: 'Plus',
-    onBg: PLUS_GRAD,
-    dotOn: PLUS_ACCENT_DEEP
-  }, {
-    label: 'Jotla AI',
-    onBg: PREMIUM_GRAD,
-    dotOn: PREMIUM_GOLD_DEEP
-  }];
-  return /*#__PURE__*/React.createElement("div", {
-    className: "j-screen"
-  }, /*#__PURE__*/React.createElement(PushHeader, {
-    title: "Jotla Plus",
-    subtitle: "Swipe to compare the three tiers.",
-    onClose: () => nav.back()
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      gap: 8,
-      padding: '0 16px 12px'
-    }
-  }, TABS.map((t, i) => {
-    const on = idx === i;
+  const [tier, setTier] = useStateB('plus'); // plus | ai
+  const [slide, setSlide] = useStateB(0);
+  const slides = tier === 'ai' ? AI_SLIDES : PLUS_SLIDES;
+  const s = slides[Math.min(slide, slides.length - 1)];
+  const seg = (id, label) => {
+    const on = tier === id;
     return /*#__PURE__*/React.createElement("button", {
-      key: t.label,
-      onClick: () => goTo(i),
-      className: "j-press",
+      key: id,
+      onClick: () => {
+        setTier(id);
+        setSlide(0);
+      },
       style: {
         flex: 1,
-        minHeight: 40,
+        minHeight: 32,
         borderRadius: 999,
         border: 'none',
         cursor: 'pointer',
         fontFamily: "'Outfit', system-ui",
+        fontSize: 'calc(13px * var(--tscale, 1))',
         fontWeight: 600,
-        fontSize: 'calc(14px * var(--tscale, 1))',
-        background: on ? t.onBg : 'var(--tag-grey-bg)',
-        color: on ? '#fff' : 'var(--muted)',
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 6
+        background: on ? id === 'ai' ? 'linear-gradient(135deg,#14294A,#1E5099)' : PLUS_GRAD : 'transparent',
+        color: on ? id === 'ai' ? '#E6B85C' : '#fff' : 'var(--muted)'
       }
-    }, i === 2 && /*#__PURE__*/React.createElement(Icon, {
-      name: "sparkle",
-      size: 14,
-      color: on ? PREMIUM_GOLD : 'var(--faint)'
-    }), t.label);
-  })), /*#__PURE__*/React.createElement("div", _extends({
-    ref: pagerRef,
-    onScroll: onScroll,
-    className: "j-pager"
-  }, pagerKeyProps(pagerRef, 'Jotla tiers'), {
-    style: {
-      flex: 1,
-      minHeight: 0,
-      display: 'flex',
-      overflowX: 'auto',
-      overflowY: 'hidden',
-      scrollSnapType: 'x mandatory',
-      WebkitOverflowScrolling: 'touch',
-      outline: 'none'
-    }
-  }), /*#__PURE__*/React.createElement(FreePage, null), /*#__PURE__*/React.createElement(PlusPage, null), /*#__PURE__*/React.createElement(AiPage, null)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      position: 'absolute',
-      left: 0,
-      right: 0,
-      bottom: 0,
-      padding: '10px 20px calc(14px + env(safe-area-inset-bottom))',
-      background: 'var(--fade-grad)'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      justifyContent: 'center',
-      gap: 6,
-      marginBottom: 12
-    }
-  }, TABS.map((t, i) => /*#__PURE__*/React.createElement("button", {
-    key: i,
-    "aria-label": 'Tier ' + (i + 1) + ' of ' + TABS.length + ': ' + t.label,
-    "aria-current": idx === i,
-    onClick: () => goTo(i),
-    style: {
-      width: idx === i ? 18 : 7,
-      height: 7,
-      borderRadius: 99,
-      transition: 'all .2s ease',
-      border: 'none',
-      padding: 0,
-      cursor: 'pointer',
-      background: idx === i ? t.dotOn : 'var(--chip-border)'
-    }
-  }))), idx === 0 && (owned ? /*#__PURE__*/React.createElement("button", {
-    className: "j-btn j-btn-lg",
-    style: {
-      background: 'var(--card)',
-      color: FREE_BLUE,
-      border: `1.5px solid ${FREE_BLUE}`
-    },
-    onClick: () => setConfirmFree(true)
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "arrowLeft",
-    size: 20,
-    color: FREE_BLUE
-  }), " Switch back to Free") : /*#__PURE__*/React.createElement("button", {
-    className: "j-btn j-btn-lg",
-    style: {
-      background: FREE_BLUE,
-      color: '#fff',
-      boxShadow: '0 10px 22px -10px rgba(26,86,168,0.6)'
-    },
-    onClick: () => goTo(1)
-  }, "See Jotla Plus ", /*#__PURE__*/React.createElement(Icon, {
-    name: "arrowRight",
-    size: 20,
-    color: "#fff"
-  }))), idx === 1 && (owned ? /*#__PURE__*/React.createElement("button", {
-    className: "j-btn j-btn-lg",
-    style: {
-      background: 'rgba(110,84,214,0.12)',
-      color: PLUS_ACCENT_DEEP,
-      border: `1.5px solid ${PLUS_ACCENT_DEEP}`
-    },
-    onClick: () => nav.back()
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "check",
-    size: 20,
-    color: PLUS_ACCENT_DEEP
-  }), " You have Jotla Plus") : /*#__PURE__*/React.createElement("button", {
-    className: "j-btn j-btn-lg",
-    style: {
-      background: PLUS_GRAD,
-      color: '#fff',
-      boxShadow: '0 14px 28px -10px rgba(60,42,114,0.6)'
-    },
-    onClick: () => setConfirmPlus(true)
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "star",
-    size: 18,
-    color: PLUS_ACCENT
-  }), " Get Jotla Plus")), idx === 2 && /*#__PURE__*/React.createElement("button", {
-    className: "j-btn j-btn-lg",
-    disabled: true,
-    style: {
-      background: 'var(--tag-grey-bg)',
-      color: 'var(--muted)',
-      cursor: 'default'
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "clock",
-    size: 18,
-    color: "var(--muted)"
-  }), " Jotla AI is coming in 2027")), confirmPlus && /*#__PURE__*/React.createElement("div", {
-    className: "j-sheet-scrim",
-    onClick: () => setConfirmPlus(false)
-  }, /*#__PURE__*/React.createElement("div", {
-    onClick: e => e.stopPropagation(),
-    className: "j-sheet"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "j-sheet-grab"
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      justifyContent: 'center',
-      marginBottom: 14
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      width: 56,
-      height: 56,
-      borderRadius: '50%',
-      background: PLUS_GRAD,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "star",
-    size: 26,
-    color: PLUS_ACCENT
-  }))), /*#__PURE__*/React.createElement("h2", {
-    className: "j-h2",
-    style: {
-      textAlign: 'center',
-      marginBottom: 8
-    }
-  }, "Choose how to start Jotla Plus"), /*#__PURE__*/React.createElement("p", {
-    className: "j-body",
-    style: {
-      textAlign: 'center',
-      color: 'var(--muted)',
-      marginBottom: 18
-    }
-  }, "Same Plus either way. It turns on Patterns, the Month view, Deep Filtering, Dysregulation Mode, Photos and Videos on Notes, and the PDF Evidence Pack. You keep everything you have written if it ever ends."), /*#__PURE__*/React.createElement("button", {
-    className: "j-btn j-btn-lg",
-    style: {
-      background: PLUS_GRAD,
-      color: '#fff',
-      marginBottom: 10,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: 10
-    },
-    onClick: () => {
-      nav.buyPlus();
-      setConfirmPlus(false);
-      setBought(true);
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: 8
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "check",
-    size: 20,
-    color: "#fff"
-  }), " The whole year, ", PLUS_PRICE), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 'calc(12px * var(--tscale, 1))',
-      fontWeight: 700,
-      color: '#3A2A0C',
-      background: PREMIUM_GOLD,
-      padding: '3px 9px',
-      borderRadius: 999
-    }
-  }, "Best value")), /*#__PURE__*/React.createElement("button", {
-    className: "j-btn j-btn-lg",
-    style: {
-      background: 'var(--plus-tint)',
-      color: 'var(--plus-ink)',
-      marginBottom: 10
-    },
-    onClick: () => {
-      nav.buyPlus();
-      setConfirmPlus(false);
-      setBought(true);
-    }
-  }, "6 months, ", TERM_PRICE), /*#__PURE__*/React.createElement("button", {
-    className: "j-btn j-btn-ghost",
-    onClick: () => setConfirmPlus(false)
-  }, "Cancel"))), confirmFree && /*#__PURE__*/React.createElement("div", {
-    className: "j-sheet-scrim",
-    onClick: () => setConfirmFree(false)
-  }, /*#__PURE__*/React.createElement("div", {
-    onClick: e => e.stopPropagation(),
-    className: "j-sheet"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "j-sheet-grab"
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      justifyContent: 'center',
-      marginBottom: 14
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      width: 56,
-      height: 56,
-      borderRadius: '50%',
-      background: 'var(--tint-blue)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "arrowLeft",
-    size: 26,
-    color: FREE_BLUE
-  }))), /*#__PURE__*/React.createElement("h2", {
-    className: "j-h2",
-    style: {
-      textAlign: 'center',
-      marginBottom: 8
-    }
-  }, "Switch back to Free?"), /*#__PURE__*/React.createElement("p", {
-    className: "j-body",
-    style: {
-      textAlign: 'center',
-      color: 'var(--muted)',
-      marginBottom: 20
-    }
-  }, "Are you sure? The Plus tools will be put away and the app goes back to the Free experience. Your record, and everything in it, stays yours and untouched."), /*#__PURE__*/React.createElement("button", {
-    className: "j-btn j-btn-lg",
-    style: {
-      background: FREE_BLUE,
-      color: '#fff',
-      marginBottom: 10
-    },
-    onClick: () => {
-      nav.dropPlus();
-      setConfirmFree(false);
-      setDroppedFree(true);
-      goTo(0);
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "check",
-    size: 20,
-    color: "#fff"
-  }), " Yes, switch to Free"), /*#__PURE__*/React.createElement("button", {
-    className: "j-btn j-btn-ghost",
-    onClick: () => setConfirmFree(false)
-  }, "Keep Jotla Plus"))), droppedFree && /*#__PURE__*/React.createElement("div", {
-    className: "j-sheet-scrim",
-    onClick: () => setDroppedFree(false)
-  }, /*#__PURE__*/React.createElement("div", {
-    onClick: e => e.stopPropagation(),
-    className: "j-sheet"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "j-sheet-grab"
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      justifyContent: 'center',
-      marginBottom: 12
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      width: 52,
-      height: 52,
-      borderRadius: '50%',
-      background: 'var(--tint-blue)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "check",
-    size: 26,
-    color: FREE_BLUE
-  }))), /*#__PURE__*/React.createElement("h2", {
-    className: "j-h2",
-    style: {
-      textAlign: 'center',
-      marginBottom: 6
-    }
-  }, "You are on Free"), /*#__PURE__*/React.createElement("p", {
-    className: "j-body",
-    style: {
-      textAlign: 'center',
-      color: 'var(--muted)',
-      marginBottom: 18
-    }
-  }, "The app is back to the Free experience. You can switch to Jotla Plus again any time from here."), /*#__PURE__*/React.createElement("button", {
-    className: "j-btn j-btn-primary",
-    onClick: () => setDroppedFree(false)
-  }, "Done"))), bought && /*#__PURE__*/React.createElement("div", {
-    className: "j-sheet-scrim",
-    onClick: () => {
-      setBought(false);
-      nav.back();
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    onClick: e => e.stopPropagation(),
-    className: "j-sheet"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "j-sheet-grab"
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      justifyContent: 'center',
-      marginBottom: 14
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      width: 56,
-      height: 56,
-      borderRadius: '50%',
-      background: PLUS_GRAD,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "star",
-    size: 26,
-    color: PLUS_ACCENT
-  }))), /*#__PURE__*/React.createElement("h2", {
-    className: "j-h2",
-    style: {
-      textAlign: 'center',
-      marginBottom: 8
-    }
-  }, "You have Jotla Plus"), /*#__PURE__*/React.createElement("p", {
-    className: "j-body",
-    style: {
-      textAlign: 'center',
-      color: 'var(--muted)',
-      marginBottom: 20
-    }
-  }, "Thank you. Patterns, Deep Filtering, Dysregulation Mode, Photos and Videos on Notes, and the PDF Evidence Pack are switched on. Your record stays yours, always, whatever happens to your subscription."), /*#__PURE__*/React.createElement("button", {
-    className: "j-btn j-btn-primary",
-    onClick: () => {
-      setBought(false);
-      nav.back();
-    }
-  }, "Done"))));
-}
-
-// ---------------- The one information page (12 Jul 2026, sixth pass) ----------------
-// The founder read the four info pages together and found them repeating the
-// same promises, some verbatim (the on-device story was told in full four
-// times, and two Settings rows opened the same page). His instruction: all
-// informational content lives in the About section, each fact said once. So
-// the mission, privacy and data-care pages fold into About Jotla below, and
-// the three old pages are deleted (Supersession Law). Every claim stays
-// checked against THIS build's own code (the web prototype), not the native
-// app's: where the two builds genuinely differ (browser storage, a live
-// restore, a live PDF pack, photos AND vault document files inside the export
-// where the native app keeps files on the phone outside its export, videos
-// never copied, the 2 MB pick-time cap) the copy says the web truth.
-
-// The page shell: round blue Back, title and subtitle, then a scrolling
-// column of blocks.
-function InfoPage({
-  nav,
-  title,
-  subtitle,
-  children
-}) {
+    }, label);
+  };
   return /*#__PURE__*/React.createElement("div", {
     className: "j-screen"
-  }, /*#__PURE__*/React.createElement(PushHeader, {
-    title: title,
-    subtitle: subtitle,
-    onBack: () => nav.back()
-  }), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "j-scroll j-fade"
   }, /*#__PURE__*/React.createElement("div", {
     className: "j-pad",
     style: {
-      paddingTop: 4,
-      paddingBottom: 40,
+      paddingTop: 12,
+      paddingBottom: 30,
       display: 'flex',
       flexDirection: 'column',
-      gap: 14
-    }
-  }, children)));
-}
-
-// One explainer card: icon disc, Cal Sans heading, optional status pill on
-// the right, then paragraphs.
-function InfoBlock({
-  icon,
-  title,
-  pill,
-  children
-}) {
-  return /*#__PURE__*/React.createElement("div", {
-    className: "j-card",
-    style: {
-      padding: 16
+      minHeight: '100%'
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       alignItems: 'center',
-      gap: 12,
-      marginBottom: 10,
-      flexWrap: 'wrap'
+      gap: 10
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
-      width: 38,
-      height: 38,
-      borderRadius: 11,
-      background: 'var(--tint-blue)',
+      width: 34,
+      height: 34,
+      borderRadius: '50%',
+      background: PLUS_GRAD,
       flexShrink: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      boxShadow: '0 6px 14px -6px rgba(60,42,114,0.5)'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "crown",
+    size: 18,
+    color: "#EBBA4D"
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      display: 'flex',
+      gap: 4,
+      padding: 3,
+      borderRadius: 999,
+      background: 'var(--tag-grey-bg)'
+    }
+  }, seg('plus', 'Jotla Plus'), seg('ai', 'Jotla AI')), /*#__PURE__*/React.createElement("button", {
+    onClick: () => nav.back(),
+    "aria-label": "Close",
+    className: "j-press",
+    style: {
+      width: 44,
+      height: 44,
+      marginRight: -10,
+      border: 'none',
+      background: 'none',
+      cursor: 'pointer',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center'
     }
   }, /*#__PURE__*/React.createElement(Icon, {
-    name: icon,
-    size: 20,
-    color: "var(--blue)"
-  })), /*#__PURE__*/React.createElement("span", {
-    className: "j-h3",
+    name: "close",
+    size: 22,
+    color: "var(--muted)"
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
-      flexShrink: 1
+      flex: 1,
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      minHeight: 0,
+      padding: '14px 0'
     }
-  }, title), pill), children);
-}
-
-// A body paragraph inside a block, muted exactly like the old info sheets.
-function InfoP({
-  children,
-  last = false
-}) {
-  return /*#__PURE__*/React.createElement("p", {
-    className: "j-body",
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
+      textAlign: 'center',
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("h1", {
+    style: {
+      fontFamily: "'Cal Sans', system-ui",
+      fontWeight: 400,
+      fontSize: 'calc(31px * var(--tscale, 1))',
+      color: 'var(--ink)',
+      margin: 0
+    }
+  }, "Jotla ", tier === 'ai' ? /*#__PURE__*/React.createElement("em", {
+    style: {
+      fontStyle: 'italic',
+      color: 'var(--aigold)',
+      fontSize: 'calc(20px * var(--tscale, 1))',
+      position: 'relative',
+      top: -7
+    }
+  }, "AI") : /*#__PURE__*/React.createElement("em", {
+    style: {
+      fontStyle: 'italic',
+      color: 'var(--plus-ink)',
+      fontSize: 'calc(20px * var(--tscale, 1))',
+      position: 'relative',
+      top: -7
+    }
+  }, "+Plus")), /*#__PURE__*/React.createElement("p", {
+    className: "j-sm",
+    style: {
+      marginTop: 6,
+      lineHeight: 1.4
+    }
+  }, tier === 'ai' ? /*#__PURE__*/React.createElement(React.Fragment, null, "The deadlines, the rights and the letters,", /*#__PURE__*/React.createElement("br", null), "kept current on your side.") : /*#__PURE__*/React.createElement(React.Fragment, null, "The tools to spot patterns", /*#__PURE__*/React.createElement("br", null), "and make your case."))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 300,
+      maxWidth: '100%',
+      margin: '0 auto',
+      textAlign: 'center'
+    }
+  }, /*#__PURE__*/React.createElement("img", {
+    src: s.img,
+    alt: "",
+    style: {
+      width: '100%',
+      height: 158,
+      objectFit: 'cover',
+      borderRadius: 12,
+      display: 'block',
+      background: 'var(--tag-grey-bg)'
+    }
+  }), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontFamily: "'Outfit', system-ui",
+      fontWeight: 600,
+      fontSize: 'calc(15.5px * var(--tscale, 1))',
+      color: 'var(--ink)',
+      margin: '11px 0 0'
+    }
+  }, s.t), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 'calc(13px * var(--tscale, 1))',
       color: 'var(--muted)',
-      marginBottom: last ? 0 : 10
+      lineHeight: 1.45,
+      margin: '4px 0 0'
     }
-  }, children);
-}
-
-// The grey status pill the Settings rows use for not-yet features.
-function PlannedPill({
-  label = 'Planned'
-}) {
-  return /*#__PURE__*/React.createElement("span", {
-    className: "j-pillbadge",
+  }, s.c), /*#__PURE__*/React.createElement("div", {
     style: {
-      background: 'var(--tag-grey-bg)',
-      color: 'var(--muted)'
+      display: 'flex',
+      gap: 6,
+      justifyContent: 'center',
+      marginTop: 10
     }
-  }, label);
-}
-
-// One planned-feature row on the About page: title beside its status pill,
-// then a one-line note.
-function PlanRow({
-  title,
-  note,
-  pill = 'Planned'
-}) {
-  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  }, slides.map((x, i) => /*#__PURE__*/React.createElement("button", {
+    key: i,
+    onClick: () => setSlide(i),
+    "aria-label": 'Slide ' + (i + 1),
+    style: {
+      width: i === slide ? 18 : 7,
+      height: 7,
+      borderRadius: 99,
+      border: 'none',
+      cursor: 'pointer',
+      padding: 0,
+      background: i === slide ? tier === 'ai' ? 'var(--aigold)' : 'var(--plus-ink)' : 'var(--line)'
+    }
+  }))))), tier === 'plus' ? nav.plus ? /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "j-card",
+    style: {
+      padding: 16,
+      textAlign: 'center'
+    }
+  }, /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontFamily: "'Outfit', system-ui",
+      fontWeight: 600,
+      fontSize: 'calc(15.5px * var(--tscale, 1))',
+      color: 'var(--ink)',
+      margin: 0
+    }
+  }, "Plus is active on this phone."), /*#__PURE__*/React.createElement("p", {
+    className: "j-sm",
+    style: {
+      marginTop: 4
+    }
+  }, "Your record is always yours, with or without it.")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => nav.dropPlus(),
+    style: {
+      display: 'block',
+      margin: '10px auto 0',
+      background: 'none',
+      border: 'none',
+      color: 'var(--faint)',
+      fontSize: 'calc(12.5px * var(--tscale, 1))',
+      cursor: 'pointer',
+      fontFamily: "'Outfit', system-ui"
+    }
+  }, "Switch Plus off (test build)")) : /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement(TermCard, {
+    label: "1 Month",
+    price: "\xA329",
+    per: "a month"
+  }), /*#__PURE__*/React.createElement(TermCard, {
+    label: "6 Months",
+    price: "\xA349",
+    per: "for 6 months"
+  }), /*#__PURE__*/React.createElement(TermCard, {
+    label: "One Year",
+    price: "\xA379",
+    per: "less than \xA37 a month",
+    sel: true,
+    badge: "Best value"
+  })), /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-lg",
+    onClick: () => {
+      nav.buyPlus();
+      nav.back();
+    },
+    style: {
+      marginTop: 12,
+      background: PLUS_GRAD,
+      color: '#fff',
+      boxShadow: '0 14px 28px -10px rgba(60,42,114,0.6)'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "crown",
+    size: 20,
+    color: "#EBBA4D"
+  }), " Get Jotla Plus"), /*#__PURE__*/React.createElement("p", {
     style: {
       display: 'flex',
       alignItems: 'center',
-      gap: 8,
-      flexWrap: 'wrap'
+      justifyContent: 'center',
+      gap: 6,
+      color: 'var(--blue)',
+      fontSize: 'calc(13px * var(--tscale, 1))',
+      fontWeight: 500,
+      margin: '10px 0 0'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "check",
+    size: 15,
+    color: "var(--blue)",
+    stroke: 2.2
+  }), " Everything in Free is included, always."), /*#__PURE__*/React.createElement("p", {
+    style: {
+      textAlign: 'center',
+      color: 'var(--faint)',
+      fontSize: 'calc(11.5px * var(--tscale, 1))',
+      lineHeight: 1.45,
+      margin: '8px 0 0'
+    }
+  }, "Plus renews automatically at the end of its term: \xA329 a month, \xA349 every 6 months or \xA379 a year, charged to your Google Play account until you cancel. Cancel any time in Subscriptions on Google Play, at least 24 hours before the term ends, and Plus stays on until the day it runs out. A subscription only ever switches off the paid tools.")) : /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement(TermCard, {
+    label: "1 Month",
+    price: "\xA359",
+    per: "a month",
+    gold: true
+  }), /*#__PURE__*/React.createElement(TermCard, {
+    label: "6 Months",
+    price: "\xA399",
+    per: "for 6 months",
+    gold: true
+  }), /*#__PURE__*/React.createElement(TermCard, {
+    label: "One Year",
+    price: "\xA3149",
+    per: "less than \xA313 a month",
+    sel: true,
+    gold: true,
+    badge: "Best value"
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 12,
+      borderRadius: 16,
+      padding: 16,
+      background: 'linear-gradient(135deg,#14294A,#1E5099)',
+      color: '#fff',
+      textAlign: 'center',
+      boxShadow: '0 10px 22px -8px rgba(20,41,74,0.55)'
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
-      fontFamily: "'Outfit', system-ui",
-      fontWeight: 500,
-      fontSize: 'calc(15.5px * var(--tscale, 1))',
-      color: 'var(--ink)'
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 6,
+      fontSize: 'calc(12.5px * var(--tscale, 1))',
+      fontWeight: 700,
+      color: '#E6B85C',
+      letterSpacing: '0.05em',
+      textTransform: 'uppercase'
     }
-  }, title), /*#__PURE__*/React.createElement(PlannedPill, {
-    label: pill
-  })), /*#__PURE__*/React.createElement("p", {
-    className: "j-sm",
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "sparkle",
+    size: 14,
+    color: "#E6B85C"
+  }), " Coming in 2027"), /*#__PURE__*/React.createElement("p", {
     style: {
-      marginTop: 2
+      fontSize: 'calc(13.5px * var(--tscale, 1))',
+      color: 'rgba(255,255,255,0.9)',
+      lineHeight: 1.5,
+      margin: '8px 0 0'
     }
-  }, note));
+  }, "Jotla Plus is included in every term: one price, not one on top of another."))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: 8,
+      marginTop: 12,
+      color: 'var(--faint)',
+      fontSize: 'calc(12.5px * var(--tscale, 1))'
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => nav.go('infoabout'),
+    style: {
+      background: 'none',
+      border: 'none',
+      color: 'var(--blue)',
+      fontWeight: 500,
+      cursor: 'pointer',
+      fontFamily: "'Outfit', system-ui",
+      fontSize: 'inherit',
+      padding: 0
+    }
+  }, "Terms"), "\xB7", /*#__PURE__*/React.createElement("button", {
+    onClick: () => nav.go('infoabout'),
+    style: {
+      background: 'none',
+      border: 'none',
+      color: 'var(--blue)',
+      fontWeight: 500,
+      cursor: 'pointer',
+      fontFamily: "'Outfit', system-ui",
+      fontSize: 'inherit',
+      padding: 0
+    }
+  }, "Privacy"), "\xB7", /*#__PURE__*/React.createElement("button", {
+    onClick: () => alert('On the phone build this restores a Google Play purchase.'),
+    style: {
+      background: 'none',
+      border: 'none',
+      color: 'var(--blue)',
+      fontWeight: 500,
+      cursor: 'pointer',
+      fontFamily: "'Outfit', system-ui",
+      fontSize: 'inherit',
+      padding: 0
+    }
+  }, "Restore"), "\xB7", /*#__PURE__*/React.createElement("button", {
+    onClick: () => nav.go('help'),
+    style: {
+      background: 'none',
+      border: 'none',
+      color: 'var(--blue)',
+      fontWeight: 500,
+      cursor: 'pointer',
+      fontFamily: "'Outfit', system-ui",
+      fontSize: 'inherit',
+      padding: 0
+    }
+  }, "Help")))));
 }
-
-// About Jotla: THE information page. Structure mirrors the native
-// InfoAboutScreen (4ca5829); the copy is this build's own, merged and deduped
-// from the three folded pages. Every claim traces to this build's code:
-//  - Version: window.JOTLA_BUILD (jotla-ui.jsx), the same number the Settings
-//    footer prints. No typeface credit line (dropped 12 Jul 2026, founder).
-//  - Mission and dates blocks: the folded mission page's copy. "Same day" and
-//    "Added later" are the exact rendered labels (EntryScreen, Day view, the
-//    PDF pack legend); the kind is decided once at save and edits keep a
-//    wording history (nav.updateEntry). No legal-advice claim is made
-//    anywhere; the honest line says so plainly instead.
-//  - "We never send your record anywhere": there is no upload in this source
-//    (no fetch, no XMLHttpRequest, no sendBeacon, no sockets; verified before
-//    this copy was written). The promise is about what WE do: the doors below
-//    move copies only when the parent opens them.
-//  - Where the record lives: localStorage under jotla_* keys (jotla-app.jsx
-//    load/saveJSON); photos and vault files are data URLs inside it, so they
-//    ride the export too. Clearing site data taking the record, the storage
-//    limit, the 2 MB pick-time refusal (DOC_FILE_CAP) and the quota alert
-//    (saveJSON) are all real code paths. No phone-backup claim: that story is
-//    the native app's, not this browser build's.
-//  - Exactly three record-content doors exist, all user-driven: the export
-//    download (SettingsScreen exportData + the DeleteChildSheet backup), the
-//    printable day record (openPrintPack, Plus), and the gate-note teacher
-//    email (mailto draft). Videos are never copied in (the picker keeps a
-//    caption, never the file); "Jotla can only know an export was run" is the
-//    backup health line's own honesty.
-//  - Restore from an export is LIVE in this build (nav.importBackup), so it
-//    sits under Where the record lives, not on the coming board.
-//  - Child mode: leaving it takes a deliberate grown-up press-and-hold
-//    (HoldButton / ChildExitPill) and the system Back is swallowed while it
-//    is open (the popstate handler re-arms), so "safe by design" is code truth.
-//  - Deleting: entry and document deletes sit behind confirms and cannot be
-//    undone; removing a child is the guarded backup-first type-DELETE flow,
-//    and the last child can never be removed (nav.deleteChild).
-//  - The live-now list names only what this build really contains; the
-//    Planned rows mirror the Unlock screen honestly. Plus copy: the Unlock
-//    screen's own hero line and price note, verbatim fragments.
 function InfoAboutScreen({
   nav
 }) {
@@ -3207,7 +2513,7 @@ function InfoAboutScreen({
   }, "Planned means exactly that: none of the above is switched on yet, and nothing in this app pretends to be."))), /*#__PURE__*/React.createElement(InfoBlock, {
     icon: "sparkle",
     title: "Jotla Plus"
-  }, /*#__PURE__*/React.createElement(InfoP, null, "The record itself is free, forever: logging, your timeline, search and export never cost anything, never expire, and stay yours."), /*#__PURE__*/React.createElement(InfoP, null, "Jotla Plus adds the tools to help you spot patterns and make your case: photos and videos kept with your notes, patterns and the Month view, deep filtering, Dysregulation Mode, and the PDF evidence pack. Family Sync, when it arrives, is part of Plus too. Plus is ", PLUS_PRICE, " ", PLUS_PERIOD, ", or ", TERM_PRICE, " ", TERM_PERIOD, ". It is paid up front, and there is no monthly plan."), /*#__PURE__*/React.createElement(InfoP, null, /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement(InfoP, null, "The record itself is free, forever: logging, your timeline, search and export never cost anything, never expire, and stay yours."), /*#__PURE__*/React.createElement(InfoP, null, "Jotla Plus adds the tools to help you spot patterns and make your case: photos and videos kept with your notes, patterns and the Month view, deep filtering, Dysregulation Mode, and the PDF evidence pack. Family Sync, when it arrives, is part of Plus too. Plus is ", MONTH_PRICE, " for 1 month, ", TERM_PRICE, " ", TERM_PERIOD, " or ", PLUS_PRICE, " for a year, through Google Play, and it stays on until the day a term runs out."), /*#__PURE__*/React.createElement(InfoP, null, /*#__PURE__*/React.createElement("span", {
     className: "j-strong"
   }, "If your year ends, you keep everything."), " Your record is never held to ransom. If Plus ends, for any reason at all, whether you cancel, let it lapse, or a card quietly expires, you lose nothing you have written. Every entry stays. Your full timeline stays. Plain keyword search stays. Raw export stays. You can still make the PDF of everything you have already logged. Appeal-deadline safety reminders keep coming, with or without a subscription. A subscription only ever switches off the paid tools. It never touches your history."), /*#__PURE__*/React.createElement(InfoP, null, "Jotla AI is coming in 2027: ", AI_PRICE, " ", PLUS_PERIOD, ", with Jotla Plus included, so it is ", AI_PRICE, " in total and not one price on top of another."), /*#__PURE__*/React.createElement("button", {
     className: "j-btn j-btn-soft",
