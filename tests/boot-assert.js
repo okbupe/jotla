@@ -29,31 +29,62 @@ function ok(name, cond) {
   await page.goto(URL_APP, { waitUntil: 'networkidle' });
   await page.waitForTimeout(1200);
   ok('app boots with content', (await page.locator('#root').innerText()).length > 40);
-  ok('tab bar shows Today/Month/Find/Settings', await page.getByText('Month', { exact: true }).first().isVisible()
-    && await page.getByText('Settings', { exact: true }).first().isVisible());
+  ok('tab bar shows Today/Month/Documents/Find/Menu', await page.getByText('Month', { exact: true }).first().isVisible()
+    && await page.getByText('Documents', { exact: true }).first().isVisible()
+    && await page.getByText('Find', { exact: true }).first().isVisible()
+    && await page.getByText('Menu', { exact: true }).first().isVisible());
   ok('no uncaught page errors on boot', errors.length === 0);
 
   // ---- 2. tabs render ----
   console.log('Suite 2: tab screens');
-  for (const tab of ['Month', 'Find', 'Settings']) {
+  for (const tab of ['Month', 'Documents', 'Find', 'Menu']) {
     await page.getByText(tab, { exact: true }).last().click();
     await page.waitForTimeout(450);
     ok(tab + ' renders', (await page.locator('#root').innerText()).length > 40);
   }
 
-  // ---- 3. backup health surface (we are on Settings) ----
-  console.log('Suite 3: backup health');
-  const settingsText = await page.locator('#root').innerText();
-  ok('backup card present', /backup and export/i.test(settingsText));
-  ok('health line: no copy yet', settingsText.includes('No saved copy from this app yet'));
-  ok('gentle nudge shows when due', settingsText.includes('good insurance'));
+  // ---- 3. backup and theme in their new homes (redesign 6-7 Aug) ----
+  console.log('Suite 3: backup page + theme sheet');
+  const menuText = await page.locator('#root').innerText();
+  ok('Menu holds the arm\u2019s-reach rows', menuText.includes('Jotla Plus') && menuText.includes('Backup and Restore') && menuText.includes('Recycle Bin'));
+  await page.getByText('Backup and Restore', { exact: true }).first().click();
+  await page.waitForTimeout(500);
+  let bkText = await page.locator('#root').innerText();
+  ok('backup page: export, restore, crowned clouds', bkText.includes('Export my data') && bkText.includes('Restore from an export')
+    && bkText.includes('Back up to your Drive') && bkText.includes('Dropbox') && bkText.includes('Auto backup'));
+  ok('honesty line: no servers', bkText.includes('Jotla has no servers and never sees your record'));
+  ok('health line: not exported yet', bkText.includes('Not exported yet'));
   await page.getByText('Export my data', { exact: false }).first().click();
-  await page.waitForTimeout(600);
-  const afterExport = await page.locator('#root').innerText();
-  ok('health line flips to today after export', afterExport.includes('Last saved copy: today'));
+  await page.waitForTimeout(400);
+  ok('export sheet offers the periods', (await page.locator('#root').innerText()).includes('The whole record'));
+  await page.getByText('Export', { exact: true }).last().click();
+  await page.waitForTimeout(800);
+  bkText = await page.locator('#root').innerText();
+  ok('health line flips after export', bkText.includes('Last export'));
   const persisted = await page.evaluate(() => localStorage.getItem('jotla_backup_v1') || '');
   ok('lastExportAt persisted', persisted.includes('lastExportAt'));
-  ok('dark mode toggle is a labelled switch', (await page.locator('[role="switch"][aria-label="Dark mode"]').count()) === 1);
+  await page.locator('button[aria-label="Back"]').first().click();
+  await page.waitForTimeout(400);
+  await page.locator('button[aria-label="Settings"]').first().click();
+  await page.waitForTimeout(450);
+  await page.getByText('Theme', { exact: true }).first().click();
+  await page.waitForTimeout(350);
+  ok('theme sheet is a labelled radio trio', (await page.locator('[role="radio"]').count()) === 3);
+  await page.locator('[role="radio"][aria-label="Dark"]').first().click();
+  await page.waitForTimeout(350);
+  ok('dark applies (the locked warm grey) and the sheet closes', await page.evaluate(() => {
+    const r = document.querySelector('.jotla-root');
+    return r.classList.contains('j-dark')
+      && getComputedStyle(r).getPropertyValue('--bg').trim() === '#201F1D'
+      && !document.querySelector('.j-sheet');
+  }));
+  await page.getByText('Theme', { exact: true }).first().click();
+  await page.waitForTimeout(300);
+  await page.locator('[role="radio"][aria-label="Light"]').first().click();
+  await page.waitForTimeout(300);
+  ok('light restores the warm paper', await page.evaluate(() => !document.querySelector('.jotla-root').classList.contains('j-dark')));
+  await page.locator('button[aria-label="Back"]').first().click();
+  await page.waitForTimeout(400);
 
   // ---- 4. screen boundary: crash keeps header + tabs alive (from Settings, tab bar visible) ----
   console.log('Suite 4: screen boundary');
@@ -63,7 +94,7 @@ function ok(name, cond) {
   const crashed = await page.locator('#root').innerText();
   ok('calm fallback shown', crashed.includes('This screen hit a problem'));
   ok('reassurance copy present', crashed.includes('Your record is safe on this device'));
-  ok('tab bar survives the crash', await page.getByText('Settings', { exact: true }).last().isVisible());
+  ok('tab bar survives the crash', await page.getByText('Menu', { exact: true }).last().isVisible());
   await page.evaluate(() => { window.__JOTLA_TEST_THROW = 0; });
   await page.getByText('Month', { exact: true }).last().click();
   await page.waitForTimeout(450);
@@ -73,7 +104,7 @@ function ok(name, cond) {
   // Day / Where / When are three cards; each opens only its own options and
   // blurs the rest, so the chips exist once a question is open.
   console.log('Suite 5: context row + chip accessibility');
-  await page.getByText('Log', { exact: true }).last().click();
+  await page.locator('.j-fab').first().click();
   await page.waitForTimeout(500);
   const rowText = await page.locator('#root').innerText();
   // the labels read plainly, with no question marks (founder, 16 Jul 2026)
@@ -243,9 +274,9 @@ function ok(name, cond) {
     Array.isArray(savedWho) && savedWho.includes('TA'));
   ok('the log organises its moments by part of day', /morning/i.test(oneLogText) && /afternoon/i.test(oneLogText));
   ok('both moments sit inside the one log', oneLogText.includes('asked for more') && oneLogText.includes('ate most of his lunch'));
-  await page.getByText('Settings', { exact: true }).last().click();
+  await page.getByText('Menu', { exact: true }).last().click();
   await page.waitForTimeout(450);
-  ok('footer shows the bumped build', (await page.locator('#root').innerText()).includes('Test build 1.11.1'));
+  ok('footer shows the bumped build', (await page.locator('#root').innerText()).includes('Test build'));
   await ctx.close();
 
   // ---- 6. app boundary: poisoned storage never blanks the app ----
@@ -282,20 +313,26 @@ function ok(name, cond) {
   const monthAfter = (await page3.locator('#root').innerText()).slice(0, 400);
   ok('ArrowLeft pages the calendar back a month', monthBefore !== monthAfter);
 
-  // dynamic type: three sizes in Settings, applied and persisted
-  await page3.getByText('Settings', { exact: true }).last().click();
+  // dynamic type: FOUR sizes behind the cog (the redesign adds Small), applied and persisted
+  await page3.getByText('Menu', { exact: true }).last().click();
   await page3.waitForTimeout(450);
-  ok('text size offers three labelled choices', (await page3.locator('[role="radio"][aria-label$=" text"]').count()) === 3);
-  const h3a = await page3.evaluate(() => parseFloat(getComputedStyle(document.querySelector('.j-h1, .j-h3, .j-body')).fontSize));
-  await page3.locator('[role="radio"][aria-label="Extra large text"]').click();
+  await page3.locator('button[aria-label="Settings"]').first().click();
+  await page3.waitForTimeout(450);
+  await page3.getByText('Text size', { exact: true }).first().click();
+  await page3.waitForTimeout(350);
+  ok('text size offers four labelled choices', (await page3.locator('[role="radio"]').count()) === 4);
+  const h3a = await page3.evaluate(() => parseFloat(getComputedStyle(document.querySelector('.j-pad p, .j-h1, .j-h3, .j-body')).fontSize));
+  await page3.locator('[role="radio"][aria-label="Extra large"]').click();
   await page3.waitForTimeout(300);
-  const h3b = await page3.evaluate(() => parseFloat(getComputedStyle(document.querySelector('.j-h1, .j-h3, .j-body')).fontSize));
+  const h3b = await page3.evaluate(() => parseFloat(getComputedStyle(document.querySelector('.j-pad p, .j-h1, .j-h3, .j-body')).fontSize));
   ok('choosing Extra large actually grows the text (' + h3a + ' -> ' + h3b + ')', h3b > h3a * 1.15);
   await page3.reload({ waitUntil: 'networkidle' });
   await page3.waitForTimeout(1000);
   const persistedScale = await page3.evaluate(() => getComputedStyle(document.querySelector('.jotla-root')).getPropertyValue('--tscale').trim());
   ok('text size persists across a relaunch (--tscale=' + persistedScale + ')', persistedScale === '1.25');
-  await page3.locator('[role="radio"][aria-label="Standard text"]').click();
+  await page3.getByText('Text size', { exact: true }).first().click();
+  await page3.waitForTimeout(350);
+  await page3.locator('[role="radio"][aria-label="Standard"]').click();
   await page3.waitForTimeout(250);
 
   // Illustrated tour. Two decks are live by design while the generated images are
@@ -507,7 +544,7 @@ function ok(name, cond) {
 
   // adding media is Plus-gated on the free tier (viewing never gates). Media now
   // rides the specific moment, so it lives inside the moment editor.
-  await page4.getByText('Log', { exact: true }).last().click();
+  await page4.locator('.j-fab').first().click();
   await page4.waitForTimeout(500);
   await page4.getByText('Wins', { exact: true }).first().click(); // open a moment editor
   await page4.waitForTimeout(300);
@@ -520,22 +557,34 @@ function ok(name, cond) {
   // Settings after the sixth-pass consolidation (1.10.0): the info rows fold
   // into the one About page, the planned rows live on its coming board, and
   // adding a child belongs to the header avatar's profile sheet.
-  await page4.getByText('Settings', { exact: true }).last().click();
+  await page4.getByText('Menu', { exact: true }).last().click();
   await page4.waitForTimeout(450);
-  const settingsNow = await page4.locator('#root').innerText();
-  ok('Settings drops the Add another child row', !settingsNow.includes('Add another child'));
-  ok('Settings drops the duplicated info rows', !settingsNow.includes('What Jotla is for')
-    && !settingsNow.includes('Privacy, in plain words') && !settingsNow.includes('Where your record is kept')
-    && !settingsNow.includes('How your data is kept'));
-  ok('Settings drops the planned-feature rows', !settingsNow.includes('Encrypted export') && !settingsNow.includes('Lock the app'));
-  ok('Settings keeps the live Restore action', settingsNow.includes('Restore from an export'));
-  ok('Settings keeps the privacy banner and feedback card', settingsNow.includes('Nothing leaves the phone') && settingsNow.includes('Tell us what you think'));
+  const menuNow = await page4.locator('#root').innerText();
+  ok('Menu is arm\u2019s reach only (no child-admin rows)', !menuNow.includes('Add another child'));
+  ok('Menu drops the duplicated info rows', !menuNow.includes('What Jotla is for')
+    && !menuNow.includes('Privacy, in plain words') && !menuNow.includes('Where your record is kept')
+    && !menuNow.includes('How your data is kept'));
+  ok('Menu carries the endorsement footer', menuNow.includes('Jotla by SEN Help'));
+  await page4.getByText('Backup and Restore', { exact: true }).first().click();
+  await page4.waitForTimeout(500);
+  ok('Backup keeps the live Restore action', (await page4.locator('#root').innerText()).includes('Restore from an export'));
+  await page4.locator('button[aria-label="Back"]').first().click();
+  await page4.waitForTimeout(400);
+  await page4.locator('button[aria-label="Settings"]').first().click();
+  await page4.waitForTimeout(450);
+  const cogNow = await page4.locator('#root').innerText();
+  ok('Settings keeps the privacy line and feedback row', cogNow.includes('nothing leaves the phone') && cogNow.includes('Tell us what you think'));
+  ok('Settings gains App lock and the Daily reminder', cogNow.includes('App lock') && cogNow.includes('Daily reminder'));
   ok('the three old info pages are out of the bundle', await page4.evaluate(() =>
     typeof window.InfoMissionScreen === 'undefined' && typeof window.InfoPrivacyScreen === 'undefined' && typeof window.InfoDataScreen === 'undefined'));
+  await page4.locator('button[aria-label="Back"]').first().click();
+  await page4.waitForTimeout(400);
+  await page4.locator('button[aria-label="Settings"]').first().click();
+  await page4.waitForTimeout(450);
   await page4.getByText('About Jotla', { exact: true }).first().click();
   await page4.waitForTimeout(500);
   const aboutText = await page4.locator('#root').innerText();
-  ok('About carries the live build number', aboutText.includes('Early test build 1.11.1'));
+  ok('About carries the live build number', aboutText.includes('Early test build 2.0.0'));
   ok('About drops the fonts credit line', !aboutText.includes('Typefaces'));
   ok('About owns the mission story', aboutText.includes('Nobody gives them the tool'));
   ok('About says the privacy promise exactly once', (aboutText.match(/We never send your record anywhere/g) || []).length === 1);
@@ -572,10 +621,10 @@ function ok(name, cond) {
   // no text at all (just the logotype SVG and two icon buttons), so on their own
   // they would also pass if the header rendered nothing. The positive anchor
   // first is what stops that: the logotype must still be there.
-  const headerPlus = await page5.locator('.j-appheader').innerText();
-  ok('header still renders the Jotla logotype', await page5.locator('.j-appheader svg[aria-label="Jotla"]').isVisible());
-  ok('header drops the +PLUS pill even when Plus is active', !headerPlus.includes('+PLUS'));
-  ok('header drops the "by SEN Help" endorsement', !headerPlus.includes('by SEN Help'));
+  // NEUTRAL SHELL (6 Aug): the persistent header is gone entirely; each screen
+  // leads with its own title and the endorsement lives on the Menu footer.
+  ok('the persistent app header is gone', (await page5.locator('.j-appheader').count()) === 0);
+  ok('no +PLUS pill anywhere on Today, even on Plus', !(await page5.locator('#root').innerText()).includes('+PLUS'));
   // item 34 (1.10.0): Plus frames the check-in as a two-of-you thing
   const todayPlus = await page5.locator('#root').innerText();
   ok("Plus Your day tile reads 'Do it together'", todayPlus.includes('Do it together with Sam'));
@@ -584,7 +633,7 @@ function ok(name, cond) {
   ok('Plus Today keeps the This month graph', todayPlus.includes('This month'));
 
   // Plus quick log: the media tiles are live inside the moment editor
-  await page5.getByText('Log', { exact: true }).last().click();
+  await page5.locator('.j-fab').first().click();
   await page5.waitForTimeout(500);
   await page5.getByText('Wins', { exact: true }).first().click(); // open a moment editor
   await page5.waitForTimeout(300);
@@ -601,11 +650,13 @@ function ok(name, cond) {
     && monthPlus.includes('Dysregulation') && !/\bGate\b/.test(monthPlus));
 
   // the Plus feature list gains Photos and Videos on Notes
-  await page5.getByText('Settings', { exact: true }).last().click();
+  await page5.getByText('Menu', { exact: true }).last().click();
   await page5.waitForTimeout(450);
-  await page5.getByText('Patterns, filters and PDF pack', { exact: false }).first().click();
+  await page5.getByText('Jotla Plus', { exact: true }).first().click();
   await page5.waitForTimeout(600);
-  ok('Unlock lists Photos and Videos on Notes', (await page5.locator('#root').innerText()).includes('Photos and Videos on Notes'));
+  await page5.locator('button[aria-label="Slide 4"]').first().click();
+  await page5.waitForTimeout(350);
+  ok('the paywall carousel lists Photos and Videos on Notes', (await page5.locator('#root').innerText()).includes('Photos and Videos on Notes'));
   await page5.locator('button[aria-label="Close"]').first().click();
   await page5.waitForTimeout(400);
 
@@ -874,7 +925,7 @@ function ok(name, cond) {
   await page9.waitForTimeout(500);
 
   // the child editor round-trips the circle
-  await page9.getByText('Settings', { exact: true }).last().click();
+  await page9.getByText('Menu', { exact: true }).last().click();
   await page9.waitForTimeout(450);
   await page9.getByText('Edit name, school, colour and avatar').click();
   await page9.waitForTimeout(450);
@@ -1001,7 +1052,7 @@ function ok(name, cond) {
   await page10.getByText('Skip', { exact: true }).first().click();
   await page10.waitForTimeout(500);
   ok('the photo shows in the header avatar', (await page10.locator('.j-appheader img[src^="data:image"]').count()) === 1);
-  await page10.getByText('Settings', { exact: true }).last().click();
+  await page10.getByText('Menu', { exact: true }).last().click();
   await page10.waitForTimeout(450);
   ok('the photo shows on the Settings profile card', (await page10.locator('img[src^="data:image"]').count()) >= 1);
 
@@ -1044,7 +1095,7 @@ function ok(name, cond) {
   page11.on('dialog', d => d.accept().catch(() => {}));
   await page11.goto(URL_APP, { waitUntil: 'networkidle' });
   await page11.waitForTimeout(1200);
-  await page11.getByText('Settings', { exact: true }).last().click();
+  await page11.getByText('Menu', { exact: true }).last().click();
   await page11.waitForTimeout(450);
   ok('a fresh device starts with no imported photo', (await page11.locator('.j-appheader img[src^="data:image"]').count()) === 0);
   // feed the captured export straight into the live Restore file input
@@ -1069,7 +1120,7 @@ function ok(name, cond) {
   await page12.goto(URL_APP, { waitUntil: 'networkidle' });
   await page12.waitForTimeout(1200);
   // open Quick log -> Day? -> Another day -> the calendar sheet
-  await page12.getByText('Log', { exact: true }).last().click();
+  await page12.locator('.j-fab').first().click();
   await page12.waitForTimeout(500);
   await page12.locator('button.j-ctx[aria-label^="Day"]').first().click();
   await page12.waitForTimeout(300);
@@ -1290,7 +1341,7 @@ function ok(name, cond) {
     // home, so the tab bar is not there to find Settings on the second lap.
     await page15.goto(URL_APP, { waitUntil: 'networkidle' });
     await page15.waitForTimeout(1000);
-    await page15.getByText('Settings', { exact: true }).last().click();
+    await page15.getByText('Menu', { exact: true }).last().click();
     await page15.waitForTimeout(450);
     await page15.locator(`[role="radio"][aria-label="${scale}"]`).click();
     await page15.waitForTimeout(300);
@@ -1369,7 +1420,7 @@ function ok(name, cond) {
   const tipsGeom = await page15.evaluate(deckGeom, 0);       // Tips card 1 carries a say pill
   await page15.goto(URL_APP, { waitUntil: 'networkidle' });
   await page15.waitForTimeout(1000);
-  await page15.getByText('Settings', { exact: true }).last().click();
+  await page15.getByText('Menu', { exact: true }).last().click();
   await page15.waitForTimeout(450);
   await page15.locator('[role="radio"][aria-label="Extra large text"]').click();
   await page15.waitForTimeout(300);

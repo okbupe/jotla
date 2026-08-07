@@ -2259,7 +2259,7 @@ function UnlockScreen({
   }), /*#__PURE__*/React.createElement(TermCard, {
     label: "One Year",
     price: "\xA379",
-    per: "less than \xA37 a month",
+    per: /*#__PURE__*/React.createElement(React.Fragment, null, "less than", /*#__PURE__*/React.createElement("br", null), "\xA37 a month"),
     sel: true,
     badge: "Best value"
   })), /*#__PURE__*/React.createElement("button", {
@@ -2320,43 +2320,48 @@ function UnlockScreen({
   }), /*#__PURE__*/React.createElement(TermCard, {
     label: "One Year",
     price: "\xA3149",
-    per: "less than \xA313 a month",
+    per: /*#__PURE__*/React.createElement(React.Fragment, null, "less than", /*#__PURE__*/React.createElement("br", null), "\xA313 a month"),
     sel: true,
     gold: true,
     badge: "Best value"
-  })), /*#__PURE__*/React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-lg",
+    onClick: () => alert('Jotla AI arrives in 2027. Nothing is charged before it exists.'),
     style: {
       marginTop: 12,
-      borderRadius: 16,
-      padding: 16,
       background: 'linear-gradient(135deg,#14294A,#1E5099)',
       color: '#fff',
-      textAlign: 'center',
-      boxShadow: '0 10px 22px -8px rgba(20,41,74,0.55)'
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: 6,
-      fontSize: 'calc(12.5px * var(--tscale, 1))',
-      fontWeight: 700,
-      color: '#E6B85C',
-      letterSpacing: '0.05em',
-      textTransform: 'uppercase'
+      boxShadow: '0 14px 28px -10px rgba(20,41,74,0.6)'
     }
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "sparkle",
-    size: 14,
+    size: 20,
     color: "#E6B85C"
-  }), " Coming in 2027"), /*#__PURE__*/React.createElement("p", {
+  }), " Get Jotla AI"), /*#__PURE__*/React.createElement("p", {
     style: {
-      fontSize: 'calc(13.5px * var(--tscale, 1))',
-      color: 'rgba(255,255,255,0.9)',
-      lineHeight: 1.5,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      color: 'var(--blue)',
+      fontSize: 'calc(13px * var(--tscale, 1))',
+      fontWeight: 500,
+      margin: '10px 0 0'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "check",
+    size: 15,
+    color: "var(--blue)",
+    stroke: 2.2
+  }), " Jotla Plus is included in every term."), /*#__PURE__*/React.createElement("p", {
+    style: {
+      textAlign: 'center',
+      color: 'var(--faint)',
+      fontSize: 'calc(11.5px * var(--tscale, 1))',
+      lineHeight: 1.45,
       margin: '8px 0 0'
     }
-  }, "Jotla Plus is included in every term: one price, not one on top of another."))), /*#__PURE__*/React.createElement("div", {
+  }, "Jotla AI arrives in 2027 and renews automatically at the end of its term: \xA359 a month, \xA399 every 6 months or \xA3149 a year, charged to your Google Play account until you cancel. Cancel any time in Subscriptions on Google Play, at least 24 hours before the term ends. One price with Plus included, never one on top of another, and a subscription only ever switches off the paid tools.")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       justifyContent: 'center',
@@ -2773,6 +2778,9 @@ function RadioSheet({
     key: o.key,
     onClick: () => onPick(o.key),
     className: "j-press",
+    role: "radio",
+    "aria-checked": activeKey === o.key,
+    "aria-label": o.label,
     style: {
       width: '100%',
       display: 'flex',
@@ -2923,7 +2931,8 @@ function SettingsScreen({
       display: 'flex',
       alignItems: 'center',
       gap: 14,
-      boxShadow: '0 10px 22px -8px rgba(38,24,84,0.5)'
+      boxShadow: '0 10px 22px -8px rgba(38,24,84,0.5)',
+      marginBottom: 14
     }
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "crown",
@@ -3371,8 +3380,7 @@ function ChildProfileScreen({
     })
   })), /*#__PURE__*/React.createElement(MRow, {
     icon: "palette",
-    title: "Colour and avatar",
-    sub: colourKey(profile.figure) + ' · ' + ((profile.glyph || 'initial') === 'initial' ? 'the letter ' + (profile.initial || (profile.name || 'J').charAt(0)).toUpperCase() : profile.glyph === 'today' ? 'house' : profile.glyph),
+    title: "Colour and Avatar",
     onClick: openSheet
   }), /*#__PURE__*/React.createElement(SectionLabel, null, "The adults around ", (profile.name || '').trim() || 'them'), /*#__PURE__*/React.createElement(AdultsEditor, {
     profile: profile,

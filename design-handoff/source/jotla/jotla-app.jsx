@@ -154,7 +154,7 @@ function ProfileSheet({ profiles, activeId, onPick, onAddChild, onClose }) {
 // ---------- child options / details sheet ----------
 // Redesign (6 Aug): the initial leads as the default avatar, and moon, sun and
 // music join the set: 14 avatars matching the 14 colours.
-const CHILD_GLYPHS = ['initial', 'person', 'heart', 'star', 'leaf', 'sparkle', 'shield', 'bell', 'hand', 'today', 'note', 'moon', 'sun', 'music'];
+const CHILD_GLYPHS = ['initial', 'person', 'heart', 'star', 'leaf', 'shield', 'bell', 'hand', 'today', 'note', 'sun', 'music'];
 function ChildOptionsSheet({ profile, entries = [], docs = [], canDelete = true, onChange, onDelete, onReset, onResetAll, onClose }) {
   const J = window.JOTLA;
   const [dangerMode, setDangerMode] = useStateApp(null); // null | 'delete' | 'reset' | 'resetAll'

@@ -1102,7 +1102,7 @@ function UnlockScreen({ nav }) {
                 <div style={{ display: 'flex', gap: 10 }}>
                   <TermCard label="1 Month" price="£29" per="a month" />
                   <TermCard label="6 Months" price="£49" per="for 6 months" />
-                  <TermCard label="One Year" price="£79" per="less than £7 a month" sel badge="Best value" />
+                  <TermCard label="One Year" price="£79" per={<>less than<br />£7 a month</>} sel badge="Best value" />
                 </div>
                 <button className="j-btn j-btn-lg" onClick={() => { nav.buyPlus(); nav.back(); }} style={{ marginTop: 12, background: PLUS_GRAD,
                   color: '#fff', boxShadow: '0 14px 28px -10px rgba(60,42,114,0.6)' }}>
@@ -1124,18 +1124,23 @@ function UnlockScreen({ nav }) {
               <div style={{ display: 'flex', gap: 10 }}>
                 <TermCard label="1 Month" price="£59" per="a month" gold />
                 <TermCard label="6 Months" price="£99" per="for 6 months" gold />
-                <TermCard label="One Year" price="£149" per="less than £13 a month" sel gold badge="Best value" />
+                <TermCard label="One Year" price="£149" per={<>less than<br />£13 a month</>} sel gold badge="Best value" />
               </div>
-              <div style={{ marginTop: 12, borderRadius: 16, padding: 16, background: 'linear-gradient(135deg,#14294A,#1E5099)',
-                color: '#fff', textAlign: 'center', boxShadow: '0 10px 22px -8px rgba(20,41,74,0.55)' }}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 'calc(12.5px * var(--tscale, 1))', fontWeight: 700,
-                  color: '#E6B85C', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                  <Icon name="sparkle" size={14} color="#E6B85C" /> Coming in 2027
-                </span>
-                <p style={{ fontSize: 'calc(13.5px * var(--tscale, 1))', color: 'rgba(255,255,255,0.9)', lineHeight: 1.5, margin: '8px 0 0' }}>
-                  Jotla Plus is included in every term: one price, not one on top of another.
-                </p>
-              </div>
+              <button className="j-btn j-btn-lg" onClick={() => alert('Jotla AI arrives in 2027. Nothing is charged before it exists.')}
+                style={{ marginTop: 12, background: 'linear-gradient(135deg,#14294A,#1E5099)', color: '#fff',
+                  boxShadow: '0 14px 28px -10px rgba(20,41,74,0.6)' }}>
+                <Icon name="sparkle" size={20} color="#E6B85C" /> Get Jotla AI
+              </button>
+              <p style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: 'var(--blue)',
+                fontSize: 'calc(13px * var(--tscale, 1))', fontWeight: 500, margin: '10px 0 0' }}>
+                <Icon name="check" size={15} color="var(--blue)" stroke={2.2} /> Jotla Plus is included in every term.
+              </p>
+              <p style={{ textAlign: 'center', color: 'var(--faint)', fontSize: 'calc(11.5px * var(--tscale, 1))', lineHeight: 1.45, margin: '8px 0 0' }}>
+                Jotla AI arrives in 2027 and renews automatically at the end of its term: £59 a month, £99 every 6 months or £149 a year,
+                charged to your Google Play account until you cancel. Cancel any time in Subscriptions on Google Play, at least 24 hours
+                before the term ends. One price with Plus included, never one on top of another, and a subscription only ever switches off
+                the paid tools.
+              </p>
             </div>
           )}
 
@@ -1343,7 +1348,8 @@ function RadioSheet({ title, subtitle, options, activeKey, onPick, onClose, foot
         <h2 className="j-h2" style={{ marginBottom: subtitle ? 4 : 10 }}>{title}</h2>
         {subtitle && <p className="j-sm" style={{ marginBottom: 8 }}>{subtitle}</p>}
         {options.map((o, i) => (
-          <button key={o.key} onClick={() => onPick(o.key)} className="j-press" style={{ width: '100%', display: 'flex',
+          <button key={o.key} onClick={() => onPick(o.key)} className="j-press" role="radio" aria-checked={activeKey === o.key}
+            aria-label={o.label} style={{ width: '100%', display: 'flex',
             alignItems: 'center', gap: 12, padding: '13px 2px', background: 'none', border: 'none',
             borderBottom: i < options.length - 1 ? '1px solid var(--line)' : 'none', cursor: 'pointer', textAlign: 'left' }}>
             <span style={{ width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
@@ -1399,7 +1405,7 @@ function SettingsScreen({ nav, profile, entries = [], docs = [], binCount = 0 })
               the solid gold crown (the app's only solid icon, its only gold) */}
           <button className="j-press" onClick={() => nav.go('unlock')} style={{ width: '100%', textAlign: 'left', border: 'none',
             cursor: 'pointer', background: PLUS_GRAD, borderRadius: 16, padding: 16, display: 'flex', alignItems: 'center',
-            gap: 14, boxShadow: '0 10px 22px -8px rgba(38,24,84,0.5)' }}>
+            gap: 14, boxShadow: '0 10px 22px -8px rgba(38,24,84,0.5)', marginBottom: 14 }}>
             <Icon name="crown" size={28} color="#EBBA4D" style={{ flexShrink: 0 }} />
             <span style={{ flex: 1, minWidth: 0 }}>
               <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 'calc(16.5px * var(--tscale, 1))', color: '#fff' }}>Jotla Plus</span>
@@ -1577,9 +1583,7 @@ function ChildProfileScreen({ nav, profile, entries = [], docs = [] }) {
             <FieldLabel>Year group</FieldLabel>
             <input className="j-input" value={profile.year} onChange={e => nav.setChild({ year: e.target.value })} />
           </div>
-          <MRow icon="palette" title="Colour and avatar"
-            sub={colourKey(profile.figure) + ' · ' + ((profile.glyph || 'initial') === 'initial' ? 'the letter ' + ((profile.initial || (profile.name || 'J').charAt(0)).toUpperCase()) : (profile.glyph === 'today' ? 'house' : profile.glyph))}
-            onClick={openSheet} />
+          <MRow icon="palette" title="Colour and Avatar" onClick={openSheet} />
 
           <SectionLabel>The adults around {(profile.name || '').trim() || 'them'}</SectionLabel>
           <AdultsEditor profile={profile} onChange={nav.setChild} />
