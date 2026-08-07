@@ -2,7 +2,9 @@
 
 Direction set by the founder on 2026-08-06 after reviewing Todoist's dark Android app (his reference screenshots live in Vision, `Gemini Gems/Demo`). The board that carries every decision below is [`lookdev-002.html`](lookdev-002.html): open it in a browser, dark pair on top, light pair below, Menu icon options and the D/G/E nav comparison above the frames.
 
-**Status: dark theme LOCKED. Light theme first pass. THE WEB BUILD SHIPPED 7 Aug 2026** (app build 2.0.0, sw v2.0.0, boot-assert 240/240 green with a proven negative control, live at https://okbupe.github.io/jotla/). The native mirror is the outstanding half of the two-track rule.
+**Status: dark theme LOCKED. Light theme first pass. THE WEB BUILD SHIPPED 7 Aug 2026, polish round shipped the same night** (app build 2.0.1, sw v2.0.1, boot-assert 247/247 green with proven negative controls, live at https://okbupe.github.io/jotla/). The native mirror is the outstanding half of the two-track rule.
+
+The 2.0.1 polish round (all founder calls, evening of 7 Aug): per-type document icons echoing the pill colours; the document page gained Print or save as PDF (documents stay OUT of the day-record PDF, an open question for Bupe); the FAB steps aside on Day records; tab titles centre on the corner-icon line; a Plus owner's Menu ticket sells Jotla AI (navy/gold) while the owned tier sits in Settings > Membership as an Active row; the paywall carousel finger-swipes on a pointer-event rail (gesture state in refs, never state closures: closures drop fast flicks), with the lockup, caption and dots pinned so nothing moves across tiers or slides, and the corner crown wearing the open tier's colours; Plus terms end "It never touches your history."
 
 ## The one-line direction
 
