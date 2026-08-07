@@ -35,11 +35,12 @@ function TodayScreen({ nav, entries, today, profile }) {
   return (
     <div className="j-screen">
       <div className="j-scroll j-fade">
-        <div className="j-pad" style={{ paddingTop: 14, paddingBottom: 120 }}>
+        <div className="j-pad" style={{ paddingTop: 10, paddingBottom: 120 }}>
           {/* Neutral shell (6 Aug): the greeting leads, the date sits under it as
               the overline, and the status sentence is gone: the screen shows the
-              day rather than describing it. */}
-          <h1 className="j-h1" style={{ marginBottom: 6 }}>{greeting()}.</h1>
+              day rather than describing it. One top line app-wide (founder,
+              7 Aug): every tab title starts at the same y, same 28px size. */}
+          <h1 className="j-h1" style={{ marginBottom: 6, fontSize: 'calc(28px * var(--tscale, 1))' }}>{greeting()}.</h1>
           <p className="j-eyebrow" style={{ marginBottom: 18 }}>{J.fmtLong(today)}</p>
 
           <SectionLabel>Check in</SectionLabel>

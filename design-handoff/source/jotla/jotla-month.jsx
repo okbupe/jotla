@@ -2,16 +2,22 @@
 const { useState: useStateM } = React;
 
 function TabTitle({ title, sub, right }) {
-  // The title and the corner icon share one line: centre-align the pair so the
-  // glyph's optical middle sits level with the title (founder, 7 Aug: the
-  // flex-end version left the word visibly below the icon line).
+  // One top line app-wide (founder, 7 Aug): the title starts at the pad's own
+  // top on every tab, never pushed down by the 44px corner button. The corner
+  // slot is capped to the title's line height and the button centres inside
+  // it, overflowing equally above and below (it is transparent, so the
+  // overflow is invisible and the tap target stays full size).
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
       <div>
         <h1 className="j-h1" style={{ fontSize: 'calc(28px * var(--tscale, 1))' }}>{title}</h1>
         {sub && <p className="j-sm" style={{ marginTop: 4 }}>{sub}</p>}
       </div>
-      {right}
+      {right && (
+        <div style={{ height: 'calc(30px * var(--tscale, 1))', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+          {right}
+        </div>
+      )}
     </div>
   );
 }
@@ -222,7 +228,7 @@ function MonthScreen({ nav, entries, view }) {
   return (
     <div className="j-screen">
       <div className="j-scroll j-fade">
-        <div className="j-pad" style={{ paddingTop: 14, paddingBottom: 120 }}>
+        <div className="j-pad" style={{ paddingTop: 10, paddingBottom: 120 }}>
           {/* DECLUTTER (founder, 4 Aug 2026): "Tap any day to read it back."
               is gone. It explained a calendar to someone looking at a calendar. */}
           <TabTitle title={monthLabel}

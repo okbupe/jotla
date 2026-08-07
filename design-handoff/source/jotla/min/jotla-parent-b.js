@@ -85,7 +85,7 @@ function FindScreen({
   }, /*#__PURE__*/React.createElement("div", {
     className: "j-pad",
     style: {
-      paddingTop: 14,
+      paddingTop: 10,
       paddingBottom: 120
     }
   }, /*#__PURE__*/React.createElement(TabTitle, {
@@ -516,7 +516,7 @@ function EvidenceScreen({
   }, /*#__PURE__*/React.createElement("div", {
     className: "j-pad",
     style: {
-      paddingTop: 14,
+      paddingTop: 10,
       paddingBottom: 120
     }
   }, /*#__PURE__*/React.createElement(TabTitle, {
@@ -1973,8 +1973,8 @@ function DocScreen({
 //             The £29 month is the anchor: two months (£58) already beats the
 //             6-month term, so the monthly door cannot be gamed. Family Sync is
 //             inside Plus and sells as launch-state (decisions 2026-08-06).
-//   Jotla AI  coming 2027, INDICATIVE ladder £59 / £99 / £149 with Plus
-//             included (£149 in total, not £79 + £149). Visible on the paywall
+//   Jotla AI  coming 2027, INDICATIVE ladder £79 / £129 / £199 with Plus
+//             included (£199 in total, not £79 + £199). Visible on the paywall
 //             with no buy button until it exists.
 // There is no one-time price and no lifetime buyout of any kind. The old
 // buy-once copy (pay once, yours to keep, no subscription, no timers) is
@@ -1984,7 +1984,7 @@ const PLUS_PRICE = '£79';
 const PLUS_PERIOD = 'a year';
 const TERM_PRICE = '£49';
 const TERM_PERIOD = 'for 6 months';
-const AI_PRICE = '£149';
+const AI_PRICE = '£199';
 
 // Free is a calm, flat darker blue. Plus has its own purple identity. The premium
 // navy + gold look (and the sparkle) dresses Jotla AI and the Settings upsell card.
@@ -2001,7 +2001,7 @@ const PREMIUM_GOLD_DEEP = '#C9912F';
 // coming 2027, real price tabs, NO buy button before it exists). Real carousel
 // art rides each tier. No fake discounts, no strikethroughs, no invented trial:
 // the honest-marketing lock. Pricing decided 6 Aug: £29 / £49 / £79, and the
-// indicative AI ladder £59 / £99 / £149 with Plus included.
+// indicative AI ladder £79 / £129 / £199 with Plus included.
 const PLUS_SLIDES = [{
   t: 'Patterns and Month View',
   c: 'A calendar of green and amber days. Tap any day to read what happened behind it.',
@@ -2191,7 +2191,7 @@ function UnlockScreen({
   }, /*#__PURE__*/React.createElement("div", {
     className: "j-pad",
     style: {
-      paddingTop: 12,
+      paddingTop: 10,
       paddingBottom: 30,
       display: 'flex',
       flexDirection: 'column',
@@ -2468,18 +2468,18 @@ function UnlockScreen({
     }
   }, /*#__PURE__*/React.createElement(TermCard, {
     label: "1 Month",
-    price: "\xA359",
+    price: "\xA379",
     per: "a month",
     gold: true
   }), /*#__PURE__*/React.createElement(TermCard, {
     label: "6 Months",
-    price: "\xA399",
+    price: "\xA3129",
     per: "for 6 months",
     gold: true
   }), /*#__PURE__*/React.createElement(TermCard, {
     label: "One Year",
-    price: "\xA3149",
-    per: /*#__PURE__*/React.createElement(React.Fragment, null, "less than", /*#__PURE__*/React.createElement("br", null), "\xA313 a month"),
+    price: "\xA3199",
+    per: /*#__PURE__*/React.createElement(React.Fragment, null, "less than", /*#__PURE__*/React.createElement("br", null), "\xA317 a month"),
     sel: true,
     gold: true,
     badge: "Best value"
@@ -2520,7 +2520,7 @@ function UnlockScreen({
       lineHeight: 1.45,
       margin: '8px 0 0'
     }
-  }, "Jotla AI arrives in 2027 and renews automatically at the end of its term: \xA359 a month, \xA399 every 6 months or \xA3149 a year, charged to your Google Play account until you cancel. Cancel any time in Subscriptions on Google Play, at least 24 hours before the term ends. One price with Plus included, never one on top of another, and a subscription only ever switches off the paid tools.")), /*#__PURE__*/React.createElement("div", {
+  }, "Jotla AI arrives in 2027 and renews automatically at the end of its term: \xA379 a month, \xA3129 every 6 months or \xA3199 a year, charged to your Google Play account until you cancel. Cancel any time in Subscriptions on Google Play, at least 24 hours before the term ends. One price with Plus included, never one on top of another, and a subscription only ever switches off the paid tools.")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       justifyContent: 'center',
@@ -3201,13 +3201,13 @@ function SettingsScreen({
   }, /*#__PURE__*/React.createElement("div", {
     className: "j-pad",
     style: {
-      paddingTop: 14,
+      paddingTop: 10,
       paddingBottom: 120
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       justifyContent: 'space-between',
       gap: 12,
       marginBottom: 18
@@ -3234,7 +3234,14 @@ function SettingsScreen({
     style: {
       fontSize: 'calc(26px * var(--tscale, 1))'
     }
-  }, profile.name)), /*#__PURE__*/React.createElement("button", {
+  }, profile.name)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: 36,
+      display: 'flex',
+      alignItems: 'center',
+      flexShrink: 0
+    }
+  }, /*#__PURE__*/React.createElement("button", {
     className: "j-iconbtn",
     "aria-label": "Settings",
     onClick: () => nav.go('appsettings')
@@ -3242,7 +3249,7 @@ function SettingsScreen({
     name: "settings",
     size: 23,
     color: "var(--muted)"
-  }))), !nav.plus ? /*#__PURE__*/React.createElement("button", {
+  })))), !nav.plus ? /*#__PURE__*/React.createElement("button", {
     className: "j-press",
     onClick: () => nav.go('unlock'),
     style: {

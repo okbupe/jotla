@@ -49,7 +49,7 @@ function FindScreen({ nav, entries, view }) {
   return (
     <div className="j-screen">
       <div className="j-scroll j-fade" ref={scrollRef}>
-        <div className="j-pad" style={{ paddingTop: 14, paddingBottom: 120 }}>
+        <div className="j-pad" style={{ paddingTop: 10, paddingBottom: 120 }}>
           {/* DECLUTTER (founder, 4 Aug 2026; mirrored from native FindScreen):
               "Search across everything you have noted." is gone. The screen was
               explaining itself four times over: a title reading Find, this line,
@@ -318,7 +318,7 @@ function EvidenceScreen({ nav, entries, docs, profile, navView }) {
           and the old green banner is gone: both explained a screen that already
           shows what it is. */}
       <div className="j-scroll j-fade" ref={scrollRef}>
-        <div className="j-pad" style={{ paddingTop: 14, paddingBottom: 120 }}>
+        <div className="j-pad" style={{ paddingTop: 10, paddingBottom: 120 }}>
           <TabTitle title="Documents" right={
             <button className="j-iconbtn" aria-label="Search documents"
               onClick={() => { setView('documents'); setShowDocQ(v => { if (v) setDocQ(''); return !v; }); }}>
@@ -1021,8 +1021,8 @@ function DocScreen({ nav, docs, id }) {
 //             The £29 month is the anchor: two months (£58) already beats the
 //             6-month term, so the monthly door cannot be gamed. Family Sync is
 //             inside Plus and sells as launch-state (decisions 2026-08-06).
-//   Jotla AI  coming 2027, INDICATIVE ladder £59 / £99 / £149 with Plus
-//             included (£149 in total, not £79 + £149). Visible on the paywall
+//   Jotla AI  coming 2027, INDICATIVE ladder £79 / £129 / £199 with Plus
+//             included (£199 in total, not £79 + £199). Visible on the paywall
 //             with no buy button until it exists.
 // There is no one-time price and no lifetime buyout of any kind. The old
 // buy-once copy (pay once, yours to keep, no subscription, no timers) is
@@ -1032,7 +1032,7 @@ const PLUS_PRICE = '£79';
 const PLUS_PERIOD = 'a year';
 const TERM_PRICE = '£49';
 const TERM_PERIOD = 'for 6 months';
-const AI_PRICE = '£149';
+const AI_PRICE = '£199';
 
 // Free is a calm, flat darker blue. Plus has its own purple identity. The premium
 // navy + gold look (and the sparkle) dresses Jotla AI and the Settings upsell card.
@@ -1049,7 +1049,7 @@ const PREMIUM_GOLD_DEEP = '#C9912F';
 // coming 2027, real price tabs, NO buy button before it exists). Real carousel
 // art rides each tier. No fake discounts, no strikethroughs, no invented trial:
 // the honest-marketing lock. Pricing decided 6 Aug: £29 / £49 / £79, and the
-// indicative AI ladder £59 / £99 / £149 with Plus included.
+// indicative AI ladder £79 / £129 / £199 with Plus included.
 const PLUS_SLIDES = [
   { t: 'Patterns and Month View', c: 'A calendar of green and amber days. Tap any day to read what happened behind it.', img: 'art/plus-1.jpg' },
   { t: 'PDF Evidence Pack', c: 'Turn any stretch of the record into one dated PDF, ready to hand over.', img: 'art/plus-2.jpg' },
@@ -1133,7 +1133,7 @@ function UnlockScreen({ nav, initialTier }) {
   return (
     <div className="j-screen">
       <div className="j-scroll j-fade">
-        <div className="j-pad" style={{ paddingTop: 12, paddingBottom: 30, display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
+        <div className="j-pad" style={{ paddingTop: 10, paddingBottom: 30, display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
 
           {/* header: crown disc, the tier selector, X */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -1231,9 +1231,9 @@ function UnlockScreen({ nav, initialTier }) {
           ) : (
             <div>
               <div style={{ display: 'flex', gap: 10 }}>
-                <TermCard label="1 Month" price="£59" per="a month" gold />
-                <TermCard label="6 Months" price="£99" per="for 6 months" gold />
-                <TermCard label="One Year" price="£149" per={<>less than<br />£13 a month</>} sel gold badge="Best value" />
+                <TermCard label="1 Month" price="£79" per="a month" gold />
+                <TermCard label="6 Months" price="£129" per="for 6 months" gold />
+                <TermCard label="One Year" price="£199" per={<>less than<br />£17 a month</>} sel gold badge="Best value" />
               </div>
               <button className="j-btn j-btn-lg" onClick={() => alert('Jotla AI arrives in 2027. Nothing is charged before it exists.')}
                 style={{ marginTop: 12, background: 'linear-gradient(135deg,#14294A,#1E5099)', color: '#fff',
@@ -1245,7 +1245,7 @@ function UnlockScreen({ nav, initialTier }) {
                 <Icon name="check" size={15} color="var(--blue)" stroke={2.2} /> Jotla Plus is included in every term.
               </p>
               <p style={{ textAlign: 'center', color: 'var(--faint)', fontSize: 'calc(11.5px * var(--tscale, 1))', lineHeight: 1.45, margin: '8px 0 0' }}>
-                Jotla AI arrives in 2027 and renews automatically at the end of its term: £59 a month, £99 every 6 months or £149 a year,
+                Jotla AI arrives in 2027 and renews automatically at the end of its term: £79 a month, £129 every 6 months or £199 a year,
                 charged to your Google Play account until you cancel. Cancel any time in Subscriptions on Google Play, at least 24 hours
                 before the term ends. One price with Plus included, never one on top of another, and a subscription only ever switches off
                 the paid tools.
@@ -1590,17 +1590,21 @@ function SettingsScreen({ nav, profile, entries = [], docs = [], binCount = 0 })
   return (
     <div className="j-screen">
       <div className="j-scroll j-fade">
-        <div className="j-pad" style={{ paddingTop: 14, paddingBottom: 120 }}>
-          {/* the title IS the child; the cog opens Settings (the Todoist pattern) */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 18 }}>
+        <div className="j-pad" style={{ paddingTop: 10, paddingBottom: 120 }}>
+          {/* the title IS the child; the cog opens Settings (the Todoist
+              pattern). The cog rides a capped box so the row's top stays on
+              the app-wide title line (founder, 7 Aug). */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 18 }}>
             <button className="j-press" onClick={() => nav.go('childprofile')} aria-label={'Open ' + profile.name + "'s profile"}
               style={{ display: 'flex', alignItems: 'center', gap: 11, background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}>
               <ChildAvatar profile={profile} size={36} />
               <h1 className="j-h1" style={{ fontSize: 'calc(26px * var(--tscale, 1))' }}>{profile.name}</h1>
             </button>
-            <button className="j-iconbtn" aria-label="Settings" onClick={() => nav.go('appsettings')}>
-              <Icon name="settings" size={23} color="var(--muted)" />
-            </button>
+            <div style={{ height: 36, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+              <button className="j-iconbtn" aria-label="Settings" onClick={() => nav.go('appsettings')}>
+                <Icon name="settings" size={23} color="var(--muted)" />
+              </button>
+            </div>
           </div>
 
           {/* The one unique surface (founder, 7 Aug): the ticket slot always

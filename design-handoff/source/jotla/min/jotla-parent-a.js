@@ -65,13 +65,14 @@ function TodayScreen({
   }, /*#__PURE__*/React.createElement("div", {
     className: "j-pad",
     style: {
-      paddingTop: 14,
+      paddingTop: 10,
       paddingBottom: 120
     }
   }, /*#__PURE__*/React.createElement("h1", {
     className: "j-h1",
     style: {
-      marginBottom: 6
+      marginBottom: 6,
+      fontSize: 'calc(28px * var(--tscale, 1))'
     }
   }, greeting(), "."), /*#__PURE__*/React.createElement("p", {
     className: "j-eyebrow",

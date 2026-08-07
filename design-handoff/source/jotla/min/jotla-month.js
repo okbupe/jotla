@@ -8,13 +8,15 @@ function TabTitle({
   sub,
   right
 }) {
-  // The title and the corner icon share one line: centre-align the pair so the
-  // glyph's optical middle sits level with the title (founder, 7 Aug: the
-  // flex-end version left the word visibly below the icon line).
+  // One top line app-wide (founder, 7 Aug): the title starts at the pad's own
+  // top on every tab, never pushed down by the 44px corner button. The corner
+  // slot is capped to the title's line height and the button centres inside
+  // it, overflowing equally above and below (it is transparent, so the
+  // overflow is invisible and the tap target stays full size).
   return /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       justifyContent: 'space-between',
       marginBottom: 16
     }
@@ -28,7 +30,14 @@ function TabTitle({
     style: {
       marginTop: 4
     }
-  }, sub)), right);
+  }, sub)), right && /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: 'calc(30px * var(--tscale, 1))',
+      display: 'flex',
+      alignItems: 'center',
+      flexShrink: 0
+    }
+  }, right));
 }
 
 // Plus: the shown month as the same bar graph the Today page draws, four bars
@@ -378,7 +387,7 @@ function MonthScreen({
   }, /*#__PURE__*/React.createElement("div", {
     className: "j-pad",
     style: {
-      paddingTop: 14,
+      paddingTop: 10,
       paddingBottom: 120
     }
   }, /*#__PURE__*/React.createElement(TabTitle, {

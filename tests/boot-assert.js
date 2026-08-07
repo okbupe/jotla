@@ -35,12 +35,27 @@ function ok(name, cond) {
     && await page.getByText('Menu', { exact: true }).first().isVisible());
   ok('no uncaught page errors on boot', errors.length === 0);
 
-  // ---- 2. tabs render ----
+  // ---- 2. tabs render, and share ONE top line (founder, 7 Aug) ----
   console.log('Suite 2: tab screens');
+  const titleTop = async () => (await page.locator('.j-pad h1').first().boundingBox()).y;
+  const tops = { Today: await titleTop() };
   for (const tab of ['Month', 'Documents', 'Find', 'Menu']) {
     await page.getByText(tab, { exact: true }).last().click();
     await page.waitForTimeout(450);
     ok(tab + ' renders', (await page.locator('#root').innerText()).length > 40);
+    tops[tab] = await titleTop();
+  }
+  {
+    // Every tab title starts at the same y: the corner buttons ride capped
+    // boxes so they can never push a title down. Menu's title is the child
+    // name at a smaller size beside the avatar, so it may sit a few px inside
+    // the line; the four full-size titles must be exact.
+    const four = [tops.Today, tops.Month, tops.Documents, tops.Find];
+    const spread4 = Math.max(...four) - Math.min(...four);
+    const all = Object.values(tops);
+    const spreadAll = Math.max(...all) - Math.min(...all);
+    ok('the four tab titles share one top line (spread ' + spread4.toFixed(1) + 'px)', spread4 <= 1.5);
+    ok('the Menu title sits within the same line (spread ' + spreadAll.toFixed(1) + 'px)', spreadAll <= 6);
   }
 
   // ---- 3. backup and theme in their new homes (redesign 6-7 Aug) ----
