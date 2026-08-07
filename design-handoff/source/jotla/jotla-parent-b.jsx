@@ -1238,7 +1238,7 @@ function UnlockScreen({ nav, initialTier }) {
               <button className="j-btn j-btn-lg" onClick={() => alert('Jotla AI arrives in 2027. Nothing is charged before it exists.')}
                 style={{ marginTop: 12, background: 'linear-gradient(135deg,#14294A,#1E5099)', color: '#fff',
                   boxShadow: '0 14px 28px -10px rgba(20,41,74,0.6)' }}>
-                <Icon name="sparkle" size={20} color="#E6B85C" /> Get Jotla AI
+                <Icon name="sparkles" size={20} color="#E6B85C" /> Get Jotla AI
               </button>
               <p style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: 'var(--blue)',
                 fontSize: 'calc(13px * var(--tscale, 1))', fontWeight: 500, margin: '10px 0 0' }}>
@@ -1627,7 +1627,7 @@ function SettingsScreen({ nav, profile, entries = [], docs = [], binCount = 0 })
             <button className="j-press" onClick={() => nav.go('unlock', { tier: 'ai' })} style={{ width: '100%', textAlign: 'left', border: 'none',
               cursor: 'pointer', background: PREMIUM_GRAD, borderRadius: 16, padding: 16, display: 'flex', alignItems: 'center',
               gap: 14, boxShadow: '0 10px 22px -8px rgba(20,41,74,0.5)', marginBottom: 14 }}>
-              <Icon name="sparkle" size={28} color="#E6B85C" style={{ flexShrink: 0 }} />
+              <Icon name="sparkles" size={28} color="#E6B85C" style={{ flexShrink: 0 }} />
               <span style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 'calc(16.5px * var(--tscale, 1))', color: '#fff' }}>Jotla AI</span>
                 <span style={{ display: 'block', fontSize: 'calc(13px * var(--tscale, 1))', color: 'rgba(255,255,255,0.82)', marginTop: 2 }}>

@@ -42,8 +42,10 @@ function Icon({ name, size = 24, color = 'currentColor', stroke = 2, fill = fals
     menu: <><rect x="4" y="4" width="7" height="7" rx="2" /><rect x="13" y="4" width="7" height="7" rx="2" /><rect x="4" y="13" width="7" height="7" rx="2" /><rect x="13" y="13" width="7" height="7" rx="2" /></>,
     /* the standing Jotla symbol for dysregulation */
     pulse: <path d="M3 12h4l2.5-7 4 14 2.5-7H21" />,
-    /* the Plus gate: the app's ONLY solid icon, and the only gold */
+    /* the two solid icons: the crown (Plus gate, the only gold) and the
+       sparkles (the Jotla AI mark, founder 7 Aug); everything else is stroke */
     crown: <path d="M3.6 18 2.6 8.6l4.9 3.3L12 5.6l4.5 6.3 4.9-3.3-1 9.4a1.4 1.4 0 0 1-1.4 1.2H5a1.4 1.4 0 0 1-1.4-1.2z" fill={color} stroke="none" />,
+    sparkles: <path d="M10.5 6.5c.9 4.6 2.5 6.2 7 7-4.5.8-6.1 2.4-7 7-.9-4.6-2.5-6.2-7-7 4.5-.8 6.1-2.4 7-7ZM18 3.5c.45 2.3 1.25 3.1 3.5 3.5-2.25.4-3.05 1.2-3.5 3.5-.45-2.3-1.25-3.1-3.5-3.5 2.25-.4 3.05-1.2 3.5-3.5Z" fill={color} stroke="none" />,
     palette: <><path d="M12 3.5a8.5 8.5 0 0 0 0 17c1.2 0 1.9-.7 1.9-1.6 0-.8-.5-1.2-.5-2 0-1 .8-1.7 1.9-1.7H17a4.5 4.5 0 0 0 4.5-4.5c0-4.1-4.3-7.2-9.5-7.2z" /><circle cx="7.5" cy="11" r="1.05" /><circle cx="10.5" cy="7.5" r="1.05" /><circle cx="14.5" cy="7.5" r="1.05" /><circle cx="17.5" cy="11" r="1.05" /></>,
     textsize: <><path d="M4 18 9 6l5 12M5.7 14h6.6" /><path d="M15.5 18l2.6-6 2.6 6M16.5 15.9h3.2" /></>,
     trash: <><path d="M3.5 6h17" /><path d="M8.5 6V4.5A1.5 1.5 0 0 1 10 3h4a1.5 1.5 0 0 1 1.5 1.5V6" /><path d="M18.5 6v13a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2V6" /><path d="M10 10.5v6M14 10.5v6" /></>,

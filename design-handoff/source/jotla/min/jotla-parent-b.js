@@ -2493,7 +2493,7 @@ function UnlockScreen({
       boxShadow: '0 14px 28px -10px rgba(20,41,74,0.6)'
     }
   }, /*#__PURE__*/React.createElement(Icon, {
-    name: "sparkle",
+    name: "sparkles",
     size: 20,
     color: "#E6B85C"
   }), " Get Jotla AI"), /*#__PURE__*/React.createElement("p", {
@@ -3313,7 +3313,7 @@ function SettingsScreen({
       marginBottom: 14
     }
   }, /*#__PURE__*/React.createElement(Icon, {
-    name: "sparkle",
+    name: "sparkles",
     size: 28,
     color: "#E6B85C",
     style: {

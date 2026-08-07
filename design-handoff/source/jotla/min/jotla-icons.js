@@ -203,9 +203,15 @@ function Icon({
     pulse: /*#__PURE__*/React.createElement("path", {
       d: "M3 12h4l2.5-7 4 14 2.5-7H21"
     }),
-    /* the Plus gate: the app's ONLY solid icon, and the only gold */
+    /* the two solid icons: the crown (Plus gate, the only gold) and the
+       sparkles (the Jotla AI mark, founder 7 Aug); everything else is stroke */
     crown: /*#__PURE__*/React.createElement("path", {
       d: "M3.6 18 2.6 8.6l4.9 3.3L12 5.6l4.5 6.3 4.9-3.3-1 9.4a1.4 1.4 0 0 1-1.4 1.2H5a1.4 1.4 0 0 1-1.4-1.2z",
+      fill: color,
+      stroke: "none"
+    }),
+    sparkles: /*#__PURE__*/React.createElement("path", {
+      d: "M10.5 6.5c.9 4.6 2.5 6.2 7 7-4.5.8-6.1 2.4-7 7-.9-4.6-2.5-6.2-7-7 4.5-.8 6.1-2.4 7-7ZM18 3.5c.45 2.3 1.25 3.1 3.5 3.5-2.25.4-3.05 1.2-3.5 3.5-.45-2.3-1.25-3.1-3.5-3.5 2.25-.4 3.05-1.2 3.5-3.5Z",
       fill: color,
       stroke: "none"
     }),
