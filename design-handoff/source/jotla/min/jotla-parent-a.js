@@ -16,7 +16,10 @@ function greeting() {
 // and read as siblings of the cards below them, not flat patches (founder's
 // seventh pass, item 39, 13 Jul 2026).
 /* The board's check-in tile (6 Aug): colour-carrying panel, bare icon, title in
-   the tile's own colour, sub muted. kind: 'blue' (Your day) | 'purple' (Dysregulation). */
+   the tile's own colour, sub in a MUTED SHADE OF THE SAME HUE (founder, 8 Aug:
+   the neutral grey clashed on the tinted panels; hierarchy now rides on weight
+   and size, not on leaving the tile's colour world).
+   kind: 'blue' (Your day) | 'purple' (Dysregulation). */
 function ActionTile({
   icon,
   title,
@@ -41,7 +44,7 @@ function ActionTile({
     style: {
       display: 'block',
       fontSize: 'calc(12.5px * var(--tscale, 1))',
-      color: 'var(--muted)',
+      color: kind === 'purple' ? 'var(--tilepurple-sub)' : 'var(--tileblue-sub)',
       marginTop: 2
     }
   }, sub)));
@@ -88,7 +91,7 @@ function TodayScreen({
   }, /*#__PURE__*/React.createElement(ActionTile, {
     icon: /*#__PURE__*/React.createElement(Icon, {
       name: "heart",
-      size: 23,
+      size: 28,
       color: "var(--blue)"
     }),
     title: "Your day",
@@ -99,7 +102,7 @@ function TodayScreen({
   }), /*#__PURE__*/React.createElement(ActionTile, {
     icon: /*#__PURE__*/React.createElement(Icon, {
       name: "pulse",
-      size: 23,
+      size: 28,
       color: "var(--dysreg)"
     }),
     title: "Dysregulation",

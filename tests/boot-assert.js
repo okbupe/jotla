@@ -35,6 +35,27 @@ function ok(name, cond) {
     && await page.getByText('Menu', { exact: true }).first().isVisible());
   ok('no uncaught page errors on boot', errors.length === 0);
 
+  // the check-in tiles' sub-lines wear a muted shade of their OWN hue, not the
+  // neutral grey (founder, 8 Aug: grey clashed on the tinted panels), and hold
+  // at least 4.5:1 against the tile they sit on. Two different hues proves the
+  // grey is gone: grey made both subs identical.
+  const tileSubs = await page.evaluate(() => {
+    const lum = (c) => { const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]); };
+    const parse = s => (s.match(/[\d.]+/g) || []).map(Number);
+    const pageBg = parse(getComputedStyle(document.querySelector('.jotla-root')).backgroundColor);
+    return [...document.querySelectorAll('.j-ctile')].map(t => {
+      const sub = t.querySelector('span span:last-child');
+      const c = parse(getComputedStyle(sub).color).slice(0, 3);
+      const raw = parse(getComputedStyle(t).backgroundColor);
+      const a = raw.length === 4 ? raw[3] : 1;
+      const bg = [0, 1, 2].map(i => raw[i] * a + pageBg[i] * (1 - a));
+      const L1 = lum(c), L2 = lum(bg);
+      return { color: c.join(','), ratio: Math.round(((Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05)) * 100) / 100 };
+    });
+  });
+  ok('tile sub-lines carry two different hues, not one shared grey', tileSubs.length === 2 && tileSubs[0].color !== tileSubs[1].color);
+  ok('tile sub-lines hold >=4.5:1 on their tints (' + tileSubs.map(t => t.ratio).join(' / ') + ')', tileSubs.every(t => t.ratio >= 4.5));
+
   // ---- 2. tabs render, and share ONE top line (founder, 7 Aug) ----
   console.log('Suite 2: tab screens');
   const titleTop = async () => (await page.locator('.j-pad h1').first().boundingBox()).y;
@@ -57,6 +78,23 @@ function ok(name, cond) {
     ok('the four tab titles share one top line (spread ' + spread4.toFixed(1) + 'px)', spread4 <= 1.5);
     ok('the Menu title sits within the same line (spread ' + spreadAll.toFixed(1) + 'px)', spreadAll <= 6);
   }
+
+  // every tab icon answers the press with its OWN animation before settling
+  // into the blue active state (founder, 8 Aug): five presses, five distinct
+  // animation names, and the class clears once the animation settles
+  const navAnims = [];
+  for (const tab of ['Today', 'Month', 'Documents', 'Find', 'Menu']) {
+    await page.getByText(tab, { exact: true }).last().click();
+    await page.waitForTimeout(60);
+    navAnims.push(await page.evaluate(() => {
+      const going = document.querySelector('[class*="j-nav-go-"]');
+      return going ? getComputedStyle(going).animationName : 'none';
+    }));
+    await page.waitForTimeout(430);
+  }
+  ok('each tab press plays its own icon animation (' + navAnims.join(', ') + ')',
+    new Set(navAnims).size === 5 && !navAnims.includes('none'));
+  ok('the press animation clears after it settles', await page.evaluate(() => !document.querySelector('[class*="j-nav-go-"]')));
 
   // ---- 3. backup and theme in their new homes (redesign 6-7 Aug) ----
   console.log('Suite 3: backup page + theme sheet');

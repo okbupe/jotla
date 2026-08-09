@@ -13,14 +13,17 @@ function greeting() {
 // and read as siblings of the cards below them, not flat patches (founder's
 // seventh pass, item 39, 13 Jul 2026).
 /* The board's check-in tile (6 Aug): colour-carrying panel, bare icon, title in
-   the tile's own colour, sub muted. kind: 'blue' (Your day) | 'purple' (Dysregulation). */
+   the tile's own colour, sub in a MUTED SHADE OF THE SAME HUE (founder, 8 Aug:
+   the neutral grey clashed on the tinted panels; hierarchy now rides on weight
+   and size, not on leaving the tile's colour world).
+   kind: 'blue' (Your day) | 'purple' (Dysregulation). */
 function ActionTile({ icon, title, sub, kind, ink, onClick }) {
   return (
     <button onClick={onClick} className={'j-ctile ' + (kind === 'purple' ? 'j-ctile-purple' : 'j-ctile-blue')}>
       {icon}
       <span>
         <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 'calc(15.5px * var(--tscale, 1))', color: ink, lineHeight: 1.15 }}>{title}</span>
-        <span style={{ display: 'block', fontSize: 'calc(12.5px * var(--tscale, 1))', color: 'var(--muted)', marginTop: 2 }}>{sub}</span>
+        <span style={{ display: 'block', fontSize: 'calc(12.5px * var(--tscale, 1))', color: kind === 'purple' ? 'var(--tilepurple-sub)' : 'var(--tileblue-sub)', marginTop: 2 }}>{sub}</span>
       </span>
     </button>
   );
@@ -49,7 +52,7 @@ function TodayScreen({ nav, entries, today, profile }) {
                 working together on Plus (the guided questions are a two-of-you
                 thing), hand-the-phone on Free. His confirm is batched. */}
             <ActionTile
-              icon={<Icon name="heart" size={23} color="var(--blue)" />}
+              icon={<Icon name="heart" size={28} color="var(--blue)" />}
               title="Your day" sub={nav.plus ? 'Do it together with ' + childName : 'Hand the phone to ' + childName}
               kind="blue" ink="var(--blue)"
               onClick={() => nav.go('child')} />
@@ -59,7 +62,7 @@ function TodayScreen({ nav, entries, today, profile }) {
                 it is. Dysregulation is the word school uses at them all day.
                 The pulse is the standing Jotla symbol for it. */}
             <ActionTile
-              icon={<Icon name="pulse" size={23} color="var(--dysreg)" />}
+              icon={<Icon name="pulse" size={28} color="var(--dysreg)" />}
               title="Dysregulation" sub="Capture what happened" kind="purple" ink="var(--dysreg)"
               onClick={() => nav.go(nav.plus ? 'handover' : 'gateintro')} />
           </div>

@@ -99,14 +99,24 @@ function loadSeedAware(key, seeds, dateKey) {
 // Documents is a tab of its own.
 
 // ---------- tab bar: five tabs, colour-only active state ----------
+// Each icon answers the press with its OWN tiny animation before settling into
+// the blue active state (founder, 8 Aug: "unique to the icon, even if subtle"):
+// today breathes, the calendar flips a page, the document lifts, the magnifier
+// sweeps, the menu pops. Keyframes live in jotla.css (j-nav-*); the pressed
+// class rides React state and clears on animationend, and prefers-reduced-motion
+// switches the whole thing off.
 function TabBar({ active, onTab }) {
+  const [pressed, setPressed] = useStateApp(null);
   return (
     <div className="j-tabbar">
       {TAB_DEFS.map(([name, label, icon]) => {
         const on = active === name;
         return (
-          <button key={name} className={'j-tab' + (on ? ' j-tab-on' : '')} onClick={() => onTab(name)}>
-            <Icon name={icon} size={24} color={on ? 'var(--blue)' : 'var(--faint)'} stroke={on ? 2.2 : 2} />
+          <button key={name} className={'j-tab' + (on ? ' j-tab-on' : '')} onClick={() => { setPressed(name); onTab(name); }}>
+            <span className={'j-tab-ic' + (pressed === name ? ' j-nav-go-' + icon : '')}
+              onAnimationEnd={() => setPressed(p => (p === name ? null : p))}>
+              <Icon name={icon} size={24} color={on ? 'var(--blue)' : 'var(--faint)'} stroke={on ? 2.2 : 2} />
+            </span>
             <span>{label}</span>
           </button>
         );
