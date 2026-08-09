@@ -2014,7 +2014,7 @@ const PLUS_SLIDES = [{
 // the build; same nano_banana_2 2K 16:9 vector recipe as slides 1-5).
 {
   t: 'Mood Styles',
-  c: 'Swap the smileys for stickers, bubbles or cats, everywhere a face shows.',
+  c: 'Swap the faces for the sticker look, everywhere a face shows.',
   img: 'art/plus-6.jpg'
 }];
 const AI_SLIDES = [{
@@ -2830,7 +2830,7 @@ function InfoAboutScreen({
     title: "Jotla Plus"
   }, /*#__PURE__*/React.createElement(InfoP, null, "The record itself is free, forever: logging, your timeline, search and export never cost anything, never expire, and stay yours."), /*#__PURE__*/React.createElement(InfoP, null, "Jotla Plus adds the tools to help you spot patterns and make your case: photos and videos kept with your notes, patterns and the Month view, deep filtering, Dysregulation Mode, and the PDF evidence pack. Family Sync, when it arrives, is part of Plus too. Plus is ", TERM_PRICE, " ", TERM_PERIOD, " or ", PLUS_PRICE, " for a year, through Google Play, and it stays on until the day a term runs out."), /*#__PURE__*/React.createElement(InfoP, null, /*#__PURE__*/React.createElement("span", {
     className: "j-strong"
-  }, "If your year ends, you keep everything."), " Your record is never held to ransom. If Plus ends, for any reason at all, whether you cancel, let it lapse, or a card quietly expires, you lose nothing you have written. Every entry stays. Your full timeline stays. Plain keyword search stays. Raw export stays. You can still make the PDF of everything you have already logged. Appeal-deadline safety reminders keep coming, with or without a subscription. A subscription only ever switches off the paid tools. It never touches your history."), /*#__PURE__*/React.createElement(InfoP, null, "Jotla AI is coming in 2027: ", AI_PRICE, " ", PLUS_PERIOD, ", with Jotla Plus included, so it is ", AI_PRICE, " in total and not one price on top of another."), /*#__PURE__*/React.createElement(InfoP, null, "Some Mood styles use open emoji artwork, with thanks to their makers: Microsoft Fluent Emoji (MIT licence), Google Noto Emoji (Apache 2.0), Twemoji (CC BY 4.0) and OpenMoji (CC BY-SA 4.0). Full notices ship inside the app's moods folder."), /*#__PURE__*/React.createElement("button", {
+  }, "If your year ends, you keep everything."), " Your record is never held to ransom. If Plus ends, for any reason at all, whether you cancel, let it lapse, or a card quietly expires, you lose nothing you have written. Every entry stays. Your full timeline stays. Plain keyword search stays. Raw export stays. You can still make the PDF of everything you have already logged. Appeal-deadline safety reminders keep coming, with or without a subscription. A subscription only ever switches off the paid tools. It never touches your history."), /*#__PURE__*/React.createElement(InfoP, null, "Jotla AI is coming in 2027: ", AI_PRICE, " ", PLUS_PERIOD, ", with Jotla Plus included, so it is ", AI_PRICE, " in total and not one price on top of another."), /*#__PURE__*/React.createElement(InfoP, null, "The mood faces use open emoji artwork, with thanks to their makers: Twemoji (CC BY 4.0) and Microsoft Fluent Emoji (MIT licence). Full notices ship inside the app's moods folder."), /*#__PURE__*/React.createElement("button", {
     className: "j-btn j-btn-soft",
     onClick: () => nav.go('unlock')
   }, /*#__PURE__*/React.createElement(Icon, {
@@ -3561,7 +3561,7 @@ function AppSettingsScreen({
 function MoodStyleScreen({
   nav
 }) {
-  const active = FACE_PACKS[nav.faceStyle] ? nav.faceStyle : 'classic';
+  const active = FACE_PACKS[nav.faceStyle] ? nav.faceStyle : FACE_PACK_DEFAULT;
   const moods = ['happy', 'ok', 'sad', 'worried', 'angry'];
   return /*#__PURE__*/React.createElement("div", {
     className: "j-screen"
@@ -3578,7 +3578,7 @@ function MoodStyleScreen({
       paddingBottom: 40
     }
   }, FACE_PACK_ORDER.map(k => {
-    const locked = k !== 'classic' && !nav.plus;
+    const locked = k !== FACE_PACK_DEFAULT && !nav.plus;
     const on = active === k;
     return /*#__PURE__*/React.createElement("button", {
       key: k,
@@ -3643,7 +3643,7 @@ function MoodStyleScreen({
       size: 40,
       styleName: k
     }))));
-  }), /*#__PURE__*/React.createElement(FootNote, null, "Classic is part of Free. Every other look is part of Plus, and the whole record changes together: Today, the Month, and the child's own screens."))));
+  }), /*#__PURE__*/React.createElement(FootNote, null, "Bold is part of Free. The sticker look is part of Plus, and the whole record changes together: Today, the Month, and the child's own screens."))));
 }
 
 // ---------------- CHILDREN ----------------

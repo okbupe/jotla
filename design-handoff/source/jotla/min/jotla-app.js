@@ -1349,10 +1349,11 @@ function App({
   // Dynamic type: 1 / 1.12 / 1.25, applied as --tscale on the root so every
   // calc()-based font size in the app follows the one dial (build 1.8.0).
   const [tscale, setTscale] = useStateApp(prefs0.tscale || 1);
-  // Mood style (founder, 8 Aug night): classic is free; Cat and Bear are Plus.
+  // Mood style (founder, 9 Aug v3): Bold free and default, Sticker on Plus.
   // The Face component reads the global at render, so one state change reskins
-  // every face in the app at once.
-  const [faceStyle, setFaceStyle] = useStateApp(prefs0.faceStyle || 'classic');
+  // every face in the app at once. Stale pack names from earlier rosters
+  // (classic, cat, bubble...) migrate to the default.
+  const [faceStyle, setFaceStyle] = useStateApp(FACE_PACKS[prefs0.faceStyle] ? prefs0.faceStyle : FACE_PACK_DEFAULT);
   window.JOTLA_FACE_STYLE = faceStyle;
   const [fabOpen, setFabOpen] = useStateApp(false); // the + speed dial (8 Aug)
   // Double tap on the + goes straight to Quick Log, the most-used capture

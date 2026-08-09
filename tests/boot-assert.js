@@ -694,10 +694,15 @@ function ok(name, cond) {
   await page4.getByText('Mood style', { exact: true }).first().click();
   await page4.waitForTimeout(600);
   const moodPage = await page4.locator('#root').innerText();
-  ok('Mood style is a full page listing all nine packs',
-    ['Classic', 'Sticker', 'Soft', 'Flat', 'Bubble', 'Bold', 'Outline', 'Sticker Cat', 'Bubble Cat'].every(n => moodPage.includes(n)));
-  ok('every pack previews its five moods (45 faces on the page)', (await page4.locator('[data-face-style]').count()) === 45);
-  ok('eight packs wear the crown on free', (await page4.locator('[data-crown-gate]').count()) === 8);
+  ok('Mood style lists exactly Bold and Sticker (the v2 roster is gone)',
+    moodPage.includes('Bold') && moodPage.includes('Sticker')
+    && !moodPage.includes('Classic') && !moodPage.includes('Bubble') && !moodPage.includes('Outline') && !moodPage.includes('Soft'));
+  ok('both packs preview their five moods (10 faces on the page)', (await page4.locator('[data-face-style]').count()) === 10);
+  ok('Bold is the default look, ticked on a fresh boot', await page4.evaluate(() => {
+    const btn = [...document.querySelectorAll('[role="radio"]')].find(b => b.getAttribute('aria-label') === 'Bold');
+    return !!btn && btn.getAttribute('aria-checked') === 'true';
+  }));
+  ok('only Sticker wears the crown on free', (await page4.locator('[data-crown-gate]').count()) === 1);
   await page4.locator('[role="radio"][aria-label="Sticker"]').first().click();
   await page4.waitForTimeout(600);
   ok('a crowned pack opens the Jotla Plus page on free', (await page4.locator('#root').innerText()).includes('Get Jotla Plus'));

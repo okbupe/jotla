@@ -21,78 +21,37 @@
 // white cards, green). That is luck, not design. Do not cite this deck as the
 // theme-correct fallback without rendering it first. See NATIVE-SYNC.md B.
 
-const FACE_FILL = '#F4C95D';   // warm butter
-const FACE_LINE = '#4A3D1E';   // soft dark brown features
-const FACE_STROKE = 6;
-
 // mood/emotion keys: happy, ok, sad, worried, angry  (good->happy, hard->sad aliases)
-// MOOD STYLES v2 (founder, 9 Aug: "proper emojis, already created"): 'classic'
-// is the free drawn look; every other pack is REAL emoji artwork bundled from
-// openly licensed sets (Microsoft Fluent, Google Noto, Twemoji, OpenMoji; the
-// first drawn cat/bear attempt is retired). Notices: moods/LICENSES.md + the
-// About page credits. Same five moods everywhere. The active look rides
-// window.JOTLA_FACE_STYLE (set by the shell from prefs); the styleName prop
-// overrides it so the Mood style page can preview every pack. An unknown pack
-// name falls back to classic so a stale pref can never blank the faces.
+// MOOD STYLES v3 (founder, 9 Aug late): TWO packs, both real emoji artwork.
+// Bold (Twemoji, CC BY 4.0) is the DEFAULT and free; Sticker (Microsoft Fluent
+// 3D, MIT) is the Plus look. The 9 Aug v2 roster (Soft/Flat/Bubble/Outline and
+// the cat packs) was cut the same day: founder verdict, "all the same kinda";
+// genuinely varied character packs are being chosen separately. The drawn
+// classic smiley retired with it. Notices: moods/LICENSES.md + About credits.
+// The active look rides window.JOTLA_FACE_STYLE (set by the shell from prefs);
+// the styleName prop overrides it so the Mood style page can preview packs.
+// Any unknown or stale pack name falls back to Bold so a face can never blank.
 const FACE_PACKS = {
-  sticker: { dir: 'moods/sticker', ext: 'png', label: 'Sticker' },
-  soft: { dir: 'moods/soft', ext: 'svg', label: 'Soft' },
-  flat: { dir: 'moods/flat', ext: 'svg', label: 'Flat' },
-  bubble: { dir: 'moods/bubble', ext: 'png', label: 'Bubble' },
   bold: { dir: 'moods/bold', ext: 'png', label: 'Bold' },
-  outline: { dir: 'moods/outline', ext: 'svg', label: 'Outline' },
-  'sticker-cat': { dir: 'moods/sticker-cat', ext: 'png', label: 'Sticker Cat' },
-  'bubble-cat': { dir: 'moods/bubble-cat', ext: 'png', label: 'Bubble Cat' },
+  sticker: { dir: 'moods/sticker', ext: 'png', label: 'Sticker' },
 };
-const FACE_PACK_ORDER = ['classic', 'sticker', 'soft', 'flat', 'bubble', 'bold', 'outline', 'sticker-cat', 'bubble-cat'];
-const FACE_PACK_LABEL = (k) => (k === 'classic' ? 'Classic' : (FACE_PACKS[k] ? FACE_PACKS[k].label : 'Classic'));
+const FACE_PACK_ORDER = ['bold', 'sticker'];
+const FACE_PACK_DEFAULT = 'bold';
+const FACE_PACK_LABEL = (k) => (FACE_PACKS[k] ? FACE_PACKS[k].label : FACE_PACKS[FACE_PACK_DEFAULT].label);
 function Face({ mood = 'happy', size = 64, bg = 'transparent', styleName }) {
-  const wanted = styleName || window.JOTLA_FACE_STYLE || 'classic';
-  const look = FACE_PACKS[wanted] ? wanted : 'classic';
+  const wanted = styleName || window.JOTLA_FACE_STYLE || FACE_PACK_DEFAULT;
+  const look = FACE_PACKS[wanted] ? wanted : FACE_PACK_DEFAULT;
+  const p = FACE_PACKS[look];
   const m = mood === 'good' ? 'happy' : mood === 'hard' ? 'sad' : mood;
-  if (look !== 'classic') {
-    const p = FACE_PACKS[look];
-    // inside a coloured chip the emoji sits at ~82% so the disc reads like the
-    // classic face's proportions
-    const pad = bg !== 'transparent' ? Math.round(size * 0.09) : 0;
-    return (
-      <span data-face-style={look} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center',
-        width: size, height: size, borderRadius: '50%', background: bg !== 'transparent' ? bg : 'none', flexShrink: 0 }}>
-        <img src={p.dir + '/' + m + '.' + p.ext} alt="" draggable={false}
-          style={{ width: size - pad * 2, height: size - pad * 2, display: 'block' }} />
-      </span>
-    );
-  }
-  const eyeY = 44;
-  const eyebrows = {
-    worried: <g stroke={FACE_LINE} strokeWidth="4.5" strokeLinecap="round">
-      <line x1="26" y1="34" x2="42" y2="30" />
-      <line x1="74" y1="34" x2="58" y2="30" />
-    </g>,
-    angry: <g stroke={FACE_LINE} strokeWidth="4.5" strokeLinecap="round">
-      <line x1="26" y1="30" x2="42" y2="36" />
-      <line x1="74" y1="30" x2="58" y2="36" />
-    </g>,
-  };
-  const mouths = {
-    happy:   <path d="M32 60 Q50 80 68 60" />,
-    ok:      <path d="M35 66 H65" />,
-    sad:     <path d="M33 71 Q50 56 67 71" />,
-    worried: <path d="M40 68 Q50 62 60 68" />,
-    angry:   <path d="M34 70 Q50 60 66 70" />,
-  };
-  const eyeR = m === 'worried' ? 5 : 6;
+  // inside a coloured chip the emoji sits at ~82% so the disc keeps the old
+  // drawn face's proportions
+  const pad = bg !== 'transparent' ? Math.round(size * 0.09) : 0;
   return (
-    <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true" data-face-style="classic" style={{ display: 'block' }}>
-      {bg !== 'transparent' && <circle cx="50" cy="50" r="50" fill={bg} />}
-      <circle cx="50" cy="50" r="44" fill={FACE_FILL} />
-      {eyebrows[m] || null}
-      <circle cx="36" cy={eyeY} r={eyeR} fill={FACE_LINE} />
-      <circle cx="64" cy={eyeY} r={eyeR} fill={FACE_LINE} />
-      <g fill="none" stroke={FACE_LINE} strokeWidth={FACE_STROKE} strokeLinecap="round">
-        {mouths[m]}
-      </g>
-    </svg>
+    <span data-face-style={look} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center',
+      width: size, height: size, borderRadius: '50%', background: bg !== 'transparent' ? bg : 'none', flexShrink: 0 }}>
+      <img src={p.dir + '/' + m + '.' + p.ext} alt="" draggable={false}
+        style={{ width: size - pad * 2, height: size - pad * 2, display: 'block' }} />
+    </span>
   );
 }
 
