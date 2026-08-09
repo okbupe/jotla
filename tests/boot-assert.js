@@ -685,20 +685,25 @@ function ok(name, cond) {
     && !menuNow.includes('How your data is kept'));
   ok('Menu carries the endorsement footer', menuNow.includes('Jotla by SEN Help'));
 
-  // Mood style (8 Aug night): the row sits in Appearance; the sheet offers
-  // Classic, Cat and Bear with the two Plus looks crown-gated on free, and a
-  // gated tap opens the Jotla Plus page, never a broken picker
+  // Mood style v2 (9 Aug): a FULL PAGE of real emoji packs, every pack
+  // previewing its five moods; on free every pack but Classic wears the crown
+  // and a gated tap opens the Jotla Plus page, never a broken picker
   await page4.locator('button[aria-label="Settings"]').first().click();
   await page4.waitForTimeout(450);
   ok('Settings carries the Mood style row', (await page4.locator('#root').innerText()).includes('Mood style'));
   await page4.getByText('Mood style', { exact: true }).first().click();
-  await page4.waitForTimeout(350);
-  ok('the sheet offers three looks with two crowns on free',
-    (await page4.locator('[role="radio"]').count()) === 3 && (await page4.locator('.j-sheet [data-crown-gate]').count()) === 2);
-  await page4.locator('[role="radio"][aria-label="Cat"]').first().click();
   await page4.waitForTimeout(600);
-  ok('a crowned look opens the Jotla Plus page on free', (await page4.locator('#root').innerText()).includes('Get Jotla Plus'));
+  const moodPage = await page4.locator('#root').innerText();
+  ok('Mood style is a full page listing all nine packs',
+    ['Classic', 'Sticker', 'Soft', 'Flat', 'Bubble', 'Bold', 'Outline', 'Sticker Cat', 'Bubble Cat'].every(n => moodPage.includes(n)));
+  ok('every pack previews its five moods (45 faces on the page)', (await page4.locator('[data-face-style]').count()) === 45);
+  ok('eight packs wear the crown on free', (await page4.locator('[data-crown-gate]').count()) === 8);
+  await page4.locator('[role="radio"][aria-label="Sticker"]').first().click();
+  await page4.waitForTimeout(600);
+  ok('a crowned pack opens the Jotla Plus page on free', (await page4.locator('#root').innerText()).includes('Get Jotla Plus'));
   await page4.locator('button[aria-label="Close"]').first().click();
+  await page4.waitForTimeout(450);
+  await page4.locator('button[aria-label="Back"]').first().click();
   await page4.waitForTimeout(450);
   await page4.locator('button[aria-label="Back"]').first().click();
   await page4.waitForTimeout(450);
@@ -821,16 +826,22 @@ function ok(name, cond) {
   ok('Settings carries the Membership row, marked Active', setPlus.includes('Membership') && setPlus.includes('Jotla Plus') && setPlus.includes('Active'));
   ok('Membership sits at the very bottom of Settings (8 Aug night)',
     setPlus.indexOf('Membership') > setPlus.indexOf('Tell us what you think'));
-  // a Plus owner picks a look freely: no crowns, it lands on every face at
-  // once, and it persists in prefs
+  // a Plus owner picks a pack freely on the page: no crowns, the tick moves,
+  // and after backing out the pack has landed app-wide and persisted
   await page5.getByText('Mood style', { exact: true }).first().click();
-  await page5.waitForTimeout(350);
-  ok("no crowns in an owner's Mood style sheet", (await page5.locator('.j-sheet [data-crown-gate]').count()) === 0);
-  await page5.locator('[role="radio"][aria-label="Cat"]').first().click();
+  await page5.waitForTimeout(600);
+  ok("no crowns on an owner's Mood style page", (await page5.locator('[data-crown-gate]').count()) === 0);
+  await page5.locator('[role="radio"][aria-label="Sticker"]').first().click();
   await page5.waitForTimeout(400);
-  ok('the cat look lands on the faces and persists',
-    (await page5.locator('svg[data-face-style="cat"]').count()) > 0
-    && (await page5.evaluate(() => (JSON.parse(localStorage.getItem('jotla_prefs_v2') || '{}').faceStyle) === 'cat')));
+  ok('picking Sticker moves the tick to it', await page5.evaluate(() => {
+    const btn = [...document.querySelectorAll('[role="radio"]')].find(b => b.getAttribute('aria-label') === 'Sticker');
+    return !!btn && btn.getAttribute('aria-checked') === 'true';
+  }));
+  await page5.locator('button[aria-label="Back"]').first().click();
+  await page5.waitForTimeout(450);
+  ok('the sticker pack lands app-wide and persists',
+    (await page5.locator('[data-face-style="sticker"]').count()) > 0
+    && (await page5.evaluate(() => (JSON.parse(localStorage.getItem('jotla_prefs_v2') || '{}').faceStyle) === 'sticker')));
   await page5.getByText('Jotla Plus', { exact: true }).first().click();
   await page5.waitForTimeout(600);
   await page5.locator('button[aria-label="Slide 4"]').first().click();

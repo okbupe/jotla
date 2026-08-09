@@ -1063,7 +1063,7 @@ const PLUS_SLIDES = [
   // Slide 6 (founder, 8 Aug night): Mood Styles. art/plus-6.jpg renders the
   // grey slot until Bupe generates it on Higgsfield (prompt handed over with
   // the build; same nano_banana_2 2K 16:9 vector recipe as slides 1-5).
-  { t: 'Mood Styles', c: 'Swap the smileys for cats or bears, everywhere a face shows.', img: 'art/plus-6.jpg' },
+  { t: 'Mood Styles', c: 'Swap the smileys for stickers, bubbles or cats, everywhere a face shows.', img: 'art/plus-6.jpg' },
 ];
 const AI_SLIDES = [
   { t: 'EHCP and SEND deadline tracker', c: 'Every deadline tracked, with what to do about a gap.', img: 'art/ai-1.jpg' },
@@ -1440,6 +1440,7 @@ function InfoAboutScreen({ nav }) {
         <InfoP>Jotla Plus adds the tools to help you spot patterns and make your case: photos and videos kept with your notes, patterns and the Month view, deep filtering, Dysregulation Mode, and the PDF evidence pack. Family Sync, when it arrives, is part of Plus too. Plus is {TERM_PRICE} {TERM_PERIOD} or {PLUS_PRICE} for a year, through Google Play, and it stays on until the day a term runs out.</InfoP>
         <InfoP><span className="j-strong">If your year ends, you keep everything.</span> Your record is never held to ransom. If Plus ends, for any reason at all, whether you cancel, let it lapse, or a card quietly expires, you lose nothing you have written. Every entry stays. Your full timeline stays. Plain keyword search stays. Raw export stays. You can still make the PDF of everything you have already logged. Appeal-deadline safety reminders keep coming, with or without a subscription. A subscription only ever switches off the paid tools. It never touches your history.</InfoP>
         <InfoP>Jotla AI is coming in 2027: {AI_PRICE} {PLUS_PERIOD}, with Jotla Plus included, so it is {AI_PRICE} in total and not one price on top of another.</InfoP>
+        <InfoP>Some Mood styles use open emoji artwork, with thanks to their makers: Microsoft Fluent Emoji (MIT licence), Google Noto Emoji (Apache 2.0), Twemoji (CC BY 4.0) and OpenMoji (CC BY-SA 4.0). Full notices ship inside the app's moods folder.</InfoP>
         <button className="j-btn j-btn-soft" onClick={() => nav.go('unlock')}>
           <Icon name="sparkle" size={18} color="var(--blue)" /> See what Plus adds
         </button>
@@ -1665,8 +1666,6 @@ function AppSettingsScreen({ nav }) {
   const [remCustom, setRemCustom] = useStateB(false);
   const themeLabel = nav.theme === 'system' ? 'System' : (nav.theme === 'dark' ? 'Dark' : 'Light');
   const sizeLabel = ({ '0.9': 'Small', '1': 'Standard', '1.12': 'Large', '1.25': 'Extra large' })[String(nav.tscale)] || 'Standard';
-  const faceLabel = ({ classic: 'Classic', cat: 'Cat', bear: 'Bear' })[nav.faceStyle || 'classic'] || 'Classic';
-  const faceCrown = <span data-crown-gate style={{ display: 'flex', flexShrink: 0 }}><Icon name="crown" size={18} color="var(--gold)" /></span>;
   const kids = (nav.profiles || []).map(p => p.name).join(', ');
   return (
     <div className="j-screen">
@@ -1681,9 +1680,9 @@ function AppSettingsScreen({ nav }) {
           <SectionLabel>Appearance</SectionLabel>
           <MRow icon="palette" title="Theme" sub={themeLabel} onClick={() => setSheet('theme')} />
           <MRow icon="textsize" title="Text size" sub={sizeLabel} onClick={() => setSheet('size')} />
-          {/* Mood style (founder, 8 Aug night): classic free, Cat and Bear are
-              Plus; on free the crowned looks open the paywall (crown gate) */}
-          <MRow iconEl={<Face mood="happy" size={24} />} title="Mood style" sub={faceLabel} onClick={() => setSheet('face')} />
+          {/* Mood style (founder, 9 Aug v2): a full page of real emoji packs,
+              Classic free, the rest Plus (crown gate on the page itself) */}
+          <MRow iconEl={<Face mood="happy" size={24} />} title="Mood style" sub={FACE_PACK_LABEL(nav.faceStyle)} onClick={() => nav.go('moodstyle')} />
 
           <SectionLabel>Privacy</SectionLabel>
           <MRow icon="lock" title="App lock" sub={nav.appLock && nav.appLock.on ? 'On' : 'Off'} onClick={() => nav.go('applock')} />
@@ -1730,16 +1729,6 @@ function AppSettingsScreen({ nav }) {
           ]}
           onPick={(k) => { nav.setTscale(parseFloat(k)); setSheet(null); }} />
       )}
-      {sheet === 'face' && (
-        <RadioSheet title="Mood style" subtitle="The faces the whole record wears." onClose={() => setSheet(null)}
-          activeKey={nav.faceStyle || 'classic'}
-          options={[
-            { key: 'classic', label: 'Classic', iconEl: <Face mood="happy" size={26} styleName="classic" /> },
-            { key: 'cat', label: 'Cat', iconEl: <Face mood="happy" size={26} styleName="cat" />, trailing: nav.plus ? null : faceCrown },
-            { key: 'bear', label: 'Bear', iconEl: <Face mood="happy" size={26} styleName="bear" />, trailing: nav.plus ? null : faceCrown },
-          ]}
-          onPick={(k) => { if (k !== 'classic' && !nav.plus) { setSheet(null); nav.go('unlock'); return; } nav.setFaceStyle(k); setSheet(null); }} />
-      )}
       {sheet === 'reminder' && (
         <RadioSheet title="Daily reminder" subtitle="A gentle nudge to write the day down."
           activeKey={remCustom ? 'custom' : (['Off', 'Morning · 08:00', 'Evening · 20:00'].includes(nav.reminder) ? nav.reminder : 'custom')}
@@ -1759,6 +1748,46 @@ function AppSettingsScreen({ nav }) {
             </div>
           ) : null} />
       )}
+    </div>
+  );
+}
+
+// ---------------- MOOD STYLE (the pack picker page, 9 Aug) ----------------
+// A full page, not a sheet (founder: "a new page showing you how they look"):
+// every pack shows its five moods in a row; the active pack wears the blue
+// tick; on free every pack but Classic wears the crown and a tap opens the
+// Jotla Plus page (the crown gate). Owners tap to apply instantly, app-wide.
+function MoodStyleScreen({ nav }) {
+  const active = FACE_PACKS[nav.faceStyle] ? nav.faceStyle : 'classic';
+  const moods = ['happy', 'ok', 'sad', 'worried', 'angry'];
+  return (
+    <div className="j-screen">
+      <PushHeader title="Mood style" subtitle="The faces the whole record wears." onBack={() => nav.back()} />
+      <div className="j-scroll j-fade">
+        <div className="j-pad" style={{ paddingTop: 2, paddingBottom: 40 }}>
+          {FACE_PACK_ORDER.map(k => {
+            const locked = k !== 'classic' && !nav.plus;
+            const on = active === k;
+            return (
+              <button key={k} className="j-card j-press" role="radio" aria-checked={on} aria-label={FACE_PACK_LABEL(k)}
+                onClick={() => { if (locked) { nav.go('unlock'); return; } nav.setFaceStyle(k); }}
+                style={{ width: '100%', textAlign: 'left', cursor: 'pointer', padding: '14px 16px', marginBottom: 10,
+                  border: '1.5px solid ' + (on ? 'var(--blue)' : 'var(--line)') }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ flex: 1, fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 'calc(15.5px * var(--tscale, 1))', color: 'var(--ink)' }}>{FACE_PACK_LABEL(k)}</span>
+                  {locked
+                    ? <span data-crown-gate style={{ display: 'flex', flexShrink: 0 }}><Icon name="crown" size={20} color="var(--gold)" /></span>
+                    : (on ? <Icon name="check" size={20} color="var(--blue)" stroke={2.4} /> : null)}
+                </span>
+                <span style={{ display: 'flex', gap: 10, marginTop: 12, justifyContent: 'space-between' }}>
+                  {moods.map(m => <Face key={m} mood={m} size={40} styleName={k} />)}
+                </span>
+              </button>
+            );
+          })}
+          <FootNote>Classic is part of Free. Every other look is part of Plus, and the whole record changes together: Today, the Month, and the child's own screens.</FootNote>
+        </div>
+      </div>
     </div>
   );
 }

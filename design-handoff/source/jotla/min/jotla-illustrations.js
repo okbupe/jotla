@@ -26,19 +26,95 @@ const FACE_LINE = '#4A3D1E'; // soft dark brown features
 const FACE_STROKE = 6;
 
 // mood/emotion keys: happy, ok, sad, worried, angry  (good->happy, hard->sad aliases)
-// MOOD STYLES (founder, 8 Aug night): 'classic' is the free look; 'cat' and
-// 'bear' are Plus looks. Same five moods, same warm palette, shape-only
-// additions (ears, whiskers) so every proven screen and both themes hold.
-// The active look rides window.JOTLA_FACE_STYLE (set by the shell from prefs);
-// the styleName prop overrides it so the Settings picker can preview each look.
+// MOOD STYLES v2 (founder, 9 Aug: "proper emojis, already created"): 'classic'
+// is the free drawn look; every other pack is REAL emoji artwork bundled from
+// openly licensed sets (Microsoft Fluent, Google Noto, Twemoji, OpenMoji; the
+// first drawn cat/bear attempt is retired). Notices: moods/LICENSES.md + the
+// About page credits. Same five moods everywhere. The active look rides
+// window.JOTLA_FACE_STYLE (set by the shell from prefs); the styleName prop
+// overrides it so the Mood style page can preview every pack. An unknown pack
+// name falls back to classic so a stale pref can never blank the faces.
+const FACE_PACKS = {
+  sticker: {
+    dir: 'moods/sticker',
+    ext: 'png',
+    label: 'Sticker'
+  },
+  soft: {
+    dir: 'moods/soft',
+    ext: 'svg',
+    label: 'Soft'
+  },
+  flat: {
+    dir: 'moods/flat',
+    ext: 'svg',
+    label: 'Flat'
+  },
+  bubble: {
+    dir: 'moods/bubble',
+    ext: 'png',
+    label: 'Bubble'
+  },
+  bold: {
+    dir: 'moods/bold',
+    ext: 'png',
+    label: 'Bold'
+  },
+  outline: {
+    dir: 'moods/outline',
+    ext: 'svg',
+    label: 'Outline'
+  },
+  'sticker-cat': {
+    dir: 'moods/sticker-cat',
+    ext: 'png',
+    label: 'Sticker Cat'
+  },
+  'bubble-cat': {
+    dir: 'moods/bubble-cat',
+    ext: 'png',
+    label: 'Bubble Cat'
+  }
+};
+const FACE_PACK_ORDER = ['classic', 'sticker', 'soft', 'flat', 'bubble', 'bold', 'outline', 'sticker-cat', 'bubble-cat'];
+const FACE_PACK_LABEL = k => k === 'classic' ? 'Classic' : FACE_PACKS[k] ? FACE_PACKS[k].label : 'Classic';
 function Face({
   mood = 'happy',
   size = 64,
   bg = 'transparent',
   styleName
 }) {
-  const look = styleName || window.JOTLA_FACE_STYLE || 'classic';
+  const wanted = styleName || window.JOTLA_FACE_STYLE || 'classic';
+  const look = FACE_PACKS[wanted] ? wanted : 'classic';
   const m = mood === 'good' ? 'happy' : mood === 'hard' ? 'sad' : mood;
+  if (look !== 'classic') {
+    const p = FACE_PACKS[look];
+    // inside a coloured chip the emoji sits at ~82% so the disc reads like the
+    // classic face's proportions
+    const pad = bg !== 'transparent' ? Math.round(size * 0.09) : 0;
+    return /*#__PURE__*/React.createElement("span", {
+      "data-face-style": look,
+      style: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: size,
+        height: size,
+        borderRadius: '50%',
+        background: bg !== 'transparent' ? bg : 'none',
+        flexShrink: 0
+      }
+    }, /*#__PURE__*/React.createElement("img", {
+      src: p.dir + '/' + m + '.' + p.ext,
+      alt: "",
+      draggable: false,
+      style: {
+        width: size - pad * 2,
+        height: size - pad * 2,
+        display: 'block'
+      }
+    }));
+  }
   const eyeY = 44;
   const eyebrows = {
     worried: /*#__PURE__*/React.createElement("g", {
@@ -95,7 +171,7 @@ function Face({
     height: size,
     viewBox: "0 0 100 100",
     "aria-hidden": "true",
-    "data-face-style": look,
+    "data-face-style": "classic",
     style: {
       display: 'block'
     }
@@ -104,52 +180,12 @@ function Face({
     cy: "50",
     r: "50",
     fill: bg
-  }), look === 'cat' && /*#__PURE__*/React.createElement("g", {
-    fill: FACE_FILL
-  }, /*#__PURE__*/React.createElement("path", {
-    d: "M20 34 L28 6 L46 20 Z"
-  }), /*#__PURE__*/React.createElement("path", {
-    d: "M80 34 L72 6 L54 20 Z"
-  })), look === 'bear' && /*#__PURE__*/React.createElement("g", {
-    fill: FACE_FILL
-  }, /*#__PURE__*/React.createElement("circle", {
-    cx: "24",
-    cy: "18",
-    r: "13"
   }), /*#__PURE__*/React.createElement("circle", {
-    cx: "76",
-    cy: "18",
-    r: "13"
-  })), /*#__PURE__*/React.createElement("circle", {
     cx: "50",
     cy: "50",
     r: "44",
     fill: FACE_FILL
-  }), look === 'cat' && /*#__PURE__*/React.createElement("g", {
-    stroke: FACE_LINE,
-    strokeWidth: "2.5",
-    strokeLinecap: "round"
-  }, /*#__PURE__*/React.createElement("line", {
-    x1: "6",
-    y1: "50",
-    x2: "24",
-    y2: "49"
-  }), /*#__PURE__*/React.createElement("line", {
-    x1: "6",
-    y1: "58",
-    x2: "24",
-    y2: "56"
-  }), /*#__PURE__*/React.createElement("line", {
-    x1: "94",
-    y1: "50",
-    x2: "76",
-    y2: "49"
-  }), /*#__PURE__*/React.createElement("line", {
-    x1: "94",
-    y1: "58",
-    x2: "76",
-    y2: "56"
-  })), eyebrows[m] || null, /*#__PURE__*/React.createElement("circle", {
+  }), eyebrows[m] || null, /*#__PURE__*/React.createElement("circle", {
     cx: "36",
     cy: eyeY,
     r: eyeR,

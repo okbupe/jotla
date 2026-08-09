@@ -2023,6 +2023,11 @@ function App({
         nav: nav
       });
       break;
+    case 'moodstyle':
+      screen = /*#__PURE__*/React.createElement(MoodStyleScreen, {
+        nav: nav
+      });
+      break;
     case 'children':
       screen = /*#__PURE__*/React.createElement(ChildrenScreen, {
         nav: nav

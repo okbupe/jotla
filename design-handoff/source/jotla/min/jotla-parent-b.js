@@ -2014,7 +2014,7 @@ const PLUS_SLIDES = [{
 // the build; same nano_banana_2 2K 16:9 vector recipe as slides 1-5).
 {
   t: 'Mood Styles',
-  c: 'Swap the smileys for cats or bears, everywhere a face shows.',
+  c: 'Swap the smileys for stickers, bubbles or cats, everywhere a face shows.',
   img: 'art/plus-6.jpg'
 }];
 const AI_SLIDES = [{
@@ -2830,7 +2830,7 @@ function InfoAboutScreen({
     title: "Jotla Plus"
   }, /*#__PURE__*/React.createElement(InfoP, null, "The record itself is free, forever: logging, your timeline, search and export never cost anything, never expire, and stay yours."), /*#__PURE__*/React.createElement(InfoP, null, "Jotla Plus adds the tools to help you spot patterns and make your case: photos and videos kept with your notes, patterns and the Month view, deep filtering, Dysregulation Mode, and the PDF evidence pack. Family Sync, when it arrives, is part of Plus too. Plus is ", TERM_PRICE, " ", TERM_PERIOD, " or ", PLUS_PRICE, " for a year, through Google Play, and it stays on until the day a term runs out."), /*#__PURE__*/React.createElement(InfoP, null, /*#__PURE__*/React.createElement("span", {
     className: "j-strong"
-  }, "If your year ends, you keep everything."), " Your record is never held to ransom. If Plus ends, for any reason at all, whether you cancel, let it lapse, or a card quietly expires, you lose nothing you have written. Every entry stays. Your full timeline stays. Plain keyword search stays. Raw export stays. You can still make the PDF of everything you have already logged. Appeal-deadline safety reminders keep coming, with or without a subscription. A subscription only ever switches off the paid tools. It never touches your history."), /*#__PURE__*/React.createElement(InfoP, null, "Jotla AI is coming in 2027: ", AI_PRICE, " ", PLUS_PERIOD, ", with Jotla Plus included, so it is ", AI_PRICE, " in total and not one price on top of another."), /*#__PURE__*/React.createElement("button", {
+  }, "If your year ends, you keep everything."), " Your record is never held to ransom. If Plus ends, for any reason at all, whether you cancel, let it lapse, or a card quietly expires, you lose nothing you have written. Every entry stays. Your full timeline stays. Plain keyword search stays. Raw export stays. You can still make the PDF of everything you have already logged. Appeal-deadline safety reminders keep coming, with or without a subscription. A subscription only ever switches off the paid tools. It never touches your history."), /*#__PURE__*/React.createElement(InfoP, null, "Jotla AI is coming in 2027: ", AI_PRICE, " ", PLUS_PERIOD, ", with Jotla Plus included, so it is ", AI_PRICE, " in total and not one price on top of another."), /*#__PURE__*/React.createElement(InfoP, null, "Some Mood styles use open emoji artwork, with thanks to their makers: Microsoft Fluent Emoji (MIT licence), Google Noto Emoji (Apache 2.0), Twemoji (CC BY 4.0) and OpenMoji (CC BY-SA 4.0). Full notices ship inside the app's moods folder."), /*#__PURE__*/React.createElement("button", {
     className: "j-btn j-btn-soft",
     onClick: () => nav.go('unlock')
   }, /*#__PURE__*/React.createElement(Icon, {
@@ -3365,22 +3365,6 @@ function AppSettingsScreen({
     '1.12': 'Large',
     '1.25': 'Extra large'
   }[String(nav.tscale)] || 'Standard';
-  const faceLabel = {
-    classic: 'Classic',
-    cat: 'Cat',
-    bear: 'Bear'
-  }[nav.faceStyle || 'classic'] || 'Classic';
-  const faceCrown = /*#__PURE__*/React.createElement("span", {
-    "data-crown-gate": true,
-    style: {
-      display: 'flex',
-      flexShrink: 0
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "crown",
-    size: 18,
-    color: "var(--gold)"
-  }));
   const kids = (nav.profiles || []).map(p => p.name).join(', ');
   return /*#__PURE__*/React.createElement("div", {
     className: "j-screen"
@@ -3419,8 +3403,8 @@ function AppSettingsScreen({
       size: 24
     }),
     title: "Mood style",
-    sub: faceLabel,
-    onClick: () => setSheet('face')
+    sub: FACE_PACK_LABEL(nav.faceStyle),
+    onClick: () => nav.go('moodstyle')
   }), /*#__PURE__*/React.createElement(SectionLabel, null, "Privacy"), /*#__PURE__*/React.createElement(MRow, {
     icon: "lock",
     title: "App lock",
@@ -3514,47 +3498,6 @@ function AppSettingsScreen({
       nav.setTscale(parseFloat(k));
       setSheet(null);
     }
-  }), sheet === 'face' && /*#__PURE__*/React.createElement(RadioSheet, {
-    title: "Mood style",
-    subtitle: "The faces the whole record wears.",
-    onClose: () => setSheet(null),
-    activeKey: nav.faceStyle || 'classic',
-    options: [{
-      key: 'classic',
-      label: 'Classic',
-      iconEl: /*#__PURE__*/React.createElement(Face, {
-        mood: "happy",
-        size: 26,
-        styleName: "classic"
-      })
-    }, {
-      key: 'cat',
-      label: 'Cat',
-      iconEl: /*#__PURE__*/React.createElement(Face, {
-        mood: "happy",
-        size: 26,
-        styleName: "cat"
-      }),
-      trailing: nav.plus ? null : faceCrown
-    }, {
-      key: 'bear',
-      label: 'Bear',
-      iconEl: /*#__PURE__*/React.createElement(Face, {
-        mood: "happy",
-        size: 26,
-        styleName: "bear"
-      }),
-      trailing: nav.plus ? null : faceCrown
-    }],
-    onPick: k => {
-      if (k !== 'classic' && !nav.plus) {
-        setSheet(null);
-        nav.go('unlock');
-        return;
-      }
-      nav.setFaceStyle(k);
-      setSheet(null);
-    }
   }), sheet === 'reminder' && /*#__PURE__*/React.createElement(RadioSheet, {
     title: "Daily reminder",
     subtitle: "A gentle nudge to write the day down.",
@@ -3608,6 +3551,99 @@ function AppSettingsScreen({
       }
     }, "Set")) : null
   }));
+}
+
+// ---------------- MOOD STYLE (the pack picker page, 9 Aug) ----------------
+// A full page, not a sheet (founder: "a new page showing you how they look"):
+// every pack shows its five moods in a row; the active pack wears the blue
+// tick; on free every pack but Classic wears the crown and a tap opens the
+// Jotla Plus page (the crown gate). Owners tap to apply instantly, app-wide.
+function MoodStyleScreen({
+  nav
+}) {
+  const active = FACE_PACKS[nav.faceStyle] ? nav.faceStyle : 'classic';
+  const moods = ['happy', 'ok', 'sad', 'worried', 'angry'];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "j-screen"
+  }, /*#__PURE__*/React.createElement(PushHeader, {
+    title: "Mood style",
+    subtitle: "The faces the whole record wears.",
+    onBack: () => nav.back()
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "j-scroll j-fade"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-pad",
+    style: {
+      paddingTop: 2,
+      paddingBottom: 40
+    }
+  }, FACE_PACK_ORDER.map(k => {
+    const locked = k !== 'classic' && !nav.plus;
+    const on = active === k;
+    return /*#__PURE__*/React.createElement("button", {
+      key: k,
+      className: "j-card j-press",
+      role: "radio",
+      "aria-checked": on,
+      "aria-label": FACE_PACK_LABEL(k),
+      onClick: () => {
+        if (locked) {
+          nav.go('unlock');
+          return;
+        }
+        nav.setFaceStyle(k);
+      },
+      style: {
+        width: '100%',
+        textAlign: 'left',
+        cursor: 'pointer',
+        padding: '14px 16px',
+        marginBottom: 10,
+        border: '1.5px solid ' + (on ? 'var(--blue)' : 'var(--line)')
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        flex: 1,
+        fontFamily: "'Outfit', system-ui",
+        fontWeight: 600,
+        fontSize: 'calc(15.5px * var(--tscale, 1))',
+        color: 'var(--ink)'
+      }
+    }, FACE_PACK_LABEL(k)), locked ? /*#__PURE__*/React.createElement("span", {
+      "data-crown-gate": true,
+      style: {
+        display: 'flex',
+        flexShrink: 0
+      }
+    }, /*#__PURE__*/React.createElement(Icon, {
+      name: "crown",
+      size: 20,
+      color: "var(--gold)"
+    })) : on ? /*#__PURE__*/React.createElement(Icon, {
+      name: "check",
+      size: 20,
+      color: "var(--blue)",
+      stroke: 2.4
+    }) : null), /*#__PURE__*/React.createElement("span", {
+      style: {
+        display: 'flex',
+        gap: 10,
+        marginTop: 12,
+        justifyContent: 'space-between'
+      }
+    }, moods.map(m => /*#__PURE__*/React.createElement(Face, {
+      key: m,
+      mood: m,
+      size: 40,
+      styleName: k
+    }))));
+  }), /*#__PURE__*/React.createElement(FootNote, null, "Classic is part of Free. Every other look is part of Plus, and the whole record changes together: Today, the Month, and the child's own screens."))));
 }
 
 // ---------------- CHILDREN ----------------

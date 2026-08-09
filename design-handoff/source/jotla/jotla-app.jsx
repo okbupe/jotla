@@ -913,6 +913,7 @@ function App({ appMode }) {
     case 'settings': screen = <SettingsScreen nav={nav} profile={profile} entries={myEntries} docs={myDocs} binCount={binEntries.length + binDocs.length} />; break;
     // The settings system behind the cog (redesign, 6-7 Aug)
     case 'appsettings': screen = <AppSettingsScreen nav={nav} />; break;
+    case 'moodstyle': screen = <MoodStyleScreen nav={nav} />; break;
     case 'children': screen = <ChildrenScreen nav={nav} />; break;
     case 'childprofile': screen = <ChildProfileScreen nav={nav} profile={profile} entries={myEntries} docs={myDocs} />; break;
     case 'applock': screen = <AppLockScreen nav={nav} />; break;
