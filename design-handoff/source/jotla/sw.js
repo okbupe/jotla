@@ -12,7 +12,7 @@
    illo deck now hashes its filenames so it never needs this; anything else that
    reuses a filename does. Bumped to 1.13.0 on 16 Jul to evict the 3:2 illustration
    set that v1.12.0 had cached under the square set's names. */
-const VERSION = 'jotla-v2.0.7';
+const VERSION = 'jotla-v2.0.8';
 const PRECACHE = [
   './',
   'index.html',

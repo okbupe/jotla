@@ -410,6 +410,15 @@ html.j-appmode .j-dial { bottom: calc(164px + env(safe-area-inset-bottom)); }
   .j-dial-opt { animation: none; }
   .j-fab-ic { transition: none; }
 }
+/* The one-time double-tap tip: a quiet pill above the +, gone forever after
+   the first successful double tap (see fabClick in jotla-app.jsx). */
+.j-fabtip { position: absolute; right: 16px; bottom: 160px; z-index: 38;
+  background: var(--card); border: 1px solid var(--line); color: var(--muted);
+  border-radius: 999px; padding: 8px 14px; font-family: var(--f-body); font-weight: 500;
+  font-size: calc(12.5px * var(--tscale, 1)); box-shadow: 0 10px 22px -12px rgba(15,25,45,0.4);
+  animation: j-dial-in .3s ease .8s both; }
+html.j-appmode .j-fabtip { bottom: calc(160px + env(safe-area-inset-bottom)); }
+@media (prefers-reduced-motion: reduce) { .j-fabtip { animation: none; } }
 
 /* ---- misc ---- */
 .j-divider { height: 1px; background: var(--line); border: none; margin: 0; }

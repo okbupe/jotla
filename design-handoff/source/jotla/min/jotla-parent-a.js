@@ -730,7 +730,7 @@ function QuickLogScreen({
   }, /*#__PURE__*/React.createElement(PushHeader, {
     title: "Quick log",
     subtitle: "Log the whole day, one moment at a time",
-    onClose: () => nav.back()
+    onBack: () => nav.back()
   }), /*#__PURE__*/React.createElement("div", {
     className: "j-scroll j-fade"
   }, /*#__PURE__*/React.createElement("div", {
@@ -1639,7 +1639,7 @@ function GateIntroScreen({
     className: "j-screen"
   }, /*#__PURE__*/React.createElement(PushHeader, {
     title: "Dysregulation",
-    onClose: () => nav.back()
+    onBack: () => nav.back()
   }), /*#__PURE__*/React.createElement("div", {
     className: "j-scroll j-fade"
   }, /*#__PURE__*/React.createElement("div", {

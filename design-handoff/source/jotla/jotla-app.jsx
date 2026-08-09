@@ -559,6 +559,27 @@ function App({ appMode }) {
   // calc()-based font size in the app follows the one dial (build 1.8.0).
   const [tscale, setTscale] = useStateApp(prefs0.tscale || 1);
   const [fabOpen, setFabOpen] = useStateApp(false); // the + speed dial (8 Aug)
+  // Double tap on the + goes straight to Quick Log, the most-used capture
+  // (founder, 8 Aug night): the first tap opens the dial as normal, a second
+  // tap inside 320ms fires Quick Log. A one-time tip teaches it and retires
+  // FOREVER on the first successful double tap (persisted, never nags again).
+  // The tap clock rides a REF, never state: two discrete taps land faster than
+  // a re-render can be trusted (the 7 Aug swipe lesson).
+  const fabLastTap = useRefApp(0);
+  const [fabTip, setFabTip] = useStateApp(() => { try { return !localStorage.getItem('jotla_fabtip_v1'); } catch (e) { return false; } });
+  const fabClick = () => {
+    const now = performance.now();
+    if (fabOpen && now - fabLastTap.current < 320) {
+      fabLastTap.current = 0;
+      setFabOpen(false);
+      setFabTip(false);
+      try { localStorage.setItem('jotla_fabtip_v1', 'learned'); } catch (e) {}
+      nav.go('quicklog');
+      return;
+    }
+    fabLastTap.current = now;
+    setFabOpen(o => !o);
+  };
   const [plus, setPlus] = useStateApp(!!prefs0.plus);
   const [childCfg, setChildCfg] = useStateApp(prefs0.childCfg || prefs0.avatarCols || {});
   const [customProfiles, setCustomProfiles] = useStateApp(prefs0.customProfiles || []);
@@ -953,8 +974,11 @@ function App({ appMode }) {
               </div>
             </div>
           )}
+          {fabTip && !fabOpen && (
+            <div className="j-fabtip" role="status">Try a double tap for Quick Log</div>
+          )}
           <button className={'j-fab' + (fabOpen ? ' j-fab-open' : '')} aria-label={fabOpen ? 'Close' : 'Add'}
-            aria-expanded={fabOpen} onClick={() => setFabOpen(o => !o)}>
+            aria-expanded={fabOpen} onClick={fabClick}>
             <span className="j-fab-ic"><Icon name="plus" size={26} color="#fff" stroke={2.4} /></span>
           </button>
         </>

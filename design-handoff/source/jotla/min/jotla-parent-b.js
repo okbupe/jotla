@@ -1356,7 +1356,7 @@ function AddDocScreen({
   }, /*#__PURE__*/React.createElement(PushHeader, {
     title: "Add a document",
     subtitle: "A few questions so it is easy to find later.",
-    onClose: () => nav.back()
+    onBack: () => nav.back()
   }), /*#__PURE__*/React.createElement("div", {
     className: "j-scroll j-fade"
   }, /*#__PURE__*/React.createElement("div", {

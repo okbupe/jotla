@@ -349,7 +349,9 @@ function QuickLogScreen({ nav, today, view, profile }) {
 
   return (
     <div className="j-screen">
-      <PushHeader title="Quick log" subtitle="Log the whole day, one moment at a time" onClose={() => nav.back()} />
+      {/* back chevron, not an X (founder, 8 Aug night): the capture screens
+          match Settings and Backup, one consistent way out, top left */}
+      <PushHeader title="Quick log" subtitle="Log the whole day, one moment at a time" onBack={() => nav.back()} />
       <div className="j-scroll j-fade">
         <div className="j-pad" style={{ paddingBottom: 130, paddingTop: 6 }}>
           {/* the three questions side by side, each a card of question + answer */}
@@ -776,7 +778,7 @@ function GateIntroScreen({ nav, profile }) {
   ];
   return (
     <div className="j-screen">
-      <PushHeader title="Dysregulation" onClose={() => nav.back()} />
+      <PushHeader title="Dysregulation" onBack={() => nav.back()} />
       <div className="j-scroll j-fade">
         <div className="j-pad" style={{ paddingTop: 4, paddingBottom: 150 }}>
           <div style={{ display: 'flex', marginBottom: 16 }}>

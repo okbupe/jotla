@@ -718,7 +718,7 @@ function AddDocScreen({ nav }) {
 
   return (
     <div className="j-screen">
-      <PushHeader title="Add a document" subtitle="A few questions so it is easy to find later." onClose={() => nav.back()} />
+      <PushHeader title="Add a document" subtitle="A few questions so it is easy to find later." onBack={() => nav.back()} />
       <div className="j-scroll j-fade">
         <div className="j-pad" style={{ paddingTop: 2, paddingBottom: 120, display: 'flex', flexDirection: 'column', gap: 22 }}>
 

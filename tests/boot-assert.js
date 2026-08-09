@@ -35,6 +35,10 @@ function ok(name, cond) {
     && await page.getByText('Menu', { exact: true }).first().isVisible());
   ok('no uncaught page errors on boot', errors.length === 0);
 
+  // the one-time double-tap tip shows for a fresh user (founder, 8 Aug night)
+  ok('a new user sees the double-tap tip by the +', (await page.locator('.j-fabtip').count()) === 1
+    && (await page.locator('.j-fabtip').innerText()).includes('double tap'));
+
   // the + is the ONE capture door (founder, 8 Aug evening, the Drive-style
   // speed dial): pressing it blurs the app behind a scrim, morphs the + into
   // an x, and staggers in the four capture routes; a scrim tap closes it.
@@ -61,8 +65,33 @@ function ok(name, cond) {
   await page.getByText('Quick Log', { exact: true }).first().click();
   await page.waitForTimeout(550);
   ok('Quick Log opens from the dial', (await page.locator('#root').innerText()).includes('Log the whole day, one moment at a time'));
-  await page.locator('button[aria-label="Close"]').first().click();
+  // the capture screens wear the Settings-style back chevron, never an X
+  // (founder, 8 Aug night): asserted for all three, here and below
+  ok('Quick log wears the back chevron, not an X', (await page.locator('button[aria-label="Back"]').count()) === 1
+    && (await page.locator('button[aria-label="Close"]').count()) === 0);
+  await page.locator('button[aria-label="Back"]').first().click();
   await page.waitForTimeout(450);
+  await page.locator('button[aria-label="Add"]').first().click();
+  await page.waitForTimeout(300);
+  await page.locator('.j-dial-opt:has-text("Dysregulation")').first().click();
+  await page.waitForTimeout(500);
+  ok('Dysregulation wears the back chevron, not an X', (await page.locator('button[aria-label="Back"]').count()) === 1
+    && (await page.locator('button[aria-label="Close"]').count()) === 0);
+  await page.locator('button[aria-label="Back"]').first().click();
+  await page.waitForTimeout(450);
+
+  // a double tap on the + fires Quick Log directly (tap one opens the dial,
+  // a second tap inside the window fires), and the tip retires FOREVER on the
+  // first success, persisted across sessions
+  await page.locator('button[aria-label="Add"]').first().click();
+  await page.waitForTimeout(90);
+  await page.locator('button[aria-label="Close"]').first().click();
+  await page.waitForTimeout(600);
+  ok('a double tap on the + goes straight to Quick Log', (await page.locator('#root').innerText()).includes('Log the whole day, one moment at a time'));
+  await page.locator('button[aria-label="Back"]').first().click();
+  await page.waitForTimeout(450);
+  ok('the double-tap tip is gone forever once learned', (await page.locator('.j-fabtip').count()) === 0
+    && (await page.evaluate(() => localStorage.getItem('jotla_fabtip_v1'))) === 'learned');
 
   // ---- 2. tabs render, and share ONE top line (founder, 7 Aug) ----
   console.log('Suite 2: tab screens');
@@ -623,7 +652,7 @@ function ok(name, cond) {
   ok('no typed date input remains in Quick log', (await page4.locator('input[type="date"]').count()) === 0);
   await page4.locator('.j-sheet .j-btn-ghost:has-text("Cancel")').click();
   await page4.waitForTimeout(300);
-  await page4.locator('button[aria-label="Close"]').first().click();
+  await page4.locator('button[aria-label="Back"]').first().click(); // quick log's chevron (X retired 8 Aug)
   await page4.waitForTimeout(400);
   // step back out of the pushed Day view so the tab bar is reachable again
   await page4.locator('button[aria-label="Back"]').first().click();
@@ -640,7 +669,7 @@ function ok(name, cond) {
   const qlFree = await page4.locator('#root').innerText();
   ok('free moment editor shows the honest locked media card', qlFree.includes('Add photos and videos') && qlFree.includes('Part of Plus'));
   ok('free moment editor has no live media tiles', !qlFree.includes('Attach media'));
-  await page4.locator('button[aria-label="Close"]').first().click();
+  await page4.locator('button[aria-label="Back"]').first().click(); // quick log's chevron exits the screen, editor and all
   await page4.waitForTimeout(400);
 
   // Settings after the sixth-pass consolidation (1.10.0): the info rows fold
@@ -738,7 +767,7 @@ function ok(name, cond) {
   await page5.waitForTimeout(300);
   const qlPlus = await page5.locator('#root').innerText();
   ok('Plus moment editor offers Capture and Attach media', qlPlus.includes('Capture') && qlPlus.includes('Attach media'));
-  await page5.locator('button[aria-label="Close"]').first().click();
+  await page5.locator('button[aria-label="Back"]').first().click(); // quick log's chevron exits the screen, editor and all
   await page5.waitForTimeout(400);
 
   // Plus month graph draws all five bars
@@ -842,6 +871,8 @@ function ok(name, cond) {
   const addFree = await page6.locator('#root').innerText();
   ok('free Add document shows the locked vault-upload card', addFree.includes('Add the document itself') && addFree.includes('Keep the letter with its details. Part of Plus.'));
   ok('free Add document has no live upload tiles', !addFree.includes('Pick a file'));
+  ok('Add a document wears the back chevron, not an X', (await page6.locator('button[aria-label="Back"]').count()) === 1
+    && (await page6.locator('button[aria-label="Close"]').count()) === 0);
   await ctx6.close();
 
   // Plus tier: live tiles, a real file pick, the mechanical prefill, the
@@ -1388,7 +1419,7 @@ function ok(name, cond) {
     + clamp.map(c => c.s + '=' + (c.clipped ? 'CLIPPED' : c.lines + 'ln')).join(' ') + ')',
     clamp.every(c => !c.clipped && c.lines <= 2) && clamp.every(c => /20\d\d/.test(c.text)));
   await page12.setViewportSize({ width: 390, height: 844 });
-  await page12.locator('button[aria-label="Close"]').first().click();
+  await page12.locator('button[aria-label="Back"]').first().click(); // quick log's chevron (X retired 8 Aug)
   await page12.waitForTimeout(400);
 
   // item 44 verify-only: with a photo in place, Change photo + Remove share one row
