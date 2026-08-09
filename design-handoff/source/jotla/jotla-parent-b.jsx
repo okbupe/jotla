@@ -1014,25 +1014,29 @@ function DocScreen({ nav, docs, id }) {
 
 // ---------------- Jotla Plus (the three-layer money model) ----------------
 
-// The money model (decisions/log.md, 2026-08-06, Bupe's money gate; supersedes
-// the 14 Jul annual-only rule):
+// The money model (decisions/log.md, 2026-08-08, Bupe's call on the first
+// /arena verdict; supersedes the 6 Aug three-term ladder):
 //   Free      £0 forever.
-//   Plus      £29 for 1 month, £49 for 6 months, £79 for a year (Best value).
-//             The £29 month is the anchor: two months (£58) already beats the
-//             6-month term, so the monthly door cannot be gamed. Family Sync is
-//             inside Plus and sells as launch-state (decisions 2026-08-06).
-//   Jotla AI  coming 2027, INDICATIVE ladder £79 / £129 / £199 with Plus
-//             included (£199 in total, not £79 + £199). Visible on the paywall
-//             with no buy button until it exists.
+//   Plus      £49 for 6 months, £79 for a year (Best value). NO monthly term:
+//             the arena found the £29 month ran 4.4x the annual rate against a
+//             verified 1.2-2.1x category band, the highest rate charged to the
+//             parents least able to pay, and the only way to try Plus. Cut.
+//             Family Sync stays inside Plus and sells as launch-state.
+//   Jotla AI  coming 2027, INDICATIVE ladder £89 for 6 months / £149 a year
+//             with Plus included (£149 in total, not £79 + £149). Visible on
+//             the paywall, nothing buyable before it exists. The 6 Aug £199
+//             was cut the same day the arena showed every live AI-inclusive
+//             comparable at or under about £120/yr (record: sen-help
+//             App/Jotla-Arena-Price-Ladder-2026-08-08.md).
 // There is no one-time price and no lifetime buyout of any kind. The old
 // buy-once copy (pay once, yours to keep, no subscription, no timers) is
 // retired with it and must not come back.
-const MONTH_PRICE = '£29';
 const PLUS_PRICE = '£79';
 const PLUS_PERIOD = 'a year';
 const TERM_PRICE = '£49';
 const TERM_PERIOD = 'for 6 months';
-const AI_PRICE = '£199';
+const AI_PRICE = '£149';
+const AI_TERM_PRICE = '£89';
 
 // Free is a calm, flat darker blue. Plus has its own purple identity. The premium
 // navy + gold look (and the sparkle) dresses Jotla AI and the Settings upsell card.
@@ -1048,8 +1052,8 @@ const PREMIUM_GOLD_DEEP = '#C9912F';
 // Both tiers behind one selector: Jotla Plus (purple) and Jotla AI (navy+gold,
 // coming 2027, real price tabs, NO buy button before it exists). Real carousel
 // art rides each tier. No fake discounts, no strikethroughs, no invented trial:
-// the honest-marketing lock. Pricing decided 6 Aug: £29 / £49 / £79, and the
-// indicative AI ladder £79 / £129 / £199 with Plus included.
+// the honest-marketing lock. Pricing decided 8 Aug (post-arena): Plus £49 / £79
+// with no monthly term, and the indicative AI ladder £89 / £149 with Plus included.
 const PLUS_SLIDES = [
   { t: 'Patterns and Month View', c: 'A calendar of green and amber days. Tap any day to read what happened behind it.', img: 'art/plus-1.jpg' },
   { t: 'PDF Evidence Pack', c: 'Turn any stretch of the record into one dated PDF, ready to hand over.', img: 'art/plus-2.jpg' },
@@ -1209,7 +1213,6 @@ function UnlockScreen({ nav, initialTier }) {
             ) : (
               <div>
                 <div style={{ display: 'flex', gap: 10 }}>
-                  <TermCard label="1 Month" price="£29" per="a month" />
                   <TermCard label="6 Months" price="£49" per="for 6 months" />
                   <TermCard label="One Year" price="£79" per={<>less than<br />£7 a month</>} sel badge="Best value" />
                 </div>
@@ -1222,18 +1225,17 @@ function UnlockScreen({ nav, initialTier }) {
                   <Icon name="check" size={15} color="var(--blue)" stroke={2.2} /> Everything in Free is included, always.
                 </p>
                 <p style={{ textAlign: 'center', color: 'var(--faint)', fontSize: 'calc(11.5px * var(--tscale, 1))', lineHeight: 1.45, margin: '8px 0 0' }}>
-                  Plus renews automatically at the end of its term: £29 a month, £49 every 6 months or £79 a year, charged to your Google Play
-                  account until you cancel. Cancel any time in Subscriptions on Google Play, at least 24 hours before the term ends, and Plus
-                  stays on until the day it runs out. A subscription only ever switches off the paid tools.<br />It never touches your history.
+                  Plus renews automatically at the end of its term: £49 every 6 months or £79 a year, charged to your Google Play
+                  account until you cancel. Cancel any time in Subscriptions on Google Play, and Plus stays on until the end of the
+                  time you have paid for. A subscription only ever switches off the paid tools.<br />It never touches your history.
                 </p>
               </div>
             )
           ) : (
             <div>
               <div style={{ display: 'flex', gap: 10 }}>
-                <TermCard label="1 Month" price="£79" per="a month" gold />
-                <TermCard label="6 Months" price="£129" per="for 6 months" gold />
-                <TermCard label="One Year" price="£199" per={<>less than<br />£17 a month</>} sel gold badge="Best value" />
+                <TermCard label="6 Months" price="£89" per="for 6 months" gold />
+                <TermCard label="One Year" price="£149" per={<>less than<br />£13 a month</>} sel gold badge="Best value" />
               </div>
               <button className="j-btn j-btn-lg" onClick={() => alert('Jotla AI arrives in 2027. Nothing is charged before it exists.')}
                 style={{ marginTop: 12, background: 'linear-gradient(135deg,#14294A,#1E5099)', color: '#fff',
@@ -1245,10 +1247,10 @@ function UnlockScreen({ nav, initialTier }) {
                 <Icon name="check" size={15} color="var(--blue)" stroke={2.2} /> Jotla Plus is included in every term.
               </p>
               <p style={{ textAlign: 'center', color: 'var(--faint)', fontSize: 'calc(11.5px * var(--tscale, 1))', lineHeight: 1.45, margin: '8px 0 0' }}>
-                Jotla AI arrives in 2027 and renews automatically at the end of its term: £79 a month, £129 every 6 months or £199 a year,
-                charged to your Google Play account until you cancel. Cancel any time in Subscriptions on Google Play, at least 24 hours
-                before the term ends. One price with Plus included, never one on top of another, and a subscription only ever switches off
-                the paid tools.
+                Jotla AI arrives in 2027. Nothing can be bought before it exists, and these prices are indicative until they are set
+                at launch. When it arrives it will renew automatically at the end of its term: £89 every 6 months or £149 a year,
+                charged to your Google Play account until you cancel, any time, in Subscriptions on Google Play. One price with Plus
+                included, never one on top of another, and a subscription only ever switches off the paid tools.
               </p>
             </div>
           )}
@@ -1431,7 +1433,7 @@ function InfoAboutScreen({ nav }) {
 
       <InfoBlock icon="sparkle" title="Jotla Plus">
         <InfoP>The record itself is free, forever: logging, your timeline, search and export never cost anything, never expire, and stay yours.</InfoP>
-        <InfoP>Jotla Plus adds the tools to help you spot patterns and make your case: photos and videos kept with your notes, patterns and the Month view, deep filtering, Dysregulation Mode, and the PDF evidence pack. Family Sync, when it arrives, is part of Plus too. Plus is {MONTH_PRICE} for 1 month, {TERM_PRICE} {TERM_PERIOD} or {PLUS_PRICE} for a year, through Google Play, and it stays on until the day a term runs out.</InfoP>
+        <InfoP>Jotla Plus adds the tools to help you spot patterns and make your case: photos and videos kept with your notes, patterns and the Month view, deep filtering, Dysregulation Mode, and the PDF evidence pack. Family Sync, when it arrives, is part of Plus too. Plus is {TERM_PRICE} {TERM_PERIOD} or {PLUS_PRICE} for a year, through Google Play, and it stays on until the day a term runs out.</InfoP>
         <InfoP><span className="j-strong">If your year ends, you keep everything.</span> Your record is never held to ransom. If Plus ends, for any reason at all, whether you cancel, let it lapse, or a card quietly expires, you lose nothing you have written. Every entry stays. Your full timeline stays. Plain keyword search stays. Raw export stays. You can still make the PDF of everything you have already logged. Appeal-deadline safety reminders keep coming, with or without a subscription. A subscription only ever switches off the paid tools. It never touches your history.</InfoP>
         <InfoP>Jotla AI is coming in 2027: {AI_PRICE} {PLUS_PERIOD}, with Jotla Plus included, so it is {AI_PRICE} in total and not one price on top of another.</InfoP>
         <button className="j-btn j-btn-soft" onClick={() => nav.go('unlock')}>
@@ -2086,7 +2088,7 @@ const HELP_QA = [
     ['I deleted something. Can I get it back?', 'Deleted logs and documents wait in the Recycle Bin for 30 days. After that they clear themselves.'],
   ]],
   ['Plus', [
-    ['What does Plus cost?', '£29 for 1 month, £49 for 6 months or £79 for a year, through Google Play.'],
+    ['What does Plus cost?', '£49 for 6 months or £79 for a year, through Google Play.'],
     ['How do I cancel?', 'In Subscriptions on Google Play, any time. Plus stays on until the day it runs out.'],
     ['What happens if I stop paying?', 'You keep every entry, the timeline, search, the export and the PDF of what you already logged. A subscription only switches off the paid tools.'],
   ]],

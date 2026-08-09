@@ -62,6 +62,28 @@ function ok(name, cond) {
   console.log('Suite 3: backup page + theme sheet');
   const menuText = await page.locator('#root').innerText();
   ok('Menu holds the arm\u2019s-reach rows', menuText.includes('Jotla Plus') && menuText.includes('Backup and Restore') && menuText.includes('Recycle Bin'));
+
+  // the free paywall carries the 8 Aug two-term ladders: no monthly rung on
+  // either tier, and the Google-accurate cancel line (the old "24 hours before
+  // the term ends" clause was an Apple convention that never applied on Play;
+  // arena record, sen-help App/Jotla-Arena-Price-Ladder-2026-08-08.md)
+  await page.getByText('Jotla Plus', { exact: true }).first().click();
+  await page.waitForTimeout(600);
+  let payText = await page.locator('#root').innerText();
+  ok('Plus ladder is 6 Months \u00a349 + One Year \u00a379, no monthly rung', payText.includes('6 Months') && payText.includes('\u00a349')
+    && payText.includes('One Year') && payText.includes('\u00a379') && payText.includes('Best value')
+    && !payText.includes('1 Month') && !payText.includes('\u00a329'));
+  ok('Plus cancel line is Google-accurate, no 24-hour clause', payText.includes('until the end of the time you have paid for')
+    && !payText.includes('24 hours'));
+  await page.getByText('Jotla AI', { exact: true }).first().click();
+  await page.waitForTimeout(450);
+  payText = await page.locator('#root').innerText();
+  ok('AI ladder is 6 Months \u00a389 + One Year \u00a3149, no monthly, no \u00a3199', payText.includes('\u00a389') && payText.includes('\u00a3149')
+    && !payText.includes('\u00a3199') && !payText.includes('1 Month') && !payText.includes('24 hours'));
+  ok('AI face says 2027, indicative, nothing buyable before it exists', payText.includes('arrives in 2027') && payText.includes('indicative'));
+  await page.locator('button[aria-label="Close"]').first().click();
+  await page.waitForTimeout(450);
+
   await page.getByText('Backup and Restore', { exact: true }).first().click();
   await page.waitForTimeout(500);
   let bkText = await page.locator('#root').innerText();

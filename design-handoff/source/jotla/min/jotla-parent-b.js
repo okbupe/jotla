@@ -1966,25 +1966,29 @@ function DocScreen({
 
 // ---------------- Jotla Plus (the three-layer money model) ----------------
 
-// The money model (decisions/log.md, 2026-08-06, Bupe's money gate; supersedes
-// the 14 Jul annual-only rule):
+// The money model (decisions/log.md, 2026-08-08, Bupe's call on the first
+// /arena verdict; supersedes the 6 Aug three-term ladder):
 //   Free      £0 forever.
-//   Plus      £29 for 1 month, £49 for 6 months, £79 for a year (Best value).
-//             The £29 month is the anchor: two months (£58) already beats the
-//             6-month term, so the monthly door cannot be gamed. Family Sync is
-//             inside Plus and sells as launch-state (decisions 2026-08-06).
-//   Jotla AI  coming 2027, INDICATIVE ladder £79 / £129 / £199 with Plus
-//             included (£199 in total, not £79 + £199). Visible on the paywall
-//             with no buy button until it exists.
+//   Plus      £49 for 6 months, £79 for a year (Best value). NO monthly term:
+//             the arena found the £29 month ran 4.4x the annual rate against a
+//             verified 1.2-2.1x category band, the highest rate charged to the
+//             parents least able to pay, and the only way to try Plus. Cut.
+//             Family Sync stays inside Plus and sells as launch-state.
+//   Jotla AI  coming 2027, INDICATIVE ladder £89 for 6 months / £149 a year
+//             with Plus included (£149 in total, not £79 + £149). Visible on
+//             the paywall, nothing buyable before it exists. The 6 Aug £199
+//             was cut the same day the arena showed every live AI-inclusive
+//             comparable at or under about £120/yr (record: sen-help
+//             App/Jotla-Arena-Price-Ladder-2026-08-08.md).
 // There is no one-time price and no lifetime buyout of any kind. The old
 // buy-once copy (pay once, yours to keep, no subscription, no timers) is
 // retired with it and must not come back.
-const MONTH_PRICE = '£29';
 const PLUS_PRICE = '£79';
 const PLUS_PERIOD = 'a year';
 const TERM_PRICE = '£49';
 const TERM_PERIOD = 'for 6 months';
-const AI_PRICE = '£199';
+const AI_PRICE = '£149';
+const AI_TERM_PRICE = '£89';
 
 // Free is a calm, flat darker blue. Plus has its own purple identity. The premium
 // navy + gold look (and the sparkle) dresses Jotla AI and the Settings upsell card.
@@ -2000,8 +2004,8 @@ const PREMIUM_GOLD_DEEP = '#C9912F';
 // Both tiers behind one selector: Jotla Plus (purple) and Jotla AI (navy+gold,
 // coming 2027, real price tabs, NO buy button before it exists). Real carousel
 // art rides each tier. No fake discounts, no strikethroughs, no invented trial:
-// the honest-marketing lock. Pricing decided 6 Aug: £29 / £49 / £79, and the
-// indicative AI ladder £79 / £129 / £199 with Plus included.
+// the honest-marketing lock. Pricing decided 8 Aug (post-arena): Plus £49 / £79
+// with no monthly term, and the indicative AI ladder £89 / £149 with Plus included.
 const PLUS_SLIDES = [{
   t: 'Patterns and Month View',
   c: 'A calendar of green and amber days. Tap any day to read what happened behind it.',
@@ -2408,10 +2412,6 @@ function UnlockScreen({
       gap: 10
     }
   }, /*#__PURE__*/React.createElement(TermCard, {
-    label: "1 Month",
-    price: "\xA329",
-    per: "a month"
-  }), /*#__PURE__*/React.createElement(TermCard, {
     label: "6 Months",
     price: "\xA349",
     per: "for 6 months"
@@ -2461,25 +2461,20 @@ function UnlockScreen({
       lineHeight: 1.45,
       margin: '8px 0 0'
     }
-  }, "Plus renews automatically at the end of its term: \xA329 a month, \xA349 every 6 months or \xA379 a year, charged to your Google Play account until you cancel. Cancel any time in Subscriptions on Google Play, at least 24 hours before the term ends, and Plus stays on until the day it runs out. A subscription only ever switches off the paid tools.", /*#__PURE__*/React.createElement("br", null), "It never touches your history.")) : /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  }, "Plus renews automatically at the end of its term: \xA349 every 6 months or \xA379 a year, charged to your Google Play account until you cancel. Cancel any time in Subscriptions on Google Play, and Plus stays on until the end of the time you have paid for. A subscription only ever switches off the paid tools.", /*#__PURE__*/React.createElement("br", null), "It never touches your history.")) : /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       gap: 10
     }
   }, /*#__PURE__*/React.createElement(TermCard, {
-    label: "1 Month",
-    price: "\xA379",
-    per: "a month",
-    gold: true
-  }), /*#__PURE__*/React.createElement(TermCard, {
     label: "6 Months",
-    price: "\xA3129",
+    price: "\xA389",
     per: "for 6 months",
     gold: true
   }), /*#__PURE__*/React.createElement(TermCard, {
     label: "One Year",
-    price: "\xA3199",
-    per: /*#__PURE__*/React.createElement(React.Fragment, null, "less than", /*#__PURE__*/React.createElement("br", null), "\xA317 a month"),
+    price: "\xA3149",
+    per: /*#__PURE__*/React.createElement(React.Fragment, null, "less than", /*#__PURE__*/React.createElement("br", null), "\xA313 a month"),
     sel: true,
     gold: true,
     badge: "Best value"
@@ -2520,7 +2515,7 @@ function UnlockScreen({
       lineHeight: 1.45,
       margin: '8px 0 0'
     }
-  }, "Jotla AI arrives in 2027 and renews automatically at the end of its term: \xA379 a month, \xA3129 every 6 months or \xA3199 a year, charged to your Google Play account until you cancel. Cancel any time in Subscriptions on Google Play, at least 24 hours before the term ends. One price with Plus included, never one on top of another, and a subscription only ever switches off the paid tools.")), /*#__PURE__*/React.createElement("div", {
+  }, "Jotla AI arrives in 2027. Nothing can be bought before it exists, and these prices are indicative until they are set at launch. When it arrives it will renew automatically at the end of its term: \xA389 every 6 months or \xA3149 a year, charged to your Google Play account until you cancel, any time, in Subscriptions on Google Play. One price with Plus included, never one on top of another, and a subscription only ever switches off the paid tools.")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       justifyContent: 'center',
@@ -2843,7 +2838,7 @@ function InfoAboutScreen({
   }, "Planned means exactly that: none of the above is switched on yet, and nothing in this app pretends to be."))), /*#__PURE__*/React.createElement(InfoBlock, {
     icon: "sparkle",
     title: "Jotla Plus"
-  }, /*#__PURE__*/React.createElement(InfoP, null, "The record itself is free, forever: logging, your timeline, search and export never cost anything, never expire, and stay yours."), /*#__PURE__*/React.createElement(InfoP, null, "Jotla Plus adds the tools to help you spot patterns and make your case: photos and videos kept with your notes, patterns and the Month view, deep filtering, Dysregulation Mode, and the PDF evidence pack. Family Sync, when it arrives, is part of Plus too. Plus is ", MONTH_PRICE, " for 1 month, ", TERM_PRICE, " ", TERM_PERIOD, " or ", PLUS_PRICE, " for a year, through Google Play, and it stays on until the day a term runs out."), /*#__PURE__*/React.createElement(InfoP, null, /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement(InfoP, null, "The record itself is free, forever: logging, your timeline, search and export never cost anything, never expire, and stay yours."), /*#__PURE__*/React.createElement(InfoP, null, "Jotla Plus adds the tools to help you spot patterns and make your case: photos and videos kept with your notes, patterns and the Month view, deep filtering, Dysregulation Mode, and the PDF evidence pack. Family Sync, when it arrives, is part of Plus too. Plus is ", TERM_PRICE, " ", TERM_PERIOD, " or ", PLUS_PRICE, " for a year, through Google Play, and it stays on until the day a term runs out."), /*#__PURE__*/React.createElement(InfoP, null, /*#__PURE__*/React.createElement("span", {
     className: "j-strong"
   }, "If your year ends, you keep everything."), " Your record is never held to ransom. If Plus ends, for any reason at all, whether you cancel, let it lapse, or a card quietly expires, you lose nothing you have written. Every entry stays. Your full timeline stays. Plain keyword search stays. Raw export stays. You can still make the PDF of everything you have already logged. Appeal-deadline safety reminders keep coming, with or without a subscription. A subscription only ever switches off the paid tools. It never touches your history."), /*#__PURE__*/React.createElement(InfoP, null, "Jotla AI is coming in 2027: ", AI_PRICE, " ", PLUS_PERIOD, ", with Jotla Plus included, so it is ", AI_PRICE, " in total and not one price on top of another."), /*#__PURE__*/React.createElement("button", {
     className: "j-btn j-btn-soft",
@@ -4396,7 +4391,7 @@ function BackupScreen({
 }
 
 // ---------------- HELP ----------------
-const HELP_QA = [['The record', [['Where does the record live?', 'On this phone. There is no account and no cloud copy unless you back up to your own Google Drive or Dropbox.'], ['How do backups work?', 'Automatic backups go to your own Drive or Dropbox, in a space only the app can read. A manual export file is always free.'], ['How do I move to a new phone?', 'Back up on the old phone, install Jotla on the new one, then restore from your Drive, Dropbox or the export file.'], ['I deleted something. Can I get it back?', 'Deleted logs and documents wait in the Recycle Bin for 30 days. After that they clear themselves.']]], ['Plus', [['What does Plus cost?', '£29 for 1 month, £49 for 6 months or £79 for a year, through Google Play.'], ['How do I cancel?', 'In Subscriptions on Google Play, any time. Plus stays on until the day it runs out.'], ['What happens if I stop paying?', 'You keep every entry, the timeline, search, the export and the PDF of what you already logged. A subscription only switches off the paid tools.']]], ['Privacy', [['How do I lock the app?', 'Settings, then App lock. A pattern or PIN, with fingerprint or face if your phone can.']]]];
+const HELP_QA = [['The record', [['Where does the record live?', 'On this phone. There is no account and no cloud copy unless you back up to your own Google Drive or Dropbox.'], ['How do backups work?', 'Automatic backups go to your own Drive or Dropbox, in a space only the app can read. A manual export file is always free.'], ['How do I move to a new phone?', 'Back up on the old phone, install Jotla on the new one, then restore from your Drive, Dropbox or the export file.'], ['I deleted something. Can I get it back?', 'Deleted logs and documents wait in the Recycle Bin for 30 days. After that they clear themselves.']]], ['Plus', [['What does Plus cost?', '£49 for 6 months or £79 for a year, through Google Play.'], ['How do I cancel?', 'In Subscriptions on Google Play, any time. Plus stays on until the day it runs out.'], ['What happens if I stop paying?', 'You keep every entry, the timeline, search, the export and the PDF of what you already logged. A subscription only switches off the paid tools.']]], ['Privacy', [['How do I lock the app?', 'Settings, then App lock. A pattern or PIN, with fingerprint or face if your phone can.']]]];
 function HelpScreen({
   nav
 }) {

@@ -2579,7 +2579,7 @@ function StoryIllo({
     /* Tour 4: Dysregulation: a parent sits down on the floor beside their child,
        close and steady, one arm around them, the hard moment already passing and
        both of them calm. The three ordered steps sit beside them.
-        REDRAWN 17 Jul, and it is a concept change, not a restyle. This scene was
+         REDRAWN 17 Jul, and it is a concept change, not a restyle. This scene was
        "At the gate": a child waving at a railed school gate with a flag. Slide 4
        was renamed "Dysregulation", so the art contradicted its own copy, which now
        reads "When a hard moment happens, Jotla asks you six simple questions...
@@ -2587,7 +2587,7 @@ function StoryIllo({
        arrival next to crisis copy. The generated image deck already fixed this on
        the web; the SVG deck had not, and the SVG deck is what native renders and
        what the web falls back to whenever STORY_IMAGES is emptied.
-        Held to the imagery locks: never a crying, distressed or mid-meltdown child.
+         Held to the imagery locks: never a crying, distressed or mid-meltdown child.
        The feeling is steadiness and repair, and the moment has already passed. The
        third step's dot is green because the third question is "what helped".
        Kept identical to the native port (illustrations.tsx). */
