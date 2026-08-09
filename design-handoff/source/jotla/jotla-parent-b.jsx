@@ -1033,6 +1033,10 @@ const TERM_PRICE = '£49';
 const TERM_PERIOD = 'for 6 months';
 const AI_PRICE = '£149';
 const AI_TERM_PRICE = '£89';
+// Jotla AI does not exist yet. While false, a Plus owner's Menu sells NOTHING
+// (founder, 8 Aug night: no banner once Plus is paid for); flipping this true
+// when the tier ships brings the navy AI ticket back into that slot.
+const AI_AVAILABLE = false;
 
 // Free is a calm, flat darker blue. Plus has its own purple identity. The premium
 // navy + gold look (and the sparkle) dresses Jotla AI and the Settings upsell card.
@@ -1056,6 +1060,10 @@ const PLUS_SLIDES = [
   { t: 'Family Sync', c: "The record on every grown-up's phone. One of you logs it, both of you have it.", img: 'art/plus-3.jpg' },
   { t: 'Photos and Videos on Notes', c: 'Add the photo or the video to the note, so the day is shown as well as told.', img: 'art/plus-4.jpg' },
   { t: 'Dysregulation Mode', c: 'Five gentle questions in the hard moment, so nothing important is lost.', img: 'art/plus-5.jpg' },
+  // Slide 6 (founder, 8 Aug night): Mood Styles. art/plus-6.jpg renders the
+  // grey slot until Bupe generates it on Higgsfield (prompt handed over with
+  // the build; same nano_banana_2 2K 16:9 vector recipe as slides 1-5).
+  { t: 'Mood Styles', c: 'Swap the smileys for cats or bears, everywhere a face shows.', img: 'art/plus-6.jpg' },
 ];
 const AI_SLIDES = [
   { t: 'EHCP and SEND deadline tracker', c: 'Every deadline tracked, with what to do about a gap.', img: 'art/ai-1.jpg' },
@@ -1557,11 +1565,13 @@ function RadioSheet({ title, subtitle, options, activeKey, onPick, onClose, foot
               display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {activeKey === o.key && <span style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--blue)' }} />}
             </span>
+            {o.iconEl || null}
             <span style={{ flex: 1 }}>
               <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontWeight: 500, color: 'var(--ink)',
                 fontSize: o.size || 'calc(15.5px * var(--tscale, 1))' }}>{o.label}</span>
               {o.sub && <span style={{ display: 'block', fontSize: 'calc(12.5px * var(--tscale, 1))', color: 'var(--muted)', marginTop: 1 }}>{o.sub}</span>}
             </span>
+            {o.trailing || null}
           </button>
         ))}
         {footer}
@@ -1605,11 +1615,11 @@ function SettingsScreen({ nav, profile, entries = [], docs = [], binCount = 0 })
             </div>
           </div>
 
-          {/* The one unique surface (founder, 7 Aug): the ticket slot always
-              sells the NEXT tier up. Free sees the purple Jotla Plus ticket;
-              a Plus owner's "active" state moves into Settings > Membership,
-              and this slot turns into the Jotla AI ticket in the AI page's own
-              navy and gold. */}
+          {/* The ticket slot sells the NEXT tier up, and only one that can be
+              acted on (founder, 8 Aug night, refining the 7 Aug rule): Free
+              sees the purple Jotla Plus ticket; a Plus owner sees NOTHING until
+              Jotla AI actually exists (AI_AVAILABLE), when the navy AI ticket
+              takes the slot. A paid-up Menu carries no advertising. */}
           {!nav.plus ? (
             <button className="j-press" onClick={() => nav.go('unlock')} style={{ width: '100%', textAlign: 'left', border: 'none',
               cursor: 'pointer', background: PLUS_GRAD, borderRadius: 16, padding: 16, display: 'flex', alignItems: 'center',
@@ -1621,7 +1631,7 @@ function SettingsScreen({ nav, profile, entries = [], docs = [], binCount = 0 })
                   Get the best experience.</span>
               </span>
             </button>
-          ) : (
+          ) : AI_AVAILABLE ? (
             <button className="j-press" onClick={() => nav.go('unlock', { tier: 'ai' })} style={{ width: '100%', textAlign: 'left', border: 'none',
               cursor: 'pointer', background: PREMIUM_GRAD, borderRadius: 16, padding: 16, display: 'flex', alignItems: 'center',
               gap: 14, boxShadow: '0 10px 22px -8px rgba(20,41,74,0.5)', marginBottom: 14 }}>
@@ -1629,10 +1639,10 @@ function SettingsScreen({ nav, profile, entries = [], docs = [], binCount = 0 })
               <span style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 'calc(16.5px * var(--tscale, 1))', color: '#fff' }}>Jotla AI</span>
                 <span style={{ display: 'block', fontSize: 'calc(13px * var(--tscale, 1))', color: 'rgba(255,255,255,0.82)', marginTop: 2 }}>
-                  Arriving 2027. See what it will do.</span>
+                  Here now, with Plus included.</span>
               </span>
             </button>
-          )}
+          ) : null}
 
           <SectionLabel>Your record</SectionLabel>
           <MRow icon="cloudup" title="Backup and Restore" onClick={() => nav.go('backup')} />
@@ -1655,6 +1665,8 @@ function AppSettingsScreen({ nav }) {
   const [remCustom, setRemCustom] = useStateB(false);
   const themeLabel = nav.theme === 'system' ? 'System' : (nav.theme === 'dark' ? 'Dark' : 'Light');
   const sizeLabel = ({ '0.9': 'Small', '1': 'Standard', '1.12': 'Large', '1.25': 'Extra large' })[String(nav.tscale)] || 'Standard';
+  const faceLabel = ({ classic: 'Classic', cat: 'Cat', bear: 'Bear' })[nav.faceStyle || 'classic'] || 'Classic';
+  const faceCrown = <span data-crown-gate style={{ display: 'flex', flexShrink: 0 }}><Icon name="crown" size={18} color="var(--gold)" /></span>;
   const kids = (nav.profiles || []).map(p => p.name).join(', ');
   return (
     <div className="j-screen">
@@ -1666,22 +1678,12 @@ function AppSettingsScreen({ nav }) {
           <MRow iconEl={<ChildAvatar profile={(nav.profiles || [])[0]} size={26} />} title="Children" sub={kids}
             onClick={() => nav.go('children')} />
 
-          {/* An owned tier lives here as a quiet status row (founder, 7 Aug:
-              the Menu ticket only ever sells the next tier up) */}
-          {nav.plus && (
-            <>
-              <SectionLabel>Membership</SectionLabel>
-              {/* the crown keeps its one colour: gold, never row-blue */}
-              <MRow iconEl={<Icon name="crown" size={22} color="var(--gold)" style={{ flexShrink: 0 }} />}
-                title="Jotla Plus" sub="Everything unlocked on this phone"
-                trailing={<span className="j-pillbadge" style={{ background: 'var(--tint-green)', color: 'var(--green-ink)', border: '1px solid var(--green)' }}>Active</span>}
-                onClick={() => nav.go('unlock')} />
-            </>
-          )}
-
           <SectionLabel>Appearance</SectionLabel>
           <MRow icon="palette" title="Theme" sub={themeLabel} onClick={() => setSheet('theme')} />
           <MRow icon="textsize" title="Text size" sub={sizeLabel} onClick={() => setSheet('size')} />
+          {/* Mood style (founder, 8 Aug night): classic free, Cat and Bear are
+              Plus; on free the crowned looks open the paywall (crown gate) */}
+          <MRow iconEl={<Face mood="happy" size={24} />} title="Mood style" sub={faceLabel} onClick={() => setSheet('face')} />
 
           <SectionLabel>Privacy</SectionLabel>
           <MRow icon="lock" title="App lock" sub={nav.appLock && nav.appLock.on ? 'On' : 'Off'} onClick={() => nav.go('applock')} />
@@ -1694,6 +1696,20 @@ function AppSettingsScreen({ nav }) {
           <MRow icon="help" title="Help" onClick={() => nav.go('help')} />
           <MRow icon="info" title="About Jotla" onClick={() => nav.go('infoabout')} />
           <MRow icon="heart" title="Tell us what you think" onClick={() => window.location.assign(FEEDBACK_HREF)} />
+
+          {/* An owned tier lives at the VERY BOTTOM as a quiet status row
+              (founder, 8 Aug night: membership is a receipt, not a feature;
+              moved down from under Children). The crown stays: it is the
+              tier's emblem here, not a locked-feature marker. */}
+          {nav.plus && (
+            <>
+              <SectionLabel>Membership</SectionLabel>
+              <MRow iconEl={<Icon name="crown" size={22} color="var(--gold)" style={{ flexShrink: 0 }} />}
+                title="Jotla Plus" sub="Everything unlocked on this phone"
+                trailing={<span className="j-pillbadge" style={{ background: 'var(--tint-green)', color: 'var(--green-ink)', border: '1px solid var(--green)' }}>Active</span>}
+                onClick={() => nav.go('unlock')} />
+            </>
+          )}
 
           <FootNote>No account, and nothing leaves the phone. Jotla works without a login: everything stays on this device, and there is no cloud we can read.</FootNote>
         </div>
@@ -1713,6 +1729,16 @@ function AppSettingsScreen({ nav }) {
             { key: '1.25', label: 'Extra large', size: '19.5px' },
           ]}
           onPick={(k) => { nav.setTscale(parseFloat(k)); setSheet(null); }} />
+      )}
+      {sheet === 'face' && (
+        <RadioSheet title="Mood style" subtitle="The faces the whole record wears." onClose={() => setSheet(null)}
+          activeKey={nav.faceStyle || 'classic'}
+          options={[
+            { key: 'classic', label: 'Classic', iconEl: <Face mood="happy" size={26} styleName="classic" /> },
+            { key: 'cat', label: 'Cat', iconEl: <Face mood="happy" size={26} styleName="cat" />, trailing: nav.plus ? null : faceCrown },
+            { key: 'bear', label: 'Bear', iconEl: <Face mood="happy" size={26} styleName="bear" />, trailing: nav.plus ? null : faceCrown },
+          ]}
+          onPick={(k) => { if (k !== 'classic' && !nav.plus) { setSheet(null); nav.go('unlock'); return; } nav.setFaceStyle(k); setSheet(null); }} />
       )}
       {sheet === 'reminder' && (
         <RadioSheet title="Daily reminder" subtitle="A gentle nudge to write the day down."
@@ -2010,7 +2036,11 @@ function BackupScreen({ nav, profile, entries = [], docs = [] }) {
   const lastExport = meta && meta.lastExportAt
     ? 'Last export ' + J.fmtShort(meta.lastExportAt.slice(0, 10)) + ' ' + meta.lastExportAt.slice(0, 4)
     : 'Not exported yet';
-  const crown = <Icon name="crown" size={20} color="var(--gold)" style={{ flexShrink: 0 }} />;
+  // The crown gate marks what Plus WOULD unlock, so it exists only in the free
+  // app: an owner's rows carry no crowns (founder, 8 Aug night). The wrapper
+  // carries a data hook so the suite can count crowns per tier.
+  const crown = nav.plus ? null
+    : <span data-crown-gate style={{ display: 'flex', flexShrink: 0 }}><Icon name="crown" size={20} color="var(--gold)" /></span>;
   return (
     <div className="j-screen">
       <PushHeader title="Backup and Restore" onBack={() => nav.back()} />

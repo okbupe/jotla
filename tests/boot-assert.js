@@ -165,6 +165,7 @@ function ok(name, cond) {
   ok('backup page: export, restore, crowned clouds', bkText.includes('Export my data') && bkText.includes('Restore from an export')
     && bkText.includes('Back up to your Drive') && bkText.includes('Dropbox') && bkText.includes('Auto backup'));
   ok('honesty line: no servers', bkText.includes('Jotla has no servers and never sees your record'));
+  ok('the free backup rows wear six crowns (the crown gate)', (await page.locator('[data-crown-gate]').count()) === 6);
   ok('health line: not exported yet', bkText.includes('Not exported yet'));
   await page.getByText('Export my data', { exact: false }).first().click();
   await page.waitForTimeout(400);
@@ -683,6 +684,25 @@ function ok(name, cond) {
     && !menuNow.includes('Privacy, in plain words') && !menuNow.includes('Where your record is kept')
     && !menuNow.includes('How your data is kept'));
   ok('Menu carries the endorsement footer', menuNow.includes('Jotla by SEN Help'));
+
+  // Mood style (8 Aug night): the row sits in Appearance; the sheet offers
+  // Classic, Cat and Bear with the two Plus looks crown-gated on free, and a
+  // gated tap opens the Jotla Plus page, never a broken picker
+  await page4.locator('button[aria-label="Settings"]').first().click();
+  await page4.waitForTimeout(450);
+  ok('Settings carries the Mood style row', (await page4.locator('#root').innerText()).includes('Mood style'));
+  await page4.getByText('Mood style', { exact: true }).first().click();
+  await page4.waitForTimeout(350);
+  ok('the sheet offers three looks with two crowns on free',
+    (await page4.locator('[role="radio"]').count()) === 3 && (await page4.locator('.j-sheet [data-crown-gate]').count()) === 2);
+  await page4.locator('[role="radio"][aria-label="Cat"]').first().click();
+  await page4.waitForTimeout(600);
+  ok('a crowned look opens the Jotla Plus page on free', (await page4.locator('#root').innerText()).includes('Get Jotla Plus'));
+  await page4.locator('button[aria-label="Close"]').first().click();
+  await page4.waitForTimeout(450);
+  await page4.locator('button[aria-label="Back"]').first().click();
+  await page4.waitForTimeout(450);
+
   await page4.getByText('Backup and Restore', { exact: true }).first().click();
   await page4.waitForTimeout(500);
   ok('Backup keeps the live Restore action', (await page4.locator('#root').innerText()).includes('Restore from an export'));
@@ -784,17 +804,39 @@ function ok(name, cond) {
   await page5.getByText('Menu', { exact: true }).last().click();
   await page5.waitForTimeout(450);
   const menuPlus = await page5.locator('#root').innerText();
-  ok("a Plus owner's Menu ticket sells Jotla AI", menuPlus.includes('Jotla AI') && menuPlus.includes('Arriving 2027'));
+  // a paid-up Menu carries no advertising (8 Aug night): the AI ticket only
+  // returns when AI_AVAILABLE flips at the 2027 launch
+  ok("a paid-up Menu sells nothing until Jotla AI exists", !menuPlus.includes('Jotla AI') && !menuPlus.includes('Arriving 2027'));
   ok("the purple Plus ticket is gone from an owner's Menu", !menuPlus.includes('Jotla Plus'));
+  // an owner's Backup rows carry no crowns: the crown gate exists only in the
+  // free app (8 Aug night)
+  await page5.getByText('Backup and Restore', { exact: true }).first().click();
+  await page5.waitForTimeout(500);
+  ok("an owner's backup rows carry no crowns", (await page5.locator('[data-crown-gate]').count()) === 0);
+  await page5.locator('button[aria-label="Back"]').first().click();
+  await page5.waitForTimeout(400);
   await page5.locator('button[aria-label="Settings"]').first().click();
   await page5.waitForTimeout(450);
   const setPlus = await page5.locator('#root').innerText();
   ok('Settings carries the Membership row, marked Active', setPlus.includes('Membership') && setPlus.includes('Jotla Plus') && setPlus.includes('Active'));
+  ok('Membership sits at the very bottom of Settings (8 Aug night)',
+    setPlus.indexOf('Membership') > setPlus.indexOf('Tell us what you think'));
+  // a Plus owner picks a look freely: no crowns, it lands on every face at
+  // once, and it persists in prefs
+  await page5.getByText('Mood style', { exact: true }).first().click();
+  await page5.waitForTimeout(350);
+  ok("no crowns in an owner's Mood style sheet", (await page5.locator('.j-sheet [data-crown-gate]').count()) === 0);
+  await page5.locator('[role="radio"][aria-label="Cat"]').first().click();
+  await page5.waitForTimeout(400);
+  ok('the cat look lands on the faces and persists',
+    (await page5.locator('svg[data-face-style="cat"]').count()) > 0
+    && (await page5.evaluate(() => (JSON.parse(localStorage.getItem('jotla_prefs_v2') || '{}').faceStyle) === 'cat')));
   await page5.getByText('Jotla Plus', { exact: true }).first().click();
   await page5.waitForTimeout(600);
   await page5.locator('button[aria-label="Slide 4"]').first().click();
   await page5.waitForTimeout(350);
   ok('the paywall carousel lists Photos and Videos on Notes', (await page5.locator('#root').innerText()).includes('Photos and Videos on Notes'));
+  ok('the Plus carousel carries six slides (Mood Styles joined 8 Aug)', (await page5.locator('button[aria-label^="Slide "]').count()) === 6);
   // Finger swipe (7 Aug): a dispatched touch drag must advance the rail. This
   // exact dispatch FAILED against the state-closure handlers and passes against
   // the ref-based ones, so the probe is empirically proven able to fail. The

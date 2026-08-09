@@ -26,7 +26,13 @@ const FACE_LINE = '#4A3D1E';   // soft dark brown features
 const FACE_STROKE = 6;
 
 // mood/emotion keys: happy, ok, sad, worried, angry  (good->happy, hard->sad aliases)
-function Face({ mood = 'happy', size = 64, bg = 'transparent' }) {
+// MOOD STYLES (founder, 8 Aug night): 'classic' is the free look; 'cat' and
+// 'bear' are Plus looks. Same five moods, same warm palette, shape-only
+// additions (ears, whiskers) so every proven screen and both themes hold.
+// The active look rides window.JOTLA_FACE_STYLE (set by the shell from prefs);
+// the styleName prop overrides it so the Settings picker can preview each look.
+function Face({ mood = 'happy', size = 64, bg = 'transparent', styleName }) {
+  const look = styleName || window.JOTLA_FACE_STYLE || 'classic';
   const m = mood === 'good' ? 'happy' : mood === 'hard' ? 'sad' : mood;
   const eyeY = 44;
   const eyebrows = {
@@ -48,9 +54,16 @@ function Face({ mood = 'happy', size = 64, bg = 'transparent' }) {
   };
   const eyeR = m === 'worried' ? 5 : 6;
   return (
-    <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true" style={{ display: 'block' }}>
+    <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true" data-face-style={look} style={{ display: 'block' }}>
       {bg !== 'transparent' && <circle cx="50" cy="50" r="50" fill={bg} />}
+      {/* ears sit behind the head so their bases stay clean at every size */}
+      {look === 'cat' && <g fill={FACE_FILL}><path d="M20 34 L28 6 L46 20 Z" /><path d="M80 34 L72 6 L54 20 Z" /></g>}
+      {look === 'bear' && <g fill={FACE_FILL}><circle cx="24" cy="18" r="13" /><circle cx="76" cy="18" r="13" /></g>}
       <circle cx="50" cy="50" r="44" fill={FACE_FILL} />
+      {look === 'cat' && <g stroke={FACE_LINE} strokeWidth="2.5" strokeLinecap="round">
+        <line x1="6" y1="50" x2="24" y2="49" /><line x1="6" y1="58" x2="24" y2="56" />
+        <line x1="94" y1="50" x2="76" y2="49" /><line x1="94" y1="58" x2="76" y2="56" />
+      </g>}
       {eyebrows[m] || null}
       <circle cx="36" cy={eyeY} r={eyeR} fill={FACE_LINE} />
       <circle cx="64" cy={eyeY} r={eyeR} fill={FACE_LINE} />

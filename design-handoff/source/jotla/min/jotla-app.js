@@ -1349,6 +1349,11 @@ function App({
   // Dynamic type: 1 / 1.12 / 1.25, applied as --tscale on the root so every
   // calc()-based font size in the app follows the one dial (build 1.8.0).
   const [tscale, setTscale] = useStateApp(prefs0.tscale || 1);
+  // Mood style (founder, 8 Aug night): classic is free; Cat and Bear are Plus.
+  // The Face component reads the global at render, so one state change reskins
+  // every face in the app at once.
+  const [faceStyle, setFaceStyle] = useStateApp(prefs0.faceStyle || 'classic');
+  window.JOTLA_FACE_STYLE = faceStyle;
   const [fabOpen, setFabOpen] = useStateApp(false); // the + speed dial (8 Aug)
   // Double tap on the + goes straight to Quick Log, the most-used capture
   // (founder, 8 Aug night): the first tap opens the dial as normal, a second
@@ -1430,6 +1435,7 @@ function App({
       theme: themeMode,
       dark,
       tscale,
+      faceStyle,
       profileId,
       plus,
       childCfg,
@@ -1439,7 +1445,7 @@ function App({
       appLock,
       reminder
     });
-  }, [themeMode, dark, tscale, profileId, plus, childCfg, customProfiles, deletedIds, backupReminderMonth, appLock, reminder]);
+  }, [themeMode, dark, tscale, faceStyle, profileId, plus, childCfg, customProfiles, deletedIds, backupReminderMonth, appLock, reminder]);
 
   // The chrome outside the app root follows the theme too: the safe-area strip,
   // the desktop frame ground and the browser UI colour must all sit on the
@@ -1738,6 +1744,8 @@ function App({
     pickChild: id => setProfileId(id),
     tscale,
     setTscale,
+    faceStyle,
+    setFaceStyle,
     plus,
     buyPlus: () => setPlus(true),
     dropPlus: () => setPlus(false),

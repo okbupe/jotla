@@ -1967,6 +1967,10 @@ const TERM_PRICE = '£49';
 const TERM_PERIOD = 'for 6 months';
 const AI_PRICE = '£149';
 const AI_TERM_PRICE = '£89';
+// Jotla AI does not exist yet. While false, a Plus owner's Menu sells NOTHING
+// (founder, 8 Aug night: no banner once Plus is paid for); flipping this true
+// when the tier ships brings the navy AI ticket back into that slot.
+const AI_AVAILABLE = false;
 
 // Free is a calm, flat darker blue. Plus has its own purple identity. The premium
 // navy + gold look (and the sparkle) dresses Jotla AI and the Settings upsell card.
@@ -2004,6 +2008,14 @@ const PLUS_SLIDES = [{
   t: 'Dysregulation Mode',
   c: 'Five gentle questions in the hard moment, so nothing important is lost.',
   img: 'art/plus-5.jpg'
+},
+// Slide 6 (founder, 8 Aug night): Mood Styles. art/plus-6.jpg renders the
+// grey slot until Bupe generates it on Higgsfield (prompt handed over with
+// the build; same nano_banana_2 2K 16:9 vector recipe as slides 1-5).
+{
+  t: 'Mood Styles',
+  c: 'Swap the smileys for cats or bears, everywhere a face shows.',
+  img: 'art/plus-6.jpg'
 }];
 const AI_SLIDES = [{
   t: 'EHCP and SEND deadline tracker',
@@ -3109,7 +3121,7 @@ function RadioSheet({
       borderRadius: '50%',
       background: 'var(--blue)'
     }
-  })), /*#__PURE__*/React.createElement("span", {
+  })), o.iconEl || null, /*#__PURE__*/React.createElement("span", {
     style: {
       flex: 1
     }
@@ -3128,7 +3140,7 @@ function RadioSheet({
       color: 'var(--muted)',
       marginTop: 1
     }
-  }, o.sub)))), footer));
+  }, o.sub)), o.trailing || null)), footer));
 }
 
 // A quiet footnote line with a small leading icon (the honesty line pattern).
@@ -3266,7 +3278,7 @@ function SettingsScreen({
       color: 'rgba(255,255,255,0.82)',
       marginTop: 2
     }
-  }, "Get the best experience."))) : /*#__PURE__*/React.createElement("button", {
+  }, "Get the best experience."))) : AI_AVAILABLE ? /*#__PURE__*/React.createElement("button", {
     className: "j-press",
     onClick: () => nav.go('unlock', {
       tier: 'ai'
@@ -3312,7 +3324,7 @@ function SettingsScreen({
       color: 'rgba(255,255,255,0.82)',
       marginTop: 2
     }
-  }, "Arriving 2027. See what it will do."))), /*#__PURE__*/React.createElement(SectionLabel, null, "Your record"), /*#__PURE__*/React.createElement(MRow, {
+  }, "Here now, with Plus included."))) : null, /*#__PURE__*/React.createElement(SectionLabel, null, "Your record"), /*#__PURE__*/React.createElement(MRow, {
     icon: "cloudup",
     title: "Backup and Restore",
     onClick: () => nav.go('backup')
@@ -3353,6 +3365,22 @@ function AppSettingsScreen({
     '1.12': 'Large',
     '1.25': 'Extra large'
   }[String(nav.tscale)] || 'Standard';
+  const faceLabel = {
+    classic: 'Classic',
+    cat: 'Cat',
+    bear: 'Bear'
+  }[nav.faceStyle || 'classic'] || 'Classic';
+  const faceCrown = /*#__PURE__*/React.createElement("span", {
+    "data-crown-gate": true,
+    style: {
+      display: 'flex',
+      flexShrink: 0
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "crown",
+    size: 18,
+    color: "var(--gold)"
+  }));
   const kids = (nav.profiles || []).map(p => p.name).join(', ');
   return /*#__PURE__*/React.createElement("div", {
     className: "j-screen"
@@ -3375,27 +3403,7 @@ function AppSettingsScreen({
     title: "Children",
     sub: kids,
     onClick: () => nav.go('children')
-  }), nav.plus && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SectionLabel, null, "Membership"), /*#__PURE__*/React.createElement(MRow, {
-    iconEl: /*#__PURE__*/React.createElement(Icon, {
-      name: "crown",
-      size: 22,
-      color: "var(--gold)",
-      style: {
-        flexShrink: 0
-      }
-    }),
-    title: "Jotla Plus",
-    sub: "Everything unlocked on this phone",
-    trailing: /*#__PURE__*/React.createElement("span", {
-      className: "j-pillbadge",
-      style: {
-        background: 'var(--tint-green)',
-        color: 'var(--green-ink)',
-        border: '1px solid var(--green)'
-      }
-    }, "Active"),
-    onClick: () => nav.go('unlock')
-  })), /*#__PURE__*/React.createElement(SectionLabel, null, "Appearance"), /*#__PURE__*/React.createElement(MRow, {
+  }), /*#__PURE__*/React.createElement(SectionLabel, null, "Appearance"), /*#__PURE__*/React.createElement(MRow, {
     icon: "palette",
     title: "Theme",
     sub: themeLabel,
@@ -3405,6 +3413,14 @@ function AppSettingsScreen({
     title: "Text size",
     sub: sizeLabel,
     onClick: () => setSheet('size')
+  }), /*#__PURE__*/React.createElement(MRow, {
+    iconEl: /*#__PURE__*/React.createElement(Face, {
+      mood: "happy",
+      size: 24
+    }),
+    title: "Mood style",
+    sub: faceLabel,
+    onClick: () => setSheet('face')
   }), /*#__PURE__*/React.createElement(SectionLabel, null, "Privacy"), /*#__PURE__*/React.createElement(MRow, {
     icon: "lock",
     title: "App lock",
@@ -3434,7 +3450,27 @@ function AppSettingsScreen({
     icon: "heart",
     title: "Tell us what you think",
     onClick: () => window.location.assign(FEEDBACK_HREF)
-  }), /*#__PURE__*/React.createElement(FootNote, null, "No account, and nothing leaves the phone. Jotla works without a login: everything stays on this device, and there is no cloud we can read."))), sheet === 'theme' && /*#__PURE__*/React.createElement(RadioSheet, {
+  }), nav.plus && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SectionLabel, null, "Membership"), /*#__PURE__*/React.createElement(MRow, {
+    iconEl: /*#__PURE__*/React.createElement(Icon, {
+      name: "crown",
+      size: 22,
+      color: "var(--gold)",
+      style: {
+        flexShrink: 0
+      }
+    }),
+    title: "Jotla Plus",
+    sub: "Everything unlocked on this phone",
+    trailing: /*#__PURE__*/React.createElement("span", {
+      className: "j-pillbadge",
+      style: {
+        background: 'var(--tint-green)',
+        color: 'var(--green-ink)',
+        border: '1px solid var(--green)'
+      }
+    }, "Active"),
+    onClick: () => nav.go('unlock')
+  })), /*#__PURE__*/React.createElement(FootNote, null, "No account, and nothing leaves the phone. Jotla works without a login: everything stays on this device, and there is no cloud we can read."))), sheet === 'theme' && /*#__PURE__*/React.createElement(RadioSheet, {
     title: "Theme",
     activeKey: nav.theme,
     onClose: () => setSheet(null),
@@ -3476,6 +3512,47 @@ function AppSettingsScreen({
     }],
     onPick: k => {
       nav.setTscale(parseFloat(k));
+      setSheet(null);
+    }
+  }), sheet === 'face' && /*#__PURE__*/React.createElement(RadioSheet, {
+    title: "Mood style",
+    subtitle: "The faces the whole record wears.",
+    onClose: () => setSheet(null),
+    activeKey: nav.faceStyle || 'classic',
+    options: [{
+      key: 'classic',
+      label: 'Classic',
+      iconEl: /*#__PURE__*/React.createElement(Face, {
+        mood: "happy",
+        size: 26,
+        styleName: "classic"
+      })
+    }, {
+      key: 'cat',
+      label: 'Cat',
+      iconEl: /*#__PURE__*/React.createElement(Face, {
+        mood: "happy",
+        size: 26,
+        styleName: "cat"
+      }),
+      trailing: nav.plus ? null : faceCrown
+    }, {
+      key: 'bear',
+      label: 'Bear',
+      iconEl: /*#__PURE__*/React.createElement(Face, {
+        mood: "happy",
+        size: 26,
+        styleName: "bear"
+      }),
+      trailing: nav.plus ? null : faceCrown
+    }],
+    onPick: k => {
+      if (k !== 'classic' && !nav.plus) {
+        setSheet(null);
+        nav.go('unlock');
+        return;
+      }
+      nav.setFaceStyle(k);
       setSheet(null);
     }
   }), sheet === 'reminder' && /*#__PURE__*/React.createElement(RadioSheet, {
@@ -4198,14 +4275,20 @@ function BackupScreen({
     r.readAsText(f);
   };
   const lastExport = meta && meta.lastExportAt ? 'Last export ' + J.fmtShort(meta.lastExportAt.slice(0, 10)) + ' ' + meta.lastExportAt.slice(0, 4) : 'Not exported yet';
-  const crown = /*#__PURE__*/React.createElement(Icon, {
-    name: "crown",
-    size: 20,
-    color: "var(--gold)",
+  // The crown gate marks what Plus WOULD unlock, so it exists only in the free
+  // app: an owner's rows carry no crowns (founder, 8 Aug night). The wrapper
+  // carries a data hook so the suite can count crowns per tier.
+  const crown = nav.plus ? null : /*#__PURE__*/React.createElement("span", {
+    "data-crown-gate": true,
     style: {
+      display: 'flex',
       flexShrink: 0
     }
-  });
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "crown",
+    size: 20,
+    color: "var(--gold)"
+  }));
   return /*#__PURE__*/React.createElement("div", {
     className: "j-screen"
   }, /*#__PURE__*/React.createElement(PushHeader, {

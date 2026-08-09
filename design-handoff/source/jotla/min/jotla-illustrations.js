@@ -26,11 +26,18 @@ const FACE_LINE = '#4A3D1E'; // soft dark brown features
 const FACE_STROKE = 6;
 
 // mood/emotion keys: happy, ok, sad, worried, angry  (good->happy, hard->sad aliases)
+// MOOD STYLES (founder, 8 Aug night): 'classic' is the free look; 'cat' and
+// 'bear' are Plus looks. Same five moods, same warm palette, shape-only
+// additions (ears, whiskers) so every proven screen and both themes hold.
+// The active look rides window.JOTLA_FACE_STYLE (set by the shell from prefs);
+// the styleName prop overrides it so the Settings picker can preview each look.
 function Face({
   mood = 'happy',
   size = 64,
-  bg = 'transparent'
+  bg = 'transparent',
+  styleName
 }) {
+  const look = styleName || window.JOTLA_FACE_STYLE || 'classic';
   const m = mood === 'good' ? 'happy' : mood === 'hard' ? 'sad' : mood;
   const eyeY = 44;
   const eyebrows = {
@@ -88,6 +95,7 @@ function Face({
     height: size,
     viewBox: "0 0 100 100",
     "aria-hidden": "true",
+    "data-face-style": look,
     style: {
       display: 'block'
     }
@@ -96,12 +104,52 @@ function Face({
     cy: "50",
     r: "50",
     fill: bg
+  }), look === 'cat' && /*#__PURE__*/React.createElement("g", {
+    fill: FACE_FILL
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M20 34 L28 6 L46 20 Z"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M80 34 L72 6 L54 20 Z"
+  })), look === 'bear' && /*#__PURE__*/React.createElement("g", {
+    fill: FACE_FILL
+  }, /*#__PURE__*/React.createElement("circle", {
+    cx: "24",
+    cy: "18",
+    r: "13"
   }), /*#__PURE__*/React.createElement("circle", {
+    cx: "76",
+    cy: "18",
+    r: "13"
+  })), /*#__PURE__*/React.createElement("circle", {
     cx: "50",
     cy: "50",
     r: "44",
     fill: FACE_FILL
-  }), eyebrows[m] || null, /*#__PURE__*/React.createElement("circle", {
+  }), look === 'cat' && /*#__PURE__*/React.createElement("g", {
+    stroke: FACE_LINE,
+    strokeWidth: "2.5",
+    strokeLinecap: "round"
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: "6",
+    y1: "50",
+    x2: "24",
+    y2: "49"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "6",
+    y1: "58",
+    x2: "24",
+    y2: "56"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "94",
+    y1: "50",
+    x2: "76",
+    y2: "49"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "94",
+    y1: "58",
+    x2: "76",
+    y2: "56"
+  })), eyebrows[m] || null, /*#__PURE__*/React.createElement("circle", {
     cx: "36",
     cy: eyeY,
     r: eyeR,
@@ -2579,7 +2627,7 @@ function StoryIllo({
     /* Tour 4: Dysregulation: a parent sits down on the floor beside their child,
        close and steady, one arm around them, the hard moment already passing and
        both of them calm. The three ordered steps sit beside them.
-         REDRAWN 17 Jul, and it is a concept change, not a restyle. This scene was
+        REDRAWN 17 Jul, and it is a concept change, not a restyle. This scene was
        "At the gate": a child waving at a railed school gate with a flag. Slide 4
        was renamed "Dysregulation", so the art contradicted its own copy, which now
        reads "When a hard moment happens, Jotla asks you six simple questions...
@@ -2587,7 +2635,7 @@ function StoryIllo({
        arrival next to crisis copy. The generated image deck already fixed this on
        the web; the SVG deck had not, and the SVG deck is what native renders and
        what the web falls back to whenever STORY_IMAGES is emptied.
-         Held to the imagery locks: never a crying, distressed or mid-meltdown child.
+        Held to the imagery locks: never a crying, distressed or mid-meltdown child.
        The feeling is steadiness and repair, and the moment has already passed. The
        third step's dot is green because the third question is "what helped".
        Kept identical to the native port (illustrations.tsx). */
