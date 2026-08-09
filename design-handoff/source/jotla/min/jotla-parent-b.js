@@ -1355,7 +1355,6 @@ function AddDocScreen({
     className: "j-screen"
   }, /*#__PURE__*/React.createElement(PushHeader, {
     title: "Add a document",
-    subtitle: "A few questions so it is easy to find later.",
     onBack: () => nav.back()
   }), /*#__PURE__*/React.createElement("div", {
     className: "j-scroll j-fade"
@@ -2009,11 +2008,10 @@ const PLUS_SLIDES = [{
   c: 'Five gentle questions in the hard moment, so nothing important is lost.',
   img: 'art/plus-5.jpg'
 },
-// Slide 6 (founder, 8 Aug night): Mood Styles. art/plus-6.jpg renders the
-// grey slot until Bupe generates it on Higgsfield (prompt handed over with
-// the build; same nano_banana_2 2K 16:9 vector recipe as slides 1-5).
+// Slide 6 (founder, 8-9 Aug): Emojis. Bupe's Higgsfield render (landed 9 Aug,
+// nano_banana_2, same vector recipe as slides 1-5).
 {
-  t: 'Mood Styles',
+  t: 'Emojis',
   c: 'Swap the faces for the sticker look, everywhere a face shows.',
   img: 'art/plus-6.jpg'
 }];
@@ -3402,7 +3400,7 @@ function AppSettingsScreen({
       mood: "happy",
       size: 24
     }),
-    title: "Mood style",
+    title: "Emojis",
     sub: FACE_PACK_LABEL(nav.faceStyle),
     onClick: () => nav.go('moodstyle')
   }), /*#__PURE__*/React.createElement(SectionLabel, null, "Privacy"), /*#__PURE__*/React.createElement(MRow, {
@@ -3566,8 +3564,7 @@ function MoodStyleScreen({
   return /*#__PURE__*/React.createElement("div", {
     className: "j-screen"
   }, /*#__PURE__*/React.createElement(PushHeader, {
-    title: "Mood style",
-    subtitle: "The faces the whole record wears.",
+    title: "Emojis",
     onBack: () => nav.back()
   }), /*#__PURE__*/React.createElement("div", {
     className: "j-scroll j-fade"

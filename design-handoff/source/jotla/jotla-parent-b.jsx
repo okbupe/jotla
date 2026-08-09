@@ -718,7 +718,7 @@ function AddDocScreen({ nav }) {
 
   return (
     <div className="j-screen">
-      <PushHeader title="Add a document" subtitle="A few questions so it is easy to find later." onBack={() => nav.back()} />
+      <PushHeader title="Add a document" onBack={() => nav.back()} />
       <div className="j-scroll j-fade">
         <div className="j-pad" style={{ paddingTop: 2, paddingBottom: 120, display: 'flex', flexDirection: 'column', gap: 22 }}>
 
@@ -1060,10 +1060,9 @@ const PLUS_SLIDES = [
   { t: 'Family Sync', c: "The record on every grown-up's phone. One of you logs it, both of you have it.", img: 'art/plus-3.jpg' },
   { t: 'Photos and Videos on Notes', c: 'Add the photo or the video to the note, so the day is shown as well as told.', img: 'art/plus-4.jpg' },
   { t: 'Dysregulation Mode', c: 'Five gentle questions in the hard moment, so nothing important is lost.', img: 'art/plus-5.jpg' },
-  // Slide 6 (founder, 8 Aug night): Mood Styles. art/plus-6.jpg renders the
-  // grey slot until Bupe generates it on Higgsfield (prompt handed over with
-  // the build; same nano_banana_2 2K 16:9 vector recipe as slides 1-5).
-  { t: 'Mood Styles', c: 'Swap the faces for the sticker look, everywhere a face shows.', img: 'art/plus-6.jpg' },
+  // Slide 6 (founder, 8-9 Aug): Emojis. Bupe's Higgsfield render (landed 9 Aug,
+  // nano_banana_2, same vector recipe as slides 1-5).
+  { t: 'Emojis', c: 'Swap the faces for the sticker look, everywhere a face shows.', img: 'art/plus-6.jpg' },
 ];
 const AI_SLIDES = [
   { t: 'EHCP and SEND deadline tracker', c: 'Every deadline tracked, with what to do about a gap.', img: 'art/ai-1.jpg' },
@@ -1680,9 +1679,9 @@ function AppSettingsScreen({ nav }) {
           <SectionLabel>Appearance</SectionLabel>
           <MRow icon="palette" title="Theme" sub={themeLabel} onClick={() => setSheet('theme')} />
           <MRow icon="textsize" title="Text size" sub={sizeLabel} onClick={() => setSheet('size')} />
-          {/* Mood style (founder, 9 Aug v2): a full page of real emoji packs,
-              Classic free, the rest Plus (crown gate on the page itself) */}
-          <MRow iconEl={<Face mood="happy" size={24} />} title="Mood style" sub={FACE_PACK_LABEL(nav.faceStyle)} onClick={() => nav.go('moodstyle')} />
+          {/* Emojis (founder, 9 Aug): a full page of real emoji packs, Bold
+              free, Sticker on Plus (crown gate on the page itself) */}
+          <MRow iconEl={<Face mood="happy" size={24} />} title="Emojis" sub={FACE_PACK_LABEL(nav.faceStyle)} onClick={() => nav.go('moodstyle')} />
 
           <SectionLabel>Privacy</SectionLabel>
           <MRow icon="lock" title="App lock" sub={nav.appLock && nav.appLock.on ? 'On' : 'Off'} onClick={() => nav.go('applock')} />
@@ -1762,7 +1761,9 @@ function MoodStyleScreen({ nav }) {
   const moods = ['happy', 'ok', 'sad', 'worried', 'angry'];
   return (
     <div className="j-screen">
-      <PushHeader title="Mood style" subtitle="The faces the whole record wears." onBack={() => nav.back()} />
+      {/* named Emojis, no subtitle (founder, 9 Aug: "dont call it Mood style,
+          call it Emojis. remove that grey comment") */}
+      <PushHeader title="Emojis" onBack={() => nav.back()} />
       <div className="j-scroll j-fade">
         <div className="j-pad" style={{ paddingTop: 2, paddingBottom: 40 }}>
           {FACE_PACK_ORDER.map(k => {

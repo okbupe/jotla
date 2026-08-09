@@ -729,7 +729,6 @@ function QuickLogScreen({
     className: "j-screen"
   }, /*#__PURE__*/React.createElement(PushHeader, {
     title: "Quick log",
-    subtitle: "Log the whole day, one moment at a time",
     onBack: () => nav.back()
   }), /*#__PURE__*/React.createElement("div", {
     className: "j-scroll j-fade"
@@ -1264,7 +1263,6 @@ function HandoverScreen({
     }
   }, /*#__PURE__*/React.createElement(PushHeader, {
     title: "Dysregulation",
-    subtitle: "One calm screen, minimal typing.",
     onBack: () => nav.back()
   }), /*#__PURE__*/React.createElement("div", {
     className: "j-scroll j-fade"

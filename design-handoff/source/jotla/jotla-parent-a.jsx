@@ -350,8 +350,9 @@ function QuickLogScreen({ nav, today, view, profile }) {
   return (
     <div className="j-screen">
       {/* back chevron, not an X (founder, 8 Aug night): the capture screens
-          match Settings and Backup, one consistent way out, top left */}
-      <PushHeader title="Quick log" subtitle="Log the whole day, one moment at a time" onBack={() => nav.back()} />
+          match Settings and Backup, one consistent way out, top left. The grey
+          subtitle came off 9 Aug (founder): the title carries the screen. */}
+      <PushHeader title="Quick log" onBack={() => nav.back()} />
       <div className="j-scroll j-fade">
         <div className="j-pad" style={{ paddingBottom: 130, paddingTop: 6 }}>
           {/* the three questions side by side, each a card of question + answer */}
@@ -614,7 +615,7 @@ function HandoverScreen({ nav, today, profile }) {
 
   return (
     <div className="j-screen" style={{ background: 'var(--bg)' }}>
-      <PushHeader title="Dysregulation" subtitle="One calm screen, minimal typing." onBack={() => nav.back()} />
+      <PushHeader title="Dysregulation" onBack={() => nav.back()} />
       <div className="j-scroll j-fade">
         <div className="j-pad" style={{ paddingBottom: 150, paddingTop: 2, display: 'flex', flexDirection: 'column', gap: 20 }}>
           {/* auto-attached context + the in-the-moment tips */}

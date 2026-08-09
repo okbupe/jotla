@@ -64,7 +64,10 @@ function ok(name, cond) {
   await page.waitForTimeout(300);
   await page.getByText('Quick Log', { exact: true }).first().click();
   await page.waitForTimeout(550);
-  ok('Quick Log opens from the dial', (await page.locator('#root').innerText()).includes('Log the whole day, one moment at a time'));
+  ok('Quick Log opens from the dial, title only, no grey subtitle', await page.evaluate(() => {
+    const t = document.querySelector('#root').innerText;
+    return t.includes('Quick log') && t.includes('Saving to') && !t.includes('Log the whole day, one moment at a time');
+  }));
   // the capture screens wear the Settings-style back chevron, never an X
   // (founder, 8 Aug night): asserted for all three, here and below
   ok('Quick log wears the back chevron, not an X', (await page.locator('button[aria-label="Back"]').count()) === 1
@@ -87,7 +90,10 @@ function ok(name, cond) {
   await page.waitForTimeout(90);
   await page.locator('button[aria-label="Close"]').first().click();
   await page.waitForTimeout(600);
-  ok('a double tap on the + goes straight to Quick Log', (await page.locator('#root').innerText()).includes('Log the whole day, one moment at a time'));
+  ok('a double tap on the + goes straight to Quick Log', await page.evaluate(() => {
+    const t = document.querySelector('#root').innerText;
+    return t.includes('Quick log') && t.includes('Saving to');
+  }));
   await page.locator('button[aria-label="Back"]').first().click();
   await page.waitForTimeout(450);
   ok('the double-tap tip is gone forever once learned', (await page.locator('.j-fabtip').count()) === 0
@@ -685,16 +691,18 @@ function ok(name, cond) {
     && !menuNow.includes('How your data is kept'));
   ok('Menu carries the endorsement footer', menuNow.includes('Jotla by SEN Help'));
 
-  // Mood style v2 (9 Aug): a FULL PAGE of real emoji packs, every pack
-  // previewing its five moods; on free every pack but Classic wears the crown
-  // and a gated tap opens the Jotla Plus page, never a broken picker
+  // Emojis (9 Aug, renamed from Mood style the same day): a FULL PAGE of real
+  // emoji packs, each previewing its five moods; on free the non-default pack
+  // wears the crown and a gated tap opens the Jotla Plus page
   await page4.locator('button[aria-label="Settings"]').first().click();
   await page4.waitForTimeout(450);
-  ok('Settings carries the Mood style row', (await page4.locator('#root').innerText()).includes('Mood style'));
-  await page4.getByText('Mood style', { exact: true }).first().click();
+  const setFree = await page4.locator('#root').innerText();
+  ok('Settings carries the Emojis row, and Mood style is gone', setFree.includes('Emojis') && !setFree.includes('Mood style'));
+  await page4.getByText('Emojis', { exact: true }).first().click();
   await page4.waitForTimeout(600);
   const moodPage = await page4.locator('#root').innerText();
-  ok('Mood style lists exactly Bold and Sticker (the v2 roster is gone)',
+  ok('the Emojis page drops the grey subtitle', !moodPage.includes('The faces the whole record wears'));
+  ok('the Emojis page lists exactly Bold and Sticker (the v2 roster is gone)',
     moodPage.includes('Bold') && moodPage.includes('Sticker')
     && !moodPage.includes('Classic') && !moodPage.includes('Bubble') && !moodPage.includes('Outline') && !moodPage.includes('Soft'));
   ok('both packs preview their five moods (10 faces on the page)', (await page4.locator('[data-face-style]').count()) === 10);
@@ -780,8 +788,12 @@ function ok(name, cond) {
   await page5.waitForTimeout(350);
   await page5.locator('.j-dial-opt:has-text("Dysregulation")').first().click();
   await page5.waitForTimeout(500);
-  ok('Plus Dysregulation dials straight into the guided capture',
-    (await page5.locator('#root').innerText()).includes('One calm screen, minimal typing.'));
+  ok('Plus Dysregulation dials straight into the guided capture (not the free explainer)',
+    await page5.evaluate(() => {
+      const t = document.querySelector('#root').innerText;
+      return t.includes('Dysregulation') && !t.includes('Just log it quickly instead')
+        && !t.includes('One calm screen, minimal typing.');
+    }));
   await page5.locator('button[aria-label="Back"]').first().click();
   await page5.waitForTimeout(450);
   // negative control for suite 8: the same demo record, on Plus, DOES carry the
@@ -833,9 +845,9 @@ function ok(name, cond) {
     setPlus.indexOf('Membership') > setPlus.indexOf('Tell us what you think'));
   // a Plus owner picks a pack freely on the page: no crowns, the tick moves,
   // and after backing out the pack has landed app-wide and persisted
-  await page5.getByText('Mood style', { exact: true }).first().click();
+  await page5.getByText('Emojis', { exact: true }).first().click();
   await page5.waitForTimeout(600);
-  ok("no crowns on an owner's Mood style page", (await page5.locator('[data-crown-gate]').count()) === 0);
+  ok("no crowns on an owner's Emojis page", (await page5.locator('[data-crown-gate]').count()) === 0);
   await page5.locator('[role="radio"][aria-label="Sticker"]').first().click();
   await page5.waitForTimeout(400);
   ok('picking Sticker moves the tick to it', await page5.evaluate(() => {
@@ -852,7 +864,7 @@ function ok(name, cond) {
   await page5.locator('button[aria-label="Slide 4"]').first().click();
   await page5.waitForTimeout(350);
   ok('the paywall carousel lists Photos and Videos on Notes', (await page5.locator('#root').innerText()).includes('Photos and Videos on Notes'));
-  ok('the Plus carousel carries six slides (Mood Styles joined 8 Aug)', (await page5.locator('button[aria-label^="Slide "]').count()) === 6);
+  ok('the Plus carousel carries six slides (Emojis joined 8 Aug)', (await page5.locator('button[aria-label^="Slide "]').count()) === 6);
   // Finger swipe (7 Aug): a dispatched touch drag must advance the rail. This
   // exact dispatch FAILED against the state-closure handlers and passes against
   // the ref-based ones, so the probe is empirically proven able to fail. The
