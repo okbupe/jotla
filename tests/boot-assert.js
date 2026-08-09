@@ -35,26 +35,34 @@ function ok(name, cond) {
     && await page.getByText('Menu', { exact: true }).first().isVisible());
   ok('no uncaught page errors on boot', errors.length === 0);
 
-  // the check-in tiles' sub-lines wear a muted shade of their OWN hue, not the
-  // neutral grey (founder, 8 Aug: grey clashed on the tinted panels), and hold
-  // at least 4.5:1 against the tile they sit on. Two different hues proves the
-  // grey is gone: grey made both subs identical.
-  const tileSubs = await page.evaluate(() => {
-    const lum = (c) => { const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]); };
-    const parse = s => (s.match(/[\d.]+/g) || []).map(Number);
-    const pageBg = parse(getComputedStyle(document.querySelector('.jotla-root')).backgroundColor);
-    return [...document.querySelectorAll('.j-ctile')].map(t => {
-      const sub = t.querySelector('span span:last-child');
-      const c = parse(getComputedStyle(sub).color).slice(0, 3);
-      const raw = parse(getComputedStyle(t).backgroundColor);
-      const a = raw.length === 4 ? raw[3] : 1;
-      const bg = [0, 1, 2].map(i => raw[i] * a + pageBg[i] * (1 - a));
-      const L1 = lum(c), L2 = lum(bg);
-      return { color: c.join(','), ratio: Math.round(((Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05)) * 100) / 100 };
-    });
-  });
-  ok('tile sub-lines carry two different hues, not one shared grey', tileSubs.length === 2 && tileSubs[0].color !== tileSubs[1].color);
-  ok('tile sub-lines hold >=4.5:1 on their tints (' + tileSubs.map(t => t.ratio).join(' / ') + ')', tileSubs.every(t => t.ratio >= 4.5));
+  // the + is the ONE capture door (founder, 8 Aug evening, the Drive-style
+  // speed dial): pressing it blurs the app behind a scrim, morphs the + into
+  // an x, and staggers in the four capture routes; a scrim tap closes it.
+  // Today's check-in tiles and Documents' dashed add-row retired into it.
+  await page.locator('button[aria-label="Add"]').first().click();
+  await page.waitForTimeout(350);
+  const dialLabels = await page.evaluate(() => [...document.querySelectorAll('.j-dial-opt')].map(b => b.innerText.trim()));
+  ok('the + opens the four capture routes, Quick Log nearest the thumb',
+    dialLabels.join('|') === "Document|Dysregulation|Child's Day|Quick Log");
+  ok('the scrim blurs the whole app behind the dial', await page.evaluate(() => {
+    const s = document.querySelector('.j-dial-scrim');
+    return !!s && ((getComputedStyle(s).backdropFilter || getComputedStyle(s).webkitBackdropFilter || '').includes('blur'));
+  }));
+  ok('the + morphs into an x while open', await page.evaluate(() => {
+    const ic = document.querySelector('.j-fab-open .j-fab-ic');
+    const m = ic && getComputedStyle(ic).transform;
+    return !!m && m !== 'none' && m !== 'matrix(1, 0, 0, 1, 0, 0)';
+  }) && (await page.locator('button[aria-label="Close"]').count()) === 1);
+  await page.locator('.j-dial-scrim').click({ position: { x: 30, y: 200 } });
+  await page.waitForTimeout(300);
+  ok('a scrim tap closes the dial', await page.evaluate(() => !document.querySelector('.j-dial-scrim')));
+  await page.locator('button[aria-label="Add"]').first().click();
+  await page.waitForTimeout(300);
+  await page.getByText('Quick Log', { exact: true }).first().click();
+  await page.waitForTimeout(550);
+  ok('Quick Log opens from the dial', (await page.locator('#root').innerText()).includes('Log the whole day, one moment at a time'));
+  await page.locator('button[aria-label="Close"]').first().click();
+  await page.waitForTimeout(450);
 
   // ---- 2. tabs render, and share ONE top line (founder, 7 Aug) ----
   console.log('Suite 2: tab screens');
@@ -179,7 +187,9 @@ function ok(name, cond) {
   // Day / Where / When are three cards; each opens only its own options and
   // blurs the rest, so the chips exist once a question is open.
   console.log('Suite 5: context row + chip accessibility');
-  await page.locator('.j-fab').first().click();
+  await page.locator('button[aria-label="Add"]').first().click();
+  await page.waitForTimeout(300);
+  await page.locator('.j-dial-opt:has-text("Quick Log")').first().click();
   await page.waitForTimeout(500);
   const rowText = await page.locator('#root').innerText();
   // the labels read plainly, with no question marks (founder, 16 Jul 2026)
@@ -540,18 +550,17 @@ function ok(name, cond) {
     new RegExp(WORD + ' gentle questions', 'i').test(srcA));
   ok(`tour slide 4 counts ${gateN} questions, matching GATE_QUESTIONS`,
     new RegExp(WORD + ' simple questions', 'i').test(srcOnb));
-  // Tour copy is tier-neutral (1.10.0, sixth-pass item 34): the Your day tile
-  // reads "Hand the phone to" on Free and "Do it together with" on Plus, so the
-  // tour has to name the feature without adopting either framing. Asserted as the
-  // rule rather than one exact phrase, so plain-language edits cannot trip it.
-  // Scoped to slide 2's own copy: slide 5 legitimately says "Do it together", and
-  // in a pager its text is in the DOM the whole time, so reading #root here would
-  // fail on its neighbour's words.
+  // Tour copy stays tier-neutral (1.10.0, item 34) and, since 8 Aug, points at
+  // the + dial instead of the retired Today tiles. Scoped to slide 2's own
+  // copy: slide 5 legitimately says "Do it together", and in a pager its text
+  // is in the DOM the whole time, so reading #root here would fail on its
+  // neighbour's words.
   const tourToday = await slideText(2);
-  ok('tour Today slide names Your day but stays tier-neutral',
-    tourToday.includes('Your day') && !/Hand the phone|Do it together/i.test(tourToday));
+  ok('tour Today slide points at the plus button, tier-neutral',
+    tourToday.includes('round plus button') && !/Hand the phone|Do it together|Your day/i.test(tourToday));
   await goSlide(5);
-  ok('tour child slide offers together or hand over', (await slideText(5)).includes('Do it together, or hand the phone over.'));
+  ok("tour child slide rides the dial's Child's Day and offers together or hand over",
+    (await slideText(5)).includes("Child's Day") && (await slideText(5)).includes('Do it together, or hand the phone over.'));
   await ctx3.close();
 
   // ---- 8. build 1.9.0 (12 Jul native parity), free tier ----
@@ -574,8 +583,11 @@ function ok(name, cond) {
   // the gate name is gone from the parent's view (founder, 16 Jul 2026); "at the
   // gate" survives only in a log's own words, where it means the actual gate
   ok('no Gate bar or gate-note wording remains on Today', !/Gate\b|gate note/.test(todayText));
-  // item 34 (1.10.0): Free keeps the hand-the-phone framing on the tile
-  ok("free Your day tile keeps 'Hand the phone'", todayText.includes('Hand the phone to Sam'));
+  // the check-in tiles retired into the + dial (8 Aug): Today leads with the
+  // day itself, no Check in section, no tile copy
+  ok('free Today carries no check-in tiles (retired into the +)',
+    !todayText.includes('Check in') && !todayText.includes('Hand the phone to Sam')
+    && todayText.includes("day so far") && (await page4.locator('.j-ctile').count()) === 0);
 
   // month view: visible month chevrons, fixed-height flash-free paging,
   // any past day tappable, and the Day view offering "Add a note"
@@ -619,7 +631,9 @@ function ok(name, cond) {
 
   // adding media is Plus-gated on the free tier (viewing never gates). Media now
   // rides the specific moment, so it lives inside the moment editor.
-  await page4.locator('.j-fab').first().click();
+  await page4.locator('button[aria-label="Add"]').first().click();
+  await page4.waitForTimeout(300);
+  await page4.locator('.j-dial-opt:has-text("Quick Log")').first().click();
   await page4.waitForTimeout(500);
   await page4.getByText('Wins', { exact: true }).first().click(); // open a moment editor
   await page4.waitForTimeout(300);
@@ -700,15 +714,25 @@ function ok(name, cond) {
   // leads with its own title and the endorsement lives on the Menu footer.
   ok('the persistent app header is gone', (await page5.locator('.j-appheader').count()) === 0);
   ok('no +PLUS pill anywhere on Today, even on Plus', !(await page5.locator('#root').innerText()).includes('+PLUS'));
-  // item 34 (1.10.0): Plus frames the check-in as a two-of-you thing
   const todayPlus = await page5.locator('#root').innerText();
-  ok("Plus Your day tile reads 'Do it together'", todayPlus.includes('Do it together with Sam'));
+  // the dial carries the tier routing the tiles used to: on Plus, Dysregulation
+  // goes straight into the guided capture, not the free explainer
+  await page5.locator('button[aria-label="Add"]').first().click();
+  await page5.waitForTimeout(350);
+  await page5.locator('.j-dial-opt:has-text("Dysregulation")').first().click();
+  await page5.waitForTimeout(500);
+  ok('Plus Dysregulation dials straight into the guided capture',
+    (await page5.locator('#root').innerText()).includes('One calm screen, minimal typing.'));
+  await page5.locator('button[aria-label="Back"]').first().click();
+  await page5.waitForTimeout(450);
   // negative control for suite 8: the same demo record, on Plus, DOES carry the
   // "This month" graph on Today (Plus-only since 17 Jul 2026).
   ok('Plus Today keeps the This month graph', todayPlus.includes('This month'));
 
-  // Plus quick log: the media tiles are live inside the moment editor
-  await page5.locator('.j-fab').first().click();
+  // Plus quick log (via the dial now): the media tiles are live inside the moment editor
+  await page5.locator('button[aria-label="Add"]').first().click();
+  await page5.waitForTimeout(300);
+  await page5.locator('.j-dial-opt:has-text("Quick Log")').first().click();
   await page5.waitForTimeout(500);
   await page5.getByText('Wins', { exact: true }).first().click(); // open a moment editor
   await page5.waitForTimeout(300);
@@ -765,7 +789,9 @@ function ok(name, cond) {
   // child mode goes dynamic on Plus: More under Next, question cards
   await page5.getByText('Today', { exact: true }).last().click();
   await page5.waitForTimeout(450);
-  await page5.getByText('Your day', { exact: true }).first().click();
+  await page5.locator('button[aria-label="Add"]').first().click();
+  await page5.waitForTimeout(300);
+  await page5.getByText("Child's Day", { exact: true }).first().click();
   await page5.waitForTimeout(500);
   await page5.getByText('Start', { exact: true }).first().click();
   await page5.waitForTimeout(400);
@@ -806,7 +832,12 @@ function ok(name, cond) {
   await page6.getByRole('button', { name: 'Documents', exact: true }).first().click();
   await page6.waitForTimeout(400);
   ok('the FAB returns on the Documents view', (await page6.locator('.j-fab').count()) === 1);
-  await page6.getByText('Add a document').first().click();
+  // the dashed add-row retired into the + dial (8 Aug): documents are added
+  // through the same door as everything else
+  ok('the dashed Add a document row is gone from Documents', (await page6.getByText('Add a document').count()) === 0);
+  await page6.locator('button[aria-label="Add"]').first().click();
+  await page6.waitForTimeout(300);
+  await page6.locator('.j-dial-opt:has-text("Document")').first().click();
   await page6.waitForTimeout(500);
   const addFree = await page6.locator('#root').innerText();
   ok('free Add document shows the locked vault-upload card', addFree.includes('Add the document itself') && addFree.includes('Keep the letter with its details. Part of Plus.'));
@@ -832,7 +863,9 @@ function ok(name, cond) {
   await page7.waitForTimeout(500);
   await page7.getByText('Documents', { exact: true }).first().click();
   await page7.waitForTimeout(400);
-  await page7.getByText('Add a document').first().click();
+  await page7.locator('button[aria-label="Add"]').first().click();
+  await page7.waitForTimeout(300);
+  await page7.locator('.j-dial-opt:has-text("Document")').first().click();
   await page7.waitForTimeout(500);
   const addPlus = await page7.locator('#root').innerText();
   ok('Plus Add document offers the live upload tiles', addPlus.includes('Capture') && addPlus.includes('Pick a file'));
@@ -1102,8 +1135,9 @@ function ok(name, cond) {
   // child mode: the named adults lead the who-chips, deduped against the generics
   await page9.getByText('Today', { exact: true }).last().click();
   await page9.waitForTimeout(450);
-  ok("Plus Your day tile reads 'Do it together' for the new child", (await page9.locator('#root').innerText()).includes('Do it together with Nia'));
-  await page9.getByText('Your day', { exact: true }).first().click();
+  await page9.locator('button[aria-label="Add"]').first().click();
+  await page9.waitForTimeout(300);
+  await page9.getByText("Child's Day", { exact: true }).first().click();
   await page9.waitForTimeout(500);
   await page9.getByText('Start', { exact: true }).first().click();
   await page9.waitForTimeout(400);
@@ -1145,8 +1179,9 @@ function ok(name, cond) {
   ok('no uncaught page errors across suite 12', errors9.length === 0);
   await ctx9.close();
 
-  // ---- 13. seventh pass (1.11.0): child photo + crop, tile lift, Drive row ----
-  console.log('Suite 13: child photo, tile lift, Google Drive coming-soon (1.11.0)');
+  // ---- 13. seventh pass (1.11.0): child photo + crop, Drive row ----
+  // (the item-39 tile-lift probe retired 8 Aug with the tiles themselves)
+  console.log('Suite 13: child photo, Google Drive coming-soon (1.11.0)');
   const ctx10 = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, acceptDownloads: true });
   const page10 = await ctx10.newPage();
   const errors10 = [];
@@ -1154,15 +1189,6 @@ function ok(name, cond) {
   page10.on('dialog', d => d.accept().catch(() => {}));
   await page10.goto(URL_APP, { waitUntil: 'networkidle' });
   await page10.waitForTimeout(1200);
-
-  // item 39: the two Today action tiles now wear the card border + drop shadow
-  const tileCss = await page10.locator('button.j-ctile:has-text("Dysregulation")').first().evaluate(el => {
-    const s = getComputedStyle(el);
-    return { shadow: s.boxShadow, borderW: parseFloat(s.borderTopWidth), borderStyle: s.borderTopStyle };
-  });
-  ok('Today tiles carry a non-empty drop shadow', !!tileCss && !!tileCss.shadow && tileCss.shadow !== 'none');
-  ok('Today tiles carry a real card border (' + tileCss.borderW + 'px ' + tileCss.borderStyle + ')',
-    !!tileCss && tileCss.borderW >= 1 && tileCss.borderStyle === 'solid');
 
   // item 36: pick a real photo for a NEW child through the actual UI (file input
   // -> crop step -> Use photo), then prove it renders as an <img> everywhere a
@@ -1279,8 +1305,10 @@ function ok(name, cond) {
   page12.on('pageerror', e => errors12.push(String(e)));
   await page12.goto(URL_APP, { waitUntil: 'networkidle' });
   await page12.waitForTimeout(1200);
-  // open Quick log -> Day? -> Another day -> the calendar sheet
-  await page12.locator('.j-fab').first().click();
+  // open Quick log (via the dial) -> Day? -> Another day -> the calendar sheet
+  await page12.locator('button[aria-label="Add"]').first().click();
+  await page12.waitForTimeout(300);
+  await page12.locator('.j-dial-opt:has-text("Quick Log")').first().click();
   await page12.waitForTimeout(500);
   await page12.locator('button.j-ctx[aria-label^="Day"]').first().click();
   await page12.waitForTimeout(300);
@@ -1532,7 +1560,9 @@ function ok(name, cond) {
     await page15.getByText('Today', { exact: true }).last().click();
     await page15.waitForTimeout(450);
 
-    await page15.getByText('Dysregulation', { exact: false }).first().click();
+    await page15.locator('button[aria-label="Add"]').first().click();
+    await page15.waitForTimeout(300);
+    await page15.locator('.j-dial-opt:has-text("Dysregulation")').first().click();
     await page15.waitForTimeout(600);
     await page15.getByText('Tips', { exact: false }).first().click();
     await page15.waitForTimeout(700);

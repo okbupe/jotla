@@ -41,14 +41,7 @@
   --gold: #BE8E1E;
   --aigold: #C9912F;
 
-  /* the two check-in tiles carry their own deeper panels */
-  --tileblue: rgba(26,86,168,0.15);
-  --tilepurple: rgba(157,52,218,0.14);
-  /* Tile sub-lines carry a muted shade of their own hue, never the neutral grey:
-     grey on the tinted panels clashed (founder, 8 Aug). Tuned to hold >=4.5:1
-     on the tints at 12.5px in both themes. */
-  --tileblue-sub: #3D5E8F;
-  --tilepurple-sub: #77479B;
+  /* the calendar's no-note day dot */
   --nonote: #C9C4BC;
   /* the quick-log context cards need a SOLID ground so their ink contrast is
      honest and measurable (translucent tints report false ratios) */
@@ -219,10 +212,6 @@ button, input, select, textarea { font-family: inherit; }
   --gold: #EBBA4D;
   --aigold: #E6B85C;
 
-  --tileblue: rgba(47,111,214,0.26);
-  --tilepurple: rgba(179,106,226,0.22);
-  --tileblue-sub: #A3BFE8;
-  --tilepurple-sub: #C7A3E6;
   --nonote: #55524C;
   --ctx-bg: #393E46;
 
@@ -273,18 +262,9 @@ button, input, select, textarea { font-family: inherit; }
 /* small semibold accent section header ("Check in", "Sam's day so far") */
 .j-section { font-family: var(--f-body); font-size: calc(13px * var(--tscale, 1)); font-weight: 600;
   color: var(--blue); letter-spacing: 0.02em; margin: 22px 2px 8px; }
-/* the two check-in tiles: the one place the shell lends colour to controls.
-   No stroke law exception: a slight same-hue stroke over a deep panel, plus the
-   app's only drop shadow (founder, 6 Aug). */
-.j-ctile { flex: 1; min-width: 0; border-radius: 14px; padding: 14px; cursor: pointer;
-  display: flex; flex-direction: column; gap: 9px; text-align: left; border: 1px solid transparent;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.30); -webkit-tap-highlight-color: transparent; transition: transform .12s ease; }
-.jotla-root:not(.j-dark) .j-ctile { box-shadow: 0 6px 16px rgba(35,33,29,0.12); }
-.j-ctile:active { transform: scale(0.98); }
-.j-ctile-blue { background: var(--tileblue); border-color: rgba(26,86,168,0.25); }
-.j-dark .j-ctile-blue { border-color: rgba(124,169,239,0.30); }
-.j-ctile-purple { background: var(--tilepurple); border-color: rgba(157,52,218,0.22); }
-.j-dark .j-ctile-purple { border-color: rgba(179,106,226,0.30); }
+/* (Today's check-in tiles retired 8 Aug evening: their jobs moved into the +
+   speed dial by the FAB rules below; the j-ctile family and tile vars went
+   with them.) */
 /* the veil over the locked Month patterns preview */
 .j-patveil { background: rgba(247,245,242,0.35); }
 .j-dark .j-patveil { background: rgba(32,31,29,0.20); }
@@ -403,6 +383,33 @@ html.j-appmode .j-tabbar { height: calc(80px + env(safe-area-inset-bottom)); pad
   -webkit-tap-highlight-color: transparent; }
 .j-fab:active { transform: scale(0.92); }
 html.j-appmode .j-fab { bottom: calc(96px + env(safe-area-inset-bottom)); }
+/* The + speed dial (founder, 8 Aug evening, the Drive pattern): the scrim
+   blurs the whole app including the tab bar, the + morphs into an x, and the
+   four capture routes stagger in above the FAB, Quick Log nearest the thumb.
+   The open FAB rides above the scrim; prefers-reduced-motion drops the motion
+   and keeps the dial. */
+.j-dial-scrim { position: absolute; inset: 0; z-index: 45; background: rgba(30,27,23,0.32);
+  -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px); }
+.j-dark .j-dial-scrim { background: rgba(6,8,12,0.45); }
+.j-fab-open { z-index: 46; }
+.j-fab-ic { display: flex; transition: transform .25s cubic-bezier(.34,1.3,.5,1); }
+.j-fab-open .j-fab-ic { transform: rotate(45deg); }
+.j-dial { position: absolute; right: 16px; bottom: 164px; display: flex; flex-direction: column;
+  align-items: flex-end; gap: 10px; }
+html.j-appmode .j-dial { bottom: calc(164px + env(safe-area-inset-bottom)); }
+.j-dial-opt { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line);
+  background: var(--card); color: var(--ink); cursor: pointer; border-radius: 999px;
+  padding: 11px 18px; font-family: var(--f-body); font-weight: 600;
+  font-size: calc(14.5px * var(--tscale, 1)); box-shadow: 0 12px 26px -12px rgba(15,25,45,0.5);
+  animation: j-dial-in .22s cubic-bezier(.34,1.3,.5,1) both; }
+@keyframes j-dial-in {
+  0% { opacity: 0; transform: translateY(10px) scale(.92); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .j-dial-opt { animation: none; }
+  .j-fab-ic { transition: none; }
+}
 
 /* ---- misc ---- */
 .j-divider { height: 1px; background: var(--line); border: none; margin: 0; }

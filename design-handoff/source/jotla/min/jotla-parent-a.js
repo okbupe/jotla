@@ -11,44 +11,11 @@ function greeting() {
   return 'Good evening';
 }
 
-// soft tappable tile used on Today. It wears the same border and drop shadow as
-// the cards (var(--line) + var(--card-shadow)) so the two tiles lift off the page
-// and read as siblings of the cards below them, not flat patches (founder's
-// seventh pass, item 39, 13 Jul 2026).
-/* The board's check-in tile (6 Aug): colour-carrying panel, bare icon, title in
-   the tile's own colour, sub in a MUTED SHADE OF THE SAME HUE (founder, 8 Aug:
-   the neutral grey clashed on the tinted panels; hierarchy now rides on weight
-   and size, not on leaving the tile's colour world).
-   kind: 'blue' (Your day) | 'purple' (Dysregulation). */
-function ActionTile({
-  icon,
-  title,
-  sub,
-  kind,
-  ink,
-  onClick
-}) {
-  return /*#__PURE__*/React.createElement("button", {
-    onClick: onClick,
-    className: 'j-ctile ' + (kind === 'purple' ? 'j-ctile-purple' : 'j-ctile-blue')
-  }, icon, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("span", {
-    style: {
-      display: 'block',
-      fontFamily: "'Outfit', system-ui",
-      fontWeight: 600,
-      fontSize: 'calc(15.5px * var(--tscale, 1))',
-      color: ink,
-      lineHeight: 1.15
-    }
-  }, title), /*#__PURE__*/React.createElement("span", {
-    style: {
-      display: 'block',
-      fontSize: 'calc(12.5px * var(--tscale, 1))',
-      color: kind === 'purple' ? 'var(--tilepurple-sub)' : 'var(--tileblue-sub)',
-      marginTop: 2
-    }
-  }, sub)));
-}
+// The check-in tiles RETIRED from Today (founder, 8 Aug evening): every way of
+// writing to the record now lives behind the + speed dial in the shell
+// (jotla-app.jsx). Today shows the day; the plus writes it. The tier-copy
+// nuance the tiles carried (do-it-together vs hand-the-phone) lives on inside
+// the child-mode screens themselves.
 
 // ---------------- Today ----------------
 function TodayScreen({
@@ -82,35 +49,7 @@ function TodayScreen({
     style: {
       marginBottom: 18
     }
-  }, J.fmtLong(today)), /*#__PURE__*/React.createElement(SectionLabel, null, "Check in"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      gap: 10,
-      marginBottom: 16
-    }
-  }, /*#__PURE__*/React.createElement(ActionTile, {
-    icon: /*#__PURE__*/React.createElement(Icon, {
-      name: "heart",
-      size: 28,
-      color: "var(--blue)"
-    }),
-    title: "Your day",
-    sub: nav.plus ? 'Do it together with ' + childName : 'Hand the phone to ' + childName,
-    kind: "blue",
-    ink: "var(--blue)",
-    onClick: () => nav.go('child')
-  }), /*#__PURE__*/React.createElement(ActionTile, {
-    icon: /*#__PURE__*/React.createElement(Icon, {
-      name: "pulse",
-      size: 28,
-      color: "var(--dysreg)"
-    }),
-    title: "Dysregulation",
-    sub: "Capture what happened",
-    kind: "purple",
-    ink: "var(--dysreg)",
-    onClick: () => nav.go(nav.plus ? 'handover' : 'gateintro')
-  })), isEmpty ? /*#__PURE__*/React.createElement("div", {
+  }, J.fmtLong(today)), isEmpty ? /*#__PURE__*/React.createElement("div", {
     className: "j-card",
     style: {
       padding: 22,

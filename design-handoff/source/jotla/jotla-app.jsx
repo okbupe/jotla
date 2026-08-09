@@ -558,6 +558,7 @@ function App({ appMode }) {
   // Dynamic type: 1 / 1.12 / 1.25, applied as --tscale on the root so every
   // calc()-based font size in the app follows the one dial (build 1.8.0).
   const [tscale, setTscale] = useStateApp(prefs0.tscale || 1);
+  const [fabOpen, setFabOpen] = useStateApp(false); // the + speed dial (8 Aug)
   const [plus, setPlus] = useStateApp(!!prefs0.plus);
   const [childCfg, setChildCfg] = useStateApp(prefs0.childCfg || prefs0.avatarCols || {});
   const [customProfiles, setCustomProfiles] = useStateApp(prefs0.customProfiles || []);
@@ -926,10 +927,37 @@ function App({ appMode }) {
           own bottom CTA in the same corner zone, and two floating actions
           overlapping is worse than one missing (founder, 7 Aug). The sub-tab
           rides the view via nav.remember, so this reacts as it changes. */}
+      {/* The + is the app's ONE capture door (founder, 8 Aug evening, the
+          Drive-style speed dial): pressing it blurs the whole app behind a
+          scrim, morphs the + into an x, and staggers in the four capture
+          routes, Quick Log nearest the thumb. Today's check-in tiles and
+          Documents' dashed add-row both retired into it. An option tap closes
+          the dial and navigates; a scrim tap just closes. */}
       {isTab && !noChild && !(view.name === 'evidence' && view.ev && view.ev.tab === 'records') && (
-        <button className="j-fab" aria-label="Quick log" onClick={() => nav.go('quicklog')}>
-          <Icon name="plus" size={26} color="#fff" stroke={2.4} />
-        </button>
+        <>
+          {fabOpen && (
+            <div className="j-dial-scrim" onClick={() => setFabOpen(false)}>
+              <div className="j-dial">
+                {[
+                  ['Document', 'doc', 'var(--blue)', () => nav.go('adddoc')],
+                  ['Dysregulation', 'pulse', 'var(--dysreg)', () => nav.go(nav.plus ? 'handover' : 'gateintro')],
+                  ["Child's Day", 'heart', 'var(--blue)', () => nav.go('child')],
+                  ['Quick Log', 'edit', 'var(--green)', () => nav.go('quicklog')],
+                ].map(([label, icon, tint, go], i) => (
+                  <button key={label} className="j-dial-opt" style={{ animationDelay: (0.035 * (3 - i)) + 's' }}
+                    onClick={e => { e.stopPropagation(); setFabOpen(false); go(); }}>
+                    <Icon name={icon} size={19} color={tint} stroke={2.1} />
+                    <span>{label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          <button className={'j-fab' + (fabOpen ? ' j-fab-open' : '')} aria-label={fabOpen ? 'Close' : 'Add'}
+            aria-expanded={fabOpen} onClick={() => setFabOpen(o => !o)}>
+            <span className="j-fab-ic"><Icon name="plus" size={26} color="#fff" stroke={2.4} /></span>
+          </button>
+        </>
       )}
       {isTab && !noChild && <TabBar active={tab} onTab={nav.setTab} />}
       {exitHint && (

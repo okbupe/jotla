@@ -160,13 +160,13 @@ const TOUR_STEPS = (name) => [
     body: `This is ${name}'s record, and right now it is completely blank. That is exactly how it should start. You will fill it one ordinary day at a time.` },
   { tint: 'var(--tint-blue)',  color: 'var(--blue)',  icon: 'today',
     illo: 'tourToday', title: 'Start on Today',
-    body: `This is the screen you open first. It shows how the day is going. Two buttons sit at the top: "Your day", where ${name} shows how school felt, and "Dysregulation", for writing down a hard moment.` },
+    body: `This is the screen you open first. It shows how ${name}'s day is going, and the round plus button in the corner is where every kind of note begins.` },
   // Rewritten 16 Jul 2026: the old line ("one moment... under thirty seconds")
   // described the quick log as it was before the dynamic day log shipped, so the
   // tour was contradicting the screen's own subtitle.
   { tint: 'var(--tint-green)', color: 'var(--green)', icon: 'plus',
     illo: 'tourLog', title: 'A line is plenty',
-    body: 'Tap the round plus button to log the day. Add as many moments as you like, a tap each, then save them all in one go. One line about each is plenty.' },
+    body: 'Tap the round plus button and choose Quick Log. Add as many moments as you like, a tap each, then save them all in one go. One line about each is plenty.' },
   // The six questions are listed in the order GATE_QUESTIONS actually asks them.
   // Two places count them in prose (here, and the Dysregulation card's "Six gentle
   // questions"); boot-assert holds both to GATE_QUESTIONS.length so they cannot drift.
@@ -175,7 +175,7 @@ const TOUR_STEPS = (name) => [
     body: `When a hard moment happens, Jotla asks you six simple questions: what happened, where and when, who was there, how ${name} seemed, what led up to it, and what helped. Most answers are a tap.` },
   { tint: 'var(--tint-green)', color: 'var(--green)', icon: 'heart', face: true,
     illo: 'tourChild', title: 'Their day,\nin their words',
-    body: `Tap "Your day" and ${name} can show how school felt: friendly faces and simple scenes, no typing. Do it together, or hand the phone over.` },
+    body: `Tap the plus and choose Child's Day: ${name} can show how school felt with friendly faces and simple scenes, no typing. Do it together, or hand the phone over.` },
   { tint: 'var(--tint-blue)',  color: 'var(--blue)',  icon: 'calendar',
     illo: 'tourPattern', title: 'Spot the pattern',
     body: 'Over time, Month and Find turn single days into a picture, so you can see when the hard days happen and pull out the exact notes you need when someone asks for proof.' },

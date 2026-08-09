@@ -707,29 +707,7 @@ function EvidenceScreen({
     key: d.id,
     doc: d,
     onClick: () => openDoc(d.id)
-  })), /*#__PURE__*/React.createElement("button", {
-    className: "j-press",
-    onClick: () => nav.go('adddoc'),
-    style: {
-      border: '1px dashed var(--chip-border)',
-      background: 'none',
-      borderRadius: 14,
-      padding: '13px 16px',
-      display: 'flex',
-      alignItems: 'center',
-      gap: 12,
-      color: 'var(--blue)',
-      cursor: 'pointer',
-      fontFamily: "'Outfit', system-ui",
-      fontWeight: 500,
-      fontSize: 'calc(15.5px * var(--tscale, 1))'
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "plus",
-    size: 20,
-    color: "var(--blue)",
-    stroke: 2.2
-  }), " Add a document"))))), view === 'records' && /*#__PURE__*/React.createElement("div", {
+  })))))), view === 'records' && /*#__PURE__*/React.createElement("div", {
     style: {
       position: 'absolute',
       left: 0,

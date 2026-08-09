@@ -8,26 +8,11 @@ function greeting() {
   return 'Good evening';
 }
 
-// soft tappable tile used on Today. It wears the same border and drop shadow as
-// the cards (var(--line) + var(--card-shadow)) so the two tiles lift off the page
-// and read as siblings of the cards below them, not flat patches (founder's
-// seventh pass, item 39, 13 Jul 2026).
-/* The board's check-in tile (6 Aug): colour-carrying panel, bare icon, title in
-   the tile's own colour, sub in a MUTED SHADE OF THE SAME HUE (founder, 8 Aug:
-   the neutral grey clashed on the tinted panels; hierarchy now rides on weight
-   and size, not on leaving the tile's colour world).
-   kind: 'blue' (Your day) | 'purple' (Dysregulation). */
-function ActionTile({ icon, title, sub, kind, ink, onClick }) {
-  return (
-    <button onClick={onClick} className={'j-ctile ' + (kind === 'purple' ? 'j-ctile-purple' : 'j-ctile-blue')}>
-      {icon}
-      <span>
-        <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 'calc(15.5px * var(--tscale, 1))', color: ink, lineHeight: 1.15 }}>{title}</span>
-        <span style={{ display: 'block', fontSize: 'calc(12.5px * var(--tscale, 1))', color: kind === 'purple' ? 'var(--tilepurple-sub)' : 'var(--tileblue-sub)', marginTop: 2 }}>{sub}</span>
-      </span>
-    </button>
-  );
-}
+// The check-in tiles RETIRED from Today (founder, 8 Aug evening): every way of
+// writing to the record now lives behind the + speed dial in the shell
+// (jotla-app.jsx). Today shows the day; the plus writes it. The tier-copy
+// nuance the tiles carried (do-it-together vs hand-the-phone) lives on inside
+// the child-mode screens themselves.
 
 // ---------------- Today ----------------
 function TodayScreen({ nav, entries, today, profile }) {
@@ -45,27 +30,6 @@ function TodayScreen({ nav, entries, today, profile }) {
               7 Aug): every tab title starts at the same y, same 28px size. */}
           <h1 className="j-h1" style={{ marginBottom: 6, fontSize: 'calc(28px * var(--tscale, 1))' }}>{greeting()}.</h1>
           <p className="j-eyebrow" style={{ marginBottom: 18 }}>{J.fmtLong(today)}</p>
-
-          <SectionLabel>Check in</SectionLabel>
-          <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
-            {/* Founder call, 12 Jul 2026 (sixth pass): the check-in reads as
-                working together on Plus (the guided questions are a two-of-you
-                thing), hand-the-phone on Free. His confirm is batched. */}
-            <ActionTile
-              icon={<Icon name="heart" size={28} color="var(--blue)" />}
-              title="Your day" sub={nav.plus ? 'Do it together with ' + childName : 'Hand the phone to ' + childName}
-              kind="blue" ink="var(--blue)"
-              onClick={() => nav.go('child')} />
-            {/* Named "Dysregulation", not "At the gate?" (founder, 16 Jul 2026):
-                the handful of parents shown the app could not tell what "At the
-                gate?" was without guessing, and asked for the mode to say what
-                it is. Dysregulation is the word school uses at them all day.
-                The pulse is the standing Jotla symbol for it. */}
-            <ActionTile
-              icon={<Icon name="pulse" size={28} color="var(--dysreg)" />}
-              title="Dysregulation" sub="Capture what happened" kind="purple" ink="var(--dysreg)"
-              onClick={() => nav.go(nav.plus ? 'handover' : 'gateintro')} />
-          </div>
 
           {isEmpty ? (
             <div className="j-card" style={{ padding: 22, marginBottom: 22, textAlign: 'center' }}>

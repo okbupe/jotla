@@ -1349,6 +1349,7 @@ function App({
   // Dynamic type: 1 / 1.12 / 1.25, applied as --tscale on the root so every
   // calc()-based font size in the app follows the one dial (build 1.8.0).
   const [tscale, setTscale] = useStateApp(prefs0.tscale || 1);
+  const [fabOpen, setFabOpen] = useStateApp(false); // the + speed dial (8 Aug)
   const [plus, setPlus] = useStateApp(!!prefs0.plus);
   const [childCfg, setChildCfg] = useStateApp(prefs0.childCfg || prefs0.avatarCols || {});
   const [customProfiles, setCustomProfiles] = useStateApp(prefs0.customProfiles || []);
@@ -2146,16 +2147,40 @@ function App({
       position: 'absolute',
       inset: 0
     }
-  }, /*#__PURE__*/React.createElement(ScreenBoundary, null, window.__JOTLA_TEST_THROW ? /*#__PURE__*/React.createElement(CrashProbe, null) : screen))), isTab && !noChild && !(view.name === 'evidence' && view.ev && view.ev.tab === 'records') && /*#__PURE__*/React.createElement("button", {
-    className: "j-fab",
-    "aria-label": "Quick log",
-    onClick: () => nav.go('quicklog')
+  }, /*#__PURE__*/React.createElement(ScreenBoundary, null, window.__JOTLA_TEST_THROW ? /*#__PURE__*/React.createElement(CrashProbe, null) : screen))), isTab && !noChild && !(view.name === 'evidence' && view.ev && view.ev.tab === 'records') && /*#__PURE__*/React.createElement(React.Fragment, null, fabOpen && /*#__PURE__*/React.createElement("div", {
+    className: "j-dial-scrim",
+    onClick: () => setFabOpen(false)
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-dial"
+  }, [['Document', 'doc', 'var(--blue)', () => nav.go('adddoc')], ['Dysregulation', 'pulse', 'var(--dysreg)', () => nav.go(nav.plus ? 'handover' : 'gateintro')], ["Child's Day", 'heart', 'var(--blue)', () => nav.go('child')], ['Quick Log', 'edit', 'var(--green)', () => nav.go('quicklog')]].map(([label, icon, tint, go], i) => /*#__PURE__*/React.createElement("button", {
+    key: label,
+    className: "j-dial-opt",
+    style: {
+      animationDelay: 0.035 * (3 - i) + 's'
+    },
+    onClick: e => {
+      e.stopPropagation();
+      setFabOpen(false);
+      go();
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: icon,
+    size: 19,
+    color: tint,
+    stroke: 2.1
+  }), /*#__PURE__*/React.createElement("span", null, label))))), /*#__PURE__*/React.createElement("button", {
+    className: 'j-fab' + (fabOpen ? ' j-fab-open' : ''),
+    "aria-label": fabOpen ? 'Close' : 'Add',
+    "aria-expanded": fabOpen,
+    onClick: () => setFabOpen(o => !o)
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "j-fab-ic"
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "plus",
     size: 26,
     color: "#fff",
     stroke: 2.4
-  })), isTab && !noChild && /*#__PURE__*/React.createElement(TabBar, {
+  })))), isTab && !noChild && /*#__PURE__*/React.createElement(TabBar, {
     active: tab,
     onTab: nav.setTab
   }), exitHint && /*#__PURE__*/React.createElement("div", {

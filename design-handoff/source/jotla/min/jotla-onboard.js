@@ -365,7 +365,7 @@ const TOUR_STEPS = name => [{
   icon: 'today',
   illo: 'tourToday',
   title: 'Start on Today',
-  body: `This is the screen you open first. It shows how the day is going. Two buttons sit at the top: "Your day", where ${name} shows how school felt, and "Dysregulation", for writing down a hard moment.`
+  body: `This is the screen you open first. It shows how ${name}'s day is going, and the round plus button in the corner is where every kind of note begins.`
 },
 // Rewritten 16 Jul 2026: the old line ("one moment... under thirty seconds")
 // described the quick log as it was before the dynamic day log shipped, so the
@@ -376,7 +376,7 @@ const TOUR_STEPS = name => [{
   icon: 'plus',
   illo: 'tourLog',
   title: 'A line is plenty',
-  body: 'Tap the round plus button to log the day. Add as many moments as you like, a tap each, then save them all in one go. One line about each is plenty.'
+  body: 'Tap the round plus button and choose Quick Log. Add as many moments as you like, a tap each, then save them all in one go. One line about each is plenty.'
 },
 // The six questions are listed in the order GATE_QUESTIONS actually asks them.
 // Two places count them in prose (here, and the Dysregulation card's "Six gentle
@@ -395,7 +395,7 @@ const TOUR_STEPS = name => [{
   face: true,
   illo: 'tourChild',
   title: 'Their day,\nin their words',
-  body: `Tap "Your day" and ${name} can show how school felt: friendly faces and simple scenes, no typing. Do it together, or hand the phone over.`
+  body: `Tap the plus and choose Child's Day: ${name} can show how school felt with friendly faces and simple scenes, no typing. Do it together, or hand the phone over.`
 }, {
   tint: 'var(--tint-blue)',
   color: 'var(--blue)',

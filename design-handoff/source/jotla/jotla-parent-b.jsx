@@ -391,13 +391,9 @@ function EvidenceScreen({ nav, entries, docs, profile, navView }) {
                 {docsShown.length === 0
                   ? <div className="j-card" style={{ padding: 22, textAlign: 'center' }}><p className="j-sm">{docQ.trim() ? 'Nothing matches that search.' : 'No documents yet. Add the first letter or report and never lose it again.'}</p></div>
                   : docsShown.map(d => <DocCard key={d.id} doc={d} onClick={() => openDoc(d.id)} />)}
-                {/* the add affordance is a dashed row under the list (6 Aug), not a bottom bar */}
-                <button className="j-press" onClick={() => nav.go('adddoc')}
-                  style={{ border: '1px dashed var(--chip-border)', background: 'none', borderRadius: 14, padding: '13px 16px',
-                    display: 'flex', alignItems: 'center', gap: 12, color: 'var(--blue)', cursor: 'pointer',
-                    fontFamily: "'Outfit', system-ui", fontWeight: 500, fontSize: 'calc(15.5px * var(--tscale, 1))' }}>
-                  <Icon name="plus" size={20} color="var(--blue)" stroke={2.2} /> Add a document
-                </button>
+                {/* the dashed add-row RETIRED (founder, 8 Aug evening): adding a
+                    document is the + speed dial's Document option now, one door
+                    for every kind of capture */}
               </div>
             </>
           )}
