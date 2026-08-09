@@ -424,7 +424,7 @@ function EntryScreen({ nav, entries, id }) {
               <Face mood={e.mood} size={44} />
               <div>
                 <p className="j-h3">{e.time} at {J.settingInSentence(e.setting)}</p>
-                <p className="j-meta">{J.fmtLong(e.date)} · {e.category}</p>
+                <p className="j-meta">{J.fmtLong(e.date)} · {e.categoryOther || e.category}</p>
               </div>
             </div>
             <span style={{ display: 'inline-flex', gap: 8, flexWrap: 'wrap' }}>

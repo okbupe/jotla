@@ -786,7 +786,7 @@ function EntryScreen({
     className: "j-h3"
   }, e.time, " at ", J.settingInSentence(e.setting)), /*#__PURE__*/React.createElement("p", {
     className: "j-meta"
-  }, J.fmtLong(e.date), " \xB7 ", e.category))), /*#__PURE__*/React.createElement("span", {
+  }, J.fmtLong(e.date), " \xB7 ", e.categoryOther || e.category))), /*#__PURE__*/React.createElement("span", {
     style: {
       display: 'inline-flex',
       gap: 8,

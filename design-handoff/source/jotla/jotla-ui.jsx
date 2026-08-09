@@ -313,6 +313,10 @@ function PlusLockedCard({ title, text, onClick, style, icon = 'lock' }) {
   );
 }
 
+// A document's display label honours the parent's own name for an Other type
+// (founder, 9 Aug): canonical d.type stays underneath for colours and filters.
+const docTypeLabel = (d) => ((d && d.typeOther) ? d.typeOther : (d ? d.type : ''));
+
 // Top bar for pushed (non-tab) screens
 function PushHeader({ title, subtitle, onBack, onClose, accent = '#1A56A8', bg = 'transparent' }) {
   return (

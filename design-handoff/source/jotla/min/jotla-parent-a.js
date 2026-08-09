@@ -452,6 +452,8 @@ function MediaPicker({
       }
     }, sourceLabel)));
   }
+  {/* the caption hugs its label (founder, 9 Aug: the pair read too far apart
+      under a uniform column gap): 2px label-to-caption, 7px below the icon */}
   const tile = (label, sub, icon, capture) => /*#__PURE__*/React.createElement("label", {
     className: "j-press",
     style: {
@@ -465,7 +467,6 @@ function MediaPicker({
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      gap: 7,
       color: 'var(--muted)'
     }
   }, /*#__PURE__*/React.createElement(Icon, {
@@ -475,12 +476,14 @@ function MediaPicker({
   }), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 'calc(14.5px * var(--tscale, 1))',
-      fontWeight: 500
+      fontWeight: 500,
+      marginTop: 7
     }
   }, label), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 'calc(12px * var(--tscale, 1))',
-      color: 'var(--faint)'
+      color: 'var(--faint)',
+      marginTop: 2
     }
   }, sub), /*#__PURE__*/React.createElement("input", _extends({
     type: "file",
@@ -575,6 +578,10 @@ function QuickLogScreen({
   const [eAfter, setEAfter] = useStateA('');
   const [eWho, setEWho] = useStateA([]); // who was there (founder, 16 Jul 2026)
   const [eMedia, setEMedia] = useStateA(null);
+  // An Other moment gets named by the parent (founder, 9 Aug: "otherwise they
+  // wont know what Other is"). Canonical 'Other' stays underneath for counts
+  // and the month buckets; the name rides categoryOther for display.
+  const [eCatOther, setECatOther] = useStateA('');
   const isInc = openCat === 'Incidents';
   const openEditor = c => {
     setPicker(null);
@@ -587,6 +594,7 @@ function QuickLogScreen({
     setEAfter('');
     setEWho([]);
     setEMedia(null);
+    setECatOther('');
   };
   // A banked moment reopens for changing (founder, 16 Jul 2026): something else
   // often comes back to you while you are still sitting there logging. It keeps
@@ -602,10 +610,12 @@ function QuickLogScreen({
     setEAfter(m.after);
     setEWho(m.who || []);
     setEMedia(m.media);
+    setECatOther(m.categoryOther || '');
   };
   const bankMoment = () => {
     const body = {
       category: openCat,
+      categoryOther: openCat === 'Other' ? eCatOther.trim() : '',
       mood: eMood,
       isIncident: openCat === 'Incidents',
       text: eText.trim(),
@@ -658,6 +668,7 @@ function QuickLogScreen({
         clock,
         setting: m.setting,
         category: m.category,
+        categoryOther: m.categoryOther || '',
         mood: m.mood,
         kind
       };
@@ -678,7 +689,7 @@ function QuickLogScreen({
       } : {
         ...base,
         type: 'quick',
-        summary: m.text || `${m.category} at ${J.settingInSentence(m.setting)}. ${m.time} went ${m.mood === 'good' ? 'well' : m.mood === 'ok' ? 'up and down' : 'hard'}.`
+        summary: m.text || `${m.categoryOther || m.category} at ${J.settingInSentence(m.setting)}. ${m.time} went ${m.mood === 'good' ? 'well' : m.mood === 'ok' ? 'up and down' : 'hard'}.`
       };
       if (m.media && m.media.dataUrl) {
         entry.photoData = m.media.dataUrl;
@@ -891,12 +902,18 @@ function QuickLogScreen({
       color: 'var(--ink)',
       margin: 0
     }
-  }, openCat), /*#__PURE__*/React.createElement("p", {
+  }, openCat === 'Other' ? eCatOther.trim() || 'Other' : openCat), /*#__PURE__*/React.createElement("p", {
     className: "j-meta",
     style: {
       marginTop: 2
     }
-  }, eTime, " \xB7 ", eSetting, " \xB7 ", longDate)), isInc ? /*#__PURE__*/React.createElement("div", {
+  }, eTime, " \xB7 ", eSetting, " \xB7 ", longDate)), openCat === 'Other' && /*#__PURE__*/React.createElement("input", {
+    className: "j-input",
+    value: eCatOther,
+    onChange: e => setECatOther(e.target.value),
+    placeholder: "Name it, e.g. Homework",
+    "aria-label": "Name this moment yourself"
+  }), isInc ? /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       flexDirection: 'column',
@@ -1011,7 +1028,7 @@ function QuickLogScreen({
     style: {
       display: 'block'
     }
-  }, m.time, " \xB7 ", m.setting, " \xB7 ", m.category), /*#__PURE__*/React.createElement("span", {
+  }, m.time, " \xB7 ", m.setting, " \xB7 ", m.categoryOther || m.category), /*#__PURE__*/React.createElement("span", {
     className: "j-body",
     style: {
       display: 'block',
@@ -1213,6 +1230,7 @@ function HandoverScreen({
   const [helped, setHelped] = useStateA('');
   const [who, setWho] = useStateA([]); // who was with the child (multi-select)
   const [whereAt, setWhereAt] = useStateA(''); // where it happened (single-select)
+  const [whereOther, setWhereOther] = useStateA(''); // names the Other place (founder, 9 Aug)
   const [nudge, setNudge] = useStateA(false);
   const [media, setMedia] = useStateA(null);
   const [extras, setExtras] = useStateA([]);
@@ -1240,7 +1258,7 @@ function HandoverScreen({
         duration: duration + ' mins',
         helped,
         who,
-        where: whereAt
+        where: whereAt === 'Other' && whereOther.trim() ? whereOther.trim() : whereAt
       }
     };
     if (media && media.dataUrl) {
@@ -1462,7 +1480,16 @@ function HandoverScreen({
     "aria-pressed": whereAt === c,
     className: 'j-chip' + (whereAt === c ? ' j-chip-on' : ''),
     onClick: () => setWhereAt(v => v === c ? '' : c)
-  }, c)))), /*#__PURE__*/React.createElement("div", {
+  }, c))), whereAt === 'Other' && /*#__PURE__*/React.createElement("input", {
+    className: "j-input",
+    style: {
+      marginTop: 10
+    },
+    value: whereOther,
+    onChange: e => setWhereOther(e.target.value),
+    placeholder: "Say where, e.g. School bus",
+    "aria-label": "Say where it happened"
+  })), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       flexDirection: 'column',

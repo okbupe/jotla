@@ -284,7 +284,7 @@ function openPrintDoc(d, attachments) {
     alert('Your browser blocked the new tab. Allow pop-ups for this page and try again.');
     return false;
   }
-  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Jotla document record</title></head>' + '<body style="font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#14223b;max-width:720px;margin:24px auto;padding:0 16px;">' + '<p style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8892a6;margin:0 0 6px;">Document record · Jotla</p>' + '<h1 style="font-size:22px;margin:0 0 2px;">' + esc(d.title) + '</h1>' + '<p style="font-size:12.5px;margin:0 0 14px;color:#5b6780;">' + esc(d.type) + ' · from ' + esc(d.from) + ' · Prepared ' + esc(J.fmtShort(J.TODAY_ISO)) + ' ' + esc(J.TODAY_ISO.slice(0, 4)) + '</p>' + row('Received', J.fmtLong(d.received) + ' ' + d.received.slice(0, 4)) + row('About', d.about) + row('Action needed', d.action) + (d.editedOn ? '<p style="margin:6px 0;font-size:11.5px;color:#8892a6;">Details last edited ' + esc(J.fmtShort(d.editedOn)) + '. Earlier details stay on the record below.</p>' : '') + (d.history && d.history.length ? '<div style="margin-top:10px;padding:10px 14px;background:#f5f7fb;border-radius:8px;">' + '<p style="margin:0 0 4px;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:#8892a6;">What it said before</p>' + d.history.map(h => '<p style="margin:4px 0;font-size:12px;">Until ' + esc(J.fmtShort(h.on)) + ' ' + esc(h.on.slice(0, 4)) + ': ' + esc(h.title) + (h.about ? ' · ' + esc(h.about) : '') + (h.action ? ' · Action: ' + esc(h.action) : '') + '</p>').join('') + '</div>' : '') + (files.length ? '<p style="margin:12px 0 0;font-size:12px;color:#5b6780;">Attached file' + (files.length > 1 ? 's' : '') + ' (open from the document in Jotla): ' + files.map(m => esc(m.name || 'File')).join(', ') + '</p>' : '') + photos.map(m => '<img src="' + m.dataUrl + '" style="display:block;width:100%;margin-top:14px;border-radius:8px;page-break-inside:avoid;" alt="Photo of the document">').join('') + '</body></html>');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Jotla document record</title></head>' + '<body style="font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#14223b;max-width:720px;margin:24px auto;padding:0 16px;">' + '<p style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8892a6;margin:0 0 6px;">Document record · Jotla</p>' + '<h1 style="font-size:22px;margin:0 0 2px;">' + esc(d.title) + '</h1>' + '<p style="font-size:12.5px;margin:0 0 14px;color:#5b6780;">' + esc(docTypeLabel(d)) + ' · from ' + esc(d.from) + ' · Prepared ' + esc(J.fmtShort(J.TODAY_ISO)) + ' ' + esc(J.TODAY_ISO.slice(0, 4)) + '</p>' + row('Received', J.fmtLong(d.received) + ' ' + d.received.slice(0, 4)) + row('About', d.about) + row('Action needed', d.action) + (d.editedOn ? '<p style="margin:6px 0;font-size:11.5px;color:#8892a6;">Details last edited ' + esc(J.fmtShort(d.editedOn)) + '. Earlier details stay on the record below.</p>' : '') + (d.history && d.history.length ? '<div style="margin-top:10px;padding:10px 14px;background:#f5f7fb;border-radius:8px;">' + '<p style="margin:0 0 4px;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:#8892a6;">What it said before</p>' + d.history.map(h => '<p style="margin:4px 0;font-size:12px;">Until ' + esc(J.fmtShort(h.on)) + ' ' + esc(h.on.slice(0, 4)) + ': ' + esc(h.title) + (h.about ? ' · ' + esc(h.about) : '') + (h.action ? ' · Action: ' + esc(h.action) : '') + '</p>').join('') + '</div>' : '') + (files.length ? '<p style="margin:12px 0 0;font-size:12px;color:#5b6780;">Attached file' + (files.length > 1 ? 's' : '') + ' (open from the document in Jotla): ' + files.map(m => esc(m.name || 'File')).join(', ') + '</p>' : '') + photos.map(m => '<img src="' + m.dataUrl + '" style="display:block;width:100%;margin-top:14px;border-radius:8px;page-break-inside:avoid;" alt="Photo of the document">').join('') + '</body></html>');
   w.document.close();
   w.focus();
   setTimeout(() => {
@@ -390,7 +390,7 @@ function DocCard({
       Letter: 'j-tag-letter',
       Email: 'j-tag-email'
     }[doc.type] || 'j-tag-grey')
-  }, doc.type), /*#__PURE__*/React.createElement("span", {
+  }, docTypeLabel(doc)), /*#__PURE__*/React.createElement("span", {
     className: "j-meta",
     style: {
       whiteSpace: 'nowrap'
@@ -450,7 +450,7 @@ function EvidenceScreen({
   // field that filters the document list by title, sender or type.
   const [docQ, setDocQ] = useStateB('');
   const [showDocQ, setShowDocQ] = useStateB(false);
-  const docsShown = docQ.trim() ? docs.filter(d => (d.title + ' ' + d.from + ' ' + d.type).toLowerCase().includes(docQ.trim().toLowerCase())) : docs;
+  const docsShown = docQ.trim() ? docs.filter(d => (d.title + ' ' + d.from + ' ' + d.type + ' ' + (d.typeOther || '')).toLowerCase().includes(docQ.trim().toLowerCase())) : docs;
   const [range, setRange] = useStateB(saved.range || {
     preset: 'Last 3 weeks',
     from: '',
@@ -1130,6 +1130,8 @@ function DocMediaPicker({
     });
     done();
   };
+  {/* the caption hugs its label (founder, 9 Aug): 2px label-to-caption, 7px
+      below the icon, matching the moment editor's tiles */}
   const tile = (label, sub, icon, inputProps) => /*#__PURE__*/React.createElement("label", {
     className: "j-press",
     style: {
@@ -1143,7 +1145,6 @@ function DocMediaPicker({
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      gap: 7,
       color: 'var(--muted)'
     }
   }, /*#__PURE__*/React.createElement(Icon, {
@@ -1153,12 +1154,14 @@ function DocMediaPicker({
   }), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 'calc(14.5px * var(--tscale, 1))',
-      fontWeight: 500
+      fontWeight: 500,
+      marginTop: 7
     }
   }, label), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 'calc(12px * var(--tscale, 1))',
-      color: 'var(--faint)'
+      color: 'var(--faint)',
+      marginTop: 2
     }
   }, sub), /*#__PURE__*/React.createElement("input", _extends({
     type: "file",
@@ -1300,6 +1303,12 @@ function AddDocScreen({
   const [title, setTitle] = useStateB('');
   const [type, setType] = useStateB('Letter');
   const [from, setFrom] = useStateB('School');
+  // An Other pill gets named by the parent (founder, 9 Aug: "otherwise they
+  // wont know what Other is"). The type keeps canonical 'Other' underneath for
+  // colours and filters, with the name in typeOther; a named Other source goes
+  // straight into from, which is free text everywhere downstream.
+  const [typeOther, setTypeOther] = useStateB('');
+  const [fromOther, setFromOther] = useStateB('');
   const [received, setReceived] = useStateB('');
   const [about, setAbout] = useStateB('');
   const [action, setAction] = useStateB('');
@@ -1341,7 +1350,8 @@ function AddDocScreen({
       id: 'doc' + Date.now(),
       title: title.trim() || 'Untitled document',
       type,
-      from,
+      typeOther: type === 'Other' ? typeOther.trim() : '',
+      from: from === 'Other' && fromOther.trim() ? fromOther.trim() : from,
       received: /^\d{4}-\d{2}-\d{2}$/.test(received.trim()) ? received.trim() : J.TODAY_ISO,
       about: about.trim(),
       action: action.trim(),
@@ -1402,14 +1412,32 @@ function AddDocScreen({
     "aria-pressed": type === t,
     className: 'j-chip' + (type === t ? ' j-chip-on' : ''),
     onClick: () => setType(t)
-  }, t)))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "Who is it from?"), /*#__PURE__*/React.createElement("div", {
+  }, t))), type === 'Other' && /*#__PURE__*/React.createElement("input", {
+    className: "j-input",
+    style: {
+      marginTop: 10
+    },
+    value: typeOther,
+    onChange: e => setTypeOther(e.target.value),
+    placeholder: "Say what it is, e.g. Tribunal bundle",
+    "aria-label": "Say what kind of document this is"
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "Who is it from?"), /*#__PURE__*/React.createElement("div", {
     className: "j-chiprow"
   }, J.DOC_SOURCES.map(s => /*#__PURE__*/React.createElement("button", {
     key: s,
     "aria-pressed": from === s,
     className: 'j-chip' + (from === s ? ' j-chip-on' : ''),
     onClick: () => setFrom(s)
-  }, s)))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "When did you receive it?"), /*#__PURE__*/React.createElement(DateField, {
+  }, s))), from === 'Other' && /*#__PURE__*/React.createElement("input", {
+    className: "j-input",
+    style: {
+      marginTop: 10
+    },
+    value: fromOther,
+    onChange: e => setFromOther(e.target.value),
+    placeholder: "Say who, e.g. Speech therapist",
+    "aria-label": "Say who this document is from"
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "When did you receive it?"), /*#__PURE__*/React.createElement(DateField, {
     value: /^\d{4}-\d{2}-\d{2}$/.test(received) ? J.fmtLong(received) + ' ' + received.slice(0, 4) : null,
     placeholder: "Left blank, today's date is used",
     label: "When did you receive it",
@@ -1477,6 +1505,7 @@ function EditDocSheet({
   const J = window.JOTLA;
   const [title, setTitle] = useStateB(doc.title);
   const [type, setType] = useStateB(doc.type);
+  const [typeOther, setTypeOther] = useStateB(doc.typeOther || ''); // the parent's own name for an Other type (9 Aug)
   const [from, setFrom] = useStateB(doc.from);
   const [received, setReceived] = useStateB(doc.received);
   const [about, setAbout] = useStateB(doc.about || '');
@@ -1496,7 +1525,7 @@ function EditDocSheet({
     color: 'var(--ink)',
     marginBottom: 12
   };
-  const changed = title.trim() !== doc.title || type !== doc.type || from.trim() !== doc.from || received !== doc.received || about.trim() !== (doc.about || '') || action.trim() !== (doc.action || '');
+  const changed = title.trim() !== doc.title || type !== doc.type || typeOther.trim() !== (doc.typeOther || '') || from.trim() !== doc.from || received !== doc.received || about.trim() !== (doc.about || '') || action.trim() !== (doc.action || '');
   return /*#__PURE__*/React.createElement("div", {
     className: "j-sheet-scrim",
     onClick: onClose
@@ -1543,7 +1572,13 @@ function EditDocSheet({
     "aria-pressed": type === t,
     className: 'j-chip' + (type === t ? ' j-chip-on' : ''),
     onClick: () => setType(t)
-  }, t))), /*#__PURE__*/React.createElement("p", {
+  }, t))), type === 'Other' && /*#__PURE__*/React.createElement("input", {
+    value: typeOther,
+    onChange: ev => setTypeOther(ev.target.value),
+    style: inputStyle,
+    placeholder: "Say what it is, e.g. Tribunal bundle",
+    "aria-label": "Say what kind of document this is"
+  }), /*#__PURE__*/React.createElement("p", {
     className: "j-sm",
     style: {
       marginBottom: 6
@@ -1628,6 +1663,7 @@ function EditDocSheet({
       if (changed && title.trim()) onSave({
         title: title.trim(),
         type,
+        typeOther: type === 'Other' ? typeOther.trim() : '',
         from: from.trim(),
         received: rec,
         about: about.trim(),
@@ -1746,7 +1782,7 @@ function DocScreen({
     style: {
       marginTop: 2
     }
-  }, d.type, " \xB7 from ", d.from), d.editedOn && /*#__PURE__*/React.createElement("span", {
+  }, docTypeLabel(d), " \xB7 from ", d.from), d.editedOn && /*#__PURE__*/React.createElement("span", {
     className: "j-pillbadge",
     style: {
       marginTop: 6,
@@ -1839,7 +1875,7 @@ function DocScreen({
     className: "j-card j-card-pad"
   }, /*#__PURE__*/React.createElement(Row, {
     label: "What it is",
-    value: d.type
+    value: docTypeLabel(d)
   }), /*#__PURE__*/React.createElement(Row, {
     label: "From",
     value: d.from

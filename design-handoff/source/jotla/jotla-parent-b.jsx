@@ -195,7 +195,7 @@ function openPrintDoc(d, attachments) {
     + '<body style="font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#14223b;max-width:720px;margin:24px auto;padding:0 16px;">'
     + '<p style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8892a6;margin:0 0 6px;">Document record · Jotla</p>'
     + '<h1 style="font-size:22px;margin:0 0 2px;">' + esc(d.title) + '</h1>'
-    + '<p style="font-size:12.5px;margin:0 0 14px;color:#5b6780;">' + esc(d.type) + ' · from ' + esc(d.from)
+    + '<p style="font-size:12.5px;margin:0 0 14px;color:#5b6780;">' + esc(docTypeLabel(d)) + ' · from ' + esc(d.from)
     + ' · Prepared ' + esc(J.fmtShort(J.TODAY_ISO)) + ' ' + esc(J.TODAY_ISO.slice(0, 4)) + '</p>'
     + row('Received', J.fmtLong(d.received) + ' ' + d.received.slice(0, 4))
     + row('About', d.about) + row('Action needed', d.action)
@@ -248,7 +248,7 @@ function DocCard({ doc, onClick }) {
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
           {/* colour-coded type pill (6 Aug): Plan blue, Letter amber, Email green, the rest quiet grey */}
-          <span className={'j-tag ' + ({ Plan: 'j-tag-plan', Letter: 'j-tag-letter', Email: 'j-tag-email' }[doc.type] || 'j-tag-grey')}>{doc.type}</span>
+          <span className={'j-tag ' + ({ Plan: 'j-tag-plan', Letter: 'j-tag-letter', Email: 'j-tag-email' }[doc.type] || 'j-tag-grey')}>{docTypeLabel(doc)}</span>
           <span className="j-meta" style={{ whiteSpace: 'nowrap' }}>{J.fmtShort(doc.received)} {doc.received.slice(0, 4)}</span>
           {attached > 0 && (
             <span aria-label={attached + ' attached'} style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
@@ -282,7 +282,7 @@ function EvidenceScreen({ nav, entries, docs, profile, navView }) {
   const [docQ, setDocQ] = useStateB('');
   const [showDocQ, setShowDocQ] = useStateB(false);
   const docsShown = docQ.trim()
-    ? docs.filter(d => (d.title + ' ' + d.from + ' ' + d.type).toLowerCase().includes(docQ.trim().toLowerCase()))
+    ? docs.filter(d => (d.title + ' ' + d.from + ' ' + d.type + ' ' + (d.typeOther || '')).toLowerCase().includes(docQ.trim().toLowerCase()))
     : docs;
   const [range, setRange] = useStateB(saved.range || { preset: 'Last 3 weeks', from: '', to: '' });
   const [themes, setThemes] = useStateB(saved.themes || []);
@@ -612,13 +612,15 @@ function DocMediaPicker({ items, onAdd, onRemove }) {
     done();
   };
 
+  {/* the caption hugs its label (founder, 9 Aug): 2px label-to-caption, 7px
+      below the icon, matching the moment editor's tiles */}
   const tile = (label, sub, icon, inputProps) => (
     <label className="j-press" style={{ flex: 1, minHeight: 84, borderRadius: 14, cursor: 'pointer',
       border: '1.5px dashed var(--chip-border)', background: 'var(--card)', display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'center', gap: 7, color: 'var(--muted)' }}>
+      alignItems: 'center', justifyContent: 'center', color: 'var(--muted)' }}>
       <Icon name={icon} size={24} color="var(--blue)" />
-      <span style={{ fontSize: 'calc(14.5px * var(--tscale, 1))', fontWeight: 500 }}>{label}</span>
-      <span style={{ fontSize: 'calc(12px * var(--tscale, 1))', color: 'var(--faint)' }}>{sub}</span>
+      <span style={{ fontSize: 'calc(14.5px * var(--tscale, 1))', fontWeight: 500, marginTop: 7 }}>{label}</span>
+      <span style={{ fontSize: 'calc(12px * var(--tscale, 1))', color: 'var(--faint)', marginTop: 2 }}>{sub}</span>
       <input type="file" style={{ display: 'none' }} {...inputProps} />
     </label>
   );
@@ -675,6 +677,12 @@ function AddDocScreen({ nav }) {
   const [title, setTitle] = useStateB('');
   const [type, setType] = useStateB('Letter');
   const [from, setFrom] = useStateB('School');
+  // An Other pill gets named by the parent (founder, 9 Aug: "otherwise they
+  // wont know what Other is"). The type keeps canonical 'Other' underneath for
+  // colours and filters, with the name in typeOther; a named Other source goes
+  // straight into from, which is free text everywhere downstream.
+  const [typeOther, setTypeOther] = useStateB('');
+  const [fromOther, setFromOther] = useStateB('');
   const [received, setReceived] = useStateB('');
   const [about, setAbout] = useStateB('');
   const [action, setAction] = useStateB('');
@@ -707,7 +715,9 @@ function AddDocScreen({ nav }) {
 
   const save = () => {
     const doc = {
-      id: 'doc' + Date.now(), title: title.trim() || 'Untitled document', type, from,
+      id: 'doc' + Date.now(), title: title.trim() || 'Untitled document',
+      type, typeOther: type === 'Other' ? typeOther.trim() : '',
+      from: from === 'Other' && fromOther.trim() ? fromOther.trim() : from,
       received: /^\d{4}-\d{2}-\d{2}$/.test(received.trim()) ? received.trim() : J.TODAY_ISO,
       about: about.trim(), action: action.trim(), mood: 'good',
     };
@@ -752,6 +762,10 @@ function AddDocScreen({ nav }) {
             <div className="j-chiprow" style={{ marginTop: 12 }}>
               {J.DOC_TYPES.map(t => <button key={t} aria-pressed={type === t} className={'j-chip' + (type === t ? ' j-chip-on' : '')} onClick={() => setType(t)}>{t}</button>)}
             </div>
+            {type === 'Other' && (
+              <input className="j-input" style={{ marginTop: 10 }} value={typeOther} onChange={e => setTypeOther(e.target.value)}
+                placeholder="Say what it is, e.g. Tribunal bundle" aria-label="Say what kind of document this is" />
+            )}
           </div>
 
           <div>
@@ -759,6 +773,10 @@ function AddDocScreen({ nav }) {
             <div className="j-chiprow">
               {J.DOC_SOURCES.map(s => <button key={s} aria-pressed={from === s} className={'j-chip' + (from === s ? ' j-chip-on' : '')} onClick={() => setFrom(s)}>{s}</button>)}
             </div>
+            {from === 'Other' && (
+              <input className="j-input" style={{ marginTop: 10 }} value={fromOther} onChange={e => setFromOther(e.target.value)}
+                placeholder="Say who, e.g. Speech therapist" aria-label="Say who this document is from" />
+            )}
           </div>
 
           <div>
@@ -812,6 +830,7 @@ function EditDocSheet({ doc, plus, onSave, onAddMedia, onUnlock, onClose }) {
   const J = window.JOTLA;
   const [title, setTitle] = useStateB(doc.title);
   const [type, setType] = useStateB(doc.type);
+  const [typeOther, setTypeOther] = useStateB(doc.typeOther || ''); // the parent's own name for an Other type (9 Aug)
   const [from, setFrom] = useStateB(doc.from);
   const [received, setReceived] = useStateB(doc.received);
   const [about, setAbout] = useStateB(doc.about || '');
@@ -821,7 +840,8 @@ function EditDocSheet({ doc, plus, onSave, onAddMedia, onUnlock, onClose }) {
   const alreadyAttached = docAttachedCount(doc);
   const inputStyle = { width: '100%', boxSizing: 'border-box', borderRadius: 12, border: '1.5px solid var(--chip-border)', background: 'var(--card-2)',
     padding: '10px 12px', fontFamily: "'Outfit', system-ui", fontSize: 'calc(15.5px * var(--tscale, 1))', color: 'var(--ink)', marginBottom: 12 };
-  const changed = title.trim() !== doc.title || type !== doc.type || from.trim() !== doc.from || received !== doc.received
+  const changed = title.trim() !== doc.title || type !== doc.type || typeOther.trim() !== (doc.typeOther || '')
+    || from.trim() !== doc.from || received !== doc.received
     || about.trim() !== (doc.about || '') || action.trim() !== (doc.action || '');
   return (
     <div className="j-sheet-scrim" onClick={onClose}>
@@ -837,6 +857,10 @@ function EditDocSheet({ doc, plus, onSave, onAddMedia, onUnlock, onClose }) {
             <button key={t} aria-pressed={type === t} className={'j-chip' + (type === t ? ' j-chip-on' : '')} onClick={() => setType(t)}>{t}</button>
           ))}
         </div>
+        {type === 'Other' && (
+          <input value={typeOther} onChange={ev => setTypeOther(ev.target.value)} style={inputStyle}
+            placeholder="Say what it is, e.g. Tribunal bundle" aria-label="Say what kind of document this is" />
+        )}
         <p className="j-sm" style={{ marginBottom: 6 }}>From</p>
         <input value={from} onChange={ev => setFrom(ev.target.value)} style={inputStyle} />
         <p className="j-sm" style={{ marginBottom: 6 }}>Date received</p>
@@ -867,7 +891,7 @@ function EditDocSheet({ doc, plus, onSave, onAddMedia, onUnlock, onClose }) {
         <button className="j-btn j-btn-primary" disabled={!title.trim()} style={{ opacity: title.trim() ? 1 : 0.5 }}
           onClick={() => {
             const rec = /^\d{4}-\d{2}-\d{2}$/.test(received) ? received : doc.received;
-            if (changed && title.trim()) onSave({ title: title.trim(), type, from: from.trim(), received: rec, about: about.trim(), action: action.trim() });
+            if (changed && title.trim()) onSave({ title: title.trim(), type, typeOther: type === 'Other' ? typeOther.trim() : '', from: from.trim(), received: rec, about: about.trim(), action: action.trim() });
             if (newMedia.length) onAddMedia(keptDocMedia(newMedia));
             onClose();
           }}>
@@ -920,7 +944,7 @@ function DocScreen({ nav, docs, id }) {
               display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name={docTypeStyle(d.type).icon} size={26} color={docTypeStyle(d.type).fg} /></span>
             <div>
               <p className="j-h3" style={{ fontSize: 'calc(19px * var(--tscale, 1))' }}>{d.title}</p>
-              <p className="j-meta" style={{ marginTop: 2 }}>{d.type} · from {d.from}</p>
+              <p className="j-meta" style={{ marginTop: 2 }}>{docTypeLabel(d)} · from {d.from}</p>
               {d.editedOn && (
                 <span className="j-pillbadge" style={{ marginTop: 6, background: 'var(--tag-grey-bg)', color: 'var(--muted)' }}>
                   <Icon name="note" size={13} color="var(--muted)" /> Edited {J.fmtShort(d.editedOn)}
@@ -961,7 +985,7 @@ function DocScreen({ nav, docs, id }) {
           )}
 
           <div className="j-card j-card-pad">
-            <Row label="What it is" value={d.type} />
+            <Row label="What it is" value={docTypeLabel(d)} />
             <Row label="From" value={d.from} />
             <Row label="Received" value={J.fmtLong(d.received) + ' ' + d.received.slice(0, 4)} />
             {d.about && (

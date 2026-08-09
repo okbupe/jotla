@@ -325,6 +325,12 @@ function ok(name, cond) {
   await page.waitForTimeout(300);
   await page.locator('button.j-chip:has-text("Today")').first().click();
   await page.waitForTimeout(300);
+  // an Other moment asks to be named (founder, 9 Aug: the pill alone tells
+  // nobody what happened); opening Wins next replaces the editor cleanly
+  await page.locator('.j-chip').filter({ hasText: /^Other$/ }).first().click();
+  await page.waitForTimeout(400);
+  ok('the Other moment editor asks the parent to name it',
+    (await page.locator('input[aria-label="Name this moment yourself"]').count()) === 1);
   await page.getByText('Wins', { exact: true }).first().click(); // tap the pill to open its moment editor
   await page.waitForTimeout(300);
   ok('placeholder nudges exact words', await page.locator('textarea[placeholder*="exact words"]').count() >= 1);
@@ -794,6 +800,12 @@ function ok(name, cond) {
       return t.includes('Dysregulation') && !t.includes('Just log it quickly instead')
         && !t.includes('One calm screen, minimal typing.');
     }));
+  // an Other place asks to be named too (founder, 9 Aug). Exact text match:
+  // a named adult like "Mother" contains "other" and sits earlier in the DOM.
+  await page5.locator('.j-chip').filter({ hasText: /^Other$/ }).first().click();
+  await page5.waitForTimeout(300);
+  ok('an Other place asks the parent to say where',
+    (await page5.locator('input[aria-label="Say where it happened"]').count()) === 1);
   await page5.locator('button[aria-label="Back"]').first().click();
   await page5.waitForTimeout(450);
   // negative control for suite 8: the same demo record, on Plus, DOES carry the
@@ -993,10 +1005,21 @@ function ok(name, cond) {
   await page7.waitForTimeout(250);
   ok('typing retires the title hint', !(await page7.locator('#root').innerText()).includes('Filled from the file name'));
 
+  // the Other pills grow name-it-yourself inputs, and the parent's own words
+  // reach the record (founder, 9 Aug: "otherwise they wont know what Other is")
+  await page7.locator('.j-chip').filter({ hasText: /^Other$/ }).first().click();
+  await page7.waitForTimeout(300);
+  await page7.locator('input[aria-label="Say what kind of document this is"]').fill('Tribunal bundle');
+  await page7.locator('.j-chip').filter({ hasText: /^Other$/ }).last().click();
+  await page7.waitForTimeout(300);
+  await page7.locator('input[aria-label="Say who this document is from"]').fill('Advocate');
+  await page7.waitForTimeout(200);
+
   await page7.getByText('Save document').click();
   await page7.waitForTimeout(700);
   const listText = await page7.locator('#root').innerText();
   ok('the saved doc lands back on the Documents list', listText.includes('Draft EHC plan, our copy'));
+  ok("the parent's own Other names reach the list", listText.includes('Tribunal bundle') && listText.includes('From Advocate'));
   ok('the doc row carries the paperclip count', (await page7.locator('[aria-label="1 attached"]').count()) >= 1);
   await page7.getByText('Draft EHC plan, our copy').first().click();
   await page7.waitForTimeout(500);

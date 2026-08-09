@@ -502,7 +502,7 @@ function BinScreen({ nav, entries = [], docs = [], today }) {
                 <div key={d.id} className="j-card j-card-pad" style={rowStyle}>
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <span style={titleStyle}>{d.title || 'A document'}</span>
-                    <span style={subStyle}>{(d.type || 'Document')} · document · {daysLeft(d.deletedAt)} {daysLeft(d.deletedAt) === 1 ? 'day' : 'days'} left</span>
+                    <span style={subStyle}>{(d.typeOther || d.type || 'Document')} · document · {daysLeft(d.deletedAt)} {daysLeft(d.deletedAt) === 1 ? 'day' : 'days'} left</span>
                   </span>
                   <button className="j-btn j-btn-soft" style={{ width: 'auto', flexShrink: 0, minHeight: 40, padding: '0 14px' }} onClick={() => nav.restoreDoc(d.id)}>Restore</button>
                   <button className="j-press" aria-label="Delete forever" onClick={() => { if (window.confirm('Delete this document for good? This cannot be undone.')) nav.purgeDoc(d.id); }}
@@ -736,7 +736,7 @@ function App({ appMode }) {
     })),
     updateDoc: (id, patch) => setDocs(ds => ds.map(d => {
       if (d.id !== id) return d;
-      const prior = { on: J.TODAY_ISO, title: d.title, type: d.type, from: d.from, received: d.received, about: d.about, action: d.action };
+      const prior = { on: J.TODAY_ISO, title: d.title, type: d.type, typeOther: d.typeOther || '', from: d.from, received: d.received, about: d.about, action: d.action };
       return { ...d, ...patch, editedOn: J.TODAY_ISO, history: [...(d.history || []), prior] };
     })),
     // The document itself (12 Jul 2026): attachments ride the doc row. Adding

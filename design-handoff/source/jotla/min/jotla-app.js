@@ -1219,7 +1219,7 @@ function BinScreen({
     style: titleStyle
   }, d.title || 'A document'), /*#__PURE__*/React.createElement("span", {
     style: subStyle
-  }, d.type || 'Document', " \xB7 document \xB7 ", daysLeft(d.deletedAt), " ", daysLeft(d.deletedAt) === 1 ? 'day' : 'days', " left")), /*#__PURE__*/React.createElement("button", {
+  }, d.typeOther || d.type || 'Document', " \xB7 document \xB7 ", daysLeft(d.deletedAt), " ", daysLeft(d.deletedAt) === 1 ? 'day' : 'days', " left")), /*#__PURE__*/React.createElement("button", {
     className: "j-btn j-btn-soft",
     style: {
       width: 'auto',
@@ -1672,6 +1672,7 @@ function App({
         on: J.TODAY_ISO,
         title: d.title,
         type: d.type,
+        typeOther: d.typeOther || '',
         from: d.from,
         received: d.received,
         about: d.about,

@@ -194,13 +194,15 @@ function MediaPicker({ value = null, onChange = () => {} }) {
     );
   }
 
+  {/* the caption hugs its label (founder, 9 Aug: the pair read too far apart
+      under a uniform column gap): 2px label-to-caption, 7px below the icon */}
   const tile = (label, sub, icon, capture) => (
     <label className="j-press" style={{ flex: 1, minHeight: 84, borderRadius: 14, cursor: 'pointer',
       border: '1.5px dashed var(--chip-border)', background: 'var(--card)', display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'center', gap: 7, color: 'var(--muted)' }}>
+      alignItems: 'center', justifyContent: 'center', color: 'var(--muted)' }}>
       <Icon name={icon} size={24} color="var(--blue)" />
-      <span style={{ fontSize: 'calc(14.5px * var(--tscale, 1))', fontWeight: 500 }}>{label}</span>
-      <span style={{ fontSize: 'calc(12px * var(--tscale, 1))', color: 'var(--faint)' }}>{sub}</span>
+      <span style={{ fontSize: 'calc(14.5px * var(--tscale, 1))', fontWeight: 500, marginTop: 7 }}>{label}</span>
+      <span style={{ fontSize: 'calc(12px * var(--tscale, 1))', color: 'var(--faint)', marginTop: 2 }}>{sub}</span>
       <input type="file" accept="image/*,video/*" {...(capture ? { capture: 'environment' } : {})} style={{ display: 'none' }}
         onChange={e => onFile(e, capture ? 'capture' : 'attach')} />
     </label>
@@ -269,12 +271,16 @@ function QuickLogScreen({ nav, today, view, profile }) {
   const [eAfter, setEAfter] = useStateA('');
   const [eWho, setEWho] = useStateA([]);   // who was there (founder, 16 Jul 2026)
   const [eMedia, setEMedia] = useStateA(null);
+  // An Other moment gets named by the parent (founder, 9 Aug: "otherwise they
+  // wont know what Other is"). Canonical 'Other' stays underneath for counts
+  // and the month buckets; the name rides categoryOther for display.
+  const [eCatOther, setECatOther] = useStateA('');
   const isInc = openCat === 'Incidents';
 
   const openEditor = (c) => {
     setPicker(null); setOpenCat(c); setEditKey(null);
     setEText(''); setEMood(c === 'Incidents' ? 'hard' : 'good');
-    setEBefore(''); setEDuring(''); setEAfter(''); setEWho([]); setEMedia(null);
+    setEBefore(''); setEDuring(''); setEAfter(''); setEWho([]); setEMedia(null); setECatOther('');
   };
   // A banked moment reopens for changing (founder, 16 Jul 2026): something else
   // often comes back to you while you are still sitting there logging. It keeps
@@ -283,10 +289,12 @@ function QuickLogScreen({ nav, today, view, profile }) {
     setPicker(null); setOpenCat(m.category); setEditKey(m.key);
     setEText(m.text); setEMood(m.mood);
     setEBefore(m.before); setEDuring(m.during); setEAfter(m.after); setEWho(m.who || []); setEMedia(m.media);
+    setECatOther(m.categoryOther || '');
   };
   const bankMoment = () => {
     const body = {
-      category: openCat, mood: eMood, isIncident: openCat === 'Incidents',
+      category: openCat, categoryOther: openCat === 'Other' ? eCatOther.trim() : '',
+      mood: eMood, isIncident: openCat === 'Incidents',
       text: eText.trim(), before: eBefore.trim(), during: eDuring.trim(), after: eAfter.trim(),
       who: eWho, media: eMedia,
     };
@@ -314,13 +322,13 @@ function QuickLogScreen({ nav, today, view, profile }) {
     [...moments].reverse().forEach(m => {
       const base = {
         id: (m.isIncident ? 'h' : 'n') + m.key, logId, date: logDate, time: m.time, clock,
-        setting: m.setting, category: m.category, mood: m.mood, kind,
+        setting: m.setting, category: m.category, categoryOther: m.categoryOther || '', mood: m.mood, kind,
       };
       const entry = m.isIncident
         ? { ...base, type: 'handover', summary: m.during || m.text || 'Hard moment captured.',
             handover: { behaviours: [], before: m.before, during: m.during || m.text, after: m.after, duration: '', helped: '', who: m.who || [], where: '' } }
         : { ...base, type: 'quick',
-            summary: m.text || `${m.category} at ${J.settingInSentence(m.setting)}. ${m.time} went ${m.mood === 'good' ? 'well' : m.mood === 'ok' ? 'up and down' : 'hard'}.` };
+            summary: m.text || `${m.categoryOther || m.category} at ${J.settingInSentence(m.setting)}. ${m.time} went ${m.mood === 'good' ? 'well' : m.mood === 'ok' ? 'up and down' : 'hard'}.` };
       if (m.media && m.media.dataUrl) { entry.photoData = m.media.dataUrl; entry.photo = 'Photo from the day'; }
       else if (m.media && m.media.kind === 'video') { entry.photo = 'Video noted (kept in your photo library)'; }
       nav.addEntry(entry);
@@ -422,9 +430,13 @@ function QuickLogScreen({ nav, today, view, profile }) {
           {openCat && (
             <div className="j-card j-card-pad" style={{ marginTop: 22, border: '1.5px solid var(--blue)', display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
-                <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(17px * var(--tscale, 1))', color: 'var(--ink)', margin: 0 }}>{openCat}</p>
+                <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(17px * var(--tscale, 1))', color: 'var(--ink)', margin: 0 }}>{openCat === 'Other' ? (eCatOther.trim() || 'Other') : openCat}</p>
                 <p className="j-meta" style={{ marginTop: 2 }}>{eTime} · {eSetting} · {longDate}</p>
               </div>
+              {openCat === 'Other' && (
+                <input className="j-input" value={eCatOther} onChange={e => setECatOther(e.target.value)}
+                  placeholder="Name it, e.g. Homework" aria-label="Name this moment yourself" />
+              )}
               {isInc ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <PhaseField label="Before" hint="What led up to it" value={eBefore} onChange={setEBefore} />
@@ -477,7 +489,7 @@ function QuickLogScreen({ nav, today, view, profile }) {
                         border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}>
                       {moodDot(m.mood)}
                       <span style={{ flex: 1, minWidth: 0 }}>
-                        <span className="j-meta" style={{ display: 'block' }}>{m.time} · {m.setting} · {m.category}</span>
+                        <span className="j-meta" style={{ display: 'block' }}>{m.time} · {m.setting} · {m.categoryOther || m.category}</span>
                         <span className="j-body" style={{ display: 'block', fontSize: 'calc(15px * var(--tscale, 1))', marginTop: 1 }}>{m.isIncident ? (m.during || m.text || 'Incident noted') : (m.text || 'Noted')}</span>
                       </span>
                     </button>
@@ -586,6 +598,7 @@ function HandoverScreen({ nav, today, profile }) {
   const [helped, setHelped] = useStateA('');
   const [who, setWho] = useStateA([]);         // who was with the child (multi-select)
   const [whereAt, setWhereAt] = useStateA(''); // where it happened (single-select)
+  const [whereOther, setWhereOther] = useStateA(''); // names the Other place (founder, 9 Aug)
   const [nudge, setNudge] = useStateA(false);
   const [media, setMedia] = useStateA(null);
   const [extras, setExtras] = useStateA([]);
@@ -604,7 +617,8 @@ function HandoverScreen({ nav, today, profile }) {
       setting: 'School', category: 'Incidents',
       mood: 'hard', kind: 'contemporaneous', type: 'handover',
       summary: during.trim() ? during.trim() : 'Hard moment captured.',
-      handover: { behaviours, before, during, after, duration: duration + ' mins', helped, who, where: whereAt },
+      handover: { behaviours, before, during, after, duration: duration + ' mins', helped, who,
+        where: whereAt === 'Other' && whereOther.trim() ? whereOther.trim() : whereAt },
     };
     if (media && media.dataUrl) { entry.photoData = media.dataUrl; entry.photo = 'Photo from the moment'; }
     else if (media && media.kind === 'video') { entry.photo = 'Video noted (kept in your photo library)'; }
@@ -691,6 +705,10 @@ function HandoverScreen({ nav, today, profile }) {
                   onClick={() => setWhereAt(v => v === c ? '' : c)}>{c}</button>
               ))}
             </div>
+            {whereAt === 'Other' && (
+              <input className="j-input" style={{ marginTop: 10 }} value={whereOther} onChange={e => setWhereOther(e.target.value)}
+                placeholder="Say where, e.g. School bus" aria-label="Say where it happened" />
+            )}
           </div>
 
           {/* before / during / after */}
