@@ -22,12 +22,15 @@
 // theme-correct fallback without rendering it first. See NATIVE-SYNC.md B.
 
 // mood/emotion keys: happy, ok, sad, worried, angry  (good->happy, hard->sad aliases)
-// MOOD STYLES v3 (founder, 9 Aug late): TWO packs, both real emoji artwork.
-// Bold (Twemoji, CC BY 4.0) is the DEFAULT and free; Sticker (Microsoft Fluent
-// 3D, MIT) is the Plus look. The 9 Aug v2 roster (Soft/Flat/Bubble/Outline and
-// the cat packs) was cut the same day: founder verdict, "all the same kinda";
-// genuinely varied character packs are being chosen separately. The drawn
-// classic smiley retired with it. Notices: moods/LICENSES.md + About credits.
+// MOOD STYLES v4 (founder, 11 Aug): THREE packs. Bold (Twemoji, CC BY 4.0) is
+// the DEFAULT and free; Sticker (Microsoft Fluent 3D, MIT) and Corgi are Plus.
+// The 9 Aug v2 roster (Soft/Flat/Bubble/Outline and the cat packs) was cut the
+// same day: founder verdict, "all the same kinda"; the drawn classic smiley
+// retired with it. Corgi is the first ORIGINAL pack, drawn for Jotla rather
+// than licensed, because nothing open carries that variety: one 21:9 sheet of
+// all five moods off one character anchor, cut into five squares and sized by
+// area so a wide head and a tall-eared head read the same. Recipe + prompt:
+// Vision `App/Jotla-Emoji-Pack-Prompts.md`. Notices: moods/LICENSES.md + About.
 // The active look rides window.JOTLA_FACE_STYLE (set by the shell from prefs);
 // the styleName prop overrides it so the Mood style page can preview packs.
 // Any unknown or stale pack name falls back to Bold so a face can never blank.
@@ -41,9 +44,14 @@ const FACE_PACKS = {
     dir: 'moods/sticker',
     ext: 'png',
     label: 'Sticker'
+  },
+  corgi: {
+    dir: 'moods/corgi',
+    ext: 'png',
+    label: 'Corgi'
   }
 };
-const FACE_PACK_ORDER = ['bold', 'sticker'];
+const FACE_PACK_ORDER = ['bold', 'sticker', 'corgi'];
 const FACE_PACK_DEFAULT = 'bold';
 const FACE_PACK_LABEL = k => FACE_PACKS[k] ? FACE_PACKS[k].label : FACE_PACKS[FACE_PACK_DEFAULT].label;
 function Face({

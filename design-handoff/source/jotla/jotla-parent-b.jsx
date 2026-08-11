@@ -1463,7 +1463,7 @@ function InfoAboutScreen({ nav }) {
         <InfoP>Jotla Plus adds the tools to help you spot patterns and make your case: photos and videos kept with your notes, patterns and the Month view, deep filtering, Dysregulation Mode, and the PDF evidence pack. Family Sync, when it arrives, is part of Plus too. Plus is {TERM_PRICE} {TERM_PERIOD} or {PLUS_PRICE} for a year, through Google Play, and it stays on until the day a term runs out.</InfoP>
         <InfoP><span className="j-strong">If your year ends, you keep everything.</span> Your record is never held to ransom. If Plus ends, for any reason at all, whether you cancel, let it lapse, or a card quietly expires, you lose nothing you have written. Every entry stays. Your full timeline stays. Plain keyword search stays. Raw export stays. You can still make the PDF of everything you have already logged. Appeal-deadline safety reminders keep coming, with or without a subscription. A subscription only ever switches off the paid tools. It never touches your history.</InfoP>
         <InfoP>Jotla AI is coming in 2027: {AI_PRICE} {PLUS_PERIOD}, with Jotla Plus included, so it is {AI_PRICE} in total and not one price on top of another.</InfoP>
-        <InfoP>The mood faces use open emoji artwork, with thanks to their makers: Twemoji (CC BY 4.0) and Microsoft Fluent Emoji (MIT licence). Full notices ship inside the app's moods folder.</InfoP>
+        <InfoP>Two of the face packs use open emoji artwork, with thanks to their makers: Bold is Twemoji (CC BY 4.0) and Sticker is Microsoft Fluent Emoji (MIT licence). Corgi was drawn for Jotla. Full notices ship inside the app's moods folder.</InfoP>
         <button className="j-btn j-btn-soft" onClick={() => nav.go('unlock')}>
           <Icon name="sparkle" size={18} color="var(--blue)" /> See what Plus adds
         </button>
@@ -1778,8 +1778,9 @@ function AppSettingsScreen({ nav }) {
 // ---------------- MOOD STYLE (the pack picker page, 9 Aug) ----------------
 // A full page, not a sheet (founder: "a new page showing you how they look"):
 // every pack shows its five moods in a row; the active pack wears the blue
-// tick; on free every pack but Classic wears the crown and a tap opens the
-// Jotla Plus page (the crown gate). Owners tap to apply instantly, app-wide.
+// tick; on free every pack but the free default wears the crown and a tap opens
+// the Jotla Plus page (the crown gate). Owners tap to apply instantly, app-wide.
+// The page is driven by FACE_PACK_ORDER, so a new pack needs no change here.
 function MoodStyleScreen({ nav }) {
   const active = FACE_PACKS[nav.faceStyle] ? nav.faceStyle : FACE_PACK_DEFAULT;
   const moods = ['happy', 'ok', 'sad', 'worried', 'angry'];
@@ -1810,7 +1811,7 @@ function MoodStyleScreen({ nav }) {
               </button>
             );
           })}
-          <FootNote>Bold is part of Free. The sticker look is part of Plus, and the whole record changes together: Today, the Month, and the child's own screens.</FootNote>
+          <FootNote>Bold is part of Free. The other looks are part of Plus, and the whole record changes together: Today, the Month, and the child's own screens.</FootNote>
         </div>
       </div>
     </div>

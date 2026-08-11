@@ -2864,7 +2864,7 @@ function InfoAboutScreen({
     title: "Jotla Plus"
   }, /*#__PURE__*/React.createElement(InfoP, null, "The record itself is free, forever: logging, your timeline, search and export never cost anything, never expire, and stay yours."), /*#__PURE__*/React.createElement(InfoP, null, "Jotla Plus adds the tools to help you spot patterns and make your case: photos and videos kept with your notes, patterns and the Month view, deep filtering, Dysregulation Mode, and the PDF evidence pack. Family Sync, when it arrives, is part of Plus too. Plus is ", TERM_PRICE, " ", TERM_PERIOD, " or ", PLUS_PRICE, " for a year, through Google Play, and it stays on until the day a term runs out."), /*#__PURE__*/React.createElement(InfoP, null, /*#__PURE__*/React.createElement("span", {
     className: "j-strong"
-  }, "If your year ends, you keep everything."), " Your record is never held to ransom. If Plus ends, for any reason at all, whether you cancel, let it lapse, or a card quietly expires, you lose nothing you have written. Every entry stays. Your full timeline stays. Plain keyword search stays. Raw export stays. You can still make the PDF of everything you have already logged. Appeal-deadline safety reminders keep coming, with or without a subscription. A subscription only ever switches off the paid tools. It never touches your history."), /*#__PURE__*/React.createElement(InfoP, null, "Jotla AI is coming in 2027: ", AI_PRICE, " ", PLUS_PERIOD, ", with Jotla Plus included, so it is ", AI_PRICE, " in total and not one price on top of another."), /*#__PURE__*/React.createElement(InfoP, null, "The mood faces use open emoji artwork, with thanks to their makers: Twemoji (CC BY 4.0) and Microsoft Fluent Emoji (MIT licence). Full notices ship inside the app's moods folder."), /*#__PURE__*/React.createElement("button", {
+  }, "If your year ends, you keep everything."), " Your record is never held to ransom. If Plus ends, for any reason at all, whether you cancel, let it lapse, or a card quietly expires, you lose nothing you have written. Every entry stays. Your full timeline stays. Plain keyword search stays. Raw export stays. You can still make the PDF of everything you have already logged. Appeal-deadline safety reminders keep coming, with or without a subscription. A subscription only ever switches off the paid tools. It never touches your history."), /*#__PURE__*/React.createElement(InfoP, null, "Jotla AI is coming in 2027: ", AI_PRICE, " ", PLUS_PERIOD, ", with Jotla Plus included, so it is ", AI_PRICE, " in total and not one price on top of another."), /*#__PURE__*/React.createElement(InfoP, null, "Two of the face packs use open emoji artwork, with thanks to their makers: Bold is Twemoji (CC BY 4.0) and Sticker is Microsoft Fluent Emoji (MIT licence). Corgi was drawn for Jotla. Full notices ship inside the app's moods folder."), /*#__PURE__*/React.createElement("button", {
     className: "j-btn j-btn-soft",
     onClick: () => nav.go('unlock')
   }, /*#__PURE__*/React.createElement(Icon, {
@@ -3590,8 +3590,9 @@ function AppSettingsScreen({
 // ---------------- MOOD STYLE (the pack picker page, 9 Aug) ----------------
 // A full page, not a sheet (founder: "a new page showing you how they look"):
 // every pack shows its five moods in a row; the active pack wears the blue
-// tick; on free every pack but Classic wears the crown and a tap opens the
-// Jotla Plus page (the crown gate). Owners tap to apply instantly, app-wide.
+// tick; on free every pack but the free default wears the crown and a tap opens
+// the Jotla Plus page (the crown gate). Owners tap to apply instantly, app-wide.
+// The page is driven by FACE_PACK_ORDER, so a new pack needs no change here.
 function MoodStyleScreen({
   nav
 }) {
@@ -3676,7 +3677,7 @@ function MoodStyleScreen({
       size: 40,
       styleName: k
     }))));
-  }), /*#__PURE__*/React.createElement(FootNote, null, "Bold is part of Free. The sticker look is part of Plus, and the whole record changes together: Today, the Month, and the child's own screens."))));
+  }), /*#__PURE__*/React.createElement(FootNote, null, "Bold is part of Free. The other looks are part of Plus, and the whole record changes together: Today, the Month, and the child's own screens."))));
 }
 
 // ---------------- CHILDREN ----------------
