@@ -563,8 +563,7 @@ function ChildScreen({
     }
   }, /*#__PURE__*/React.createElement(Face, {
     mood: "happy",
-    size: 140,
-    bg: "#FFE6B8"
+    size: 150
   })), /*#__PURE__*/React.createElement("p", {
     style: {
       fontFamily: "'Cal Sans', system-ui",
@@ -693,8 +692,7 @@ function ChildScreen({
     }
   }, /*#__PURE__*/React.createElement(Face, {
     mood: sel,
-    size: 150,
-    bg: "#FFE6B8"
+    size: 162
   }))), /*#__PURE__*/React.createElement("p", {
     style: {
       fontFamily: "'Cal Sans', system-ui",
@@ -942,8 +940,7 @@ function ChildScreen({
     }
   }, /*#__PURE__*/React.createElement(Face, {
     mood: "happy",
-    size: 150,
-    bg: "#FFE6B8"
+    size: 162
   })), /*#__PURE__*/React.createElement("span", {
     style: {
       position: 'absolute',

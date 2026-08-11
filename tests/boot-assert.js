@@ -720,19 +720,33 @@ function ok(name, cond) {
   await page4.waitForTimeout(600);
   const moodPage = await page4.locator('#root').innerText();
   ok('the Emojis page drops the grey subtitle', !moodPage.includes('The faces the whole record wears'));
-  ok('the Emojis page lists exactly Bold, Sticker and Corgi (the v2 roster is gone)',
-    moodPage.includes('Bold') && moodPage.includes('Sticker') && moodPage.includes('Corgi')
+  ok('the Emojis page lists all ten packs (the v2 roster is still gone)',
+    ['Bold', 'Sticker', 'Corgi', 'Cat', 'Dino', 'Monster', 'Ghost', 'Robot', 'Weather', 'Boba'].every(k => moodPage.includes(k))
     && !moodPage.includes('Classic') && !moodPage.includes('Bubble') && !moodPage.includes('Outline') && !moodPage.includes('Soft'));
-  ok('all three packs preview their five moods (15 faces on the page)', (await page4.locator('[data-face-style]').count()) === 15);
+  ok('all ten packs preview their five moods (50 faces on the page)', (await page4.locator('[data-face-style]').count()) === 50);
   ok('Bold is the default look, ticked on a fresh boot', await page4.evaluate(() => {
     const btn = [...document.querySelectorAll('[role="radio"]')].find(b => b.getAttribute('aria-label') === 'Bold');
     return !!btn && btn.getAttribute('aria-checked') === 'true';
   }));
-  ok('both paid packs wear the crown on free', (await page4.locator('[data-crown-gate]').count()) === 2);
+  ok('all nine paid packs wear the crown on free', (await page4.locator('[data-crown-gate]').count()) === 9);
   // every face on the page is a file that actually decoded: a missing PNG
-  // renders as an empty img and still counts in the locator above
-  ok('every previewed face image loaded (no broken art)', await page4.evaluate(() =>
-    [...document.querySelectorAll('[data-face-style] img')].every(i => i.complete && i.naturalWidth > 0)));
+  // renders as an empty img and still counts in the locator above. The previews
+  // are lazy, so the page is scrolled to the end first, which also proves the
+  // lazy images do arrive: 50 files, 10 packs, no broken art anywhere.
+  await page4.evaluate(async () => {
+    const box = document.querySelector('.j-scroll');
+    for (let y = 0; y < box.scrollHeight; y += 400) {
+      box.scrollTop = y;
+      await new Promise(r => setTimeout(r, 60));
+    }
+  });
+  await page4.waitForTimeout(900);
+  const faceImgs = await page4.evaluate(() => {
+    const imgs = [...document.querySelectorAll('[data-face-style] img')];
+    return { total: imgs.length, ok: imgs.filter(i => i.complete && i.naturalWidth > 0).length };
+  });
+  ok(`every previewed face image loaded (${faceImgs.ok}/${faceImgs.total})`,
+    faceImgs.total === 50 && faceImgs.ok === 50);
   await page4.locator('[role="radio"][aria-label="Sticker"]').first().click();
   await page4.waitForTimeout(600);
   ok('a crowned pack opens the Jotla Plus page on free', (await page4.locator('#root').innerText()).includes('Get Jotla Plus'));
@@ -948,6 +962,17 @@ function ok(name, cond) {
   await page5.getByText('Happy', { exact: true }).first().click();
   await page5.waitForTimeout(500);
   ok('a picked face grows the More button on Plus', await page5.getByText('More', { exact: true }).first().isVisible());
+  // 11 Aug: the amber disc behind the child's face is gone. It was also padding
+  // the art down to 82%, so the disc is what made the sticker look small.
+  ok('no child face sits on a coloured disc', await page5.evaluate(() =>
+    [...document.querySelectorAll('[data-face-style]')].every(s => {
+      const bg = getComputedStyle(s).backgroundColor;
+      return bg === 'rgba(0, 0, 0, 0)' || bg === 'transparent';
+    })));
+  ok('the confirmed face renders full-bleed at 162px', await page5.evaluate(() => {
+    const img = document.querySelector('[data-face-style] img');
+    return !!img && Math.round(img.getBoundingClientRect().width) === 162;
+  }));
   await page5.getByText('More', { exact: true }).first().click();
   await page5.waitForTimeout(500);
   const qCards = await page5.locator('#root').innerText();

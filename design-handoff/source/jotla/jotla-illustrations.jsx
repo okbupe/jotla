@@ -22,15 +22,17 @@
 // theme-correct fallback without rendering it first. See NATIVE-SYNC.md B.
 
 // mood/emotion keys: happy, ok, sad, worried, angry  (good->happy, hard->sad aliases)
-// MOOD STYLES v4 (founder, 11 Aug): THREE packs. Bold (Twemoji, CC BY 4.0) is
-// the DEFAULT and free; Sticker (Microsoft Fluent 3D, MIT) and Corgi are Plus.
-// The 9 Aug v2 roster (Soft/Flat/Bubble/Outline and the cat packs) was cut the
-// same day: founder verdict, "all the same kinda"; the drawn classic smiley
-// retired with it. Corgi is the first ORIGINAL pack, drawn for Jotla rather
-// than licensed, because nothing open carries that variety: one 21:9 sheet of
-// all five moods off one character anchor, cut into five squares and sized by
-// area so a wide head and a tall-eared head read the same. Recipe + prompt:
-// Vision `App/Jotla-Emoji-Pack-Prompts.md`. Notices: moods/LICENSES.md + About.
+// EMOJI PACKS v5 (founder, 11 Aug): TEN packs. Bold (Twemoji, CC BY 4.0) is the
+// DEFAULT and free; every other pack is Plus. Eight of them are ORIGINAL, drawn
+// for Jotla rather than licensed, because nothing open carries that variety
+// (the 9 Aug roster was cut on the founder's verdict, "all the same kinda").
+// Each original pack is ONE 21:9 sheet holding all five moods, so one drawing
+// pass gives one character; the founder cuts the sheet in Photoshop and Vision
+// splits it, sizes each face by AREA (a wide short head and a tall eared head
+// with the same bounding box read as different sizes) and squares it to 256px,
+// palette-optimised to about a sixth of the raw weight. Recipe and the prompt
+// for every pack: Vision `App/Jotla-Emoji-Pack-Prompts.md`. Notices live in
+// moods/LICENSES.md and on the About page.
 // The active look rides window.JOTLA_FACE_STYLE (set by the shell from prefs);
 // the styleName prop overrides it so the Mood style page can preview packs.
 // Any unknown or stale pack name falls back to Bold so a face can never blank.
@@ -38,8 +40,15 @@ const FACE_PACKS = {
   bold: { dir: 'moods/bold', ext: 'png', label: 'Bold' },
   sticker: { dir: 'moods/sticker', ext: 'png', label: 'Sticker' },
   corgi: { dir: 'moods/corgi', ext: 'png', label: 'Corgi' },
+  cat: { dir: 'moods/cat', ext: 'png', label: 'Cat' },
+  dino: { dir: 'moods/dino', ext: 'png', label: 'Dino' },
+  monster: { dir: 'moods/monster', ext: 'png', label: 'Monster' },
+  ghost: { dir: 'moods/ghost', ext: 'png', label: 'Ghost' },
+  robot: { dir: 'moods/robot', ext: 'png', label: 'Robot' },
+  weather: { dir: 'moods/weather', ext: 'png', label: 'Weather' },
+  boba: { dir: 'moods/boba', ext: 'png', label: 'Boba' },
 };
-const FACE_PACK_ORDER = ['bold', 'sticker', 'corgi'];
+const FACE_PACK_ORDER = ['bold', 'sticker', 'corgi', 'cat', 'dino', 'monster', 'ghost', 'robot', 'weather', 'boba'];
 const FACE_PACK_DEFAULT = 'bold';
 const FACE_PACK_LABEL = (k) => (FACE_PACKS[k] ? FACE_PACKS[k].label : FACE_PACKS[FACE_PACK_DEFAULT].label);
 function Face({ mood = 'happy', size = 64, bg = 'transparent', styleName }) {
@@ -53,7 +62,7 @@ function Face({ mood = 'happy', size = 64, bg = 'transparent', styleName }) {
   return (
     <span data-face-style={look} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center',
       width: size, height: size, borderRadius: '50%', background: bg !== 'transparent' ? bg : 'none', flexShrink: 0 }}>
-      <img src={p.dir + '/' + m + '.' + p.ext} alt="" draggable={false}
+      <img src={p.dir + '/' + m + '.' + p.ext} alt="" draggable={false} loading="lazy" decoding="async" 
         style={{ width: size - pad * 2, height: size - pad * 2, display: 'block' }} />
     </span>
   );

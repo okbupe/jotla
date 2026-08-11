@@ -301,8 +301,13 @@ function ChildScreen({ nav, profile }) {
 
           {step === 'intro' && (
             <div className="j-fade" style={{ textAlign: 'center' }}>
+              {/* no amber disc behind the face (founder, 11 Aug: "dont let it
+                  have those round borders around them. it makes the sticker
+                  look smaller. just leave it natural"). The disc also padded
+                  the art to 82%, so dropping it is what makes the face bigger,
+                  not the size bump. */}
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 22 }}>
-                <Face mood="happy" size={140} bg="#FFE6B8" />
+                <Face mood="happy" size={150} />
               </div>
               <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(36px * var(--tscale, 1))', color: HEAD_INK, margin: '0 0 8px' }}>Hi {childName}</p>
               <p style={{ fontSize: 'calc(20px * var(--tscale, 1))', color: SUB_INK, margin: '0 0 34px' }}>How was your day?</p>
@@ -349,7 +354,7 @@ function ChildScreen({ nav, profile }) {
               <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
                 {sel === 'happy' && <ConfettiBurst />}
                 <span className={'j-anim-' + sel} style={{ display: 'inline-flex' }}>
-                  <Face mood={sel} size={150} bg="#FFE6B8" />
+                  <Face mood={sel} size={162} />
                 </span>
               </div>
               <p style={{ fontFamily: "'Cal Sans', system-ui", fontWeight: 500, fontSize: 'calc(32px * var(--tscale, 1))', color: HEAD_INK, margin: '0 0 8px', lineHeight: 1.1 }}>
@@ -460,7 +465,7 @@ function ChildScreen({ nav, profile }) {
                 {/* gentle colour wash, no confetti, no sound */}
                 <span style={{ position: 'absolute', inset: '-30px', borderRadius: '50%',
                   background: 'radial-gradient(circle, rgba(39,174,96,0.16), rgba(39,174,96,0) 70%)' }} />
-                <span style={{ position: 'relative' }}><Face mood="happy" size={150} bg="#FFE6B8" /></span>
+                <span style={{ position: 'relative' }}><Face mood="happy" size={162} /></span>
                 {/* soft tick */}
                 <span style={{ position: 'absolute', right: 4, bottom: 4, width: 48, height: 48, borderRadius: '50%',
                   background: '#27AE60', display: 'flex', alignItems: 'center', justifyContent: 'center',

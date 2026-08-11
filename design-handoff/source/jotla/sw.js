@@ -10,9 +10,10 @@
    VERSION, and that is the ONLY thing that can evict a cache-first entry. A ?v=
    query cannot, because the fetch handler matches with ignoreSearch: true. The
    illo deck now hashes its filenames so it never needs this; anything else that
-   reuses a filename does. Bumped to 1.13.0 on 16 Jul to evict the 3:2 illustration
+   reuses a filename does: 2.0.15 replaced every moods/corgi/*.png with a cleaner
+   cut under the same five names, which is exactly the case this rule exists for. Bumped to 1.13.0 on 16 Jul to evict the 3:2 illustration
    set that v1.12.0 had cached under the square set's names. */
-const VERSION = 'jotla-v2.0.14';
+const VERSION = 'jotla-v2.0.15';
 const PRECACHE = [
   './',
   'index.html',
