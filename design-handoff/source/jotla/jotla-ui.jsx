@@ -5,7 +5,7 @@ const { useState, useRef, useEffect, useLayoutEffect } = React;
 // and the suite asserts that, because asking a person to remember is what got
 // us here: this said 2.0.4 for fourteen builds while the service worker said
 // 2.0.18, so the one number a tester can actually read was the one lying.
-window.JOTLA_BUILD = '2.0.20';
+window.JOTLA_BUILD = '2.0.21';
 
 // The app's data epoch: the earliest day a log can land on (Quick log's own
 // minimum day, and how far back the Month calendar pages). One home here, on

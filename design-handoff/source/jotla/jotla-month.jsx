@@ -257,7 +257,20 @@ function MonthScreen({ nav, entries, view }) {
       if (!el || !el.clientWidth) return;
       const i = Math.round(el.scrollLeft / el.clientWidth);
       const target = monthOffsets[Math.max(0, Math.min(monthOffsets.length - 1, i))];
-      if (target !== undefined) adopt(target);
+      if (target === undefined) return;
+      // A settle that lands where the pager was already headed is one of our
+      // own parks echoing back. A settle anywhere ELSE is the parent swiping
+      // months, and on Plus that swipe carries the whole surface with it
+      // (founder, 14 Aug): the graph follows the shown month and the record
+      // moves to the first of it.
+      const swiped = target !== targetRef.current;
+      adopt(target);
+      if (swiped && nav.plus) {
+        const shown = new Date(today.getFullYear(), today.getMonth() + target, 1);
+        let iso = `${shown.getFullYear()}-${String(shown.getMonth() + 1).padStart(2, '0')}-01`;
+        if (iso < window.MIN_LOG_DAY) iso = window.MIN_LOG_DAY;
+        scrollToDate(iso);
+      }
     }, 90);
   };
   // Prev/next month controls (12 Jul 2026): the swipe pager stays, these make
@@ -284,19 +297,23 @@ function MonthScreen({ nav, entries, view }) {
   };
   const dows = J.DOW_MON; // Mon Tue Wed Thu Fri Sat Sun
 
-  // ---- advanced mode (Plus). Free never leaves simple mode. ----
-  // Mode, graph and place ride the VIEW, like the month pager's offset already
-  // does, because opening a note from the record and coming back must not throw
-  // the parent out of advanced mode and lose where they were reading.
+  // ---- THE ONE SURFACE (Plus; rebuilt to the founder's 14 Aug correction) ----
+  // There is no separate advanced mode any more. The Plus Month tab is always
+  // the simple view's inset CARD (never a full-bleed panel, the title never on
+  // a white background), with the grab line on the card, the graph in its OWN
+  // card below (never inside the calendar area), and the record streaming
+  // underneath. Two numbers drive it, both 0 to 1, both able to sit anywhere
+  // in between because they follow the finger:
+  //   t  the calendar, 0 = the anchor's week alone, 1 = the whole month
+  //   g  the graph,    0 = tucked away behind the calendar, 1 = fully out
+  // The graph swipe drives BOTH together (tuck + compress, nearest-state
+  // bounce on release); the grab line drives t alone; the graph icon shows the
+  // graph (t untouched) or hides it AND compresses. State rides the VIEW so a
+  // note opened from the record comes Back to the page exactly as it was.
   const anchorDateOf = (iso) => J.parseISO(iso);
   const backTo = (iso) => Math.round((J.parseISO(J.TODAY_ISO) - J.parseISO(iso)) / 86400000);
-  const [adv, setAdv] = React.useState(!!(view && view.calAdv));
-  // Two numbers drive the whole surface, both 0 to 1, both able to sit at any
-  // value in between because they follow the finger:
-  //   t  the calendar, 0 = the anchor's week alone, 1 = the whole month
-  //   g  the graph,    0 = tucked under the calendar, 1 = fully out
-  const [t, setT] = React.useState(0);
-  const [g, setG] = React.useState(view && typeof view.calGraph === 'boolean' ? (view.calGraph ? 1 : 0) : 1);
+  const [t, setT] = React.useState(view && typeof view.calT === 'boolean' ? (view.calT ? 1 : 0) : 1);
+  const [g, setG] = React.useState(view && typeof view.calG === 'boolean' ? (view.calG ? 1 : 0) : 1);
   const graphOpen = g > 0.5;
   const calOpen = t > 0.5;
   const [anchorISO, setAnchorISO] = React.useState(view && view.calAnchor ? view.calAnchor : J.TODAY_ISO);
@@ -305,11 +322,9 @@ function MonthScreen({ nav, entries, view }) {
   const streamRef = React.useRef(null);
   const dayEls = React.useRef({});
   const spyLock = React.useRef(0);      // a scroll WE caused must not feed back into the strip
-  const pendingScroll = React.useRef(view && view.calAdv && view.calAnchor ? view.calAnchor : null);
-  const advRef = React.useRef(false);
+  const pendingScroll = React.useRef(view && view.calAnchor ? view.calAnchor : null);
   const anchorRef = React.useRef(J.TODAY_ISO);
-  const graphOpenRef = React.useRef(true);
-  advRef.current = adv; graphOpenRef.current = graphOpen; anchorRef.current = anchorISO;
+  anchorRef.current = anchorISO;
 
   const byDate = React.useMemo(() => {
     const m = {};
@@ -325,20 +340,6 @@ function MonthScreen({ nav, entries, view }) {
     return out;
   }, [dayCount]);
   const atEpoch = streamDates.length < dayCount;
-
-  const enterAdvanced = () => {
-    setAdv(true); setG(0); setT(0);
-    setAnchorISO(J.TODAY_ISO); setDayCount(STREAM_PAGE);
-    dayEls.current = {};
-  };
-  // Coming back to the month grid, land on the month the parent was READING,
-  // not wherever the pager happened to be parked before they went advanced.
-  const exitAdvanced = () => {
-    const a = J.parseISO(anchorRef.current);
-    const off = (a.getFullYear() * 12 + a.getMonth()) - (today.getFullYear() * 12 + today.getMonth());
-    adopt(Math.max(minOffset, Math.min(0, off)));
-    setAdv(false); setT(0); setG(1);
-  };
 
   const scrollToDate = (iso) => {
     const back = backTo(iso);
@@ -373,8 +374,9 @@ function MonthScreen({ nav, entries, view }) {
       setDayCount(c => c + STREAM_PAGE);
     }
     if (Date.now() < spyLock.current) return;
-    // any scroll of the parent's own making compresses the full calendar again
-    if (tRef.current > 0) tween(setT, tRef.current, 0);   // a scroll of the parent's own making folds the month away
+    // a scroll of the parent's own making folds the month back to the strip
+    // (the graph is untouched: its state belongs to the swipe and the icon)
+    if (tRef.current > 0) tween([[setT, tRef.current, 0]]);
     const top = el.scrollTop + 14;
     let found = null;
     for (const iso of streamDates) {
@@ -392,17 +394,27 @@ function MonthScreen({ nav, entries, view }) {
   const GAP = 6;
   const [rowH, setRowH] = React.useState(0);
   const [graphH, setGraphH] = React.useState(0);
+  const [legendH, setLegendH] = React.useState(0);
   const foldRef = React.useRef(null);
   const graphInnerRef = React.useRef(null);
+  const legendInnerRef = React.useRef(null);
+  // Heights are kept FRACTIONAL end to end. Rounding the cell height clipped
+  // the top of the day rings on the strip: the real cell is (width - gaps)/7,
+  // e.g. 40.857px, and a rounded 41 makes the fold's translate overshoot by
+  // the accumulated error, worse the lower the anchor's week sits in the month
+  // (founder caught the shaved rings on his phone, 14 Aug). The 0.25px epsilon
+  // stops sub-pixel measurement jitter re-rendering forever.
   React.useLayoutEffect(() => {
-    if (!adv) return;
+    if (!nav.plus) return;
     const cell = foldRef.current && foldRef.current.querySelector('button');
     if (cell) {
-      const h = Math.round(cell.getBoundingClientRect().height);
-      if (h && h !== rowH) setRowH(h);
+      const h = cell.getBoundingClientRect().height;
+      if (h && Math.abs(h - rowH) > 0.25) setRowH(h);
     }
-    const gh = graphInnerRef.current ? Math.round(graphInnerRef.current.getBoundingClientRect().height) : 0;
-    if (gh && gh !== graphH) setGraphH(gh);
+    const gh = graphInnerRef.current ? graphInnerRef.current.getBoundingClientRect().height : 0;
+    if (gh && Math.abs(gh - graphH) > 0.25) setGraphH(gh);
+    const lh = legendInnerRef.current ? legendInnerRef.current.getBoundingClientRect().height : 0;
+    if (lh && Math.abs(lh - legendH) > 0.25) setLegendH(lh);
   });
   const fullH = rowH ? rowH * 6 + GAP * 5 : 0;
   const weekRow = (() => {
@@ -413,30 +425,35 @@ function MonthScreen({ nav, entries, view }) {
 
   // The settle after a release is the ONLY animation on these two numbers, and
   // it runs in JS because the value it starts from is wherever the finger left.
+  // It takes PAIRS ([setter, from, to], ...) because the graph swipe and the
+  // icon's hide both move g and t together in one bounce; two separate tweens
+  // would cancel each other through the shared raf handle.
   const tweenRef = React.useRef(null);
-  const tween = (setter, from, to) => {
+  const tween = (pairs) => {
     if (tweenRef.current) cancelAnimationFrame(tweenRef.current);
     const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce) { setter(to); return; }
+    if (reduce) { pairs.forEach(([set, , to]) => set(to)); return; }
     let t0 = null;
     const step = (ts) => {
       if (t0 === null) t0 = ts;
       const k = Math.min(1, (ts - t0) / 240);
       const e = 1 - Math.pow(1 - k, 3);
-      setter(from + (to - from) * e);
+      pairs.forEach(([set, from, to]) => set(from + (to - from) * e));
       if (k < 1) tweenRef.current = requestAnimationFrame(step);
     };
     tweenRef.current = requestAnimationFrame(step);
   };
   React.useEffect(() => () => { if (tweenRef.current) cancelAnimationFrame(tweenRef.current); }, []);
 
-  // the grab line stretches and compresses the calendar, one to one
+  // THE GRAB LINE stretches and compresses the calendar, one to one, and ONLY
+  // the calendar ("using the line can expand calendar or compress calendar
+  // without graph", founder 14 Aug). A tap on it toggles the fold.
   const handleRef = React.useRef(null);
   const draggedRef = React.useRef(false);
   const tRef = React.useRef(0); tRef.current = t;
   React.useEffect(() => {
     const el = handleRef.current;
-    if (!el || !adv || !fullH) return undefined;
+    if (!el || !nav.plus || !fullH) return undefined;
     let from = null;
     const span = Math.max(1, fullH - rowH);
     const down = (ev) => {
@@ -452,7 +469,7 @@ function MonthScreen({ nav, entries, view }) {
     const up = () => {
       if (!from) return;
       const now = tRef.current; from = null;
-      tween(setT, now, now > 0.5 ? 1 : 0);
+      tween([[setT, now, now > 0.5 ? 1 : 0]]);
       setTimeout(() => { draggingRef.current = false; }, 320);
     };
     el.addEventListener('pointerdown', down);
@@ -463,107 +480,64 @@ function MonthScreen({ nav, entries, view }) {
       el.removeEventListener('pointerdown', down); el.removeEventListener('pointermove', move);
       el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up);
     };
-  }, [adv, fullH, rowH]);
+  }, [nav.plus, fullH, rowH]);
 
-  // Stash the mode on the view so Back restores the page AS IT WAS.
+  // Stash the state on the view so Back restores the page AS IT WAS.
   React.useEffect(() => {
-    if (view && view.calAdv === adv && view.calGraph === graphOpen && view.calAnchor === anchorISO) return;
-    nav.remember({ calAdv: adv, calGraph: graphOpen, calAnchor: anchorISO });
-  }, [adv, graphOpen, anchorISO]);
+    if (!nav.plus) return;
+    if (view && view.calT === calOpen && view.calG === graphOpen && view.calAnchor === anchorISO) return;
+    nav.remember({ calT: calOpen, calG: graphOpen, calAnchor: anchorISO });
+  }, [calOpen, graphOpen, anchorISO]);
 
-  // Simple mode only: swiping UP on the graph tucks it away and goes advanced.
-  // (In advanced mode the graph is not swiped, it is PULLED, by the record: see
-  // the pull handler below, which is the way back out too.)
-  const graphRef = React.useRef(null);
-  React.useEffect(() => {
-    const el = graphRef.current;
-    if (!el || !nav.plus || adv) return undefined;
-    let y0 = null, x0 = null;
-    const start = (ev) => { const p0 = ev.touches[0]; y0 = p0.clientY; x0 = p0.clientX; };
-    const move = (ev) => {
-      if (y0 === null) return;
-      const p1 = ev.touches[0];
-      const dy = p1.clientY - y0, dx = p1.clientX - x0;
-      if (Math.abs(dy) < 44 || Math.abs(dx) > Math.abs(dy)) return;   // deliberate, and vertical
-      y0 = null;
-      if (dy < 0) { ev.preventDefault(); enterAdvanced(); }
-    };
-    const end = () => { y0 = null; };
-    el.addEventListener('touchstart', start, { passive: true });
-    el.addEventListener('touchmove', move, { passive: false });
-    el.addEventListener('touchend', end, { passive: true });
-    el.addEventListener('touchcancel', end, { passive: true });
-    return () => {
-      el.removeEventListener('touchstart', start);
-      el.removeEventListener('touchmove', move);
-      el.removeEventListener('touchend', end);
-      el.removeEventListener('touchcancel', end);
-    };
-  }, [nav.plus, adv]);
-
-  // THE PULL. At the top of the record, dragging down brings the graph out of
-  // its tuck, tracking the finger; keep pulling past it and the month comes
-  // back, which is the way out of advanced mode. One continuous gesture, so a
-  // parent never has to learn two.
+  // THE GRAPH SWIPE (founder, 14 Aug): swiping the graph up begins to tuck it
+  // behind the calendar WHILE the calendar compresses, both tracking the one
+  // finger; let go and it bounces to the nearest state, hidden (the record
+  // shows below the compressed calendar) or back out. The same drag downward
+  // brings it back. One shared span so both land together. The zone carries
+  // touch-action: none, so the browser can never claim the gesture mid-swipe
+  // (the 13 Aug pointercancel lesson), and every release path unlatches
+  // draggingRef (the 13 Aug latch lesson).
   const gRef = React.useRef(0); gRef.current = g;
+  const graphZoneRef = React.useRef(null);
   React.useEffect(() => {
-    const el = streamRef.current;
-    if (!el || !adv) return undefined;
-    const span = Math.max(80, graphH || 120);
+    const el = graphZoneRef.current;
+    if (!el || !nav.plus) return undefined;
+    const span = Math.max(120, Math.max(graphH || 0, Math.max(1, fullH - rowH)));
     let from = null;
-    const down = (ev) => { if (el.scrollTop > 0) return; from = { y: ev.clientY, g0: gRef.current }; draggingRef.current = true; };
+    const down = (ev) => {
+      try { el.setPointerCapture(ev.pointerId); } catch (e) {}
+      from = { y: ev.clientY, g0: gRef.current, t0: tRef.current }; draggingRef.current = true;
+    };
     const move = (ev) => {
       if (!from) return;
       const dy = ev.clientY - from.y;
-      if (dy <= 0 && from.g0 === 0) return;
-      const next = from.g0 + dy / span;
-      if (next > 1.55) {   // pulled clean past the graph
-        // Unlatch BEFORE leaving: up() returns early once from is null, so
-        // this exit path used to leave draggingRef true forever, and the next
-        // advanced session had a dead scroll-spy and no paging (the strip
-        // froze on today and the record stopped at its first page). Caught by
-        // the 13 Aug arena run's month-boundary assert.
-        from = null; draggingRef.current = false; exitAdvanced(); return;
-      }
-      setG(Math.max(0, Math.min(1, next)));
+      setG(Math.max(0, Math.min(1, from.g0 + dy / span)));
+      setT(Math.max(0, Math.min(1, from.t0 + dy / span)));
     };
     const up = () => {
       if (!from) return;
-      const now = gRef.current; from = null;
-      tween(setG, now, now > 0.4 ? 1 : 0);
+      const t0 = from.t0; from = null;
+      const hide = gRef.current < 0.5;
+      // Bouncing back OUT restores the calendar to where the gesture began: a
+      // nudged graph over a compressed calendar must not expand the month.
+      tween([[setG, gRef.current, hide ? 0 : 1], [setT, tRef.current, hide ? 0 : (t0 > 0.5 ? 1 : 0)]]);
       setTimeout(() => { draggingRef.current = false; }, 320);
-    };
-    // The browser must not claim the pull as a native pan: once it does, it
-    // fires pointercancel and the graph freezes mid-gesture (seen in the
-    // 13 Aug arena browse; on a phone this is also where pull-to-refresh
-    // steals the gesture). While a pull is live and heading down from the
-    // top, the touchmove is ours. An upward move with the graph tucked stays
-    // native, so ordinary scrolling never changes feel.
-    const claim = (ev) => {
-      if (!from || !ev.cancelable) return;
-      const dy = ev.touches[0].clientY - from.y;
-      if (dy > 0 || from.g0 > 0) ev.preventDefault();
     };
     el.addEventListener('pointerdown', down);
     el.addEventListener('pointermove', move);
     el.addEventListener('pointerup', up);
     el.addEventListener('pointercancel', up);
-    el.addEventListener('touchmove', claim, { passive: false });
     return () => {
       el.removeEventListener('pointerdown', down); el.removeEventListener('pointermove', move);
       el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up);
-      el.removeEventListener('touchmove', claim);
     };
-  }, [adv, graphH]);
+  }, [nav.plus, graphH, fullH, rowH]);
 
-  // THE PAGER MUST BE RE-PARKED EVERY TIME ITS DOM IS REBUILT (11 Aug bug).
-  // The mount effect above runs once for the whole screen, but the calendar
-  // card is unmounted in advanced mode and rebuilt on the way back, and a fresh
-  // scroller starts at scrollLeft 0, which is PANEL ZERO: September 2019. That
-  // is what the founder saw, a calendar that came back empty and then, on a
-  // swipe, jumped to 2019 and 2017 with no record on it. The title said 2026
-  // the whole time, because only the DOM had moved.
+  // THE PAGER MUST BE RE-PARKED whenever the shown offset moves under it
+  // programmatically (11 Aug bug: a rebuilt scroller starts at panel zero,
+  // September 2019, while the title says 2026).
   React.useLayoutEffect(() => {
+    if (!nav.plus) return;
     const park = () => {
       const el = pagerRef.current;
       if (!el || !el.clientWidth) return false;
@@ -571,48 +545,48 @@ function MonthScreen({ nav, entries, view }) {
       return true;
     };
     if (!park()) requestAnimationFrame(park);
-  }, [adv, calOpen, offset]);
+  }, [nav.plus, calOpen, offset]);
 
-  // THE STRIP SHOWS THE MONTH BEING READ (13 Aug arena catch). The week strip
-  // is the pager, and the pager parks wherever it was last left, which is not
-  // where the record is: entering advanced from June left a June week under an
-  // August title, and scrolling the record across a month boundary moved the
-  // title but not the strip. So while the strip is compressed, the pager
-  // follows the anchor's month; while the full calendar is open the parent may
-  // swipe it freely, and folding it back re-syncs here. The park itself
+  // THE STRIP SHOWS THE MONTH BEING READ (13 Aug arena catch). While the
+  // calendar is compressed, the pager follows the anchor's month, so the week
+  // on screen is always the week of the record's top. With the month open the
+  // parent may swipe freely; folding it back re-syncs here. The park itself
   // happens in the effect above, which re-runs when the adopt lands.
   React.useLayoutEffect(() => {
-    if (!adv || calOpen) return;
+    if (!nav.plus || calOpen) return;
     const a = anchorDateOf(anchorISO);
     const off = Math.max(minOffset, Math.min(0,
       (a.getFullYear() * 12 + a.getMonth()) - (today.getFullYear() * 12 + today.getMonth())));
     if (off !== targetRef.current) adopt(off);
-  }, [adv, calOpen, anchorISO]);
+  }, [nav.plus, calOpen, anchorISO]);
 
   const anchorDate = anchorDateOf(anchorISO);
   // Compressed, the title names the month being READ (the anchor's). Open, the
   // parent can swipe the grid to other months, and the title must follow the
-  // grid it sits above, not the record underneath (13 Aug arena catch: swiping
-  // the open calendar to June left the title saying July). Folding it back
-  // re-syncs pager and title to the anchor.
-  const advLabel = calOpen ? monthLabel : `${J.MONTH_NAMES[anchorDate.getMonth()]} ${anchorDate.getFullYear()}`;
-  // Opening the month by tap: park the pager on the month being READ first, so
-  // the grid that unfolds is the right one, then stretch it open.
+  // grid it sits above, not the record underneath (13 Aug arena catch).
+  const plusLabel = calOpen ? monthLabel : `${J.MONTH_NAMES[anchorDate.getMonth()]} ${anchorDate.getFullYear()}`;
   const toggleCal = () => {
-    if (calOpen) { tween(setT, t, 0); return; }
+    if (calOpen) { tween([[setT, t, 0]]); return; }
     const off = (anchorDate.getFullYear() * 12 + anchorDate.getMonth()) - (today.getFullYear() * 12 + today.getMonth());
     adopt(Math.max(minOffset, Math.min(0, off)));
-    tween(setT, t, 1);
+    tween([[setT, t, 1]]);
   };
+  // The graph icon (founder, 14 Aug): pressing it makes the graph come out for
+  // the month you are on, the calendar staying as it is; pressing it while the
+  // graph is out is "the same outcome" as the tuck swipe, so it hides the
+  // graph AND compresses the calendar.
   const graphBtn = nav.plus ? (
     <button className="j-iconbtn" data-graph-toggle aria-pressed={graphOpen}
       aria-label={graphOpen ? 'Hide the graph' : 'Show the graph'}
-      onClick={() => { if (!advRef.current) enterAdvanced(); else tween(setG, gRef.current, gRef.current > 0.5 ? 0 : 1); }}>
+      onClick={() => {
+        if (gRef.current > 0.5) tween([[setG, gRef.current, 0], [setT, tRef.current, 0]]);
+        else tween([[setG, gRef.current, 1]]);
+      }}>
       <Icon name="bars" size={22} color="var(--muted)" />
     </button>
   ) : null;
-  // in advanced mode a calendar tap moves the record; in simple mode it opens the day
-  const pickDay = (iso) => (advRef.current ? scrollToDate(iso) : nav.go('day', { date: iso }));
+  // on Plus a calendar tap moves the record; on free it opens the day
+  const pickDay = (iso) => (nav.plus ? scrollToDate(iso) : nav.go('day', { date: iso }));
 
   const dowRow = (
     <div className="j-caldows">
@@ -636,12 +610,12 @@ function MonthScreen({ nav, entries, view }) {
                 display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6, alignContent: 'start' }}>
                 {m.cells.map((c, idx) => {
                   if (!c) return <div key={'blank-' + idx} style={{ aspectRatio: '1 / 1' }} />;
-                  // In advanced mode the day being read wears the accent, and it
-                  // travels with the record as the parent scrolls (spec 4.5; the
+                  // On Plus the day being read wears the accent, and it travels
+                  // with the record as the parent scrolls (spec 4.5; the
                   // prototype's .cell.on, dropped in the build and caught by the
                   // 13 Aug arena run). The mood dot stays, so no meaning is lost
                   // under the highlight.
-                  const isAnchor = adv && c.iso === anchorISO;
+                  const isAnchor = nav.plus && c.iso === anchorISO;
                   const tint = isAnchor ? 'var(--tint-blue)' : (c.mood ? window.moodTint(c.mood) : 'transparent');
                   const ink = isAnchor ? 'var(--blue)' : (c.mood ? window.MOOD_COLOURS[c.mood] : (c.future ? 'var(--line)' : 'var(--faint)'));
                   // Every past day and today opens the Day view, notes or
@@ -668,8 +642,6 @@ function MonthScreen({ nav, entries, view }) {
           })}
         </div>
   );
-  // Simple mode keeps the card it has always had. Advanced mode takes the same
-  // grid out of the card and into the panel, where its height is the gesture.
   const calendarCard = (
       <div className="j-card" style={{ padding: 14, overflow: 'hidden' }}>
         {dowRow}
@@ -685,55 +657,57 @@ function MonthScreen({ nav, entries, view }) {
         ))}
       </div>
   );
-  // The graph is both the panel and the handle. In advanced mode it shows the
-  // month the parent is actually reading, which is the anchor's month, not the
-  // month the pager happens to be parked on.
-  const graphBlock = (
-    <div ref={graphRef}>
-      {nav.plus
-        ? <MonthMoodGraph entries={entries} year={year} month={month} />
-        : <PatternsLockedPreview onOpen={() => nav.go('unlock')} />}
-    </div>
-  );
 
-  // ---- ADVANCED: the calendar panel, pinned, then ONE scroller for the record ----
-  if (adv) {
-    const foldH = rowH ? Math.round(rowH + (fullH - rowH) * t) : undefined;
+  // ---- PLUS: the one surface (founder, 14 Aug). The inset card ALWAYS, the
+  // title on the page background, the grab line on the card, the legend and
+  // the graph folding beneath it as their own layers, and the record
+  // streaming under everything. Never a full-bleed panel. ----
+  if (nav.plus) {
+    const foldH = rowH ? rowH + (fullH - rowH) * t : undefined;
     return (
-      <div className="j-screen" data-cal-mode="advanced">
-        <div className="j-calarea">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 8 }}>
-            <button className="j-press" data-cal-open onClick={toggleCal}
-              aria-expanded={calOpen} aria-label={(calOpen ? 'Close' : 'Open') + ' the full calendar'}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
-              <h1 className="j-h1" style={{ fontSize: 'calc(26px * var(--tscale, 1))' }}>{advLabel}</h1>
-              <span className={'j-calarrow' + (calOpen ? ' j-open' : '')} aria-hidden="true">
-                <Icon name="chevronRight" size={19} color="var(--muted)" />
-              </span>
-            </button>
-            <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>{graphBtn}</div>
-          </div>
-          {dowRow}
-          {/* the fold: the month, folded down to the anchor's week. The grid
-              inside slides so the week left standing is the one being read. */}
-          <div className="j-calfold" ref={foldRef} data-cal-fold style={{ height: foldH }}>
-            <div style={{ transform: `translateY(${-(1 - t) * weekRow * (rowH + GAP)}px)` }}>
-              {pagerEl}
+      <div className="j-screen" data-cal-mode="unified">
+        <div style={{ flexShrink: 0 }} data-cal-pinned>
+          <div className="j-pad" style={{ paddingTop: 10 }}>
+            <TabTitle title={plusLabel} right={graphBtn} />
+            <div className="j-card" data-cal-card style={{ padding: '14px 14px 0', overflow: 'hidden' }}>
+              {dowRow}
+              {/* the fold: the month, folded down to the anchor's week. The
+                  grid inside slides so the week left standing is the one
+                  being read. */}
+              <div className="j-calfold" ref={foldRef} data-cal-fold style={{ height: foldH }}>
+                <div style={{ transform: `translateY(${-(1 - t) * weekRow * (rowH + GAP)}px)` }}>
+                  {pagerEl}
+                </div>
+              </div>
+              {/* the grab line: on the card, always, and it is the control,
+                  not decoration (founder, 11 + 14 Aug) */}
+              <button className="j-calhandle" ref={handleRef} data-cal-handle
+                aria-label={calOpen ? 'Fold the calendar to one week' : 'Stretch the calendar to the month'}
+                onClick={() => { if (draggedRef.current) { draggedRef.current = false; return; } toggleCal(); }}><span /></button>
+            </div>
+            {/* the legend belongs to the full month view, so it folds with t */}
+            <div data-legend-fold style={{ height: legendH ? legendH * t : (t > 0.5 ? undefined : 0), opacity: t, overflow: 'hidden' }}>
+              <div ref={legendInnerRef} style={{ overflow: 'hidden' }}>{legendRow}</div>
+            </div>
+            {/* the graph: its OWN card, separate from the calendar area, and
+                it tucks away upward behind it as g falls. Always the month
+                being read (the anchor's). */}
+            <div className="j-graphfold" data-graph-fold ref={graphZoneRef}
+              style={{ height: graphH ? graphH * g : (g > 0.5 ? undefined : 0), opacity: 0.25 + 0.75 * g }}>
+              <div ref={graphInnerRef} style={{ overflow: 'hidden', transform: `translateY(${graphH ? -((1 - g) * graphH) : 0}px)` }}>
+                <MonthMoodGraph entries={entries} year={anchorDate.getFullYear()} month={anchorDate.getMonth()} />
+              </div>
             </div>
           </div>
-          <div className="j-graphfold" data-graph-fold
-            style={{ height: graphH ? Math.round(graphH * g) : undefined, opacity: 0.25 + 0.75 * g }}>
-            <div ref={graphInnerRef}>
-              <MonthMoodGraph entries={entries} year={anchorDate.getFullYear()} month={anchorDate.getMonth()} />
-            </div>
-          </div>
-          {/* the grab line: about a third of the android home indicator, and it
-              is the control, not decoration (founder, 11 Aug) */}
-          <button className="j-calhandle" ref={handleRef} data-cal-handle
-            aria-label={calOpen ? 'Fold the calendar to one week' : 'Stretch the calendar to the month'}
-            onClick={() => { if (draggedRef.current) { draggedRef.current = false; return; } toggleCal(); }}><span /></button>
         </div>
-        <div className="j-scroll j-fade" ref={streamRef} onScroll={onStreamScroll} data-stream>
+        {/* position: relative makes the SCROLLER the offsetParent, so a day's
+            offsetTop is its place in the record and nothing else. Without it,
+            offsets were measured from the screen and silently included the
+            pinned block's CURRENT height, so a tap overshot by that height and
+            the strip's highlight drifted days off the true top whenever the
+            calendar folded (14 Aug arena catch). */}
+        <div className="j-scroll j-fade" ref={streamRef} onScroll={onStreamScroll} data-stream
+          style={{ position: 'relative' }}>
           <div className="j-pad" style={{ paddingBottom: 140 }}>
             {streamDates.map(iso => (
               <StreamDay key={iso} iso={iso} list={byDate[iso] || []} nav={nav}
@@ -746,16 +720,17 @@ function MonthScreen({ nav, entries, view }) {
     );
   }
 
-  // ---- SIMPLE: the free app's Month tab, unchanged ----
+  // ---- FREE: the Month tab exactly as it has always been (the 11 Aug lock:
+  // "in the free version how it is right now is unchanged"), chevrons and all ----
   return (
     <div className="j-screen" data-cal-mode="simple">
       <div className="j-scroll j-fade">
         <div className="j-pad" style={{ paddingTop: 10, paddingBottom: 120 }}>
           <TabTitle title={monthLabel}
-            right={<div style={{ display: 'flex', gap: 8 }}>{monthNavBtn('prev')}{monthNavBtn('next')}{graphBtn}</div>} />
+            right={<div style={{ display: 'flex', gap: 8 }}>{monthNavBtn('prev')}{monthNavBtn('next')}</div>} />
           {calendarCard}
           {legendRow}
-          {graphBlock}
+          <PatternsLockedPreview onOpen={() => nav.go('unlock')} />
         </div>
       </div>
     </div>

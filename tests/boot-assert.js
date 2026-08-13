@@ -659,10 +659,11 @@ function ok(name, cond) {
   ok('month view grows prev/next controls', await prevBtn.count() === 1 && await prevBtn.isEnabled());
   // The advanced calendar is Plus, whole (founder, 11 Aug: "in the free version
   // how it is right now is unchanged"). Free has no way in and no way to it.
-  ok('free keeps the simple calendar: no graph toggle, no record stream',
+  ok('free keeps the simple calendar: no graph toggle, no record stream, no grab line',
     (await page4.locator('[data-cal-mode="simple"]').count()) === 1
     && (await page4.locator('[data-graph-toggle]').count()) === 0
     && (await page4.locator('[data-stream]').count()) === 0
+    && (await page4.locator('[data-cal-handle]').count()) === 0
     && (await page4.locator('.j-weekday').count()) === 0);
   const gridBox1 = await page4.locator('.j-pager').first().boundingBox();
   await prevBtn.click();
@@ -993,20 +994,15 @@ function ok(name, cond) {
   const qCards = await page5.locator('#root').innerText();
   ok('More opens the per-place question cards', qCards.includes('Who was there?'));
   ok('question chips are tappable words', qCards.includes('Teachers') && qCards.includes('Friends'));
-  // ---- the advanced calendar (Plus, 11 Aug) ----
-  // Two modes on the Month tab, and in advanced mode the calendar is a PANEL
-  // whose height tracks the finger. Free never leaves simple mode (suite 4).
-  const foldH = () => page5.evaluate(() => {
-    const f = document.querySelector('[data-cal-fold]');
-    return f ? Math.round(f.getBoundingClientRect().height) : null;
-  });
-  const graphFoldH = () => page5.evaluate(() => {
-    const g = document.querySelector('[data-graph-fold]');
-    return g ? Math.round(g.getBoundingClientRect().height) : null;
-  });
-  // The child journey above hides the tab bar, and a reload does NOT drop it: a
-  // child mid-walk keeps their place across a restart by design. So leave the
-  // way a grown-up does, by holding the exit pill for its full second.
+  // ---- THE UNIFIED CALENDAR (Plus; the founder's 14 Aug correction, arena-built) ----
+  // One surface, no modes. The inset CARD always (never the old full-bleed
+  // panel, the title never on a white background), the grab line on the card,
+  // the graph in its OWN card below (never inside the calendar area), the
+  // record streaming underneath. The line drives the calendar ALONE; the graph
+  // swipe tucks the graph AND compresses the calendar together with a
+  // nearest-state bounce; the icon shows the graph for the month being read
+  // (calendar untouched) or hides it and compresses; swiping months carries
+  // the title and the graph and moves the record to the first of that month.
   const exitPill = page5.getByText('Hold for grown-ups').first();
   await exitPill.hover();
   await page5.mouse.down();
@@ -1015,41 +1011,89 @@ function ok(name, cond) {
   await page5.waitForTimeout(600);
   ok('the grown-up hold leaves child mode', (await page5.getByText('Month', { exact: true }).count()) > 0);
   await page5.getByText('Month', { exact: true }).last().click();
-  await page5.waitForTimeout(500);
-  ok('a Plus Month tab opens in simple mode with the graph toggle',
-    (await page5.locator('[data-cal-mode="simple"]').count()) === 1
-    && (await page5.locator('[data-graph-toggle]').count()) === 1);
-  await page5.locator('[data-graph-toggle]').first().click();
-  await page5.waitForTimeout(600);
-  ok('the graph toggle goes advanced: a calendar panel, a folded graph, the record streaming',
-    (await page5.locator('[data-cal-mode="advanced"]').count()) === 1
-    && (await page5.locator('[data-cal-fold]').count()) === 1
-    && (await page5.locator('[data-cal-handle]').count()) === 1
-    && (await page5.locator('[data-stream]').count()) === 1);
-  const shut = await foldH();
-  ok('the calendar folds down to one week (' + shut + 'px)', shut > 20 && shut < 90);
-  ok('the graph is tucked away under it', (await graphFoldH()) === 0);
-  const panel = await page5.evaluate(() => {
-    const a = document.querySelector('.j-calarea');
-    const cs = getComputedStyle(a);
-    return { radius: parseInt(cs.borderBottomLeftRadius, 10), line: parseFloat(cs.borderBottomWidth) };
+  await page5.waitForTimeout(700);
+  const now = new Date();
+  const todayISO = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+  const calState = () => page5.evaluate(() => {
+    const vw = window.innerWidth;
+    const q = s => document.querySelector(s);
+    const card = q('[data-cal-card]');
+    const fold = q('[data-cal-fold]');
+    const gfold = q('[data-graph-fold]');
+    const handle = q('[data-cal-handle]');
+    const h1 = q('.j-h1');
+    const stream = q('[data-stream]');
+    const cr = card ? card.getBoundingClientRect() : null;
+    const gr = gfold ? gfold.getBoundingClientRect() : null;
+    const days = stream ? [...document.querySelectorAll('[data-day]')] : [];
+    let topDay = null;
+    if (stream) {
+      const top = stream.scrollTop + 14;
+      for (const d of days) { if (d.offsetTop <= top) topDay = d.getAttribute('data-day'); else break; }
+    }
+    const fr = fold ? fold.getBoundingClientRect() : null;
+    const vis = fold ? [...fold.querySelectorAll('.j-pager button')].filter(b => {
+      const r = b.getBoundingClientRect();
+      return r.width > 0 && r.top >= fr.top - 2 && r.bottom <= fr.bottom + 2 && r.left >= fr.left - 2 && r.right <= fr.right + 2;
+    }) : [];
+    const anchors = vis.filter(b => b.hasAttribute('data-anchor'));
+    return {
+      mode: q('[data-cal-mode]') ? q('[data-cal-mode]').getAttribute('data-cal-mode') : null,
+      title: h1 ? h1.textContent.trim() : null,
+      titleInCard: h1 ? !!h1.closest('.j-card') : null,
+      chevrons: document.querySelectorAll('button[aria-label="Previous month"], button[aria-label="Next month"]').length,
+      cardInsetL: cr ? Math.round(cr.left) : null,
+      cardInsetR: cr ? Math.round(vw - cr.right) : null,
+      foldH: fr ? Math.round(fr.height) : null,
+      handleInCard: handle ? handle.closest('.j-card') === card : null,
+      graphH: gr ? Math.round(gr.height) : null,
+      graphSeparate: (gr && cr) ? gr.top >= cr.bottom - 1 : null,
+      graphInCalCard: gfold ? !!gfold.closest('[data-cal-card]') : null,
+      graphText: gfold ? gfold.innerText.replace(/\s+/g, ' ').slice(0, 60) : null,
+      stream: !!stream, topDay,
+      months: [...new Set(vis.map(b => (b.getAttribute('aria-label') || '').split(',')[0].split(' ').slice(1).join(' ')))],
+      anchorLabel: anchors.length === 1 ? anchors[0].getAttribute('aria-label') : null,
+      anchorBg: anchors.length === 1 ? getComputedStyle(anchors[0]).backgroundColor : null,
+    };
   });
-  ok('the calendar area is a panel: ' + panel.radius + 'px corners, ' + panel.line + 'px hairline',
-    panel.radius >= 12 && panel.line > 0 && panel.line <= 1.5);
-  // THE GRAB LINE TRACKS THE FINGER, and settles open when let go past halfway
+  const u0 = await calState();
+  ok('Plus Month is ONE surface: unified, no full-bleed panel, no chevrons (14 Aug)',
+    u0.mode === 'unified' && u0.chevrons === 0
+    && (await page5.locator('.j-calarea').count()) === 0);
+  ok('the calendar is the inset card and the title sits on the page background',
+    u0.cardInsetL >= 12 && u0.cardInsetR >= 12 && u0.titleInCard === false);
+  ok('the grab line lives on the card; the graph is its own card below, never inside',
+    u0.handleInCard === true && u0.graphSeparate === true && u0.graphInCalCard === false);
+  ok('the graph is out by default, real, and the record starts at today underneath',
+    u0.graphH > 100 && /How .+ looked/.test(u0.graphText || '') && u0.stream && u0.topDay === todayISO);
+
+  // THE LINE drives the calendar ALONE, tracking the finger both ways
   const grab = await page5.locator('[data-cal-handle]').boundingBox();
   await page5.mouse.move(grab.x + grab.width / 2, grab.y + grab.height / 2);
   await page5.mouse.down();
-  await page5.mouse.move(grab.x + grab.width / 2, grab.y + 60, { steps: 5 });
-  const at60 = await foldH();
-  await page5.mouse.move(grab.x + grab.width / 2, grab.y + 200, { steps: 8 });
-  const at200 = await foldH();
-  ok('the grab line stretches the calendar with the finger (' + shut + ' to ' + at60 + ' to ' + at200 + 'px)',
-    at60 > shut + 30 && at200 > at60 + 80);
+  await page5.mouse.move(grab.x + grab.width / 2, grab.y - 120, { steps: 6 });
+  const uMid = await calState();
+  await page5.mouse.move(grab.x + grab.width / 2, grab.y - 280, { steps: 8 });
   await page5.mouse.up();
   await page5.waitForTimeout(500);
-  const settled = await foldH();
-  ok('letting go past halfway settles the month open (' + settled + 'px)', settled > at200 - 10);
+  const u1 = await calState();
+  ok('the line compresses the calendar with the finger (' + u0.foldH + ' to ' + uMid.foldH + ' to ' + u1.foldH + 'px)',
+    uMid.foldH < u0.foldH - 40 && u1.foldH < 90);
+  ok('...and the graph does not move with the line (' + u0.graphH + 'px throughout)',
+    uMid.graphH === u0.graphH && u1.graphH === u0.graphH);
+  ok('compressed, the strip holds the week being read with the day highlighted',
+    u1.months.length === 1 && u1.months[0] === u1.title
+    && !!u1.anchorLabel && !!u1.anchorBg && u1.anchorBg !== 'rgba(0, 0, 0, 0)');
+
+  const grab2 = await page5.locator('[data-cal-handle]').boundingBox();
+  await page5.mouse.move(grab2.x + grab2.width / 2, grab2.y + 2);
+  await page5.mouse.down();
+  await page5.mouse.move(grab2.x + grab2.width / 2, grab2.y + 300, { steps: 8 });
+  await page5.mouse.up();
+  await page5.waitForTimeout(500);
+  const u2 = await calState();
+  ok('the line stretches the month back open, graph still untouched',
+    u2.foldH > 200 && u2.graphH === u0.graphH);
   ok('the whole month is on screen once it is open', await page5.evaluate(() => {
     const f = document.querySelector('[data-cal-fold]').getBoundingClientRect();
     return [...document.querySelectorAll('.j-pager button')].filter(b => {
@@ -1057,54 +1101,124 @@ function ok(name, cond) {
       return r.width > 0 && r.top >= f.top - 2 && r.bottom <= f.bottom + 2;
     }).length >= 28;
   }));
-  await page5.locator('[data-cal-open]').first().click();
-  await page5.waitForTimeout(500);
-  ok('tapping the month and year folds it away again', (await foldH()) < shut + 20);
-  // PULLING THE RECORD DOWN brings the graph out, tracking the finger
-  const st = await page5.locator('[data-stream]').boundingBox();
-  await page5.mouse.move(st.x + 100, st.y + 30);
+
+  // THE GRAPH SWIPE tucks the graph AND compresses the calendar together,
+  // both tracking the one finger; past halfway it completes to hidden
+  const gz = await page5.locator('[data-graph-fold]').boundingBox();
+  await page5.mouse.move(gz.x + gz.width / 2, gz.y + 40);
   await page5.mouse.down();
-  await page5.mouse.move(st.x + 100, st.y + 90, { steps: 5 });
-  const pull60 = await graphFoldH();
-  await page5.mouse.move(st.x + 100, st.y + 190, { steps: 8 });
-  const pull160 = await graphFoldH();
-  ok('pulling the record down brings the graph out with the finger (0 to ' + pull60 + ' to ' + pull160 + 'px)',
-    pull60 > 20 && pull160 > pull60 + 40);
+  await page5.mouse.move(gz.x + gz.width / 2, gz.y - 60, { steps: 5 });
+  const uSwipeMid = await calState();
+  await page5.mouse.move(gz.x + gz.width / 2, gz.y - 320, { steps: 10 });
   await page5.mouse.up();
   await page5.waitForTimeout(500);
-  ok('the graph stays out when the pull is a real one', (await graphFoldH()) > 60);
-  const graphText = await page5.locator('[data-graph-fold]').innerText();
-  ok('and it is the REAL graph, not a stand-in',
-    graphText.includes('Good') && graphText.includes('Dysregulation'));
-  // the record: today at the top, running backwards, blue where a day holds something
-  const streamHead = await page5.evaluate(() => {
-    const d = [...document.querySelectorAll('[data-day]')].map(x => x.getAttribute('data-day'));
-    return { first: d[0], second: d[1], count: d.length,
-      label: document.querySelector('.j-daysec-head .j-h3').textContent,
-      title: document.querySelector('.j-h1').textContent,
-      blue: document.querySelectorAll('.j-daysec.j-hasnotes').length };
-  });
-  const now = new Date();
-  const todayISO = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
-  ok('the record starts at today and runs BACKWARDS (founder, 11 Aug)',
-    streamHead.first === todayISO && streamHead.second < streamHead.first && streamHead.label === 'Today');
-  const accent = await page5.evaluate(() => {
-    const held = document.querySelector('.j-daysec.j-hasnotes .j-h3');
-    const bare = document.querySelector('.j-daysec:not(.j-hasnotes) .j-h3');
-    return { held: held ? getComputedStyle(held).color : null, bare: bare ? getComputedStyle(bare).color : null };
-  });
-  ok('a day that holds something says so in the accent (' + streamHead.blue + ' of ' + streamHead.count + ')',
-    streamHead.blue > 0 && !!accent.held && !!accent.bare && accent.held !== accent.bare);
-  // paging
-  await page5.evaluate(() => { const el = document.querySelector('[data-stream]'); el.scrollTop = el.scrollHeight; el.dispatchEvent(new Event('scroll', { bubbles: true })); });
+  const u3 = await calState();
+  ok('the graph swipe tucks the graph AND compresses the calendar with the finger',
+    uSwipeMid.graphH < u2.graphH - 30 && uSwipeMid.foldH < u2.foldH - 30);
+  ok('past halfway it bounces to hidden: graph away, week strip, record below',
+    u3.graphH === 0 && u3.foldH < 90 && u3.stream);
+  // a short nudge bounces back to the nearest state, OUT, calendar staying put
+  await page5.locator('[data-graph-toggle]').click();
   await page5.waitForTimeout(500);
-  const paged = await page5.evaluate(() => ({
-    count: document.querySelectorAll('[data-day]').length,
-    title: document.querySelector('.j-h1').textContent,
-  }));
-  ok('scrolling down pages the record in (' + streamHead.count + ' days to ' + paged.count + ')', paged.count > streamHead.count);
-  ok('the calendar title follows the record', paged.title !== streamHead.title);
-  // an empty day is not a dead row
+  const gz2 = await page5.locator('[data-graph-fold]').boundingBox();
+  await page5.mouse.move(gz2.x + gz2.width / 2, gz2.y + 30);
+  await page5.mouse.down();
+  await page5.mouse.move(gz2.x + gz2.width / 2, gz2.y - 40, { steps: 4 });
+  await page5.mouse.up();
+  await page5.waitForTimeout(500);
+  const u3b = await calState();
+  ok('a short nudge bounces the graph back to out, the calendar staying compressed',
+    u3b.graphH === u0.graphH && u3b.foldH < 90);
+
+  // THE ICON: hides the graph, or brings it out for the month being read
+  await page5.locator('[data-graph-toggle]').click();
+  await page5.waitForTimeout(500);
+  const u4 = await calState();
+  ok('the icon hides the graph (the compressed calendar stays put)',
+    u4.graphH === 0 && u4.foldH < 90);
+  await page5.locator('[data-graph-toggle]').click();
+  await page5.waitForTimeout(500);
+  const u5 = await calState();
+  ok('the icon brings the graph out for the month being read, calendar untouched',
+    u5.graphH > 100 && u5.foldH < 90
+    && (u5.graphText || '').includes(u5.title.split(' ')[0]));
+  // from the open month with the graph out, the icon is the same outcome as
+  // the tuck: hidden AND compressed
+  const grab3 = await page5.locator('[data-cal-handle]').boundingBox();
+  await page5.mouse.move(grab3.x + grab3.width / 2, grab3.y + 2);
+  await page5.mouse.down();
+  await page5.mouse.move(grab3.x + grab3.width / 2, grab3.y + 300, { steps: 8 });
+  await page5.mouse.up();
+  await page5.waitForTimeout(400);
+  await page5.locator('[data-graph-toggle]').click();
+  await page5.waitForTimeout(500);
+  const u6 = await calState();
+  ok('from the open month with the graph out, the icon hides it AND compresses',
+    u6.graphH === 0 && u6.foldH < 90);
+
+  // MONTH SWIPES carry the surface: the title and the graph follow, and the
+  // record moves to the first of the shown month (founder, 14 Aug)
+  const grab4 = await page5.locator('[data-cal-handle]').boundingBox();
+  await page5.mouse.move(grab4.x + grab4.width / 2, grab4.y + 2);
+  await page5.mouse.down();
+  await page5.mouse.move(grab4.x + grab4.width / 2, grab4.y + 300, { steps: 8 });
+  await page5.mouse.up();
+  await page5.waitForTimeout(400);
+  await page5.locator('[data-graph-toggle]').click();
+  await page5.waitForTimeout(500);
+  await page5.evaluate(() => {
+    const pager = document.querySelector('.j-pager');
+    pager.scrollLeft = pager.scrollLeft - pager.clientWidth;
+    pager.dispatchEvent(new Event('scroll', { bubbles: true }));
+  });
+  await page5.waitForTimeout(1000);
+  const u7 = await calState();
+  const prevM = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const mn = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const prevLabel = mn[prevM.getMonth()] + ' ' + prevM.getFullYear();
+  const prevFirst = prevM.getFullYear() + '-' + String(prevM.getMonth() + 1).padStart(2, '0') + '-01';
+  ok('swiping the open month back: the title and the graph follow (' + u7.title + ')',
+    u7.title === prevLabel && (u7.graphText || '').includes(mn[prevM.getMonth()]));
+  ok('and the record moves to the first of that month (' + u7.topDay + ')',
+    u7.topDay === prevFirst);
+
+  // A REAL SCROLL folds the month, and the strip follows the record across
+  // month boundaries with the highlight on the true top day (the 13 Aug
+  // catches re-asserted here; exact now the scroller is the offsetParent)
+  await page5.evaluate(() => {
+    const el = document.querySelector('[data-stream]');
+    el.scrollTop = el.scrollTop + 500;
+    el.dispatchEvent(new Event('scroll', { bubbles: true }));
+  });
+  await page5.waitForTimeout(700);
+  const u8 = await calState();
+  ok('a real scroll folds the month back to the strip', u8.foldH < 90);
+  ok('the strip and the title follow the record (' + u8.title + ')',
+    u8.months.length === 1 && u8.months[0] === u8.title);
+  ok('the highlighted day is the day at the top of the record (' + u8.topDay + ')',
+    !!u8.topDay && !!u8.anchorLabel
+    && u8.anchorLabel.startsWith(Number(u8.topDay.split('-')[2]) + ' '));
+  // THE RINGS ARE NEVER SHAVED (founder caught it on his phone, 14 Aug): the
+  // fold chain is fractional end to end, because a rounded cell height made
+  // the translate overshoot and clip the top of the day circles. Measured as
+  // geometry against the fold's own clip line, at a real sub-pixel width.
+  const clip = await page5.evaluate(() => {
+    const fold = document.querySelector('[data-cal-fold]');
+    const fr = fold.getBoundingClientRect();
+    const cells = [...fold.querySelectorAll('.j-pager button')].filter(b => {
+      const r = b.getBoundingClientRect();
+      return r.width > 2 && r.left >= fr.left - 2 && r.right <= fr.right + 2
+        && r.bottom > fr.top + 4 && r.top < fr.bottom - 4;
+    });
+    return { n: cells.length,
+      worstTop: Math.min(...cells.map(b => b.getBoundingClientRect().top - fr.top)),
+      worstBottom: Math.min(...cells.map(b => fr.bottom - b.getBoundingClientRect().bottom)) };
+  });
+  ok('the strip never shaves the day rings (' + clip.n + ' cells, top ' + clip.worstTop.toFixed(3) + 'px, bottom ' + clip.worstBottom.toFixed(3) + 'px)',
+    // a month's last week can hold as few as one real day cell; blanks are divs
+    clip.n >= 1 && clip.n <= 7 && clip.worstTop >= -0.05 && clip.worstBottom >= -0.05);
+
+  // an empty day is not a dead row, and Back keeps the place
   const bareDay = await page5.evaluate(() => {
     const btn = [...document.querySelectorAll('.j-emptyday')][0];
     if (!btn) return null;
@@ -1116,131 +1230,19 @@ function ok(name, cond) {
   ok('an empty day in the record takes a note, preset to that day',
     !!bareDay && (await page5.locator('#root').innerText()).includes('Quick log'));
   await page5.locator('button[aria-label="Back"]').first().click();
-  await page5.waitForTimeout(600);
-  ok('coming back from a note keeps the parent in advanced mode, where they were',
-    (await page5.locator('[data-cal-mode="advanced"]').count()) === 1);
-  // the way out: keep pulling past the graph
-  await page5.evaluate(() => { const el = document.querySelector('[data-stream]'); el.scrollTop = 0; });
-  await page5.waitForTimeout(300);
-  const st2 = await page5.locator('[data-stream]').boundingBox();
-  await page5.mouse.move(st2.x + 100, st2.y + 30);
-  await page5.mouse.down();
-  await page5.mouse.move(st2.x + 100, st2.y + 460, { steps: 14 });
-  await page5.mouse.up();
   await page5.waitForTimeout(700);
-  ok('pulling clean past the graph puts the month back and the record away',
-    (await page5.locator('[data-cal-mode="simple"]').count()) === 1
-    && (await page5.locator('[data-stream]').count()) === 0);
-  // REGRESSION GUARD (shipped broken in 2.0.16, founder caught it): the pager
-  // is unmounted in advanced mode, and a rebuilt scroller starts at scrollLeft
-  // 0, which is PANEL ZERO, September 2019. The title kept saying 2026 while
-  // the grid sat seven years earlier with no record on it. It has to be
-  // measured as what it is, a SCROLL POSITION: asserting the month's cells
-  // exist in the DOM passes even when the pager is parked seven years away.
-  const backOnMonth = await page5.evaluate(() => {
-    const title = document.querySelector('.j-h1').textContent.trim();
-    const pager = document.querySelector('.j-pager');
-    const pr = pager.getBoundingClientRect();
-    const inView = [...pager.querySelectorAll('button')].filter(b => {
-      const r = b.getBoundingClientRect();
-      return r.width > 0 && r.left >= pr.left - 2 && r.right <= pr.right + 2;
-    });
-    return { title, inView: inView.length,
-      matching: inView.filter(b => (b.getAttribute('aria-label') || '').includes(title)).length,
-      panel: pager.clientWidth ? Math.round(pager.scrollLeft / pager.clientWidth) : null };
-  });
-  ok('the calendar comes back ON the month it says (' + backOnMonth.title + ', panel ' + backOnMonth.panel
-      + ', ' + backOnMonth.matching + '/' + backOnMonth.inView + ' days on screen)',
-    backOnMonth.inView >= 28 && backOnMonth.matching >= 28);
+  const u9 = await calState();
+  ok('coming back from a note lands on the unified surface, where they were',
+    u9.mode === 'unified' && u9.stream);
 
-  // ---- THE STRIP SHOWS THE MONTH BEING READ (13 Aug arena run) ----
-  // Three catches from browsing the real app, none of which the height-and-title
-  // asserts above could see, because none of them measured WHICH DATES the
-  // strip holds. What the fold shows is read the same way everywhere below:
-  // only cells inside the fold's own rectangle, horizontally too, since the
-  // neighbouring pager panels sit just off-screen at full size.
-  const foldCells = () => page5.evaluate(() => {
-    const fold = document.querySelector('[data-cal-fold]');
-    if (!fold) return null;
-    const fr = fold.getBoundingClientRect();
-    const vis = [...fold.querySelectorAll('.j-pager button')].filter(b => {
-      const r = b.getBoundingClientRect();
-      return r.width > 0 && r.top >= fr.top - 2 && r.bottom <= fr.bottom + 2
-        && r.left >= fr.left - 2 && r.right <= fr.right + 2;
-    });
-    const anchors = vis.filter(b => b.hasAttribute('data-anchor'));
-    return {
-      title: document.querySelector('.j-h1').textContent.trim(),
-      labels: vis.map(b => b.getAttribute('aria-label') || ''),
-      months: [...new Set(vis.map(b => (b.getAttribute('aria-label') || '').split(',')[0].split(' ').slice(1).join(' ')))],
-      anchorLabel: anchors.length === 1 ? anchors[0].getAttribute('aria-label') : null,
-      anchorBg: anchors.length === 1 ? getComputedStyle(anchors[0]).backgroundColor : null,
-    };
-  });
-  // (1) Entering advanced while parked on an OLDER month used to pin that
-  // month's week under a today title: the pager parks wherever it was left,
-  // and nothing walked it to the anchor. Today's week must be the one pinned.
-  await page5.locator('button[aria-label="Previous month"]').click();
+  // the record keeps paging in as far back as it goes
+  await page5.evaluate(() => { const el = document.querySelector('[data-stream]'); el.scrollTop = el.scrollHeight; el.dispatchEvent(new Event('scroll', { bubbles: true })); });
   await page5.waitForTimeout(600);
-  await page5.locator('button[aria-label="Previous month"]').click();
-  await page5.waitForTimeout(800);
-  await page5.locator('[data-graph-toggle]').first().click();
-  await page5.waitForTimeout(800);
-  const mn = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const todayLabelFull = now.getDate() + ' ' + mn[now.getMonth()] + ' ' + now.getFullYear();
-  const stripEntry = await foldCells();
-  ok('entering advanced from an older month still pins TODAY\'s week (13 Aug)',
-    !!stripEntry && stripEntry.labels.some(l => l.startsWith(todayLabelFull)));
-  // (2) The read day wears the accent and travels with the record, ACROSS a
-  // month boundary too: the strip must page with the title, and the anchor
-  // highlight (the prototype's .cell.on, dropped in the 2.0.16 build) must sit
-  // on the day at the top of the record.
-  const crossedTo = await page5.evaluate(() => {
-    const days = [...document.querySelectorAll('[data-day]')];
-    const curKey = days[0].getAttribute('data-day').slice(0, 7);
-    let t = null;
-    for (const d of days) { if (d.getAttribute('data-day').slice(0, 7) < curKey) { t = d; break; } }
-    if (!t) return null;
-    const el = document.querySelector('[data-stream]');
-    el.scrollTop = t.offsetTop - 6;
-    el.dispatchEvent(new Event('scroll', { bubbles: true }));
-    return t.getAttribute('data-day');
-  });
-  await page5.waitForTimeout(900);
-  const stripCross = await foldCells();
-  // The title must be the CROSSED month, not just any month the strip agrees
-  // with: this assert first passed while both sat wrongly on the current month
-  // (the draggingRef latch below), which is a pass for the wrong reason.
-  const crossedMonthLabel = crossedTo ? mn[Number(crossedTo.split('-')[1]) - 1] + ' ' + crossedTo.split('-')[0] : null;
-  ok('the strip crosses the month boundary with the record (' + (stripCross && stripCross.title) + ')',
-    !!crossedTo && !!stripCross && stripCross.title === crossedMonthLabel
-    && stripCross.months.length === 1 && stripCross.months[0] === stripCross.title);
-  ok('the read day wears the accent on the strip and moves with the scroll',
-    !!stripCross && !!stripCross.anchorLabel
-    && stripCross.anchorLabel.startsWith(Number(crossedTo.split('-')[2]) + ' ')
-    && !!stripCross.anchorBg && stripCross.anchorBg !== 'rgba(0, 0, 0, 0)');
-  // (3) With the calendar open over the stream, swiping to another month must
-  // carry the title with it (it stayed on the anchor's month), and folding it
-  // back must return both title and strip to the month being read.
-  await page5.locator('[data-cal-open]').first().click();
+  const paged9 = await page5.evaluate(() => document.querySelectorAll('[data-day]').length);
+  await page5.evaluate(() => { const el = document.querySelector('[data-stream]'); el.scrollTop = el.scrollHeight; el.dispatchEvent(new Event('scroll', { bubbles: true })); });
   await page5.waitForTimeout(600);
-  await page5.evaluate(() => {
-    const pager = document.querySelector('.j-pager');
-    pager.scrollLeft = pager.scrollLeft - pager.clientWidth;
-    pager.dispatchEvent(new Event('scroll', { bubbles: true }));
-  });
-  await page5.waitForTimeout(900);
-  const swiped = await foldCells();
-  ok('swiping the open calendar carries the title with the grid (' + (swiped && swiped.title) + ')',
-    !!swiped && swiped.months.length === 1 && swiped.months[0] === swiped.title);
-  await page5.locator('[data-cal-open]').first().click();
-  await page5.waitForTimeout(700);
-  const folded = await foldCells();
-  const anchorMonthLabel = mn[Number(crossedTo.split('-')[1]) - 1] + ' ' + crossedTo.split('-')[0];
-  ok('folding it back returns title and strip to the month being read (' + (folded && folded.title) + ')',
-    !!folded && folded.title === anchorMonthLabel
-    && folded.months.length === 1 && folded.months[0] === anchorMonthLabel);
-
+  const paged10 = await page5.evaluate(() => document.querySelectorAll('[data-day]').length);
+  ok('scrolling down keeps paging the record in (' + paged9 + ' to ' + paged10 + ' days)', paged10 > paged9);
   ok('no uncaught page errors across suite 9', errors5.length === 0);
   await ctx5.close();
 

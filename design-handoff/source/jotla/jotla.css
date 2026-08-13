@@ -438,8 +438,8 @@ html.j-appmode .j-fabtip { bottom: calc(160px + env(safe-area-inset-bottom)); }
    stretch of the calendar and the tuck of the graph TRACK THE FINGER, so their
    heights are inline pixels driven by a gesture, and the only transition is the
    short settle after release, run in JS. */
-.j-calarea { background: var(--card); border-bottom: 1px solid var(--line);
-  border-radius: 0 0 22px 22px; flex-shrink: 0; padding: 10px 20px 0; }
+/* (the full-bleed .j-calarea panel is retired, founder 14 Aug: the calendar
+   is ALWAYS the inset card, edge to edge never) */
 .j-caldows { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 6px; }
 .j-caldows span { text-align: center; font-size: calc(12px * var(--tscale, 1)); font-weight: 500; color: var(--faint); }
 /* the fold: the calendar's own height, from one week to the whole month */
@@ -450,10 +450,10 @@ html.j-appmode .j-fabtip { bottom: calc(160px + env(safe-area-inset-bottom)); }
   padding: 9px 0 10px; border: none; background: none; cursor: grab; touch-action: none; }
 .j-calhandle span { display: block; width: 44px; height: 4px; border-radius: 99px; background: var(--line); }
 .j-calhandle:active span { background: var(--faint); }
-.j-calarrow { display: inline-flex; transition: transform .3s cubic-bezier(.4,0,.2,1); }
-.j-calarrow.j-open { transform: rotate(90deg); }
-/* the graph folds away under the calendar; height is driven by the gesture */
-.j-graphfold { overflow: hidden; }
+/* the graph folds away behind the calendar; height is driven by the gesture,
+   and the zone owns its touches so the browser can never claim the swipe
+   mid-gesture and freeze it with a pointercancel (13 Aug lesson) */
+.j-graphfold { overflow: hidden; touch-action: none; }
 /* a day in the record arrives from below, once, as it is paged in */
 .j-daysec { animation: jDayIn .34s cubic-bezier(.2,.7,.3,1) both; }
 @keyframes jDayIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
@@ -465,7 +465,6 @@ html.j-appmode .j-fabtip { bottom: calc(160px + env(safe-area-inset-bottom)); }
   font-size: calc(13.5px * var(--tscale, 1)); color: var(--faint); }
 @media (prefers-reduced-motion: reduce) {
   .j-daysec { animation: none; }
-  .j-calarrow { transition: none; }
 }
 
 /* ---- misc ---- */
