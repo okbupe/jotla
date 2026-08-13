@@ -1394,7 +1394,7 @@ function InfoAboutScreen({ nav }) {
   return (
     <InfoPage nav={nav} title="About Jotla" subtitle="What it is, how it protects you, what is coming">
       <InfoBlock icon="star" title="Jotla">
-        <InfoP><span className="j-strong">Jotla by SEN Help.</span> Early test build {window.JOTLA_BUILD} (July 2026).</InfoP>
+        <InfoP><span className="j-strong">Jotla by SEN Help.</span> Early test build {window.JOTLA_BUILD}.</InfoP>
         <InfoP>Designed and built by SEN Help (sen.help).</InfoP>
         <InfoP last>Jotla is a private, on-device record for parents of children with special educational needs: log the moments, the moods and the school handoffs, keep the details of every letter and report, and export the record when someone needs to see it.</InfoP>
       </InfoBlock>

@@ -2778,7 +2778,7 @@ function InfoAboutScreen({
     title: "Jotla"
   }, /*#__PURE__*/React.createElement(InfoP, null, /*#__PURE__*/React.createElement("span", {
     className: "j-strong"
-  }, "Jotla by SEN Help."), " Early test build ", window.JOTLA_BUILD, " (July 2026)."), /*#__PURE__*/React.createElement(InfoP, null, "Designed and built by SEN Help (sen.help)."), /*#__PURE__*/React.createElement(InfoP, {
+  }, "Jotla by SEN Help."), " Early test build ", window.JOTLA_BUILD, "."), /*#__PURE__*/React.createElement(InfoP, null, "Designed and built by SEN Help (sen.help)."), /*#__PURE__*/React.createElement(InfoP, {
     last: true
   }, "Jotla is a private, on-device record for parents of children with special educational needs: log the moments, the moods and the school handoffs, keep the details of every letter and report, and export the record when someone needs to see it.")), /*#__PURE__*/React.createElement(InfoBlock, {
     icon: "heart",

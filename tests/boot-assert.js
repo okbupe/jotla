@@ -595,6 +595,14 @@ function ok(name, cond) {
   // invariant, so the count cannot drift again unnoticed.
   const fs = require('fs'), path = require('path');
   const srcOf = (f) => fs.readFileSync(path.join(ROOT, 'design-handoff/source/jotla', f), 'utf8');
+  // The footer number a tester reads has to BE the build that shipped. It said
+  // 2.0.4 while the service worker said 2.0.18, so nobody could tell whether an
+  // update had landed. Three things must agree: the constant, the worker, and
+  // the pixels on the Menu tab.
+  const shownBuild = (srcOf('jotla-ui.jsx').match(/JOTLA_BUILD = '([^']+)'/) || [])[1];
+  const swBuild = (srcOf('sw.js').match(/VERSION = 'jotla-v([^']+)'/) || [])[1];
+  ok('the build number the app SHOWS is the build that shipped (' + shownBuild + ')',
+    !!shownBuild && shownBuild === swBuild);
   const srcA = srcOf('jotla-parent-a.jsx'), srcOnb = srcOf('jotla-onboard.jsx');
   const gateBody = (srcA.match(/const GATE_QUESTIONS = \(name\) => \[([\s\S]*?)\n\];/) || [, ''])[1];
   const gateN = gateBody.split('\n').filter((l) => /^\s*['"`]/.test(l)).length;

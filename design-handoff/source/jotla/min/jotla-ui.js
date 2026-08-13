@@ -7,9 +7,11 @@ const {
   useLayoutEffect
 } = React;
 
-// The single source of the visible build number. Bump this every release
-// (and keep sw.js VERSION in step) so the Settings footer can never lie.
-window.JOTLA_BUILD = '2.0.4';
+// The single source of the visible build number. It MUST equal sw.js VERSION,
+// and the suite asserts that, because asking a person to remember is what got
+// us here: this said 2.0.4 for fourteen builds while the service worker said
+// 2.0.18, so the one number a tester can actually read was the one lying.
+window.JOTLA_BUILD = '2.0.19';
 
 // The app's data epoch: the earliest day a log can land on (Quick log's own
 // minimum day, and how far back the Month calendar pages). One home here, on
