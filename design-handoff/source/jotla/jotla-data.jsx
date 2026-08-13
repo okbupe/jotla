@@ -373,7 +373,13 @@ function dayMood(entries) {
 }
 
 // Anchor the seed near the real today (whole-week shift preserves weekdays).
-function _isoShift(iso, days) { const d = parseISO(iso); d.setDate(d.getDate() + days); return _isoOf(d); }
+// Days added to or taken off an ISO date, month and year ends handled by Date.
+// Local-date arithmetic on purpose, never toISOString(), which converts to UTC
+// and hands back yesterday for anyone west of Greenwich after midnight local.
+// Shared out as isoShift (the advanced calendar walks dates with it, 11 Aug);
+// the seed shifter below was its first caller and keeps the private name.
+function isoShift(iso, days) { const d = parseISO(iso); d.setDate(d.getDate() + days); return _isoOf(d); }
+const _isoShift = isoShift;
 const _weekShift = Math.round((_NOW - parseISO(SEED_ANCHOR_ISO)) / 86400000 / 7) * 7;
 const SEED_ENTRIES_LIVE = _weekShift ? SEED_ENTRIES.map(e => ({ ...e, date: _isoShift(e.date, _weekShift) })) : SEED_ENTRIES;
 const SEED_DOCS_LIVE = _weekShift ? SEED_DOCS.map(d => ({ ...d, received: _isoShift(d.received, _weekShift) })) : SEED_DOCS;
@@ -384,7 +390,7 @@ Object.assign(window, {
     SEED_SHIFTING: true, // sample data re-anchors near "today"; a real record sets this false
     TODAY_ISO, SETTINGS, TIMES, CATEGORIES, BEHAVIOURS,
     MOODS, CHILD_SCENES, CHILD_EMOTIONS, FIND_THEMES, FIND_MOODS,
-    MONTH_NAMES, DOW_SHORT, DOW_MON, DOW_LONG, parseISO, fmtLong, fmtShort, dayMood,
+    MONTH_NAMES, DOW_SHORT, DOW_MON, DOW_LONG, parseISO, isoShift, fmtLong, fmtShort, dayMood,
     isNamedSetting, settingInSentence,
   },
 });

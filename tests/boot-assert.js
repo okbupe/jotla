@@ -649,6 +649,13 @@ function ok(name, cond) {
   await page4.waitForTimeout(500);
   const prevBtn = page4.locator('button[aria-label="Previous month"]');
   ok('month view grows prev/next controls', await prevBtn.count() === 1 && await prevBtn.isEnabled());
+  // The advanced calendar is Plus, whole (founder, 11 Aug: "in the free version
+  // how it is right now is unchanged"). Free has no way in and no way to it.
+  ok('free keeps the simple calendar: no graph toggle, no record stream',
+    (await page4.locator('[data-cal-mode="simple"]').count()) === 1
+    && (await page4.locator('[data-graph-toggle]').count()) === 0
+    && (await page4.locator('[data-stream]').count()) === 0
+    && (await page4.locator('.j-weekday').count()) === 0);
   const gridBox1 = await page4.locator('.j-pager').first().boundingBox();
   await prevBtn.click();
   await page4.waitForTimeout(700);
@@ -978,6 +985,121 @@ function ok(name, cond) {
   const qCards = await page5.locator('#root').innerText();
   ok('More opens the per-place question cards', qCards.includes('Who was there?'));
   ok('question chips are tappable words', qCards.includes('Teachers') && qCards.includes('Friends'));
+  // ---- the advanced calendar (Plus, 11 Aug) ----
+  // Two modes on the Month tab, driven by deliberate gestures, never by scroll
+  // offset. Free never leaves simple mode; that is asserted in suite 4.
+  const TOUCH_DRAG = ([sel, y0, y1]) => {
+    const el = document.querySelector(sel);
+    const mk = (y) => new Touch({ identifier: 1, target: el, clientX: 180, clientY: y });
+    el.dispatchEvent(new TouchEvent('touchstart', { bubbles: true, cancelable: true, touches: [mk(y0)], targetTouches: [mk(y0)], changedTouches: [mk(y0)] }));
+    el.dispatchEvent(new TouchEvent('touchmove', { bubbles: true, cancelable: true, touches: [mk(y1)], targetTouches: [mk(y1)], changedTouches: [mk(y1)] }));
+    el.dispatchEvent(new TouchEvent('touchend', { bubbles: true, cancelable: true, touches: [], targetTouches: [], changedTouches: [mk(y1)] }));
+  };
+  // The child journey above hides the tab bar, and a reload does NOT drop it: a
+  // child mid-walk keeps their place across a restart by design. So leave the
+  // way a grown-up does, by holding the exit pill for its full second.
+  const exitPill = page5.getByText('Hold for grown-ups').first();
+  await exitPill.hover();
+  await page5.mouse.down();
+  await page5.waitForTimeout(1300);
+  await page5.mouse.up();
+  await page5.waitForTimeout(600);
+  ok('the grown-up hold leaves child mode', (await page5.getByText('Month', { exact: true }).count()) > 0);
+  await page5.getByText('Month', { exact: true }).last().click();
+  await page5.waitForTimeout(500);
+  ok('a Plus Month tab opens in simple mode with the graph toggle',
+    (await page5.locator('[data-cal-mode="simple"]').count()) === 1
+    && (await page5.locator('[data-graph-toggle]').count()) === 1);
+  // "deliberate" has to mean deliberate: a small drag must do nothing at all,
+  // or every flick of the page would throw the parent into the other mode.
+  await page5.evaluate(TOUCH_DRAG, ['.j-graphfold', 400, 380]);
+  await page5.waitForTimeout(400);
+  ok('a small drag on the graph changes nothing (the gesture is deliberate)',
+    (await page5.locator('[data-cal-mode="simple"]').count()) === 1);
+  // the graph is the handle: swiping it UP tucks it away and streams the record
+  await page5.evaluate(TOUCH_DRAG, ['.j-graphfold', 400, 300]);
+  await page5.waitForTimeout(600);
+  ok('swiping the graph up goes advanced: week strip, tucked graph, the record streaming',
+    (await page5.locator('[data-cal-mode="advanced"]').count()) === 1
+    && (await page5.locator('.j-weekday').count()) === 7
+    && (await page5.locator('.j-graphfold.j-folded').count()) === 1
+    && (await page5.locator('[data-stream]').count()) === 1);
+  const streamHead = await page5.evaluate(() => {
+    const d = [...document.querySelectorAll('[data-day]')].map(x => x.getAttribute('data-day'));
+    return { first: d[0], second: d[1], count: d.length, label: document.querySelector('.j-daysec-head .j-h3').textContent };
+  });
+  const now = new Date();
+  const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  ok('the record starts at today and runs BACKWARDS (founder, 11 Aug)',
+    streamHead.first === todayISO && streamHead.second < streamHead.first && streamHead.label === 'Today');
+  // paging: the stream fades in a page at a time as the parent scrolls down
+  await page5.evaluate(() => { const el = document.querySelector('[data-stream]'); el.scrollTop = el.scrollHeight; el.dispatchEvent(new Event('scroll', { bubbles: true })); });
+  await page5.waitForTimeout(500);
+  const paged = await page5.evaluate(() => ({
+    count: document.querySelectorAll('[data-day]').length,
+    title: document.querySelector('.j-h1').textContent,
+    anchored: !!document.querySelector('.j-weekday[aria-current="date"]'),
+  }));
+  ok(`scrolling down pages the record in (${streamHead.count} days to ${paged.count})`, paged.count > streamHead.count);
+  ok('the strip and the title follow the scroll', paged.anchored === true);
+  // the month and year opens the full calendar OVER the stream, arrow and all
+  await page5.locator('[data-cal-open]').first().click();
+  await page5.waitForTimeout(500);
+  const opened = await page5.evaluate(() => ({
+    expanded: document.querySelector('[data-cal-open]').getAttribute('aria-expanded'),
+    grid: document.querySelectorAll('.j-pager button').length,
+    strip: document.querySelectorAll('.j-weekday').length,
+    stream: !!document.querySelector('[data-stream]'),
+    arrow: getComputedStyle(document.querySelector('.j-calarrow')).transform,
+  }));
+  ok('the month and year opens the full calendar over the record',
+    opened.expanded === 'true' && opened.grid > 0 && opened.strip === 0 && opened.stream === true);
+  // a rotation is a rendered fact, not a class name: measure the matrix
+  ok('the arrow has actually turned (matrix, not a class)',
+    opened.arrow.startsWith('matrix(') && Math.abs(parseFloat(opened.arrow.split(',')[1]) - 1) < 0.06);
+  // tapping a date moves the RECORD, and paging in whatever it takes to get there
+  const jumped = await page5.evaluate(() => {
+    const cells = [...document.querySelectorAll('.j-pager button')].filter(b => !b.disabled);
+    const target = cells[Math.min(6, cells.length - 1)];
+    const label = target.getAttribute('aria-label');
+    target.click();
+    return label;
+  });
+  await page5.waitForTimeout(700);
+  const landed = await page5.evaluate(() => ({ top: document.querySelector('[data-stream]').scrollTop }));
+  ok(`tapping a date scrolls the record to it (${jumped})`, landed.top > 0);
+  // and the next real scroll compresses the calendar back to the strip
+  await page5.evaluate(() => { const el = document.querySelector('[data-stream]'); el.scrollTop += 400; el.dispatchEvent(new Event('scroll', { bubbles: true })); });
+  await page5.waitForTimeout(400);
+  ok('scrolling compresses the calendar again',
+    (await page5.locator('.j-weekday').count()) === 7
+    && (await page5.locator('.j-pager button').count()) === 0);
+  // an empty day is not a dead row: it takes a note, preset to ITS date
+  const bareDay = await page5.evaluate(() => {
+    const btn = [...document.querySelectorAll('.j-emptyday')][0];
+    if (!btn) return null;
+    const iso = btn.closest('[data-day]').getAttribute('data-day');
+    btn.click();
+    return iso;
+  });
+  await page5.waitForTimeout(600);
+  ok('an empty day in the record takes a note, preset to that day',
+    !!bareDay && (await page5.locator('#root').innerText()).includes('Quick log'));
+  await page5.locator('button[aria-label="Back"]').first().click();
+  await page5.waitForTimeout(500);
+  // the way back: open the graph, then pull it DOWN
+  await page5.locator('[data-graph-toggle]').first().click();
+  await page5.waitForTimeout(500);
+  ok('the graph icon unfolds the graph from under the calendar',
+    (await page5.locator('.j-graphfold.j-folded').count()) === 0
+    && (await page5.locator('[data-cal-mode="advanced"]').count()) === 1);
+  await page5.evaluate(TOUCH_DRAG, ['.j-graphfold', 300, 420]);
+  await page5.waitForTimeout(600);
+  ok('a deliberate pull down puts the month back and the record away',
+    (await page5.locator('[data-cal-mode="simple"]').count()) === 1
+    && (await page5.locator('[data-stream]').count()) === 0
+    && (await page5.locator('.j-graphfold.j-folded').count()) === 0);
+
   ok('no uncaught page errors across suite 9', errors5.length === 0);
   await ctx5.close();
 

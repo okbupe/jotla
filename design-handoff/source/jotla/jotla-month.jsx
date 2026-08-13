@@ -106,6 +106,88 @@ function PatternsLockedPreview({ onOpen }) {
   );
 }
 
+/* ==================== THE ADVANCED CALENDAR (Plus, 11 Aug 2026) ====================
+   Founder's design, and the shape of it matters: the calendar's state is driven
+   by DELIBERATE GESTURES and discrete modes, never by scroll offset. Scrolling
+   only ever moves the record.
+
+     Simple mode      the month grid with the graph under it. This is the whole
+                      of the free app's Month tab, now and for good.
+     Advanced mode    a single week strip pinned at the top, the graph tucked
+                      underneath it, and the record streaming downwards.
+
+   Swipe the graph UP (or tap the graph icon) to go advanced; pull the graph
+   DOWN to come back. The graph icon opens and closes the graph in either mode.
+   Tapping the month and year opens the full calendar over the stream; tapping a
+   date there scrolls the stream to it, and the next scroll compresses it again.
+
+   TODAY IS AT THE TOP AND SCROLLING DOWN GOES BACK IN TIME (founder, 11 Aug).
+   That direction is not a preference, it falls out of the record: Jotla refuses
+   future-dated entries, so the empty days a parent can tap and fill can only
+   ever lie in the past. Spec: Vision `App/Jotla-Insights-and-Calendar-Plan-2026-08-11.md`. */
+const STREAM_PAGE = 21;   // days paged in at a time
+const STREAM_LEAD = 480;  // px from the end of the stream that triggers the next page
+
+// The pinned week: seven real day buttons, Monday first, the anchor carrying
+// the tint. Tapping one scrolls the record to that day.
+function WeekStrip({ anchor, byDate, onPick }) {
+  const J = window.JOTLA;
+  const dt = J.parseISO(anchor);
+  const monday = J.isoShift(anchor, -((dt.getDay() + 6) % 7));
+  const days = [];
+  for (let i = 0; i < 7; i++) days.push(J.isoShift(monday, i));
+  return (
+    <div className="j-weekstrip" role="group" aria-label="The week you are reading">
+      {days.map((iso, i) => {
+        const list = byDate[iso] || [];
+        const mood = J.dayMood(list);
+        const future = iso > J.TODAY_ISO;
+        const on = iso === anchor;
+        const d = J.parseISO(iso);
+        return (
+          <button key={iso} className="j-weekday j-press" disabled={future} onClick={() => !future && onPick(iso)}
+            aria-current={on ? 'date' : undefined}
+            aria-label={`${J.fmtLong(iso)}, ${list.length ? list.length + (list.length === 1 ? ' note' : ' notes') : 'no note'}`}
+            style={{ opacity: future ? 0.4 : 1, cursor: future ? 'default' : 'pointer' }}>
+            <span className="j-weekday-dow">{J.DOW_MON[i].slice(0, 1)}</span>
+            <span className="j-weekday-num" style={{ color: on ? 'var(--blue)' : mood ? window.MOOD_COLOURS[mood] : 'var(--muted)' }}>{d.getDate()}</span>
+            <MoodDot mood={mood || 'none'} size={5} />
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// One day in the stream. A day with nothing on it is not a dead row: it offers
+// the note, exactly as the Day screen does, preset to that date.
+function StreamDay({ iso, list, nav, hostRef }) {
+  const J = window.JOTLA;
+  const mood = J.dayMood(list);
+  const label = iso === J.TODAY_ISO ? 'Today'
+    : iso === J.isoShift(J.TODAY_ISO, -1) ? 'Yesterday' : J.fmtLong(iso);
+  return (
+    <section className="j-daysec" data-day={iso} ref={hostRef}>
+      <div className="j-daysec-head">
+        <span className="j-h3" style={{ fontSize: 'calc(15.5px * var(--tscale, 1))' }}>{label}</span>
+        {mood && <MoodDot mood={mood} size={8} />}
+        <span style={{ flex: 1 }} />
+        {list.length > 0 && (
+          <span className="j-meta">{list.length} {list.length === 1 ? 'note' : 'notes'}</span>
+        )}
+      </div>
+      {list.length
+        ? <LogList list={list} nav={nav} />
+        : (
+          <button className="j-emptyday j-press" onClick={() => nav.go('quicklog', { date: iso })}
+            aria-label={'Add a note for ' + J.fmtLong(iso)}>
+            <Icon name="plus" size={15} color="var(--faint)" /> Add a note
+          </button>
+        )}
+    </section>
+  );
+}
+
 function MonthScreen({ nav, entries, view }) {
   const J = window.JOTLA;
   const today = J.parseISO(J.TODAY_ISO);
@@ -225,89 +307,254 @@ function MonthScreen({ nav, entries, view }) {
   };
   const dows = J.DOW_MON; // Mon Tue Wed Thu Fri Sat Sun
 
+  // ---- advanced mode (Plus). Free never leaves simple mode. ----
+  // Mode, graph and place ride the VIEW, like the month pager's offset already
+  // does, because opening a note from the record and coming back must not throw
+  // the parent out of advanced mode and lose where they were reading.
+  const backTo = (iso) => Math.round((J.parseISO(J.TODAY_ISO) - J.parseISO(iso)) / 86400000);
+  const [adv, setAdv] = React.useState(!!(view && view.calAdv));
+  const [graphOpen, setGraphOpen] = React.useState(view && typeof view.calGraph === 'boolean' ? view.calGraph : true);
+  const [calOpen, setCalOpen] = React.useState(false);      // the full calendar always opens closed
+  const [anchorISO, setAnchorISO] = React.useState(view && view.calAnchor ? view.calAnchor : J.TODAY_ISO);
+  const [dayCount, setDayCount] = React.useState(() => (view && view.calAnchor
+    ? Math.max(STREAM_PAGE, backTo(view.calAnchor) + 2 + STREAM_PAGE) : STREAM_PAGE));
+  const streamRef = React.useRef(null);
+  const dayEls = React.useRef({});
+  const spyLock = React.useRef(0);      // a scroll WE caused must not feed back into the strip
+  const pendingScroll = React.useRef(view && view.calAdv && view.calAnchor ? view.calAnchor : null);
+  const advRef = React.useRef(false);
+  const anchorRef = React.useRef(J.TODAY_ISO);
+  const graphOpenRef = React.useRef(true);
+  advRef.current = adv; graphOpenRef.current = graphOpen; anchorRef.current = anchorISO;
+
+  const byDate = React.useMemo(() => {
+    const m = {};
+    entries.forEach(e => { (m[e.date] = m[e.date] || []).push(e); });
+    return m;
+  }, [entries]);
+
+  // Today first, one day at a time backwards, stopping at the data epoch.
+  const streamDates = React.useMemo(() => {
+    const out = [];
+    let iso = J.TODAY_ISO;
+    for (let i = 0; i < dayCount && iso >= window.MIN_LOG_DAY; i++) { out.push(iso); iso = J.isoShift(iso, -1); }
+    return out;
+  }, [dayCount]);
+  const atEpoch = streamDates.length < dayCount;
+
+  const enterAdvanced = () => {
+    setAdv(true); setGraphOpen(false); setCalOpen(false);
+    setAnchorISO(J.TODAY_ISO); setDayCount(STREAM_PAGE);
+    dayEls.current = {};
+  };
+  // Coming back to the month grid, land on the month the parent was READING,
+  // not wherever the pager happened to be parked before they went advanced.
+  const exitAdvanced = () => {
+    const a = J.parseISO(anchorRef.current);
+    const off = (a.getFullYear() * 12 + a.getMonth()) - (today.getFullYear() * 12 + today.getMonth());
+    adopt(Math.max(minOffset, Math.min(0, off)));
+    setAdv(false); setCalOpen(false); setGraphOpen(true);
+  };
+
+  const scrollToDate = (iso) => {
+    const back = backTo(iso);
+    if (back + 2 > dayCount) setDayCount(back + 2 + STREAM_PAGE);
+    setAnchorISO(iso);
+    spyLock.current = Date.now() + 600;
+    pendingScroll.current = iso;
+  };
+  // runs after every render, so a date that needed paging in first still lands
+  React.useEffect(() => {
+    const iso = pendingScroll.current;
+    if (!iso) return;
+    const node = dayEls.current[iso];
+    if (!node || !streamRef.current) return;
+    streamRef.current.scrollTop = Math.max(0, node.offsetTop - 6);
+    pendingScroll.current = null;
+    spyLock.current = Date.now() + 400;
+  });
+
+  const onStreamScroll = (e) => {
+    const el = e.currentTarget;
+    if (!atEpoch && el.scrollTop + el.clientHeight > el.scrollHeight - STREAM_LEAD) {
+      setDayCount(c => c + STREAM_PAGE);
+    }
+    if (Date.now() < spyLock.current) return;
+    // any scroll of the parent's own making compresses the full calendar again
+    if (calOpen) setCalOpen(false);
+    const top = el.scrollTop + 14;
+    let found = null;
+    for (const iso of streamDates) {
+      const node = dayEls.current[iso];
+      if (!node) continue;
+      if (node.offsetTop <= top) found = iso; else break;
+    }
+    if (found && found !== anchorISO) setAnchorISO(found);
+  };
+
+  // Stash the mode on the view so Back restores the page AS IT WAS.
+  React.useEffect(() => {
+    if (view && view.calAdv === adv && view.calGraph === graphOpen && view.calAnchor === anchorISO) return;
+    nav.remember({ calAdv: adv, calGraph: graphOpen, calAnchor: anchorISO });
+  }, [adv, graphOpen, anchorISO]);
+
+  // The graph is the handle for both mode changes: up tucks it away and the
+  // record streams in, down brings the month back. Refs, not state, inside the
+  // listener: a gesture reading a stale closure drops fast flicks.
+  const graphRef = React.useRef(null);
+  React.useEffect(() => {
+    const el = graphRef.current;
+    if (!el || !nav.plus) return undefined;
+    let y0 = null, x0 = null;
+    const start = (ev) => { const t = ev.touches[0]; y0 = t.clientY; x0 = t.clientX; };
+    const move = (ev) => {
+      if (y0 === null) return;
+      const t = ev.touches[0];
+      const dy = t.clientY - y0, dx = t.clientX - x0;
+      if (Math.abs(dy) < 44 || Math.abs(dx) > Math.abs(dy)) return;   // deliberate, and vertical
+      y0 = null;
+      if (dy < 0 && !advRef.current) { ev.preventDefault(); enterAdvanced(); }
+      else if (dy > 0 && advRef.current && graphOpenRef.current) { ev.preventDefault(); exitAdvanced(); }
+    };
+    const end = () => { y0 = null; };
+    el.addEventListener('touchstart', start, { passive: true });
+    el.addEventListener('touchmove', move, { passive: false });
+    el.addEventListener('touchend', end, { passive: true });
+    el.addEventListener('touchcancel', end, { passive: true });
+    return () => {
+      el.removeEventListener('touchstart', start);
+      el.removeEventListener('touchmove', move);
+      el.removeEventListener('touchend', end);
+      el.removeEventListener('touchcancel', end);
+    };
+  }, [nav.plus, adv]);
+
+  const anchorDate = J.parseISO(anchorISO);
+  const advLabel = `${J.MONTH_NAMES[anchorDate.getMonth()]} ${anchorDate.getFullYear()}`;
+  const openCal = () => {
+    const off = (anchorDate.getFullYear() * 12 + anchorDate.getMonth()) - (today.getFullYear() * 12 + today.getMonth());
+    adopt(Math.max(minOffset, Math.min(0, off)));
+    setCalOpen(true);
+  };
+  const graphBtn = nav.plus ? (
+    <button className="j-iconbtn" data-graph-toggle aria-pressed={graphOpen}
+      aria-label={graphOpen ? 'Hide the graph' : 'Show the graph'}
+      onClick={() => { if (!advRef.current) enterAdvanced(); else setGraphOpen(g => !g); }}>
+      <Icon name="chart" size={22} color="var(--muted)" />
+    </button>
+  ) : null;
+  // in advanced mode a calendar tap moves the record; in simple mode it opens the day
+  const pickDay = (iso) => (advRef.current ? scrollToDate(iso) : nav.go('day', { date: iso }));
+
+  const calendarCard = (
+      <div className="j-card" style={{ padding: 14, overflow: 'hidden' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6, marginBottom: 8 }}>
+          {dows.map((d, i) => <div key={i} style={{ textAlign: 'center', fontSize: 'calc(12px * var(--tscale, 1))', fontWeight: 500, color: 'var(--faint)' }}>{d}</div>)}
+        </div>
+        <div ref={pagerRef} onScroll={onPagerScroll} className="j-pager" {...pagerKeyProps(pagerRef, 'Calendar months')}
+          style={{ display: 'flex',
+          overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch', outline: 'none' }}>
+          {monthOffsets.map(off => {
+            // Materialise cells only near the shown month; the far panels
+            // stay as fixed-size placeholders (they stretch to the row's
+            // height, so paging is always pixel-stable).
+            if (Math.abs(off - offset) > 2) {
+              return <div key={off} aria-hidden="true" style={{ flex: '0 0 100%', width: '100%', scrollSnapAlign: 'start' }} />;
+            }
+            const m = off === offset ? cur : monthMeta(off);
+            return (
+              <div key={off} style={{ flex: '0 0 100%', width: '100%', scrollSnapAlign: 'start',
+                display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6, alignContent: 'start' }}>
+                {m.cells.map((c, idx) => {
+                  if (!c) return <div key={'blank-' + idx} style={{ aspectRatio: '1 / 1' }} />;
+                  const tint = c.mood ? window.moodTint(c.mood) : 'transparent';
+                  const ink = c.mood ? window.MOOD_COLOURS[c.mood] : (c.future ? 'var(--line)' : 'var(--faint)');
+                  // Every past day and today opens the Day view, notes or
+                  // not (12 Jul 2026); only future days stay inert.
+                  const tappable = !c.future;
+                  return (
+                    <button key={c.d} onClick={() => tappable && pickDay(c.iso)}
+                      className={tappable ? 'j-press' : ''} disabled={!tappable}
+                      aria-label={c.future
+                        ? `${c.d} ${J.MONTH_NAMES[m.month]} ${m.year}, in the future`
+                        : `${c.d} ${J.MONTH_NAMES[m.month]} ${m.year}, ${c.count > 0 ? c.count + (c.count === 1 ? ' note' : ' notes') : 'no note'}`}
+                      style={{ aspectRatio: '1 / 1', borderRadius: '50%', cursor: tappable ? 'pointer' : 'default',
+                        border: 'none', boxShadow: c.isToday ? 'inset 0 0 0 1.5px var(--blue)' : 'none',
+                        background: tint, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3,
+                        opacity: c.future ? 0.55 : 1 }}>
+                      <span style={{ fontFamily: "'Outfit', system-ui", fontWeight: c.isToday ? 600 : 500, fontSize: 'calc(15px * var(--tscale, 1))', color: c.isToday ? 'var(--blue)' : ink }}>{c.d}</span>
+                      {c.mood && <MoodDot mood={c.mood} size={6} />}
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+  );
+  const legendRow = (
+      <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 12 }}>
+        {[['good', 'Good day'], ['ok', 'Mixed day'], ['hard', 'Hard day'], ['none', 'No note']].map(([k, l]) => (
+          <span key={k} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 'calc(12.5px * var(--tscale, 1))', color: 'var(--faint)' }}>
+            <MoodDot mood={k} size={9} /> {l}
+          </span>
+        ))}
+      </div>
+  );
+  // The graph is both the panel and the handle. In advanced mode it shows the
+  // month the parent is actually reading, which is the anchor's month, not the
+  // month the pager happens to be parked on.
+  const graphBlock = (
+    <div ref={graphRef} className={'j-graphfold' + (graphOpen ? '' : ' j-folded')}>
+      {nav.plus
+        ? <MonthMoodGraph entries={entries} year={adv ? anchorDate.getFullYear() : year} month={adv ? anchorDate.getMonth() : month} />
+        : <PatternsLockedPreview onOpen={() => nav.go('unlock')} />}
+    </div>
+  );
+
+  // ---- ADVANCED: pinned chrome, then ONE scroller holding the record ----
+  if (adv) {
+    return (
+      <div className="j-screen" data-cal-mode="advanced">
+        <div className="j-pad" style={{ paddingTop: 10, paddingBottom: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
+            <button className="j-press" data-cal-open onClick={() => (calOpen ? setCalOpen(false) : openCal())}
+              aria-expanded={calOpen} aria-label={(calOpen ? 'Close' : 'Open') + ' the full calendar'}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
+              <h1 className="j-h1" style={{ fontSize: 'calc(28px * var(--tscale, 1))' }}>{advLabel}</h1>
+              <span className={'j-calarrow' + (calOpen ? ' j-open' : '')} aria-hidden="true">
+                <Icon name="chevronRight" size={20} color="var(--muted)" />
+              </span>
+            </button>
+            <div style={{ height: 'calc(30px * var(--tscale, 1))', display: 'flex', alignItems: 'center', flexShrink: 0 }}>{graphBtn}</div>
+          </div>
+          {calOpen ? calendarCard : <WeekStrip anchor={anchorISO} byDate={byDate} onPick={scrollToDate} />}
+          {graphBlock}
+        </div>
+        <div className="j-scroll j-fade" ref={streamRef} onScroll={onStreamScroll} data-stream>
+          <div className="j-pad" style={{ paddingBottom: 140 }}>
+            {streamDates.map(iso => (
+              <StreamDay key={iso} iso={iso} list={byDate[iso] || []} nav={nav}
+                hostRef={el => { if (el) dayEls.current[iso] = el; }} />
+            ))}
+            {atEpoch && <p className="j-meta" style={{ textAlign: 'center', padding: '18px 0 4px' }}>That is as far back as Jotla goes.</p>}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ---- SIMPLE: the free app's Month tab, unchanged ----
   return (
-    <div className="j-screen">
+    <div className="j-screen" data-cal-mode="simple">
       <div className="j-scroll j-fade">
         <div className="j-pad" style={{ paddingTop: 10, paddingBottom: 120 }}>
-          {/* DECLUTTER (founder, 4 Aug 2026): "Tap any day to read it back."
-              is gone. It explained a calendar to someone looking at a calendar. */}
           <TabTitle title={monthLabel}
-            right={<div style={{ display: 'flex', gap: 8 }}>{monthNavBtn('prev')}{monthNavBtn('next')}</div>} />
-
-          {/* calendar: swipe the grid itself between months, like the tier pager */}
-          <div className="j-card" style={{ padding: 14, overflow: 'hidden' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6, marginBottom: 8 }}>
-              {dows.map((d, i) => <div key={i} style={{ textAlign: 'center', fontSize: 'calc(12px * var(--tscale, 1))', fontWeight: 500, color: 'var(--faint)' }}>{d}</div>)}
-            </div>
-            <div ref={pagerRef} onScroll={onPagerScroll} className="j-pager" {...pagerKeyProps(pagerRef, 'Calendar months')}
-              style={{ display: 'flex',
-              overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch', outline: 'none' }}>
-              {monthOffsets.map(off => {
-                // Materialise cells only near the shown month; the far panels
-                // stay as fixed-size placeholders (they stretch to the row's
-                // height, so paging is always pixel-stable).
-                if (Math.abs(off - offset) > 2) {
-                  return <div key={off} aria-hidden="true" style={{ flex: '0 0 100%', width: '100%', scrollSnapAlign: 'start' }} />;
-                }
-                const m = off === offset ? cur : monthMeta(off);
-                return (
-                  <div key={off} style={{ flex: '0 0 100%', width: '100%', scrollSnapAlign: 'start',
-                    display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6, alignContent: 'start' }}>
-                    {m.cells.map((c, idx) => {
-                      if (!c) return <div key={'blank-' + idx} style={{ aspectRatio: '1 / 1' }} />;
-                      const tint = c.mood ? window.moodTint(c.mood) : 'transparent';
-                      const ink = c.mood ? window.MOOD_COLOURS[c.mood] : (c.future ? 'var(--line)' : 'var(--faint)');
-                      // Every past day and today opens the Day view, notes or
-                      // not (12 Jul 2026); only future days stay inert.
-                      const tappable = !c.future;
-                      return (
-                        <button key={c.d} onClick={() => tappable && nav.go('day', { date: c.iso })}
-                          className={tappable ? 'j-press' : ''} disabled={!tappable}
-                          aria-label={c.future
-                            ? `${c.d} ${J.MONTH_NAMES[m.month]} ${m.year}, in the future`
-                            : `${c.d} ${J.MONTH_NAMES[m.month]} ${m.year}, ${c.count > 0 ? c.count + (c.count === 1 ? ' note' : ' notes') : 'no note'}`}
-                          style={{ aspectRatio: '1 / 1', borderRadius: '50%', cursor: tappable ? 'pointer' : 'default',
-                            border: 'none', boxShadow: c.isToday ? 'inset 0 0 0 1.5px var(--blue)' : 'none',
-                            background: tint, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3,
-                            opacity: c.future ? 0.55 : 1 }}>
-                          <span style={{ fontFamily: "'Outfit', system-ui", fontWeight: c.isToday ? 600 : 500, fontSize: 'calc(15px * var(--tscale, 1))', color: c.isToday ? 'var(--blue)' : ink }}>{c.d}</span>
-                          {c.mood && <MoodDot mood={c.mood} size={6} />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* DECLUTTER (founder, 4 Aug 2026; mirrored from native MonthScreen):
-              the "‹ swipe left and right ›" line is gone. The month already had
-              two working affordances for the same gesture sitting a few pixels
-              away: the prev/next chevrons beside the title, and the grid itself,
-              which follows the finger. */}
-
-          {/* legend. ONE WORD FOR THE MIDDLE MOOD (4 Aug 2026): 'ok' reads
-              "Mixed day" here, matching MOODS in jotla-data and the graph
-              directly below, which already said "Mixed". The four legend dots
-              and the graph bars stay DIFFERENT keys and should not be merged:
-              the legend explains the day tints on the calendar (a day with no
-              note being a real fourth state), while the graph's fourth bar
-              counts dysregulation moments, which is not a day colour at all. */}
-          <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 12 }}>
-            {[['good', 'Good day'], ['ok', 'Mixed day'], ['hard', 'Hard day'], ['none', 'No note']].map(([k, l]) => (
-              <span key={k} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 'calc(12.5px * var(--tscale, 1))', color: 'var(--faint)' }}>
-                <MoodDot mood={k} size={9} /> {l}
-              </span>
-            ))}
-          </div>
-
-          {/* Below the calendar: Plus gets the real graph; free gets the locked
-              preview, the analytics shape blurred behind the crown veil
-              (redesign, 6 Aug: the old locked card above the calendar is gone). */}
-          {nav.plus
-            ? <MonthMoodGraph entries={entries} year={year} month={month} />
-            : <PatternsLockedPreview onOpen={() => nav.go('unlock')} />}
+            right={<div style={{ display: 'flex', gap: 8 }}>{monthNavBtn('prev')}{monthNavBtn('next')}{graphBtn}</div>} />
+          {calendarCard}
+          {legendRow}
+          {graphBlock}
         </div>
       </div>
     </div>

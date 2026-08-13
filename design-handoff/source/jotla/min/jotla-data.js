@@ -930,11 +930,17 @@ function dayMood(entries) {
 }
 
 // Anchor the seed near the real today (whole-week shift preserves weekdays).
-function _isoShift(iso, days) {
+// Days added to or taken off an ISO date, month and year ends handled by Date.
+// Local-date arithmetic on purpose, never toISOString(), which converts to UTC
+// and hands back yesterday for anyone west of Greenwich after midnight local.
+// Shared out as isoShift (the advanced calendar walks dates with it, 11 Aug);
+// the seed shifter below was its first caller and keeps the private name.
+function isoShift(iso, days) {
   const d = parseISO(iso);
   d.setDate(d.getDate() + days);
   return _isoOf(d);
 }
+const _isoShift = isoShift;
 const _weekShift = Math.round((_NOW - parseISO(SEED_ANCHOR_ISO)) / 86400000 / 7) * 7;
 const SEED_ENTRIES_LIVE = _weekShift ? SEED_ENTRIES.map(e => ({
   ...e,
@@ -970,6 +976,7 @@ Object.assign(window, {
     DOW_MON,
     DOW_LONG,
     parseISO,
+    isoShift,
     fmtLong,
     fmtShort,
     dayMood,

@@ -222,6 +222,122 @@ function PatternsLockedPreview({
     }
   }, "The mood graph, counts and hard-day patterns.")));
 }
+
+/* ==================== THE ADVANCED CALENDAR (Plus, 11 Aug 2026) ====================
+   Founder's design, and the shape of it matters: the calendar's state is driven
+   by DELIBERATE GESTURES and discrete modes, never by scroll offset. Scrolling
+   only ever moves the record.
+
+     Simple mode      the month grid with the graph under it. This is the whole
+                      of the free app's Month tab, now and for good.
+     Advanced mode    a single week strip pinned at the top, the graph tucked
+                      underneath it, and the record streaming downwards.
+
+   Swipe the graph UP (or tap the graph icon) to go advanced; pull the graph
+   DOWN to come back. The graph icon opens and closes the graph in either mode.
+   Tapping the month and year opens the full calendar over the stream; tapping a
+   date there scrolls the stream to it, and the next scroll compresses it again.
+
+   TODAY IS AT THE TOP AND SCROLLING DOWN GOES BACK IN TIME (founder, 11 Aug).
+   That direction is not a preference, it falls out of the record: Jotla refuses
+   future-dated entries, so the empty days a parent can tap and fill can only
+   ever lie in the past. Spec: Vision `App/Jotla-Insights-and-Calendar-Plan-2026-08-11.md`. */
+const STREAM_PAGE = 21; // days paged in at a time
+const STREAM_LEAD = 480; // px from the end of the stream that triggers the next page
+
+// The pinned week: seven real day buttons, Monday first, the anchor carrying
+// the tint. Tapping one scrolls the record to that day.
+function WeekStrip({
+  anchor,
+  byDate,
+  onPick
+}) {
+  const J = window.JOTLA;
+  const dt = J.parseISO(anchor);
+  const monday = J.isoShift(anchor, -((dt.getDay() + 6) % 7));
+  const days = [];
+  for (let i = 0; i < 7; i++) days.push(J.isoShift(monday, i));
+  return /*#__PURE__*/React.createElement("div", {
+    className: "j-weekstrip",
+    role: "group",
+    "aria-label": "The week you are reading"
+  }, days.map((iso, i) => {
+    const list = byDate[iso] || [];
+    const mood = J.dayMood(list);
+    const future = iso > J.TODAY_ISO;
+    const on = iso === anchor;
+    const d = J.parseISO(iso);
+    return /*#__PURE__*/React.createElement("button", {
+      key: iso,
+      className: "j-weekday j-press",
+      disabled: future,
+      onClick: () => !future && onPick(iso),
+      "aria-current": on ? 'date' : undefined,
+      "aria-label": `${J.fmtLong(iso)}, ${list.length ? list.length + (list.length === 1 ? ' note' : ' notes') : 'no note'}`,
+      style: {
+        opacity: future ? 0.4 : 1,
+        cursor: future ? 'default' : 'pointer'
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "j-weekday-dow"
+    }, J.DOW_MON[i].slice(0, 1)), /*#__PURE__*/React.createElement("span", {
+      className: "j-weekday-num",
+      style: {
+        color: on ? 'var(--blue)' : mood ? window.MOOD_COLOURS[mood] : 'var(--muted)'
+      }
+    }, d.getDate()), /*#__PURE__*/React.createElement(MoodDot, {
+      mood: mood || 'none',
+      size: 5
+    }));
+  }));
+}
+
+// One day in the stream. A day with nothing on it is not a dead row: it offers
+// the note, exactly as the Day screen does, preset to that date.
+function StreamDay({
+  iso,
+  list,
+  nav,
+  hostRef
+}) {
+  const J = window.JOTLA;
+  const mood = J.dayMood(list);
+  const label = iso === J.TODAY_ISO ? 'Today' : iso === J.isoShift(J.TODAY_ISO, -1) ? 'Yesterday' : J.fmtLong(iso);
+  return /*#__PURE__*/React.createElement("section", {
+    className: "j-daysec",
+    "data-day": iso,
+    ref: hostRef
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-daysec-head"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "j-h3",
+    style: {
+      fontSize: 'calc(15.5px * var(--tscale, 1))'
+    }
+  }, label), mood && /*#__PURE__*/React.createElement(MoodDot, {
+    mood: mood,
+    size: 8
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      flex: 1
+    }
+  }), list.length > 0 && /*#__PURE__*/React.createElement("span", {
+    className: "j-meta"
+  }, list.length, " ", list.length === 1 ? 'note' : 'notes')), list.length ? /*#__PURE__*/React.createElement(LogList, {
+    list: list,
+    nav: nav
+  }) : /*#__PURE__*/React.createElement("button", {
+    className: "j-emptyday j-press",
+    onClick: () => nav.go('quicklog', {
+      date: iso
+    }),
+    "aria-label": 'Add a note for ' + J.fmtLong(iso)
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "plus",
+    size: 15,
+    color: "var(--faint)"
+  }), " Add a note"));
+}
 function MonthScreen({
   nav,
   entries,
@@ -380,25 +496,184 @@ function MonthScreen({
   };
   const dows = J.DOW_MON; // Mon Tue Wed Thu Fri Sat Sun
 
-  return /*#__PURE__*/React.createElement("div", {
-    className: "j-screen"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "j-scroll j-fade"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "j-pad",
-    style: {
-      paddingTop: 10,
-      paddingBottom: 120
+  // ---- advanced mode (Plus). Free never leaves simple mode. ----
+  // Mode, graph and place ride the VIEW, like the month pager's offset already
+  // does, because opening a note from the record and coming back must not throw
+  // the parent out of advanced mode and lose where they were reading.
+  const backTo = iso => Math.round((J.parseISO(J.TODAY_ISO) - J.parseISO(iso)) / 86400000);
+  const [adv, setAdv] = React.useState(!!(view && view.calAdv));
+  const [graphOpen, setGraphOpen] = React.useState(view && typeof view.calGraph === 'boolean' ? view.calGraph : true);
+  const [calOpen, setCalOpen] = React.useState(false); // the full calendar always opens closed
+  const [anchorISO, setAnchorISO] = React.useState(view && view.calAnchor ? view.calAnchor : J.TODAY_ISO);
+  const [dayCount, setDayCount] = React.useState(() => view && view.calAnchor ? Math.max(STREAM_PAGE, backTo(view.calAnchor) + 2 + STREAM_PAGE) : STREAM_PAGE);
+  const streamRef = React.useRef(null);
+  const dayEls = React.useRef({});
+  const spyLock = React.useRef(0); // a scroll WE caused must not feed back into the strip
+  const pendingScroll = React.useRef(view && view.calAdv && view.calAnchor ? view.calAnchor : null);
+  const advRef = React.useRef(false);
+  const anchorRef = React.useRef(J.TODAY_ISO);
+  const graphOpenRef = React.useRef(true);
+  advRef.current = adv;
+  graphOpenRef.current = graphOpen;
+  anchorRef.current = anchorISO;
+  const byDate = React.useMemo(() => {
+    const m = {};
+    entries.forEach(e => {
+      (m[e.date] = m[e.date] || []).push(e);
+    });
+    return m;
+  }, [entries]);
+
+  // Today first, one day at a time backwards, stopping at the data epoch.
+  const streamDates = React.useMemo(() => {
+    const out = [];
+    let iso = J.TODAY_ISO;
+    for (let i = 0; i < dayCount && iso >= window.MIN_LOG_DAY; i++) {
+      out.push(iso);
+      iso = J.isoShift(iso, -1);
     }
-  }, /*#__PURE__*/React.createElement(TabTitle, {
-    title: monthLabel,
-    right: /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: 'flex',
-        gap: 8
+    return out;
+  }, [dayCount]);
+  const atEpoch = streamDates.length < dayCount;
+  const enterAdvanced = () => {
+    setAdv(true);
+    setGraphOpen(false);
+    setCalOpen(false);
+    setAnchorISO(J.TODAY_ISO);
+    setDayCount(STREAM_PAGE);
+    dayEls.current = {};
+  };
+  // Coming back to the month grid, land on the month the parent was READING,
+  // not wherever the pager happened to be parked before they went advanced.
+  const exitAdvanced = () => {
+    const a = J.parseISO(anchorRef.current);
+    const off = a.getFullYear() * 12 + a.getMonth() - (today.getFullYear() * 12 + today.getMonth());
+    adopt(Math.max(minOffset, Math.min(0, off)));
+    setAdv(false);
+    setCalOpen(false);
+    setGraphOpen(true);
+  };
+  const scrollToDate = iso => {
+    const back = backTo(iso);
+    if (back + 2 > dayCount) setDayCount(back + 2 + STREAM_PAGE);
+    setAnchorISO(iso);
+    spyLock.current = Date.now() + 600;
+    pendingScroll.current = iso;
+  };
+  // runs after every render, so a date that needed paging in first still lands
+  React.useEffect(() => {
+    const iso = pendingScroll.current;
+    if (!iso) return;
+    const node = dayEls.current[iso];
+    if (!node || !streamRef.current) return;
+    streamRef.current.scrollTop = Math.max(0, node.offsetTop - 6);
+    pendingScroll.current = null;
+    spyLock.current = Date.now() + 400;
+  });
+  const onStreamScroll = e => {
+    const el = e.currentTarget;
+    if (!atEpoch && el.scrollTop + el.clientHeight > el.scrollHeight - STREAM_LEAD) {
+      setDayCount(c => c + STREAM_PAGE);
+    }
+    if (Date.now() < spyLock.current) return;
+    // any scroll of the parent's own making compresses the full calendar again
+    if (calOpen) setCalOpen(false);
+    const top = el.scrollTop + 14;
+    let found = null;
+    for (const iso of streamDates) {
+      const node = dayEls.current[iso];
+      if (!node) continue;
+      if (node.offsetTop <= top) found = iso;else break;
+    }
+    if (found && found !== anchorISO) setAnchorISO(found);
+  };
+
+  // Stash the mode on the view so Back restores the page AS IT WAS.
+  React.useEffect(() => {
+    if (view && view.calAdv === adv && view.calGraph === graphOpen && view.calAnchor === anchorISO) return;
+    nav.remember({
+      calAdv: adv,
+      calGraph: graphOpen,
+      calAnchor: anchorISO
+    });
+  }, [adv, graphOpen, anchorISO]);
+
+  // The graph is the handle for both mode changes: up tucks it away and the
+  // record streams in, down brings the month back. Refs, not state, inside the
+  // listener: a gesture reading a stale closure drops fast flicks.
+  const graphRef = React.useRef(null);
+  React.useEffect(() => {
+    const el = graphRef.current;
+    if (!el || !nav.plus) return undefined;
+    let y0 = null,
+      x0 = null;
+    const start = ev => {
+      const t = ev.touches[0];
+      y0 = t.clientY;
+      x0 = t.clientX;
+    };
+    const move = ev => {
+      if (y0 === null) return;
+      const t = ev.touches[0];
+      const dy = t.clientY - y0,
+        dx = t.clientX - x0;
+      if (Math.abs(dy) < 44 || Math.abs(dx) > Math.abs(dy)) return; // deliberate, and vertical
+      y0 = null;
+      if (dy < 0 && !advRef.current) {
+        ev.preventDefault();
+        enterAdvanced();
+      } else if (dy > 0 && advRef.current && graphOpenRef.current) {
+        ev.preventDefault();
+        exitAdvanced();
       }
-    }, monthNavBtn('prev'), monthNavBtn('next'))
-  }), /*#__PURE__*/React.createElement("div", {
+    };
+    const end = () => {
+      y0 = null;
+    };
+    el.addEventListener('touchstart', start, {
+      passive: true
+    });
+    el.addEventListener('touchmove', move, {
+      passive: false
+    });
+    el.addEventListener('touchend', end, {
+      passive: true
+    });
+    el.addEventListener('touchcancel', end, {
+      passive: true
+    });
+    return () => {
+      el.removeEventListener('touchstart', start);
+      el.removeEventListener('touchmove', move);
+      el.removeEventListener('touchend', end);
+      el.removeEventListener('touchcancel', end);
+    };
+  }, [nav.plus, adv]);
+  const anchorDate = J.parseISO(anchorISO);
+  const advLabel = `${J.MONTH_NAMES[anchorDate.getMonth()]} ${anchorDate.getFullYear()}`;
+  const openCal = () => {
+    const off = anchorDate.getFullYear() * 12 + anchorDate.getMonth() - (today.getFullYear() * 12 + today.getMonth());
+    adopt(Math.max(minOffset, Math.min(0, off)));
+    setCalOpen(true);
+  };
+  const graphBtn = nav.plus ? /*#__PURE__*/React.createElement("button", {
+    className: "j-iconbtn",
+    "data-graph-toggle": true,
+    "aria-pressed": graphOpen,
+    "aria-label": graphOpen ? 'Hide the graph' : 'Show the graph',
+    onClick: () => {
+      if (!advRef.current) enterAdvanced();else setGraphOpen(g => !g);
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "chart",
+    size: 22,
+    color: "var(--muted)"
+  })) : null;
+  // in advanced mode a calendar tap moves the record; in simple mode it opens the day
+  const pickDay = iso => advRef.current ? scrollToDate(iso) : nav.go('day', {
+    date: iso
+  });
+  const calendarCard = /*#__PURE__*/React.createElement("div", {
     className: "j-card",
     style: {
       padding: 14,
@@ -472,9 +747,7 @@ function MonthScreen({
       const tappable = !c.future;
       return /*#__PURE__*/React.createElement("button", {
         key: c.d,
-        onClick: () => tappable && nav.go('day', {
-          date: c.iso
-        }),
+        onClick: () => tappable && pickDay(c.iso),
         className: tappable ? 'j-press' : '',
         disabled: !tappable,
         "aria-label": c.future ? `${c.d} ${J.MONTH_NAMES[m.month]} ${m.year}, in the future` : `${c.d} ${J.MONTH_NAMES[m.month]} ${m.year}, ${c.count > 0 ? c.count + (c.count === 1 ? ' note' : ' notes') : 'no note'}`,
@@ -504,7 +777,8 @@ function MonthScreen({
         size: 6
       }));
     }));
-  }))), /*#__PURE__*/React.createElement("div", {
+  })));
+  const legendRow = /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       gap: 16,
@@ -523,13 +797,126 @@ function MonthScreen({
   }, /*#__PURE__*/React.createElement(MoodDot, {
     mood: k,
     size: 9
-  }), " ", l))), nav.plus ? /*#__PURE__*/React.createElement(MonthMoodGraph, {
+  }), " ", l)));
+  // The graph is both the panel and the handle. In advanced mode it shows the
+  // month the parent is actually reading, which is the anchor's month, not the
+  // month the pager happens to be parked on.
+  const graphBlock = /*#__PURE__*/React.createElement("div", {
+    ref: graphRef,
+    className: 'j-graphfold' + (graphOpen ? '' : ' j-folded')
+  }, nav.plus ? /*#__PURE__*/React.createElement(MonthMoodGraph, {
     entries: entries,
-    year: year,
-    month: month
+    year: adv ? anchorDate.getFullYear() : year,
+    month: adv ? anchorDate.getMonth() : month
   }) : /*#__PURE__*/React.createElement(PatternsLockedPreview, {
     onOpen: () => nav.go('unlock')
-  }))));
+  }));
+
+  // ---- ADVANCED: pinned chrome, then ONE scroller holding the record ----
+  if (adv) {
+    return /*#__PURE__*/React.createElement("div", {
+      className: "j-screen",
+      "data-cal-mode": "advanced"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "j-pad",
+      style: {
+        paddingTop: 10,
+        paddingBottom: 4
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+        gap: 12,
+        marginBottom: 12
+      }
+    }, /*#__PURE__*/React.createElement("button", {
+      className: "j-press",
+      "data-cal-open": true,
+      onClick: () => calOpen ? setCalOpen(false) : openCal(),
+      "aria-expanded": calOpen,
+      "aria-label": (calOpen ? 'Close' : 'Open') + ' the full calendar',
+      style: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+        background: 'none',
+        border: 'none',
+        padding: 0,
+        cursor: 'pointer'
+      }
+    }, /*#__PURE__*/React.createElement("h1", {
+      className: "j-h1",
+      style: {
+        fontSize: 'calc(28px * var(--tscale, 1))'
+      }
+    }, advLabel), /*#__PURE__*/React.createElement("span", {
+      className: 'j-calarrow' + (calOpen ? ' j-open' : ''),
+      "aria-hidden": "true"
+    }, /*#__PURE__*/React.createElement(Icon, {
+      name: "chevronRight",
+      size: 20,
+      color: "var(--muted)"
+    }))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        height: 'calc(30px * var(--tscale, 1))',
+        display: 'flex',
+        alignItems: 'center',
+        flexShrink: 0
+      }
+    }, graphBtn)), calOpen ? calendarCard : /*#__PURE__*/React.createElement(WeekStrip, {
+      anchor: anchorISO,
+      byDate: byDate,
+      onPick: scrollToDate
+    }), graphBlock), /*#__PURE__*/React.createElement("div", {
+      className: "j-scroll j-fade",
+      ref: streamRef,
+      onScroll: onStreamScroll,
+      "data-stream": true
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "j-pad",
+      style: {
+        paddingBottom: 140
+      }
+    }, streamDates.map(iso => /*#__PURE__*/React.createElement(StreamDay, {
+      key: iso,
+      iso: iso,
+      list: byDate[iso] || [],
+      nav: nav,
+      hostRef: el => {
+        if (el) dayEls.current[iso] = el;
+      }
+    })), atEpoch && /*#__PURE__*/React.createElement("p", {
+      className: "j-meta",
+      style: {
+        textAlign: 'center',
+        padding: '18px 0 4px'
+      }
+    }, "That is as far back as Jotla goes."))));
+  }
+
+  // ---- SIMPLE: the free app's Month tab, unchanged ----
+  return /*#__PURE__*/React.createElement("div", {
+    className: "j-screen",
+    "data-cal-mode": "simple"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-scroll j-fade"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-pad",
+    style: {
+      paddingTop: 10,
+      paddingBottom: 120
+    }
+  }, /*#__PURE__*/React.createElement(TabTitle, {
+    title: monthLabel,
+    right: /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        gap: 8
+      }
+    }, monthNavBtn('prev'), monthNavBtn('next'), graphBtn)
+  }), calendarCard, legendRow, graphBlock)));
 }
 
 // ---------------- Day detail ----------------
