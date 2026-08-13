@@ -422,36 +422,46 @@ html.j-appmode .j-fabtip { bottom: calc(160px + env(safe-area-inset-bottom)); }
 
 /* ---- the advanced calendar (Plus, 11 Aug 2026) ----
    Two modes on the Month tab. Simple mode is the month grid the free app keeps
-   for good. Advanced mode pins a single week strip, tucks the graph underneath
-   it, and streams the record downwards from today. ONE vertical scroller owns
-   the screen (the stream); the chrome above it is pinned outside that scroller,
-   never sticky inside it, because a sticky header inside a scroller that also
-   holds a horizontal pager is where this pattern dies on a real phone. */
-.j-weekstrip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-.j-weekday { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0 5px;
-  border: none; background: none; border-radius: 12px; cursor: pointer; }
-.j-weekday[aria-current="date"] { background: var(--tint-blue); }
-.j-weekday-dow { font-size: calc(11px * var(--tscale, 1)); color: var(--faint); }
-.j-weekday-num { font-family: 'Outfit', system-ui; font-weight: 500; font-size: calc(15px * var(--tscale, 1)); line-height: 1; }
-/* the graph folds up UNDER the calendar: the wrapper closes to nothing while
-   the card itself slides up behind the chrome above it */
-.j-graphfold { overflow: hidden; max-height: 420px; transition: max-height .34s cubic-bezier(.4,0,.2,1); }
-.j-graphfold > * { transition: transform .34s cubic-bezier(.4,0,.2,1), opacity .22s ease; }
-.j-graphfold.j-folded { max-height: 0; }
-.j-graphfold.j-folded > * { transform: translateY(-14px); opacity: 0; }
-/* the arrow beside the month and year turns as the calendar opens */
+   for good. In advanced mode the calendar becomes a PANEL fixed to the top of
+   the screen, rounded where it meets the edge, with a hairline under it and a
+   grab line that is the control; the record streams below it.
+
+   ONE vertical scroller owns the screen (the record); the panel is pinned
+   outside that scroller, never sticky inside it, because a sticky header inside
+   a scroller that also holds a horizontal pager is where this dies on a phone.
+
+   Nothing here animates on a class. The founder's rule (11 Aug) is that the
+   stretch of the calendar and the tuck of the graph TRACK THE FINGER, so their
+   heights are inline pixels driven by a gesture, and the only transition is the
+   short settle after release, run in JS. */
+.j-calarea { background: var(--card); border-bottom: 1px solid var(--line);
+  border-radius: 0 0 22px 22px; flex-shrink: 0; padding: 10px 20px 0; }
+.j-caldows { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 6px; }
+.j-caldows span { text-align: center; font-size: calc(12px * var(--tscale, 1)); font-weight: 500; color: var(--faint); }
+/* the fold: the calendar's own height, from one week to the whole month */
+.j-calfold { overflow: hidden; }
+/* the grab line, about a third of the android home indicator, and it is a
+   control: drag it to stretch or compress the calendar */
+.j-calhandle { display: flex; justify-content: center; align-items: center; width: 100%;
+  padding: 9px 0 10px; border: none; background: none; cursor: grab; touch-action: none; }
+.j-calhandle span { display: block; width: 44px; height: 4px; border-radius: 99px; background: var(--line); }
+.j-calhandle:active span { background: var(--faint); }
 .j-calarrow { display: inline-flex; transition: transform .3s cubic-bezier(.4,0,.2,1); }
 .j-calarrow.j-open { transform: rotate(90deg); }
-/* a day in the stream arrives from below, once, as it is paged in */
+/* the graph folds away under the calendar; height is driven by the gesture */
+.j-graphfold { overflow: hidden; }
+/* a day in the record arrives from below, once, as it is paged in */
 .j-daysec { animation: jDayIn .34s cubic-bezier(.2,.7,.3,1) both; }
 @keyframes jDayIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 .j-daysec-head { display: flex; align-items: baseline; gap: 8px; padding: 18px 0 8px; }
+/* a day that HOLDS something says so in the accent (founder, 11 Aug) */
+.j-daysec.j-hasnotes .j-daysec-head .j-h3 { color: var(--blue); }
 .j-emptyday { width: 100%; text-align: left; display: flex; align-items: center; gap: 8px; cursor: pointer;
   padding: 12px 14px; border-radius: 14px; border: 1px dashed var(--line); background: none;
   font-size: calc(13.5px * var(--tscale, 1)); color: var(--faint); }
 @media (prefers-reduced-motion: reduce) {
   .j-daysec { animation: none; }
-  .j-graphfold, .j-graphfold > *, .j-calarrow { transition: none; }
+  .j-calarrow { transition: none; }
 }
 
 /* ---- misc ---- */

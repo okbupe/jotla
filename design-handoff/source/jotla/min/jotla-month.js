@@ -245,53 +245,12 @@ function PatternsLockedPreview({
 const STREAM_PAGE = 21; // days paged in at a time
 const STREAM_LEAD = 480; // px from the end of the stream that triggers the next page
 
-// The pinned week: seven real day buttons, Monday first, the anchor carrying
-// the tint. Tapping one scrolls the record to that day.
-function WeekStrip({
-  anchor,
-  byDate,
-  onPick
-}) {
-  const J = window.JOTLA;
-  const dt = J.parseISO(anchor);
-  const monday = J.isoShift(anchor, -((dt.getDay() + 6) % 7));
-  const days = [];
-  for (let i = 0; i < 7; i++) days.push(J.isoShift(monday, i));
-  return /*#__PURE__*/React.createElement("div", {
-    className: "j-weekstrip",
-    role: "group",
-    "aria-label": "The week you are reading"
-  }, days.map((iso, i) => {
-    const list = byDate[iso] || [];
-    const mood = J.dayMood(list);
-    const future = iso > J.TODAY_ISO;
-    const on = iso === anchor;
-    const d = J.parseISO(iso);
-    return /*#__PURE__*/React.createElement("button", {
-      key: iso,
-      className: "j-weekday j-press",
-      disabled: future,
-      onClick: () => !future && onPick(iso),
-      "aria-current": on ? 'date' : undefined,
-      "aria-label": `${J.fmtLong(iso)}, ${list.length ? list.length + (list.length === 1 ? ' note' : ' notes') : 'no note'}`,
-      style: {
-        opacity: future ? 0.4 : 1,
-        cursor: future ? 'default' : 'pointer'
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      className: "j-weekday-dow"
-    }, J.DOW_MON[i].slice(0, 1)), /*#__PURE__*/React.createElement("span", {
-      className: "j-weekday-num",
-      style: {
-        color: on ? 'var(--blue)' : mood ? window.MOOD_COLOURS[mood] : 'var(--muted)'
-      }
-    }, d.getDate()), /*#__PURE__*/React.createElement(MoodDot, {
-      mood: mood || 'none',
-      size: 5
-    }));
-  }));
-}
-
+// The compressed calendar IS the week strip: the same grid, folded down to the
+// one row holding the anchor. A separate strip component was the first build
+// and it is gone, because two components cannot stretch into each other while
+// tracking a finger. The row height is measured from a real cell, never
+// assumed, since cells are aspect-ratio squares in a 7-column grid and their
+// size follows the screen and the parent's text-size setting.
 // One day in the stream. A day with nothing on it is not a dead row: it offers
 // the note, exactly as the Day screen does, preset to that date.
 function StreamDay({
@@ -304,7 +263,7 @@ function StreamDay({
   const mood = J.dayMood(list);
   const label = iso === J.TODAY_ISO ? 'Today' : iso === J.isoShift(J.TODAY_ISO, -1) ? 'Yesterday' : J.fmtLong(iso);
   return /*#__PURE__*/React.createElement("section", {
-    className: "j-daysec",
+    className: 'j-daysec' + (list.length ? ' j-hasnotes' : ''),
     "data-day": iso,
     ref: hostRef
   }, /*#__PURE__*/React.createElement("div", {
@@ -500,10 +459,17 @@ function MonthScreen({
   // Mode, graph and place ride the VIEW, like the month pager's offset already
   // does, because opening a note from the record and coming back must not throw
   // the parent out of advanced mode and lose where they were reading.
+  const anchorDateOf = iso => J.parseISO(iso);
   const backTo = iso => Math.round((J.parseISO(J.TODAY_ISO) - J.parseISO(iso)) / 86400000);
   const [adv, setAdv] = React.useState(!!(view && view.calAdv));
-  const [graphOpen, setGraphOpen] = React.useState(view && typeof view.calGraph === 'boolean' ? view.calGraph : true);
-  const [calOpen, setCalOpen] = React.useState(false); // the full calendar always opens closed
+  // Two numbers drive the whole surface, both 0 to 1, both able to sit at any
+  // value in between because they follow the finger:
+  //   t  the calendar, 0 = the anchor's week alone, 1 = the whole month
+  //   g  the graph,    0 = tucked under the calendar, 1 = fully out
+  const [t, setT] = React.useState(0);
+  const [g, setG] = React.useState(view && typeof view.calGraph === 'boolean' ? view.calGraph ? 1 : 0 : 1);
+  const graphOpen = g > 0.5;
+  const calOpen = t > 0.5;
   const [anchorISO, setAnchorISO] = React.useState(view && view.calAnchor ? view.calAnchor : J.TODAY_ISO);
   const [dayCount, setDayCount] = React.useState(() => view && view.calAnchor ? Math.max(STREAM_PAGE, backTo(view.calAnchor) + 2 + STREAM_PAGE) : STREAM_PAGE);
   const streamRef = React.useRef(null);
@@ -537,8 +503,8 @@ function MonthScreen({
   const atEpoch = streamDates.length < dayCount;
   const enterAdvanced = () => {
     setAdv(true);
-    setGraphOpen(false);
-    setCalOpen(false);
+    setG(0);
+    setT(0);
     setAnchorISO(J.TODAY_ISO);
     setDayCount(STREAM_PAGE);
     dayEls.current = {};
@@ -550,8 +516,8 @@ function MonthScreen({
     const off = a.getFullYear() * 12 + a.getMonth() - (today.getFullYear() * 12 + today.getMonth());
     adopt(Math.max(minOffset, Math.min(0, off)));
     setAdv(false);
-    setCalOpen(false);
-    setGraphOpen(true);
+    setT(0);
+    setG(1);
   };
   const scrollToDate = iso => {
     const back = backTo(iso);
@@ -570,14 +536,23 @@ function MonthScreen({
     pendingScroll.current = null;
     spyLock.current = Date.now() + 400;
   });
+  const lastTop = React.useRef(0);
+  const draggingRef = React.useRef(false);
   const onStreamScroll = e => {
     const el = e.currentTarget;
+    // Stretching the calendar moves the record down, and the browser reports
+    // that as a scroll. Treating it as one folded the month shut the instant it
+    // opened. Only a real change of position counts, and never while a gesture
+    // is live.
+    const moved = Math.abs(el.scrollTop - lastTop.current);
+    lastTop.current = el.scrollTop;
+    if (draggingRef.current || moved < 3) return;
     if (!atEpoch && el.scrollTop + el.clientHeight > el.scrollHeight - STREAM_LEAD) {
       setDayCount(c => c + STREAM_PAGE);
     }
     if (Date.now() < spyLock.current) return;
     // any scroll of the parent's own making compresses the full calendar again
-    if (calOpen) setCalOpen(false);
+    if (tRef.current > 0) tween(setT, tRef.current, 0); // a scroll of the parent's own making folds the month away
     const top = el.scrollTop + 14;
     let found = null;
     for (const iso of streamDates) {
@@ -587,6 +562,103 @@ function MonthScreen({
     }
     if (found && found !== anchorISO) setAnchorISO(found);
   };
+
+  // ---- the gesture engine ----
+  // Row height is MEASURED off a real cell, so the fold is right at every text
+  // size and screen width. Until it is measured the fold stays auto, which
+  // renders the whole month rather than a guessed sliver.
+  const GAP = 6;
+  const [rowH, setRowH] = React.useState(0);
+  const [graphH, setGraphH] = React.useState(0);
+  const foldRef = React.useRef(null);
+  const graphInnerRef = React.useRef(null);
+  React.useLayoutEffect(() => {
+    if (!adv) return;
+    const cell = foldRef.current && foldRef.current.querySelector('button');
+    if (cell) {
+      const h = Math.round(cell.getBoundingClientRect().height);
+      if (h && h !== rowH) setRowH(h);
+    }
+    const gh = graphInnerRef.current ? Math.round(graphInnerRef.current.getBoundingClientRect().height) : 0;
+    if (gh && gh !== graphH) setGraphH(gh);
+  });
+  const fullH = rowH ? rowH * 6 + GAP * 5 : 0;
+  const weekRow = (() => {
+    const first = new Date(anchorDateOf(anchorISO).getFullYear(), anchorDateOf(anchorISO).getMonth(), 1);
+    const lead = (first.getDay() + 6) % 7;
+    return Math.floor((lead + anchorDateOf(anchorISO).getDate() - 1) / 7);
+  })();
+
+  // The settle after a release is the ONLY animation on these two numbers, and
+  // it runs in JS because the value it starts from is wherever the finger left.
+  const tweenRef = React.useRef(null);
+  const tween = (setter, from, to) => {
+    if (tweenRef.current) cancelAnimationFrame(tweenRef.current);
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) {
+      setter(to);
+      return;
+    }
+    let t0 = null;
+    const step = ts => {
+      if (t0 === null) t0 = ts;
+      const k = Math.min(1, (ts - t0) / 240);
+      const e = 1 - Math.pow(1 - k, 3);
+      setter(from + (to - from) * e);
+      if (k < 1) tweenRef.current = requestAnimationFrame(step);
+    };
+    tweenRef.current = requestAnimationFrame(step);
+  };
+  React.useEffect(() => () => {
+    if (tweenRef.current) cancelAnimationFrame(tweenRef.current);
+  }, []);
+
+  // the grab line stretches and compresses the calendar, one to one
+  const handleRef = React.useRef(null);
+  const draggedRef = React.useRef(false);
+  const tRef = React.useRef(0);
+  tRef.current = t;
+  React.useEffect(() => {
+    const el = handleRef.current;
+    if (!el || !adv || !fullH) return undefined;
+    let from = null;
+    const span = Math.max(1, fullH - rowH);
+    const down = ev => {
+      try {
+        el.setPointerCapture(ev.pointerId);
+      } catch (e) {}
+      from = {
+        y: ev.clientY,
+        t0: tRef.current
+      };
+      draggingRef.current = true;
+    };
+    const move = ev => {
+      if (!from) return;
+      const dy = ev.clientY - from.y;
+      if (Math.abs(dy) > 4) draggedRef.current = true; // a drag must not also read as a tap
+      setT(Math.max(0, Math.min(1, from.t0 + dy / span)));
+    };
+    const up = () => {
+      if (!from) return;
+      const now = tRef.current;
+      from = null;
+      tween(setT, now, now > 0.5 ? 1 : 0);
+      setTimeout(() => {
+        draggingRef.current = false;
+      }, 320);
+    };
+    el.addEventListener('pointerdown', down);
+    el.addEventListener('pointermove', move);
+    el.addEventListener('pointerup', up);
+    el.addEventListener('pointercancel', up);
+    return () => {
+      el.removeEventListener('pointerdown', down);
+      el.removeEventListener('pointermove', move);
+      el.removeEventListener('pointerup', up);
+      el.removeEventListener('pointercancel', up);
+    };
+  }, [adv, fullH, rowH]);
 
   // Stash the mode on the view so Back restores the page AS IT WAS.
   React.useEffect(() => {
@@ -598,33 +670,30 @@ function MonthScreen({
     });
   }, [adv, graphOpen, anchorISO]);
 
-  // The graph is the handle for both mode changes: up tucks it away and the
-  // record streams in, down brings the month back. Refs, not state, inside the
-  // listener: a gesture reading a stale closure drops fast flicks.
+  // Simple mode only: swiping UP on the graph tucks it away and goes advanced.
+  // (In advanced mode the graph is not swiped, it is PULLED, by the record: see
+  // the pull handler below, which is the way back out too.)
   const graphRef = React.useRef(null);
   React.useEffect(() => {
     const el = graphRef.current;
-    if (!el || !nav.plus) return undefined;
+    if (!el || !nav.plus || adv) return undefined;
     let y0 = null,
       x0 = null;
     const start = ev => {
-      const t = ev.touches[0];
-      y0 = t.clientY;
-      x0 = t.clientX;
+      const p0 = ev.touches[0];
+      y0 = p0.clientY;
+      x0 = p0.clientX;
     };
     const move = ev => {
       if (y0 === null) return;
-      const t = ev.touches[0];
-      const dy = t.clientY - y0,
-        dx = t.clientX - x0;
+      const p1 = ev.touches[0];
+      const dy = p1.clientY - y0,
+        dx = p1.clientX - x0;
       if (Math.abs(dy) < 44 || Math.abs(dx) > Math.abs(dy)) return; // deliberate, and vertical
       y0 = null;
-      if (dy < 0 && !advRef.current) {
+      if (dy < 0) {
         ev.preventDefault();
         enterAdvanced();
-      } else if (dy > 0 && advRef.current && graphOpenRef.current) {
-        ev.preventDefault();
-        exitAdvanced();
       }
     };
     const end = () => {
@@ -650,6 +719,58 @@ function MonthScreen({
     };
   }, [nav.plus, adv]);
 
+  // THE PULL. At the top of the record, dragging down brings the graph out of
+  // its tuck, tracking the finger; keep pulling past it and the month comes
+  // back, which is the way out of advanced mode. One continuous gesture, so a
+  // parent never has to learn two.
+  const gRef = React.useRef(0);
+  gRef.current = g;
+  React.useEffect(() => {
+    const el = streamRef.current;
+    if (!el || !adv) return undefined;
+    const span = Math.max(80, graphH || 120);
+    let from = null;
+    const down = ev => {
+      if (el.scrollTop > 0) return;
+      from = {
+        y: ev.clientY,
+        g0: gRef.current
+      };
+      draggingRef.current = true;
+    };
+    const move = ev => {
+      if (!from) return;
+      const dy = ev.clientY - from.y;
+      if (dy <= 0 && from.g0 === 0) return;
+      const next = from.g0 + dy / span;
+      if (next > 1.55) {
+        from = null;
+        exitAdvanced();
+        return;
+      } // pulled clean past the graph
+      setG(Math.max(0, Math.min(1, next)));
+    };
+    const up = () => {
+      if (!from) return;
+      const now = gRef.current;
+      from = null;
+      tween(setG, now, now > 0.4 ? 1 : 0);
+      setTimeout(() => {
+        draggingRef.current = false;
+      }, 320);
+    };
+    el.addEventListener('pointerdown', down);
+    el.addEventListener('pointermove', move);
+    el.addEventListener('pointerup', up);
+    el.addEventListener('pointercancel', up);
+    return () => {
+      el.removeEventListener('pointerdown', down);
+      el.removeEventListener('pointermove', move);
+      el.removeEventListener('pointerup', up);
+      el.removeEventListener('pointercancel', up);
+    };
+  }, [adv, graphH]);
+
   // THE PAGER MUST BE RE-PARKED EVERY TIME ITS DOM IS REBUILT (11 Aug bug).
   // The mount effect above runs once for the whole screen, but the calendar
   // card is unmounted in advanced mode and rebuilt on the way back, and a fresh
@@ -666,12 +787,18 @@ function MonthScreen({
     };
     if (!park()) requestAnimationFrame(park);
   }, [adv, calOpen]);
-  const anchorDate = J.parseISO(anchorISO);
+  const anchorDate = anchorDateOf(anchorISO);
   const advLabel = `${J.MONTH_NAMES[anchorDate.getMonth()]} ${anchorDate.getFullYear()}`;
-  const openCal = () => {
+  // Opening the month by tap: park the pager on the month being READ first, so
+  // the grid that unfolds is the right one, then stretch it open.
+  const toggleCal = () => {
+    if (calOpen) {
+      tween(setT, t, 0);
+      return;
+    }
     const off = anchorDate.getFullYear() * 12 + anchorDate.getMonth() - (today.getFullYear() * 12 + today.getMonth());
     adopt(Math.max(minOffset, Math.min(0, off)));
-    setCalOpen(true);
+    tween(setT, t, 1);
   };
   const graphBtn = nav.plus ? /*#__PURE__*/React.createElement("button", {
     className: "j-iconbtn",
@@ -679,7 +806,7 @@ function MonthScreen({
     "aria-pressed": graphOpen,
     "aria-label": graphOpen ? 'Hide the graph' : 'Show the graph',
     onClick: () => {
-      if (!advRef.current) enterAdvanced();else setGraphOpen(g => !g);
+      if (!advRef.current) enterAdvanced();else tween(setG, gRef.current, gRef.current > 0.5 ? 0 : 1);
     }
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "bars",
@@ -690,28 +817,12 @@ function MonthScreen({
   const pickDay = iso => advRef.current ? scrollToDate(iso) : nav.go('day', {
     date: iso
   });
-  const calendarCard = /*#__PURE__*/React.createElement("div", {
-    className: "j-card",
-    style: {
-      padding: 14,
-      overflow: 'hidden'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(7, 1fr)',
-      gap: 6,
-      marginBottom: 8
-    }
-  }, dows.map((d, i) => /*#__PURE__*/React.createElement("div", {
-    key: i,
-    style: {
-      textAlign: 'center',
-      fontSize: 'calc(12px * var(--tscale, 1))',
-      fontWeight: 500,
-      color: 'var(--faint)'
-    }
-  }, d))), /*#__PURE__*/React.createElement("div", _extends({
+  const dowRow = /*#__PURE__*/React.createElement("div", {
+    className: "j-caldows"
+  }, dows.map((d, i) => /*#__PURE__*/React.createElement("span", {
+    key: i
+  }, d)));
+  const pagerEl = /*#__PURE__*/React.createElement("div", _extends({
     ref: pagerRef,
     onScroll: onPagerScroll,
     className: "j-pager"
@@ -794,7 +905,16 @@ function MonthScreen({
         size: 6
       }));
     }));
-  })));
+  }));
+  // Simple mode keeps the card it has always had. Advanced mode takes the same
+  // grid out of the card and into the panel, where its height is the gesture.
+  const calendarCard = /*#__PURE__*/React.createElement("div", {
+    className: "j-card",
+    style: {
+      padding: 14,
+      overflow: 'hidden'
+    }
+  }, dowRow, pagerEl);
   const legendRow = /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
@@ -819,39 +939,35 @@ function MonthScreen({
   // month the parent is actually reading, which is the anchor's month, not the
   // month the pager happens to be parked on.
   const graphBlock = /*#__PURE__*/React.createElement("div", {
-    ref: graphRef,
-    className: 'j-graphfold' + (graphOpen ? '' : ' j-folded')
+    ref: graphRef
   }, nav.plus ? /*#__PURE__*/React.createElement(MonthMoodGraph, {
     entries: entries,
-    year: adv ? anchorDate.getFullYear() : year,
-    month: adv ? anchorDate.getMonth() : month
+    year: year,
+    month: month
   }) : /*#__PURE__*/React.createElement(PatternsLockedPreview, {
     onOpen: () => nav.go('unlock')
   }));
 
-  // ---- ADVANCED: pinned chrome, then ONE scroller holding the record ----
+  // ---- ADVANCED: the calendar panel, pinned, then ONE scroller for the record ----
   if (adv) {
+    const foldH = rowH ? Math.round(rowH + (fullH - rowH) * t) : undefined;
     return /*#__PURE__*/React.createElement("div", {
       className: "j-screen",
       "data-cal-mode": "advanced"
     }, /*#__PURE__*/React.createElement("div", {
-      className: "j-pad",
-      style: {
-        paddingTop: 10,
-        paddingBottom: 4
-      }
+      className: "j-calarea"
     }, /*#__PURE__*/React.createElement("div", {
       style: {
         display: 'flex',
-        alignItems: 'flex-start',
+        alignItems: 'center',
         justifyContent: 'space-between',
         gap: 12,
-        marginBottom: 12
+        marginBottom: 8
       }
     }, /*#__PURE__*/React.createElement("button", {
       className: "j-press",
       "data-cal-open": true,
-      onClick: () => calOpen ? setCalOpen(false) : openCal(),
+      onClick: toggleCal,
       "aria-expanded": calOpen,
       "aria-label": (calOpen ? 'Close' : 'Open') + ' the full calendar',
       style: {
@@ -866,27 +982,58 @@ function MonthScreen({
     }, /*#__PURE__*/React.createElement("h1", {
       className: "j-h1",
       style: {
-        fontSize: 'calc(28px * var(--tscale, 1))'
+        fontSize: 'calc(26px * var(--tscale, 1))'
       }
     }, advLabel), /*#__PURE__*/React.createElement("span", {
       className: 'j-calarrow' + (calOpen ? ' j-open' : ''),
       "aria-hidden": "true"
     }, /*#__PURE__*/React.createElement(Icon, {
       name: "chevronRight",
-      size: 20,
+      size: 19,
       color: "var(--muted)"
     }))), /*#__PURE__*/React.createElement("div", {
       style: {
-        height: 'calc(30px * var(--tscale, 1))',
         display: 'flex',
         alignItems: 'center',
         flexShrink: 0
       }
-    }, graphBtn)), calOpen ? calendarCard : /*#__PURE__*/React.createElement(WeekStrip, {
-      anchor: anchorISO,
-      byDate: byDate,
-      onPick: scrollToDate
-    }), graphBlock), /*#__PURE__*/React.createElement("div", {
+    }, graphBtn)), dowRow, /*#__PURE__*/React.createElement("div", {
+      className: "j-calfold",
+      ref: foldRef,
+      "data-cal-fold": true,
+      style: {
+        height: foldH
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        transform: `translateY(${-(1 - t) * weekRow * (rowH + GAP)}px)`
+      }
+    }, pagerEl)), /*#__PURE__*/React.createElement("div", {
+      className: "j-graphfold",
+      "data-graph-fold": true,
+      style: {
+        height: graphH ? Math.round(graphH * g) : undefined,
+        opacity: 0.25 + 0.75 * g
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      ref: graphInnerRef
+    }, /*#__PURE__*/React.createElement(MonthMoodGraph, {
+      entries: entries,
+      year: anchorDate.getFullYear(),
+      month: anchorDate.getMonth()
+    }))), /*#__PURE__*/React.createElement("button", {
+      className: "j-calhandle",
+      ref: handleRef,
+      "data-cal-handle": true,
+      "aria-label": calOpen ? 'Fold the calendar to one week' : 'Stretch the calendar to the month',
+      onClick: () => {
+        if (draggedRef.current) {
+          draggedRef.current = false;
+          return;
+        }
+        toggleCal();
+      }
+    }, /*#__PURE__*/React.createElement("span", null))), /*#__PURE__*/React.createElement("div", {
       className: "j-scroll j-fade",
       ref: streamRef,
       onScroll: onStreamScroll,
