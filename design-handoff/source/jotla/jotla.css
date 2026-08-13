@@ -234,7 +234,11 @@ button, input, select, textarea { font-family: inherit; }
 
 /* ---- screen scaffold ---- */
 .j-screen { display: flex; flex-direction: column; height: 100%; background: var(--bg); position: relative; }
-.j-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+/* overscroll-y contained: a pull-down at the very top of the record is a
+   Jotla gesture (it brings the graph out, 2.0.18), so the browser's own
+   pull-to-refresh must never take it (13 Aug). Costs nothing on the other
+   tabs, which scroll inside the same fixed shell. */
+.j-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; }
 .j-scroll::-webkit-scrollbar { width: 0; height: 0; }
 .j-pad { padding: 0 20px; }
 

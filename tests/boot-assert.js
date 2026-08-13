@@ -1153,6 +1153,94 @@ function ok(name, cond) {
       + ', ' + backOnMonth.matching + '/' + backOnMonth.inView + ' days on screen)',
     backOnMonth.inView >= 28 && backOnMonth.matching >= 28);
 
+  // ---- THE STRIP SHOWS THE MONTH BEING READ (13 Aug arena run) ----
+  // Three catches from browsing the real app, none of which the height-and-title
+  // asserts above could see, because none of them measured WHICH DATES the
+  // strip holds. What the fold shows is read the same way everywhere below:
+  // only cells inside the fold's own rectangle, horizontally too, since the
+  // neighbouring pager panels sit just off-screen at full size.
+  const foldCells = () => page5.evaluate(() => {
+    const fold = document.querySelector('[data-cal-fold]');
+    if (!fold) return null;
+    const fr = fold.getBoundingClientRect();
+    const vis = [...fold.querySelectorAll('.j-pager button')].filter(b => {
+      const r = b.getBoundingClientRect();
+      return r.width > 0 && r.top >= fr.top - 2 && r.bottom <= fr.bottom + 2
+        && r.left >= fr.left - 2 && r.right <= fr.right + 2;
+    });
+    const anchors = vis.filter(b => b.hasAttribute('data-anchor'));
+    return {
+      title: document.querySelector('.j-h1').textContent.trim(),
+      labels: vis.map(b => b.getAttribute('aria-label') || ''),
+      months: [...new Set(vis.map(b => (b.getAttribute('aria-label') || '').split(',')[0].split(' ').slice(1).join(' ')))],
+      anchorLabel: anchors.length === 1 ? anchors[0].getAttribute('aria-label') : null,
+      anchorBg: anchors.length === 1 ? getComputedStyle(anchors[0]).backgroundColor : null,
+    };
+  });
+  // (1) Entering advanced while parked on an OLDER month used to pin that
+  // month's week under a today title: the pager parks wherever it was left,
+  // and nothing walked it to the anchor. Today's week must be the one pinned.
+  await page5.locator('button[aria-label="Previous month"]').click();
+  await page5.waitForTimeout(600);
+  await page5.locator('button[aria-label="Previous month"]').click();
+  await page5.waitForTimeout(800);
+  await page5.locator('[data-graph-toggle]').first().click();
+  await page5.waitForTimeout(800);
+  const mn = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const todayLabelFull = now.getDate() + ' ' + mn[now.getMonth()] + ' ' + now.getFullYear();
+  const stripEntry = await foldCells();
+  ok('entering advanced from an older month still pins TODAY\'s week (13 Aug)',
+    !!stripEntry && stripEntry.labels.some(l => l.startsWith(todayLabelFull)));
+  // (2) The read day wears the accent and travels with the record, ACROSS a
+  // month boundary too: the strip must page with the title, and the anchor
+  // highlight (the prototype's .cell.on, dropped in the 2.0.16 build) must sit
+  // on the day at the top of the record.
+  const crossedTo = await page5.evaluate(() => {
+    const days = [...document.querySelectorAll('[data-day]')];
+    const curKey = days[0].getAttribute('data-day').slice(0, 7);
+    let t = null;
+    for (const d of days) { if (d.getAttribute('data-day').slice(0, 7) < curKey) { t = d; break; } }
+    if (!t) return null;
+    const el = document.querySelector('[data-stream]');
+    el.scrollTop = t.offsetTop - 6;
+    el.dispatchEvent(new Event('scroll', { bubbles: true }));
+    return t.getAttribute('data-day');
+  });
+  await page5.waitForTimeout(900);
+  const stripCross = await foldCells();
+  // The title must be the CROSSED month, not just any month the strip agrees
+  // with: this assert first passed while both sat wrongly on the current month
+  // (the draggingRef latch below), which is a pass for the wrong reason.
+  const crossedMonthLabel = crossedTo ? mn[Number(crossedTo.split('-')[1]) - 1] + ' ' + crossedTo.split('-')[0] : null;
+  ok('the strip crosses the month boundary with the record (' + (stripCross && stripCross.title) + ')',
+    !!crossedTo && !!stripCross && stripCross.title === crossedMonthLabel
+    && stripCross.months.length === 1 && stripCross.months[0] === stripCross.title);
+  ok('the read day wears the accent on the strip and moves with the scroll',
+    !!stripCross && !!stripCross.anchorLabel
+    && stripCross.anchorLabel.startsWith(Number(crossedTo.split('-')[2]) + ' ')
+    && !!stripCross.anchorBg && stripCross.anchorBg !== 'rgba(0, 0, 0, 0)');
+  // (3) With the calendar open over the stream, swiping to another month must
+  // carry the title with it (it stayed on the anchor's month), and folding it
+  // back must return both title and strip to the month being read.
+  await page5.locator('[data-cal-open]').first().click();
+  await page5.waitForTimeout(600);
+  await page5.evaluate(() => {
+    const pager = document.querySelector('.j-pager');
+    pager.scrollLeft = pager.scrollLeft - pager.clientWidth;
+    pager.dispatchEvent(new Event('scroll', { bubbles: true }));
+  });
+  await page5.waitForTimeout(900);
+  const swiped = await foldCells();
+  ok('swiping the open calendar carries the title with the grid (' + (swiped && swiped.title) + ')',
+    !!swiped && swiped.months.length === 1 && swiped.months[0] === swiped.title);
+  await page5.locator('[data-cal-open]').first().click();
+  await page5.waitForTimeout(700);
+  const folded = await foldCells();
+  const anchorMonthLabel = mn[Number(crossedTo.split('-')[1]) - 1] + ' ' + crossedTo.split('-')[0];
+  ok('folding it back returns title and strip to the month being read (' + (folded && folded.title) + ')',
+    !!folded && folded.title === anchorMonthLabel
+    && folded.months.length === 1 && folded.months[0] === anchorMonthLabel);
+
   ok('no uncaught page errors across suite 9', errors5.length === 0);
   await ctx5.close();
 

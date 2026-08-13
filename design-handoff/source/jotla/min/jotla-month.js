@@ -392,16 +392,20 @@ function MonthScreen({
     window.addEventListener('resize', realign);
     return () => window.removeEventListener('resize', realign);
   }, []);
+  // A state updater must stay pure: remember() used to live inside this one,
+  // and an updater re-runs on every re-render pass, so calling adopt from an
+  // effect sent remember -> setView -> re-render -> remember round in a circle
+  // until React's nested-update cap (#185, caught 13 Aug). The view is stashed
+  // below, after the commit, where a write belongs.
   const adopt = target => {
     targetRef.current = target;
-    setOffset(o => {
-      if (target === o) return o;
-      nav.remember({
-        monthOffset: target
-      });
-      return target;
-    });
+    setOffset(o => target === o ? o : target);
   };
+  React.useEffect(() => {
+    nav.remember({
+      monthOffset: offset
+    });
+  }, [offset]);
   const onPagerScroll = () => {
     clearTimeout(settleRef.current);
     settleRef.current = setTimeout(() => {
@@ -744,10 +748,17 @@ function MonthScreen({
       if (dy <= 0 && from.g0 === 0) return;
       const next = from.g0 + dy / span;
       if (next > 1.55) {
+        // pulled clean past the graph
+        // Unlatch BEFORE leaving: up() returns early once from is null, so
+        // this exit path used to leave draggingRef true forever, and the next
+        // advanced session had a dead scroll-spy and no paging (the strip
+        // froze on today and the record stopped at its first page). Caught by
+        // the 13 Aug arena run's month-boundary assert.
         from = null;
+        draggingRef.current = false;
         exitAdvanced();
         return;
-      } // pulled clean past the graph
+      }
       setG(Math.max(0, Math.min(1, next)));
     };
     const up = () => {
@@ -759,15 +770,30 @@ function MonthScreen({
         draggingRef.current = false;
       }, 320);
     };
+    // The browser must not claim the pull as a native pan: once it does, it
+    // fires pointercancel and the graph freezes mid-gesture (seen in the
+    // 13 Aug arena browse; on a phone this is also where pull-to-refresh
+    // steals the gesture). While a pull is live and heading down from the
+    // top, the touchmove is ours. An upward move with the graph tucked stays
+    // native, so ordinary scrolling never changes feel.
+    const claim = ev => {
+      if (!from || !ev.cancelable) return;
+      const dy = ev.touches[0].clientY - from.y;
+      if (dy > 0 || from.g0 > 0) ev.preventDefault();
+    };
     el.addEventListener('pointerdown', down);
     el.addEventListener('pointermove', move);
     el.addEventListener('pointerup', up);
     el.addEventListener('pointercancel', up);
+    el.addEventListener('touchmove', claim, {
+      passive: false
+    });
     return () => {
       el.removeEventListener('pointerdown', down);
       el.removeEventListener('pointermove', move);
       el.removeEventListener('pointerup', up);
       el.removeEventListener('pointercancel', up);
+      el.removeEventListener('touchmove', claim);
     };
   }, [adv, graphH]);
 
@@ -786,9 +812,29 @@ function MonthScreen({
       return true;
     };
     if (!park()) requestAnimationFrame(park);
-  }, [adv, calOpen]);
+  }, [adv, calOpen, offset]);
+
+  // THE STRIP SHOWS THE MONTH BEING READ (13 Aug arena catch). The week strip
+  // is the pager, and the pager parks wherever it was last left, which is not
+  // where the record is: entering advanced from June left a June week under an
+  // August title, and scrolling the record across a month boundary moved the
+  // title but not the strip. So while the strip is compressed, the pager
+  // follows the anchor's month; while the full calendar is open the parent may
+  // swipe it freely, and folding it back re-syncs here. The park itself
+  // happens in the effect above, which re-runs when the adopt lands.
+  React.useLayoutEffect(() => {
+    if (!adv || calOpen) return;
+    const a = anchorDateOf(anchorISO);
+    const off = Math.max(minOffset, Math.min(0, a.getFullYear() * 12 + a.getMonth() - (today.getFullYear() * 12 + today.getMonth())));
+    if (off !== targetRef.current) adopt(off);
+  }, [adv, calOpen, anchorISO]);
   const anchorDate = anchorDateOf(anchorISO);
-  const advLabel = `${J.MONTH_NAMES[anchorDate.getMonth()]} ${anchorDate.getFullYear()}`;
+  // Compressed, the title names the month being READ (the anchor's). Open, the
+  // parent can swipe the grid to other months, and the title must follow the
+  // grid it sits above, not the record underneath (13 Aug arena catch: swiping
+  // the open calendar to June left the title saying July). Folding it back
+  // re-syncs pager and title to the anchor.
+  const advLabel = calOpen ? monthLabel : `${J.MONTH_NAMES[anchorDate.getMonth()]} ${anchorDate.getFullYear()}`;
   // Opening the month by tap: park the pager on the month being READ first, so
   // the grid that unfolds is the right one, then stretch it open.
   const toggleCal = () => {
@@ -868,8 +914,14 @@ function MonthScreen({
           aspectRatio: '1 / 1'
         }
       });
-      const tint = c.mood ? window.moodTint(c.mood) : 'transparent';
-      const ink = c.mood ? window.MOOD_COLOURS[c.mood] : c.future ? 'var(--line)' : 'var(--faint)';
+      // In advanced mode the day being read wears the accent, and it
+      // travels with the record as the parent scrolls (spec 4.5; the
+      // prototype's .cell.on, dropped in the build and caught by the
+      // 13 Aug arena run). The mood dot stays, so no meaning is lost
+      // under the highlight.
+      const isAnchor = adv && c.iso === anchorISO;
+      const tint = isAnchor ? 'var(--tint-blue)' : c.mood ? window.moodTint(c.mood) : 'transparent';
+      const ink = isAnchor ? 'var(--blue)' : c.mood ? window.MOOD_COLOURS[c.mood] : c.future ? 'var(--line)' : 'var(--faint)';
       // Every past day and today opens the Day view, notes or
       // not (12 Jul 2026); only future days stay inert.
       const tappable = !c.future;
@@ -878,6 +930,7 @@ function MonthScreen({
         onClick: () => tappable && pickDay(c.iso),
         className: tappable ? 'j-press' : '',
         disabled: !tappable,
+        "data-anchor": isAnchor ? 'true' : undefined,
         "aria-label": c.future ? `${c.d} ${J.MONTH_NAMES[m.month]} ${m.year}, in the future` : `${c.d} ${J.MONTH_NAMES[m.month]} ${m.year}, ${c.count > 0 ? c.count + (c.count === 1 ? ' note' : ' notes') : 'no note'}`,
         style: {
           aspectRatio: '1 / 1',
