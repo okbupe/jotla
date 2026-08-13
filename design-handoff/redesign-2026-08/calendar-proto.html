@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Jotla advanced calendar: feel it before we build it</title>
+<link rel="stylesheet" href="../source/styles.css">
+<link rel="stylesheet" href="../source/jotla/jotla.css">
+<style>
+  html, body { margin: 0; height: 100%; background: var(--bg); overscroll-behavior: none; }
+  body { font-family: 'Outfit', system-ui, sans-serif; }
+  .app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; background: var(--bg); }
+
+  /* THE CALENDAR AREA: one panel, rounded at the bottom where it meets the
+     screen edge, a hairline under it, and a grab line that IS the control. */
+  .calarea { background: var(--card); border-bottom: 1px solid var(--line);
+    border-radius: 0 0 22px 22px; padding: 10px 20px 0; flex-shrink: 0; }
+  .caltop { display: flex; align-items: center; justify-content: space-between; height: 40px; }
+  .caltitle { display: flex; align-items: center; gap: 6px; background: none; border: none; padding: 0; cursor: pointer; }
+  .caltitle h1 { font-family: 'Cal Sans', system-ui; font-weight: 500; font-size: 26px; color: var(--ink); margin: 0; }
+  .arrow { display: inline-flex; transition: transform .25s cubic-bezier(.4,0,.2,1); color: var(--muted); }
+  .arrow.open { transform: rotate(90deg); }
+  .iconbtn { width: 40px; height: 40px; border: none; background: none; color: var(--muted); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; border-radius: 12px; }
+  .iconbtn.on { color: var(--blue); background: var(--tint-blue); }
+  .dows { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin: 2px 0 4px; }
+  .dows span { text-align: center; font-size: 11px; color: var(--faint); }
+  .gridwrap { overflow: hidden; }
+  .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .cell { aspect-ratio: 1/1; border: none; background: none; border-radius: 50%; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    font-family: 'Outfit', system-ui; font-weight: 500; font-size: 14px; color: var(--muted); }
+  .cell.has { color: var(--blue); font-weight: 600; }
+  .cell.on { background: var(--tint-blue); color: var(--blue); }
+  .cell.out { opacity: .32; }
+  .dot { width: 5px; height: 5px; border-radius: 50%; }
+  .graphwrap { overflow: hidden; }
+  .graphcard { padding: 12px 0 6px; }
+  .graphcard .row { display: flex; align-items: flex-end; gap: 10px; height: 74px; }
+  .bar { flex: 1; border-radius: 10px 10px 4px 4px; }
+  .glabels { display: flex; gap: 10px; margin-top: 6px; }
+  .glabels span { flex: 1; text-align: center; font-size: 11px; color: var(--faint); }
+  /* the grab line: about a third of the android home indicator */
+  .handlezone { padding: 8px 0 9px; display: flex; justify-content: center; cursor: grab; touch-action: none; }
+  .handle { width: 44px; height: 4px; border-radius: 99px; background: var(--line); }
+  .handlezone:active .handle { background: var(--faint); }
+
+  .stream { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0 20px 40px; }
+  .stream::-webkit-scrollbar { width: 0; }
+  .day { padding: 16px 0 6px; }
+  .dayhead { display: flex; align-items: baseline; gap: 8px; }
+  .dayname { font-family: 'Cal Sans', system-ui; font-weight: 500; font-size: 15.5px; color: var(--faint); }
+  .day.has .dayname { color: var(--blue); }
+  .daycount { font-size: 12px; color: var(--faint); margin-left: auto; }
+  .note { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin-top: 8px; }
+  .note p { margin: 0; font-size: 14px; color: var(--body); line-height: 1.45; }
+  .note .meta { font-size: 11.5px; color: var(--faint); margin-top: 6px; }
+  .empty { margin-top: 8px; padding: 11px 14px; border: 1px dashed var(--line); border-radius: 14px;
+    font-size: 13px; color: var(--faint); background: none; width: 100%; text-align: left; cursor: pointer; }
+  .hintbar { position: fixed; left: 0; right: 0; bottom: 0; background: rgba(26,86,168,0.94); color: #fff;
+    font-size: 12.5px; padding: 9px 16px calc(9px + env(safe-area-inset-bottom)); text-align: center; }
+</style>
+</head>
+<body>
+<div class="jotla-root app">
+  <div class="calarea" id="calarea">
+    <div class="caltop">
+      <button class="caltitle" id="titlebtn">
+        <h1 id="monthlabel">August 2026</h1>
+        <span class="arrow" id="arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg></span>
+      </button>
+      <button class="iconbtn" id="graphbtn" aria-label="Graph">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3.6" y="12.4" width="4.8" height="7.6" rx="1.6"/><rect x="9.6" y="7.4" width="4.8" height="12.6" rx="1.6"/><rect x="15.6" y="3.8" width="4.8" height="16.2" rx="1.6"/>
+        </svg>
+      </button>
+    </div>
+    <div class="dows"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+    <div class="gridwrap" id="gridwrap"><div class="grid" id="grid"></div></div>
+    <div class="graphwrap" id="graphwrap">
+      <div class="graphcard">
+        <div class="row">
+          <span class="bar" style="height:38%; background:var(--green)"></span>
+          <span class="bar" style="height:62%; background:var(--amber)"></span>
+          <span class="bar" style="height:88%; background:var(--red)"></span>
+          <span class="bar" style="height:30%; background:var(--dysreg)"></span>
+        </div>
+        <div class="glabels"><span>Good</span><span>Mixed</span><span>Hard</span><span>Dysreg</span></div>
+      </div>
+    </div>
+    <div class="handlezone" id="handlezone"><span class="handle"></span></div>
+  </div>
+  <div class="stream" id="stream"></div>
+  <div class="hintbar" id="hint">Drag the little line. Or pull down on the notes at the top.</div>
+</div>
+<script>
+(function () {
+  var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var DOWL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  var today = new Date(); today.setHours(0,0,0,0);
+  var iso = function (d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); };
+  var shift = function (d, n) { var x = new Date(d); x.setDate(x.getDate()+n); return x; };
+
+  // a stand-in record: some days carry notes, some do not
+  var NOTES = {};
+  var SAMPLE = [
+    'Lunch hall was loud. Came out upset and would not line up.',
+    'Settled well at drop-off, went straight to the construction table.',
+    'Same lunch-to-class change was hard again. Refused to come in.',
+    'Good afternoon. Joined a small group game at choosing time.',
+    'Slow breakfast at home, but got out of the door on time.'
+  ];
+  for (var i = 0; i < 70; i++) {
+    if (i % 3 === 1) continue;
+    var key = iso(shift(today, -i));
+    var n = (i % 4 === 0) ? 2 : 1;
+    NOTES[key] = [];
+    for (var k = 0; k < n; k++) NOTES[key].push(SAMPLE[(i + k) % SAMPLE.length]);
+  }
+
+  // ---- the calendar grid, six rows, of which one is "the week" ----
+  var anchor = new Date(today);
+  var grid = document.getElementById('grid');
+  function buildGrid() {
+    grid.innerHTML = '';
+    var first = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
+    var lead = (first.getDay() + 6) % 7;
+    var start = shift(first, -lead);
+    for (var i = 0; i < 42; i++) {
+      var d = shift(start, i);
+      var b = document.createElement('button');
+      b.className = 'cell' + (NOTES[iso(d)] ? ' has' : '') + (d.getMonth() !== anchor.getMonth() ? ' out' : '')
+        + (iso(d) === iso(anchor) ? ' on' : '');
+      b.innerHTML = '<span>' + d.getDate() + '</span>';
+      b.setAttribute('data-iso', iso(d));
+      b.onclick = (function (t) { return function () { jumpTo(t); }; })(new Date(d));
+      grid.appendChild(b);
+    }
+    document.getElementById('monthlabel').textContent = MONTHS[anchor.getMonth()] + ' ' + anchor.getFullYear();
+  }
+
+  // ---- the record ----
+  var stream = document.getElementById('stream');
+  var rows = [];
+  function buildStream() {
+    stream.innerHTML = '';
+    rows = [];
+    for (var i = 0; i < 120; i++) {
+      var d = shift(today, -i);
+      var key = iso(d);
+      var list = NOTES[key] || [];
+      var sec = document.createElement('section');
+      sec.className = 'day' + (list.length ? ' has' : '');
+      sec.setAttribute('data-iso', key);
+      var label = i === 0 ? 'Today' : i === 1 ? 'Yesterday' : DOWL[d.getDay()] + ', ' + d.getDate() + ' ' + MONTHS[d.getMonth()];
+      var html = '<div class="dayhead"><span class="dayname">' + label + '</span>'
+        + (list.length ? '<span class="daycount">' + list.length + (list.length === 1 ? ' note' : ' notes') + '</span>' : '') + '</div>';
+      if (list.length) {
+        for (var k = 0; k < list.length; k++) {
+          html += '<div class="note"><p>' + list[k] + '</p><div class="meta">School, afternoon</div></div>';
+        }
+      } else {
+        html += '<button class="empty">+  Add a note</button>';
+      }
+      sec.innerHTML = html;
+      stream.appendChild(sec);
+      rows.push(sec);
+    }
+  }
+
+  // ---- the one number that drives the calendar: t = 0 compressed, 1 full ----
+  var ROW = 40, GAP = 4;
+  var COMPRESSED = ROW, FULL = ROW * 6 + GAP * 5;
+  var GRAPH_H = 108;
+  var t = 0, g = 0;
+  function render() {
+    document.getElementById('gridwrap').style.height = (COMPRESSED + (FULL - COMPRESSED) * t) + 'px';
+    // the visible week slides so the anchor's row is the one left standing
+    var wk = weekRowOf(anchor);
+    grid.style.transform = 'translateY(' + (-(1 - t) * wk * (ROW + GAP)) + 'px)';
+    document.getElementById('graphwrap').style.height = (GRAPH_H * g) + 'px';
+    document.getElementById('graphwrap').style.opacity = g;
+    document.getElementById('arrow').className = 'arrow' + (t > 0.5 ? ' open' : '');
+    document.getElementById('graphbtn').className = 'iconbtn' + (g > 0.5 ? ' on' : '');
+  }
+  function weekRowOf(d) {
+    var first = new Date(d.getFullYear(), d.getMonth(), 1);
+    var lead = (first.getDay() + 6) % 7;
+    return Math.floor((lead + d.getDate() - 1) / 7);
+  }
+  function settle(target, which) {
+    var from = which === 't' ? t : g, start = null;
+    function step(ts) {
+      if (!start) start = ts;
+      var k = Math.min(1, (ts - start) / 240);
+      var e = 1 - Math.pow(1 - k, 3);
+      if (which === 't') t = from + (target - from) * e; else g = from + (target - from) * e;
+      render();
+      if (k < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  // ---- the grab line tracks the finger, both ways ----
+  var zone = document.getElementById('handlezone');
+  var dragT = null;
+  zone.addEventListener('pointerdown', function (e) {
+    try { zone.setPointerCapture(e.pointerId); } catch (err) {}
+    dragT = { y: e.clientY, t0: t };
+  });
+  zone.addEventListener('pointermove', function (e) {
+    if (!dragT) return;
+    t = Math.max(0, Math.min(1, dragT.t0 + (e.clientY - dragT.y) / (FULL - COMPRESSED)));
+    render();
+  });
+  function endT() { if (!dragT) return; var to = t > 0.5 ? 1 : 0; dragT = null; settle(to, 't'); }
+  zone.addEventListener('pointerup', endT);
+  zone.addEventListener('pointercancel', endT);
+
+  // ---- pulling down on the record at the top pulls the graph out ----
+  var dragG = null;
+  stream.addEventListener('pointerdown', function (e) {
+    if (stream.scrollTop > 0) return;
+    dragG = { y: e.clientY, g0: g };
+  });
+  stream.addEventListener('pointermove', function (e) {
+    if (!dragG) return;
+    var dy = e.clientY - dragG.y;
+    if (dy <= 0 && dragG.g0 === 0) return;
+    g = Math.max(0, Math.min(1, dragG.g0 + dy / GRAPH_H));
+    render();
+  });
+  function endG() { if (!dragG) return; var to = g > 0.4 ? 1 : 0; dragG = null; settle(to, 'g'); }
+  stream.addEventListener('pointerup', endG);
+  stream.addEventListener('pointercancel', endG);
+
+  document.getElementById('graphbtn').onclick = function () { settle(g > 0.5 ? 0 : 1, 'g'); };
+  document.getElementById('titlebtn').onclick = function () { settle(t > 0.5 ? 0 : 1, 't'); };
+
+  // ---- the strip follows the record ----
+  var lock = 0;
+  stream.addEventListener('scroll', function () {
+    if (Date.now() < lock) return;
+    var top = stream.scrollTop + 10;
+    var found = null;
+    for (var i = 0; i < rows.length; i++) { if (rows[i].offsetTop <= top) found = rows[i]; else break; }
+    if (!found) return;
+    var d = new Date(found.getAttribute('data-iso'));
+    if (iso(d) === iso(anchor)) return;
+    anchor = d; buildGrid(); render();
+  });
+  function jumpTo(d) {
+    anchor = d; buildGrid(); render();
+    var el = stream.querySelector('[data-iso="' + iso(d) + '"]');
+    if (el) { lock = Date.now() + 500; stream.scrollTop = el.offsetTop - 4; }
+    if (t > 0.5) settle(0, 't');
+  }
+
+  buildGrid(); buildStream(); render();
+  setTimeout(function () { document.getElementById('hint').style.display = 'none'; }, 6000);
+})();
+</script>
+</body>
+</html>
