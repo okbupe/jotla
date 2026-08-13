@@ -367,6 +367,26 @@ function Icon({
     }), /*#__PURE__*/React.createElement("path", {
       d: "M7 20v-6M12 20V7M17 20v-9"
     })),
+    /* the graph toggle wears this one: three real bars, no axis (founder, 11 Aug) */
+    bars: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("rect", {
+      x: "3.6",
+      y: "12.4",
+      width: "4.8",
+      height: "7.6",
+      rx: "1.6"
+    }), /*#__PURE__*/React.createElement("rect", {
+      x: "9.6",
+      y: "7.4",
+      width: "4.8",
+      height: "12.6",
+      rx: "1.6"
+    }), /*#__PURE__*/React.createElement("rect", {
+      x: "15.6",
+      y: "3.8",
+      width: "4.8",
+      height: "16.2",
+      rx: "1.6"
+    })),
     folder: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
       d: "M3.5 7a2 2 0 0 1 2-2h4l2 2.5h7a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"
     })),

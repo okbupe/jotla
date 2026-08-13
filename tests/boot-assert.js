@@ -1099,6 +1099,28 @@ function ok(name, cond) {
     (await page5.locator('[data-cal-mode="simple"]').count()) === 1
     && (await page5.locator('[data-stream]').count()) === 0
     && (await page5.locator('.j-graphfold.j-folded').count()) === 0);
+  // REGRESSION GUARD (shipped broken in 2.0.16, founder caught it): the pager
+  // is unmounted in advanced mode, and a rebuilt scroller starts at scrollLeft
+  // 0, which is PANEL ZERO, September 2019. The title kept saying 2026 while
+  // the grid sat seven years earlier with no record on it. So: the month the
+  // calendar SHOWS has to be the month the title claims.
+  // It has to be measured as what it is, a SCROLL POSITION. Asserting that the
+  // month's cells exist in the DOM passes even when the pager is parked seven
+  // years away, because the cells are simply scrolled out of sight.
+  const backOnMonth = await page5.evaluate(() => {
+    const title = document.querySelector('.j-h1').textContent.trim();
+    const pager = document.querySelector('.j-pager');
+    const pr = pager.getBoundingClientRect();
+    const inView = [...pager.querySelectorAll('button')].filter(b => {
+      const r = b.getBoundingClientRect();
+      return r.width > 0 && r.left >= pr.left - 2 && r.right <= pr.right + 2;
+    });
+    return { title, inView: inView.length,
+      matching: inView.filter(b => (b.getAttribute('aria-label') || '').includes(title)).length,
+      panel: pager.clientWidth ? Math.round(pager.scrollLeft / pager.clientWidth) : null };
+  });
+  ok(`the calendar comes back ON the month it says (${backOnMonth.title}, panel ${backOnMonth.panel}, ${backOnMonth.matching}/${backOnMonth.inView} days on screen)`,
+    backOnMonth.inView >= 28 && backOnMonth.matching >= 28);
 
   ok('no uncaught page errors across suite 9', errors5.length === 0);
   await ctx5.close();

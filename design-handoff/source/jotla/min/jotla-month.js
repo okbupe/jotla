@@ -649,6 +649,23 @@ function MonthScreen({
       el.removeEventListener('touchcancel', end);
     };
   }, [nav.plus, adv]);
+
+  // THE PAGER MUST BE RE-PARKED EVERY TIME ITS DOM IS REBUILT (11 Aug bug).
+  // The mount effect above runs once for the whole screen, but the calendar
+  // card is unmounted in advanced mode and rebuilt on the way back, and a fresh
+  // scroller starts at scrollLeft 0, which is PANEL ZERO: September 2019. That
+  // is what the founder saw, a calendar that came back empty and then, on a
+  // swipe, jumped to 2019 and 2017 with no record on it. The title said 2026
+  // the whole time, because only the DOM had moved.
+  React.useLayoutEffect(() => {
+    const park = () => {
+      const el = pagerRef.current;
+      if (!el || !el.clientWidth) return false;
+      el.scrollLeft = (targetRef.current - minOffset) * el.clientWidth;
+      return true;
+    };
+    if (!park()) requestAnimationFrame(park);
+  }, [adv, calOpen]);
   const anchorDate = J.parseISO(anchorISO);
   const advLabel = `${J.MONTH_NAMES[anchorDate.getMonth()]} ${anchorDate.getFullYear()}`;
   const openCal = () => {
@@ -665,7 +682,7 @@ function MonthScreen({
       if (!advRef.current) enterAdvanced();else setGraphOpen(g => !g);
     }
   }, /*#__PURE__*/React.createElement(Icon, {
-    name: "chart",
+    name: "bars",
     size: 22,
     color: "var(--muted)"
   })) : null;
