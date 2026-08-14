@@ -415,7 +415,9 @@ html.j-appmode .j-tabbar { height: calc(80px + env(safe-area-inset-bottom)); pad
    a transparency glitch, not a material. Nothing shows through anything now,
    and the record's own scroll is LOCKED while the window is out, so there is
    nothing moving behind it either. */
-.j-finddrawer { overflow: hidden; position: relative; z-index: 1; background: var(--bg); }
+/* touch-action none: the panel owns its vertical pans for the swipe-to-close
+   (round 8); the filters scroller inside overrides per its own overflow */
+.j-finddrawer { overflow: hidden; position: relative; z-index: 1; background: var(--bg); touch-action: none; }
 .j-finddrawer-in { background: var(--card); border: 1px solid var(--line);
   border-radius: 18px; padding: 14px; margin: 0; box-sizing: border-box;
   box-shadow: 0 16px 30px -18px rgba(0,0,0,0.28); }

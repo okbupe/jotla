@@ -11,7 +11,7 @@ const {
 // and the suite asserts that, because asking a person to remember is what got
 // us here: this said 2.0.4 for fourteen builds while the service worker said
 // 2.0.18, so the one number a tester can actually read was the one lying.
-window.JOTLA_BUILD = '2.0.28';
+window.JOTLA_BUILD = '2.0.29';
 
 // The app's data epoch: the earliest day a log can land on (Quick log's own
 // minimum day, and how far back the Month calendar pages). One home here, on
@@ -717,10 +717,16 @@ function inDateRange(iso, b) {
 // presets is an array; value = { preset, from, to }; onChange(next).
 // The custom ends are picked from a CalendarSheet (12 Jul 2026: no typed
 // dates anywhere). Either end can stay open: the sheet's clear puts it back.
+// inlineCustom (founder, 14 Aug round 8: "just remove the pill custom and
+// just put the from and to"): no Custom chip; the From/To fields sit under
+// the presets permanently. Picking a date IS choosing custom (the preset
+// flips underneath); picking a preset clears the dates; clearing the last
+// date hands the control back to the first preset.
 function DateRangeControl({
   presets,
   value,
-  onChange
+  onChange,
+  inlineCustom = false
 }) {
   const J = window.JOTLA;
   const set = patch => onChange({
@@ -755,14 +761,18 @@ function DateRangeControl({
   const openRaw = openFor ? (value[openFor] || '').trim() : '';
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "j-chiprow"
-  }, presets.map(p => /*#__PURE__*/React.createElement("button", {
+  }, presets.filter(p => !inlineCustom || p !== 'Custom').map(p => /*#__PURE__*/React.createElement("button", {
     key: p,
     "aria-pressed": value.preset === p,
     className: 'j-chip' + (value.preset === p ? ' j-chip-on' : ''),
-    onClick: () => set({
+    onClick: () => set(inlineCustom ? {
+      preset: p,
+      from: '',
+      to: ''
+    } : {
       preset: p
     })
-  }, p))), value.preset === 'Custom' && /*#__PURE__*/React.createElement("div", {
+  }, p))), (inlineCustom || value.preset === 'Custom') && /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       gap: 12,
@@ -772,11 +782,24 @@ function DateRangeControl({
     onClose: () => setOpenFor(null),
     value: /^\d{4}-\d{2}-\d{2}$/.test(openRaw) ? openRaw : null,
     onSelect: iso => set({
-      [openFor]: iso
+      [openFor]: iso,
+      ...(inlineCustom ? {
+        preset: 'Custom'
+      } : {})
     }),
-    onClear: () => set({
-      [openFor]: ''
-    })
+    onClear: () => {
+      // clearing a field that never held a date is a "never mind":
+      // it must not touch an active preset (arena catch, 14 Aug
+      // round 8: it silently killed 'This week')
+      if (!(value[openFor] || '').trim()) return;
+      const other = (openFor === 'from' ? value.to : value.from) || '';
+      set({
+        [openFor]: '',
+        ...(inlineCustom && !other.trim() ? {
+          preset: presets.filter(p => p !== 'Custom')[0]
+        } : {})
+      });
+    }
   }));
 }
 

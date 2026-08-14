@@ -135,12 +135,23 @@ function FindScreen({
   // the pills sat under the tab bar and a Search tap changed tabs).
   const [drawerH, setDrawerH] = useStateB(0);
   const [capH, setCapH] = useStateB(0);
+  // whether the filters area genuinely scrolls (the large-text safety net):
+  // when it does, its touch-action stays pan-y and the swipe-to-close hands
+  // the vertical pans back to the browser; when it fits, the panel owns them
+  const [innerScrolls, setInnerScrolls] = useStateB(false);
+  const innerScrollsRef = useRefB(false);
+  innerScrollsRef.current = innerScrolls;
   const drawerInnerRef = useRefB(null);
   React.useLayoutEffect(() => {
     const el = drawerInnerRef.current;
     if (!el) return;
     const h = el.getBoundingClientRect().height;
     if (h && Math.abs(h - drawerH) > 0.25) setDrawerH(h);
+    const fl = el.querySelector('[data-find-filters]');
+    if (fl) {
+      const s = fl.scrollHeight > fl.clientHeight + 1;
+      if (s !== innerScrolls) setInnerScrolls(s);
+    }
     const bar = barRef.current;
     const tb = document.querySelector('.j-tabbar');
     if (bar && tb) {
@@ -169,6 +180,12 @@ function FindScreen({
   const queryBits = [];
   if (q.trim()) queryBits.push('“' + q.trim() + '”');
   queryBits.push(...themes);
+  // a committed mood filter must show on the bar too (arena catch, 14 Aug
+  // round 8: a mood-only search read as "all dates", an apparent no-op)
+  queryBits.push(...moods.map(k => {
+    const m = J.FIND_MOODS.find(x => x.key === k);
+    return m ? m.label : k;
+  }));
   if (setting !== 'Any') queryBits.push(setting);
   const rangeLabel = range.preset === 'Custom' ? (range.from ? J.fmtShort(range.from) : 'start') + ' to ' + (range.to ? J.fmtShort(range.to) : 'today') : range.preset === 'Any time' ? 'all dates' : range.preset.toLowerCase();
   queryBits.push(rangeLabel);
@@ -198,14 +215,24 @@ function FindScreen({
     setDrange(FIND_RANGE_DEFAULT);
   };
 
-  // Search commits the draft and tucks the drawer away; Cancel drops the
-  // draft, so the results stay at the last thing actually searched.
-  const applyDraft = () => {
+  // EVERY WAY OUT COMMITS, EXCEPT CANCEL (founder, 14 Aug round 8: "I can
+  // swipe the window up and it will be the same result as pressing search.
+  // only cancel leaves the previous filters"). Search, a swipe up, a bar
+  // tap, a tap on the dimmed record: all of them apply the draft; Cancel
+  // alone puts the last search back.
+  const commitDraft = () => {
     setQ(dq);
     setThemes(dthemes);
     setMoods(dmoods);
     setSetting(dsetting);
     setRange(drange);
+  };
+  // the gesture effects mount once, so they reach the LIVE draft through a
+  // ref, never a stale first-render closure
+  const commitRef = useRefB(null);
+  commitRef.current = commitDraft;
+  const applyDraft = () => {
+    commitDraft();
     tween(setF, fRef.current, 0);
   };
   const cancelDraft = () => {
@@ -218,7 +245,7 @@ function FindScreen({
   };
   const toggleDrawer = () => {
     if (fOpen) {
-      cancelDraft();
+      applyDraft();
       return;
     }
     // opening always begins from what is applied, never a stale draft
@@ -258,24 +285,135 @@ function FindScreen({
       from = {
         y: ev.clientY,
         f0: fRef.current,
-        span: Math.max(160, drawerHRef.current || 320)
+        span: Math.max(160, drawerHRef.current || 320),
+        lastY: ev.clientY,
+        lastT: performance.now(),
+        prevY: ev.clientY,
+        prevT: performance.now()
       };
     };
     const move = ev => {
       if (!from) return;
       const dy = ev.clientY - from.y;
       if (Math.abs(dy) > 4) barDraggedRef.current = true; // a drag must not also read as a tap
+      from.prevY = from.lastY;
+      from.prevT = from.lastT;
+      from.lastY = ev.clientY;
+      from.lastT = performance.now();
       setF(Math.max(0, Math.min(1, from.f0 + dy / from.span)));
     };
     const up = () => {
       if (!from) return;
+      const wasOpen = from.f0 > 0.5;
+      const dt = from.lastT - from.prevT;
+      // a finger that PAUSES before letting go is not flicking: past 100ms
+      // of stillness the release is positional, whatever the last move did
+      const idle = performance.now() - from.lastT;
+      const v = idle > 100 || dt <= 0 ? 0 : (from.lastY - from.prevY) / dt;
       from = null;
       const now = fRef.current;
-      tween(setF, now, now > 0.5 ? 1 : 0);
+      // release velocity wins (arena catch, 14 Aug round 8): with the bar
+      // resting near the top while the window is open, position alone could
+      // never close it from here; a flick can
+      const target = v < -0.4 ? 0 : v > 0.4 ? 1 : now > 0.5 ? 1 : 0;
+      // a drag that closes the open window commits, exactly like Search
+      // (founder, 14 Aug round 8); a wiggle from closed just settles
+      if (target === 0 && wasOpen) commitRef.current();
+      tween(setF, now, target);
       // the guard outlives the release just long enough to swallow the
       // click the browser fires after a drag, then a real tap works again
       setTimeout(() => {
         barDraggedRef.current = false;
+      }, 60);
+    };
+    el.addEventListener('pointerdown', down);
+    el.addEventListener('pointermove', move);
+    el.addEventListener('pointerup', up);
+    el.addEventListener('pointercancel', up);
+    return () => {
+      el.removeEventListener('pointerdown', down);
+      el.removeEventListener('pointermove', move);
+      el.removeEventListener('pointerup', up);
+      el.removeEventListener('pointercancel', up);
+    };
+  }, []);
+
+  // THE WINDOW ITSELF SWIPES SHUT (founder, 14 Aug round 8): drag anywhere
+  // on the open panel and it follows the finger up, the same physics as the
+  // bar, and a settle to closed COMMITS like Search. The gesture only
+  // engages after a clearly vertical upward slop, so chip taps and the
+  // search field stay untouched, and the pointer is captured only at that
+  // moment, never at the down (a capture at down would eat the chips'
+  // clicks). While the filters area genuinely scrolls (large text), the
+  // browser keeps the pans and this gesture stands down.
+  const drawerZoneRef = useRefB(null);
+  const panelDraggedRef = useRefB(false);
+  useEffectB(() => {
+    const el = drawerZoneRef.current;
+    if (!el) return undefined;
+    let from = null; // pointer down, watching for the slop
+    let live = false; // engaged: the drawer is following the finger
+    const down = ev => {
+      if (fRef.current < 0.95 || innerScrollsRef.current) return;
+      // a CalendarSheet riding the drawer owns its own touches (arena catch,
+      // 14 Aug round 8: a swipe on the sheet dragged the drawer shut under
+      // it and stranded the sheet)
+      if (ev.target && ev.target.closest && ev.target.closest('.j-sheet-scrim')) return;
+      from = {
+        id: ev.pointerId,
+        x: ev.clientX,
+        y: ev.clientY,
+        f0: fRef.current,
+        span: Math.max(160, drawerHRef.current || 320),
+        lastY: ev.clientY,
+        lastT: performance.now(),
+        prevY: ev.clientY,
+        prevT: performance.now()
+      };
+      live = false;
+    };
+    const move = ev => {
+      if (!from) return;
+      const dx = ev.clientX - from.x,
+        dy = ev.clientY - from.y;
+      if (!live) {
+        if (dy > -8 || Math.abs(dy) <= Math.abs(dx)) {
+          if (Math.abs(dx) > 12) from = null;
+          return;
+        }
+        live = true;
+        panelDraggedRef.current = true;
+        if (tweenRef.current) cancelAnimationFrame(tweenRef.current);
+        try {
+          el.setPointerCapture(from.id);
+        } catch (e) {}
+      }
+      from.prevY = from.lastY;
+      from.prevT = from.lastT;
+      from.lastY = ev.clientY;
+      from.lastT = performance.now();
+      setF(Math.max(0, Math.min(1, from.f0 + dy / from.span)));
+    };
+    const up = () => {
+      if (!from) return;
+      const engaged = live;
+      const dt = from.lastT - from.prevT;
+      // px per ms, + is down; a pause before release means no flick
+      const idle = performance.now() - from.lastT;
+      const v = idle > 100 || dt <= 0 ? 0 : (from.lastY - from.prevY) / dt;
+      from = null;
+      live = false;
+      if (!engaged) return;
+      const now = fRef.current;
+      // a FLICK closes or reopens in its own direction, however short the
+      // travel (arena catch, 14 Aug round 8: every sheet a parent knows
+      // honours release velocity, and a bounced-back flick reads as broken);
+      // a slow release still settles to its nearest half
+      const target = v < -0.4 ? 0 : v > 0.4 ? 1 : now > 0.5 ? 1 : 0;
+      if (target === 0) commitRef.current();
+      tween(setF, now, target);
+      setTimeout(() => {
+        panelDraggedRef.current = false;
       }, 60);
     };
     el.addEventListener('pointerdown', down);
@@ -359,7 +497,8 @@ function FindScreen({
     className: 'j-chip' + (dsetting === s ? ' j-chip-on' : ''),
     onClick: () => setDsetting(s)
   }, s))), /*#__PURE__*/React.createElement(SectionLabel, null, "When"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(DateRangeControl, {
-    presets: ['Any time', 'This week', 'Last 2 weeks', 'Custom'],
+    inlineCustom: true,
+    presets: ['Any time', 'This week', 'Last 2 weeks'],
     value: drange,
     onChange: setDrange
   }))) : /*#__PURE__*/React.createElement(PlusLockedCard, {
@@ -446,6 +585,13 @@ function FindScreen({
   }))), /*#__PURE__*/React.createElement("div", {
     className: "j-finddrawer",
     "data-find-drawer": true,
+    ref: drawerZoneRef,
+    onClickCapture: e => {
+      if (panelDraggedRef.current) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    },
     style: {
       height: drawerH ? drawerH * f : f > 0.5 ? undefined : 0
     }
@@ -492,7 +638,10 @@ function FindScreen({
       overflowY: 'auto',
       flex: '1 1 auto',
       minHeight: 0,
-      WebkitOverflowScrolling: 'touch'
+      WebkitOverflowScrolling: 'touch',
+      // fitting content hands its pans to the swipe-to-close;
+      // genuinely scrolling content (large text) keeps them
+      touchAction: innerScrolls ? 'pan-y' : 'none'
     }
   }, filtersBody), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -517,7 +666,21 @@ function FindScreen({
       minHeight: 46
     },
     onClick: cancelDraft
-  }, "Cancel")))))), /*#__PURE__*/React.createElement("p", {
+  }, "Cancel")))))), /*#__PURE__*/React.createElement("div", {
+    "data-find-results": true,
+    onClick: fOpen ? applyDraft : undefined,
+    style: {
+      transition: 'filter .18s ease, opacity .18s ease',
+      ...(fOpen ? {
+        filter: 'blur(4px)',
+        opacity: 0.4
+      } : {})
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: fOpen ? {
+      pointerEvents: 'none'
+    } : undefined
+  }, /*#__PURE__*/React.createElement("p", {
     className: "j-meta",
     style: {
       margin: '30px 0 10px'
@@ -541,7 +704,7 @@ function FindScreen({
     entry: e,
     showDate: true,
     onClick: () => openEntry(e.id)
-  }))))));
+  }))))))));
 }
 
 // ---------------- Evidence: records pack + document vault ----------------

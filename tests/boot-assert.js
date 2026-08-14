@@ -1626,6 +1626,9 @@ function ok(name, cond) {
   const firstMid = await page5.evaluate(() => document.querySelector('[data-find-drawer]').getBoundingClientRect().height);
   await page5.mouse.move(barBox0.x + barBox0.width / 2, barBox0.y + 160, { steps: 4 });
   const firstMid2 = await page5.evaluate(() => document.querySelector('[data-find-drawer]').getBoundingClientRect().height);
+  // a slow release (the 150ms hold): under half, so it settles back shut;
+  // an instant release would read as a flick since 2.0.29 and open it
+  await page5.waitForTimeout(150);
   await page5.mouse.up();
   await page5.waitForTimeout(500);
   const firstSettled = await page5.evaluate(() => document.querySelector('[data-find-drawer]').getBoundingClientRect().height);
@@ -1646,19 +1649,20 @@ function ok(name, cond) {
     drawer.h > 260 && drawer.hasSearch === true && drawer.rewind === true
     && drawer.text.includes('Themes') && drawer.text.includes('Mood') && drawer.text.includes('Where') && drawer.text.includes('When'));
   ok('the drawer ends in the Search and Cancel pills', drawer.pills === true);
-  // 2.0.25 (founder, 14 Aug round 5): the whole panel fits the phone with no
-  // inner scroll, even with Custom's date pickers out
-  await page5.locator('[data-find-drawer] .j-chip', { hasText: 'Custom' }).click();
-  await page5.waitForTimeout(400);
+  // 2.0.29 (founder, 14 Aug round 8): no Custom pill; From and To sit under
+  // the presets permanently, and the whole panel still fits with no inner
+  // scroll (the round-5 law)
   const fit = await page5.evaluate(() => {
     const el = document.querySelector('[data-find-filters]');
     return { over: el.scrollHeight - el.clientHeight,
-      custom: !!document.querySelector('[data-find-drawer] button[aria-label^="From date"]') };
+      fromTo: !!document.querySelector('[data-find-drawer] button[aria-label^="From date"]')
+        && !!document.querySelector('[data-find-drawer] button[aria-label^="To date"]'),
+      customChip: [...document.querySelectorAll('[data-find-drawer] .j-chip')].some(c => c.innerText.trim() === 'Custom') };
   });
-  ok('the whole drawer fits with no inner scroll, Custom open (' + fit.over + 'px over)',
-    fit.over <= 1 && fit.custom === true);
-  await page5.locator('[data-find-drawer] .j-chip', { hasText: 'Any time' }).click();
-  await page5.waitForTimeout(300);
+  ok('From and To sit in the drawer permanently, no Custom pill',
+    fit.fromTo === true && fit.customChip === false);
+  ok('the whole drawer fits with no inner scroll, the date row included (' + fit.over + 'px over)',
+    fit.over <= 1);
   // the pills stand clear of the tab bar and really take the tap, and the +
   // FAB steps aside while the drawer is out (arena catches, round 4: at full
   // height the pills sat behind the tab bar and a Search tap changed tabs,
@@ -1730,10 +1734,13 @@ function ok(name, cond) {
   const draggedOpen = await page5.evaluate(() => document.querySelector('[data-find-drawer]').getBoundingClientRect().height);
   ok('dragging the bar untucks the drawer with the finger (' + Math.round(midDrag) + ' to ' + Math.round(draggedOpen) + 'px)',
     midDrag > 30 && midDrag < draggedOpen - 40 && draggedOpen > 260);
-  // a short nudge settles back to the nearest half; a long drag up tucks away
+  // a short SLOW nudge settles back to the nearest half (the 150ms hold
+  // before release matters since 2.0.29: an instant release reads as a
+  // flick and flicks close in their own direction); a long drag up tucks
   await page5.mouse.move(barBox.x + barBox.width / 2, barBox.y + barBox.height / 2);
   await page5.mouse.down();
   await page5.mouse.move(barBox.x + barBox.width / 2, barBox.y - 40, { steps: 4 });
+  await page5.waitForTimeout(150);
   await page5.mouse.up();
   await page5.waitForTimeout(500);
   const nudgedOpen = await page5.evaluate(() => document.querySelector('[data-find-drawer]').getBoundingClientRect().height);
@@ -2860,6 +2867,133 @@ function ok(name, cond) {
   ok('...and the first child\'s Documents is still exactly as they left it (' + samEv.scrollY + 'px)',
     samEv.onRecords === true && Math.abs(samEv.scrollY - 180) <= 6);
   await ctx18.close();
+
+  // ---- 19. every way out commits except Cancel; the record blurs (2.0.29) ----
+  // Founder, 14 Aug round 8: swiping the window up IS Search (the drawer
+  // follows the finger, same physics as the bar), a bar tap and a tap on
+  // the dimmed record commit too, only Cancel puts the last search back;
+  // the record blurs and dims while the window is out; and picking a From
+  // date IS choosing custom, no pill needed.
+  console.log('Suite 19: commit-on-close + the blurred record');
+  const ctx19 = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  const page19 = await ctx19.newPage();
+  await page19.addInitScript(() => {
+    localStorage.setItem('jotla_prefs_v2', JSON.stringify({ dark: false, plus: true, childCfg: {}, customProfiles: [], deletedIds: [] }));
+    localStorage.setItem('jotla_fabtip_v1', 'learned');
+  });
+  await page19.goto(URL_APP, { waitUntil: 'networkidle' });
+  await page19.waitForTimeout(1000);
+  await page19.getByText('Find', { exact: true }).last().click();
+  await page19.waitForTimeout(600);
+  const notesOf = () => page19.evaluate(() =>
+    parseInt(([...document.querySelectorAll('.j-meta')].map(p => p.innerText).find(t => /notes? found/.test(t)) || '0'), 10));
+  const allNotes = await notesOf();
+  // the record blurs and dims while the window is out
+  await page19.locator('.j-findbar').click();
+  await page19.waitForTimeout(600);
+  const dim19 = await page19.evaluate(() => {
+    const el = document.querySelector('[data-find-results]');
+    const cs = getComputedStyle(el);
+    return { blurred: /blur/.test(cs.filter || ''), dimmed: parseFloat(cs.opacity) < 0.7 };
+  });
+  ok('the record blurs and dims behind the open window', dim19.blurred === true && dim19.dimmed === true);
+  // swipe the window up: it must follow the finger and COMMIT like Search
+  await page19.locator('[data-find-drawer] .j-chip', { hasText: 'Lunch hall' }).click();
+  await page19.waitForTimeout(300);
+  const dz = await page19.locator('[data-find-drawer]').boundingBox();
+  const sx = dz.x + dz.width / 2;
+  await page19.mouse.move(sx, dz.y + dz.height - 60);
+  await page19.mouse.down();
+  // a mid-drag sample proves it tracks the finger rather than flicking shut
+  await page19.mouse.move(sx, dz.y + dz.height - 200, { steps: 6 });
+  const midH = await page19.evaluate(() => document.querySelector('[data-find-drawer]').getBoundingClientRect().height);
+  await page19.mouse.move(sx, dz.y + 40, { steps: 8 });
+  await page19.mouse.up();
+  await page19.waitForTimeout(500);
+  const afterSwipe = await page19.evaluate(() => ({
+    h: document.querySelector('[data-find-drawer]').getBoundingClientRect().height,
+    bar: document.querySelector('[data-find-bar]').innerText,
+  }));
+  ok('the swipe tracks the finger (mid-drag height ' + Math.round(midH) + ' of ' + Math.round(dz.height) + ')',
+    midH < dz.height - 60 && midH > 40);
+  ok('a swipe up commits like Search: tucked, the bar names the pick, the results filter',
+    afterSwipe.h === 0 && afterSwipe.bar.includes('Lunch hall') && (await notesOf()) < allNotes);
+  // a bar tap commits too; only Cancel puts the last search back
+  await page19.locator('.j-findbar').click();
+  await page19.waitForTimeout(600);
+  await page19.locator('[data-find-drawer] .j-chip', { hasText: 'Eating' }).click();
+  await page19.waitForTimeout(200);
+  await page19.locator('.j-findbar').click();
+  await page19.waitForTimeout(600);
+  const afterTap = await page19.evaluate(() => document.querySelector('[data-find-bar]').innerText);
+  ok('a bar tap on the open window commits the draft too', afterTap.includes('Eating'));
+  await page19.locator('.j-findbar').click();
+  await page19.waitForTimeout(600);
+  await page19.locator('[data-find-drawer] .j-chip', { hasText: 'Play' }).click();
+  await page19.waitForTimeout(200);
+  await page19.locator('[data-find-cancel]').click();
+  await page19.waitForTimeout(600);
+  const afterCancel = await page19.evaluate(() => document.querySelector('[data-find-bar]').innerText);
+  ok('Cancel alone leaves the previous filters standing', afterCancel.includes('Eating') && !afterCancel.includes('Play'));
+  // picking a From date IS choosing custom: the bar reads the range
+  await page19.locator('.j-findbar').click();
+  await page19.waitForTimeout(600);
+  await page19.locator('[data-find-drawer] button[aria-label^="From date"]').click();
+  await page19.waitForTimeout(500);
+  const sheetMonth = (await page19.locator('.j-sheet h2').first().innerText()).trim();
+  // a low day also rides the previous panel's tail; day 10 is unique here
+  // and safely in the past
+  await page19.locator('.j-sheet button[aria-label="10 ' + sheetMonth + '"]').click();
+  await page19.waitForTimeout(400);
+  await page19.locator('[data-find-search]').click();
+  await page19.waitForTimeout(500);
+  const afterDate = await page19.evaluate(() => document.querySelector('[data-find-bar]').innerText);
+  ok('picking a From date is choosing custom: the bar reads the range (' + afterDate.trim().slice(0, 60) + ')',
+    /to today/i.test(afterDate));
+  // round-8 arena catches, regression-guarded:
+  // (a) a swipe on an open CalendarSheet must not drag the drawer shut under it
+  await page19.locator('.j-findbar').click();
+  await page19.waitForTimeout(600);
+  await page19.locator('[data-find-drawer] button[aria-label^="From date"]').click();
+  await page19.waitForTimeout(500);
+  const sheetBox = await page19.locator('.j-sheet').boundingBox();
+  await page19.mouse.move(sheetBox.x + sheetBox.width / 2, sheetBox.y + sheetBox.height - 60);
+  await page19.mouse.down();
+  await page19.mouse.move(sheetBox.x + sheetBox.width / 2, sheetBox.y + 40, { steps: 6 });
+  await page19.mouse.up();
+  await page19.waitForTimeout(500);
+  const sheetSwipe = await page19.evaluate(() => ({
+    drawerH: document.querySelector('[data-find-drawer]').getBoundingClientRect().height,
+    sheetOpen: document.querySelectorAll('.j-sheet-scrim').length,
+  }));
+  ok('a swipe on the calendar sheet leaves the drawer standing under it',
+    sheetSwipe.drawerH > 200 && sheetSwipe.sheetOpen === 1);
+  // (b) clearing a date field that never held a date must not kill a preset
+  await page19.locator('.j-sheet button', { hasText: 'Clear the date' }).click();
+  await page19.waitForTimeout(400);
+  await page19.locator('[data-find-drawer] .j-chip', { hasText: 'This week' }).click();
+  await page19.waitForTimeout(300);
+  await page19.locator('[data-find-drawer] button[aria-label^="From date"]').click();
+  await page19.waitForTimeout(500);
+  await page19.locator('.j-sheet button', { hasText: 'Clear the date' }).click();
+  await page19.waitForTimeout(400);
+  const weekHeld = await page19.evaluate(() =>
+    [...document.querySelectorAll('[data-find-drawer] .j-chip')].some(c => c.innerText.trim() === 'This week' && c.getAttribute('aria-pressed') === 'true'));
+  ok('clearing an empty date field is a never-mind: the preset stands', weekHeld === true);
+  // (c) a quick FLICK closes and commits, however short the travel
+  const flickBox = await page19.locator('[data-find-drawer]').boundingBox();
+  await page19.mouse.move(flickBox.x + flickBox.width / 2, flickBox.y + flickBox.height - 80);
+  await page19.mouse.down();
+  await page19.mouse.move(flickBox.x + flickBox.width / 2, flickBox.y + flickBox.height - 230, { steps: 3 });
+  await page19.mouse.up();
+  await page19.waitForTimeout(500);
+  const afterFlick = await page19.evaluate(() => ({
+    h: document.querySelector('[data-find-drawer]').getBoundingClientRect().height,
+    bar: document.querySelector('[data-find-bar]').innerText,
+  }));
+  ok('a short flick closes the window and commits (bar: ' + afterFlick.bar.trim().slice(0, 40) + ')',
+    afterFlick.h === 0 && afterFlick.bar.includes('this week'));
+  await ctx19.close();
 
   await browser.close();
   server.kill();
