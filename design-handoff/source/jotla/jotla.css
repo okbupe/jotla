@@ -450,10 +450,18 @@ html.j-appmode .j-fabtip { bottom: calc(160px + env(safe-area-inset-bottom)); }
   padding: 9px 0 10px; border: none; background: none; cursor: grab; touch-action: none; }
 .j-calhandle span { display: block; width: 44px; height: 4px; border-radius: 99px; background: var(--line); }
 .j-calhandle:active span { background: var(--faint); }
+/* the title's arrow: right when folded, turned down while the calendar is
+   open (founder, 14 Aug: "month year >") */
+.j-calarrow { display: inline-flex; transition: transform .3s cubic-bezier(.4,0,.2,1); }
+.j-calarrow.j-open { transform: rotate(90deg); }
 /* the graph folds away behind the calendar; height is driven by the gesture,
    and the zone owns its touches so the browser can never claim the swipe
    mid-gesture and freeze it with a pointercancel (13 Aug lesson) */
 .j-graphfold { overflow: hidden; touch-action: none; }
+/* the record dissolves as it slides up behind the pinned area: one card-gap's
+   worth of soft fade instead of a hard edge (founder, 14 Aug, "so the notes
+   look clean when they scrolling up in behind") */
+.j-streamfade { -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 22px); mask-image: linear-gradient(to bottom, transparent 0, #000 22px); }
 /* a day in the record arrives from below, once, as it is paged in */
 .j-daysec { animation: jDayIn .34s cubic-bezier(.2,.7,.3,1) both; }
 @keyframes jDayIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
@@ -465,6 +473,7 @@ html.j-appmode .j-fabtip { bottom: calc(160px + env(safe-area-inset-bottom)); }
   font-size: calc(13.5px * var(--tscale, 1)); color: var(--faint); }
 @media (prefers-reduced-motion: reduce) {
   .j-daysec { animation: none; }
+  .j-calarrow { transition: none; }
 }
 
 /* ---- misc ---- */

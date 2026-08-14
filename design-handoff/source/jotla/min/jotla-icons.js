@@ -387,6 +387,14 @@ function Icon({
       height: "16.2",
       rx: "1.6"
     })),
+    /* the rewind clock: back to today (founder, 14 Aug) */
+    rewind: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+      d: "M3.8 12a8.2 8.2 0 1 0 2.4-5.8L3.8 8.4"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M3.8 3.6v4.8h4.8"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M12 8.2v4.3l2.7 1.9"
+    })),
     folder: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
       d: "M3.5 7a2 2 0 0 1 2-2h4l2 2.5h7a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"
     })),

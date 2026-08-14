@@ -64,6 +64,8 @@ function Icon({ name, size = 24, color = 'currentColor', stroke = 2, fill = fals
     chart: <><path d="M4 20h16" /><path d="M7 20v-6M12 20V7M17 20v-9" /></>,
     /* the graph toggle wears this one: three real bars, no axis (founder, 11 Aug) */
     bars: <><rect x="3.6" y="12.4" width="4.8" height="7.6" rx="1.6" /><rect x="9.6" y="7.4" width="4.8" height="12.6" rx="1.6" /><rect x="15.6" y="3.8" width="4.8" height="16.2" rx="1.6" /></>,
+    /* the rewind clock: back to today (founder, 14 Aug) */
+    rewind: <><path d="M3.8 12a8.2 8.2 0 1 0 2.4-5.8L3.8 8.4" /><path d="M3.8 3.6v4.8h4.8" /><path d="M12 8.2v4.3l2.7 1.9" /></>,
     folder: <><path d="M3.5 7a2 2 0 0 1 2-2h4l2 2.5h7a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z" /></>,
     person: <><circle cx="12" cy="8" r="3.6" /><path d="M5.5 20a6.5 6.5 0 0 1 13 0" /></>,
     sun: <><circle cx="12" cy="12" r="4" /><path d="M12 2.8v2M12 19.2v2M2.8 12h2M19.2 12h2M5.5 5.5l1.4 1.4M17.1 17.1l1.4 1.4M18.5 5.5l-1.4 1.4M6.9 17.1l-1.4 1.4" /></>,

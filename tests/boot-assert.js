@@ -1053,7 +1053,13 @@ function ok(name, cond) {
       stream: !!stream, topDay,
       months: [...new Set(vis.map(b => (b.getAttribute('aria-label') || '').split(',')[0].split(' ').slice(1).join(' ')))],
       anchorLabel: anchors.length === 1 ? anchors[0].getAttribute('aria-label') : null,
-      anchorBg: anchors.length === 1 ? getComputedStyle(anchors[0]).backgroundColor : null,
+      anchorRing: anchors.length === 1 ? getComputedStyle(anchors[0]).boxShadow !== 'none' : null,
+      anchorFilledBlue: anchors.length === 1
+        ? getComputedStyle(anchors[0]).backgroundColor === getComputedStyle(document.documentElement).getPropertyValue('--tint-blue').trim()
+        : null,
+      arrowOpen: q('.j-calarrow') ? q('.j-calarrow').className.includes('j-open') : null,
+      rewindDisabled: q('[data-rewind]') ? q('[data-rewind]').disabled : null,
+      streamMask: stream ? ((getComputedStyle(stream).maskImage || getComputedStyle(stream).webkitMaskImage || '')) : null,
     };
   });
   const u0 = await calState();
@@ -1066,6 +1072,17 @@ function ok(name, cond) {
     u0.handleInCard === true && u0.graphSeparate === true && u0.graphInCalCard === false);
   ok('the graph is out by default, real, and the record starts at today underneath',
     u0.graphH > 100 && /How .+ looked/.test(u0.graphText || '') && u0.stream && u0.topDay === todayISO);
+  // the founder's 14 Aug chrome: the title is "month year >" and the whole
+  // thing is the fold toggle, its arrow turned down while the calendar is
+  // open; the rewind clock sits left of the graph icon, grey at the default
+  // view; the record dissolves through a soft gradient as it slides up behind
+  // the pinned area rather than hitting a hard edge
+  ok('the title wears the arrow, turned down while the calendar is open',
+    (await page5.locator('[data-cal-open]').count()) === 1 && u0.arrowOpen === true);
+  ok('the rewind clock sits by the graph icon, grey at the default view',
+    (await page5.locator('[data-rewind]').count()) === 1 && u0.rewindDisabled === true);
+  ok('the record fades in under the pinned area (a gradient, not a hard edge)',
+    /gradient/.test(u0.streamMask || ''));
 
   // THE LINE drives the calendar ALONE, tracking the finger both ways
   const grab = await page5.locator('[data-cal-handle]').boundingBox();
@@ -1082,8 +1099,13 @@ function ok(name, cond) {
   ok('...and the graph does not move with the line (' + u0.graphH + 'px throughout)',
     uMid.graphH === u0.graphH && u1.graphH === u0.graphH);
   ok('compressed, the strip holds the week being read with the day highlighted',
-    u1.months.length === 1 && u1.months[0] === u1.title
-    && !!u1.anchorLabel && !!u1.anchorBg && u1.anchorBg !== 'rgba(0, 0, 0, 0)');
+    u1.months.length === 1 && u1.months[0] === u1.title && !!u1.anchorLabel);
+  // the highlight is the founder's 14 Aug styling: a thin stroke ring and the
+  // blue number, never a filled blue disc, so the mood tint shows through
+  ok('the highlighted day is a thin ring, not a filled disc',
+    u1.anchorRing === true && u1.anchorFilledBlue === false);
+  ok('folded, the arrow points right again and the rewind clock is awake',
+    u1.arrowOpen === false && u1.rewindDisabled === false);
 
   const grab2 = await page5.locator('[data-cal-handle]').boundingBox();
   await page5.mouse.move(grab2.x + grab2.width / 2, grab2.y + 2);
@@ -1243,6 +1265,73 @@ function ok(name, cond) {
   await page5.waitForTimeout(600);
   const paged10 = await page5.evaluate(() => document.querySelectorAll('[data-day]').length);
   ok('scrolling down keeps paging the record in (' + paged9 + ' to ' + paged10 + ' days)', paged10 > paged9);
+
+  // THE REWIND CLOCK takes everything home: today at the top, calendar open,
+  // graph out, the current month, and then it greys out again
+  const deepState = await calState();
+  ok('deep in the record the rewind clock is awake', deepState.rewindDisabled === false);
+  await page5.locator('[data-rewind]').click();
+  await page5.waitForTimeout(700);
+  const home = await calState();
+  const mn0 = mn[now.getMonth()] + ' ' + now.getFullYear();
+  ok('one press takes everything back to the default view (' + home.title + ')',
+    home.title === mn0 && home.topDay === todayISO && home.foldH > 200 && home.graphH > 100);
+  ok('and at home it greys out again', home.rewindDisabled === true);
+
+  // THE BOUNCE BUG (founder caught it, 01:24): compressed calendar, graph out,
+  // drag the graph DOWN past halfway and let go: the month must STAY open,
+  // because everything settles to its own nearest half
+  await page5.locator('[data-graph-toggle]').click();   // hide + compress
+  await page5.waitForTimeout(500);
+  await page5.locator('[data-graph-toggle]').click();   // graph out, calendar still folded
+  await page5.waitForTimeout(500);
+  const gzB = await page5.locator('[data-graph-fold]').boundingBox();
+  await page5.mouse.move(gzB.x + gzB.width / 2, gzB.y + 30);
+  await page5.mouse.down();
+  await page5.mouse.move(gzB.x + gzB.width / 2, gzB.y + 320, { steps: 10 });
+  await page5.mouse.up();
+  await page5.waitForTimeout(500);
+  const bounced = await calState();
+  ok('dragging the graph down past halfway leaves the month OPEN (nearest half, not where it began)',
+    bounced.foldH > 200 && bounced.graphH > 100);
+
+  // THE PULL LADDER: from compressed and tucked at the very top, pulling the
+  // notes down opens the calendar; the next pull begins to untuck the graph
+  await page5.locator('[data-graph-toggle]').click();   // hide + compress
+  await page5.waitForTimeout(500);
+  await page5.evaluate(() => { const el = document.querySelector('[data-stream]'); el.scrollTop = 0; });
+  await page5.waitForTimeout(400);
+  const stP = await page5.locator('[data-stream]').boundingBox();
+  await page5.mouse.move(stP.x + 120, stP.y + 30);
+  await page5.mouse.down();
+  await page5.mouse.move(stP.x + 120, stP.y + 260, { steps: 10 });
+  await page5.mouse.up();
+  await page5.waitForTimeout(500);
+  const pull1 = await calState();
+  ok('pulling the notes down at the top opens the calendar (' + pull1.foldH + 'px), graph still tucked',
+    pull1.foldH > 200 && pull1.graphH === 0);
+  const stP2 = await page5.locator('[data-stream]').boundingBox();
+  await page5.mouse.move(stP2.x + 120, stP2.y + 30);
+  await page5.mouse.down();
+  await page5.mouse.move(stP2.x + 120, stP2.y + 260, { steps: 10 });
+  await page5.mouse.up();
+  await page5.waitForTimeout(500);
+  const pull2 = await calState();
+  ok('the next pull untucks the graph (' + pull2.graphH + 'px), calendar staying open',
+    pull2.graphH > 100 && pull2.foldH > 200);
+
+  // month year > as the toggle: a tap folds the open calendar, a tap opens it
+  await page5.locator('[data-cal-open]').click();
+  await page5.waitForTimeout(500);
+  const tapFold = await calState();
+  ok('tapping the title folds the calendar and turns the arrow right',
+    tapFold.foldH < 90 && tapFold.arrowOpen === false);
+  await page5.locator('[data-cal-open]').click();
+  await page5.waitForTimeout(500);
+  const tapOpen = await calState();
+  ok('tapping it again opens the month and turns the arrow down',
+    tapOpen.foldH > 200 && tapOpen.arrowOpen === true);
+
   ok('no uncaught page errors across suite 9', errors5.length === 0);
   await ctx5.close();
 

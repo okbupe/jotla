@@ -516,11 +516,12 @@ function MonthScreen({ nav, entries, view }) {
     };
     const up = () => {
       if (!from) return;
-      const t0 = from.t0; from = null;
-      const hide = gRef.current < 0.5;
-      // Bouncing back OUT restores the calendar to where the gesture began: a
-      // nudged graph over a compressed calendar must not expand the month.
-      tween([[setG, gRef.current, hide ? 0 : 1], [setT, tRef.current, hide ? 0 : (t0 > 0.5 ? 1 : 0)]]);
+      from = null;
+      // THE PHYSICS OF JOTLA (founder, 14 Aug): on release, everything that
+      // slides settles to its own nearest half, each axis for itself. The
+      // first version restored the calendar to where the gesture began, and
+      // dragging the graph down past halfway snapped the month shut again.
+      tween([[setG, gRef.current, gRef.current > 0.5 ? 1 : 0], [setT, tRef.current, tRef.current > 0.5 ? 1 : 0]]);
       setTimeout(() => { draggingRef.current = false; }, 320);
     };
     el.addEventListener('pointerdown', down);
@@ -532,6 +533,62 @@ function MonthScreen({ nav, entries, view }) {
       el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up);
     };
   }, [nav.plus, graphH, fullH, rowH]);
+
+  // THE PULL LADDER (founder, 14 Aug): at the very top of the record, pulling
+  // the notes down opens the calendar with the finger; from an open calendar
+  // the next pull begins to untuck the graph; one long pull chains through
+  // both, the surplus flowing on. A pull only ever OPENS (closing is the
+  // scroll, the tuck and the icon), and on release each axis settles to its
+  // own nearest half. An upward move with nothing driven stays an ordinary
+  // scroll. The touchmove claim keeps the browser's pan and pull-to-refresh
+  // off a live pull (the 13 Aug pointercancel lesson), and every release
+  // path unlatches draggingRef (the 13 Aug latch lesson).
+  React.useEffect(() => {
+    const el = streamRef.current;
+    if (!el || !nav.plus) return undefined;
+    const spanT = Math.max(120, fullH - rowH);
+    const spanG = Math.max(120, graphH || 160);
+    let from = null;
+    const down = (ev) => {
+      if (el.scrollTop > 0) return;
+      from = { y: ev.clientY, t0: tRef.current, g0: gRef.current, engaged: false };
+      draggingRef.current = true;
+    };
+    const move = (ev) => {
+      if (!from) return;
+      const dy = ev.clientY - from.y;
+      if (!from.engaged) {
+        if (dy <= 0) { from = null; draggingRef.current = false; return; }   // ordinary scrolling
+        if (dy <= 4) return;
+        from.engaged = true;
+      }
+      const d = Math.max(0, dy);
+      const tNext = Math.max(from.t0, Math.min(1, from.t0 + d / spanT));
+      const usedT = (tNext - from.t0) * spanT;
+      setT(tNext);
+      if (from.g0 < 1) setG(Math.max(from.g0, Math.min(1, from.g0 + Math.max(0, d - usedT) / spanG)));
+    };
+    const up = () => {
+      if (!from) return;
+      from = null;
+      tween([[setT, tRef.current, tRef.current > 0.5 ? 1 : 0], [setG, gRef.current, gRef.current > 0.5 ? 1 : 0]]);
+      setTimeout(() => { draggingRef.current = false; }, 320);
+    };
+    const claim = (ev) => {
+      if (!from || !from.engaged || !ev.cancelable) return;
+      ev.preventDefault();
+    };
+    el.addEventListener('pointerdown', down);
+    el.addEventListener('pointermove', move);
+    el.addEventListener('pointerup', up);
+    el.addEventListener('pointercancel', up);
+    el.addEventListener('touchmove', claim, { passive: false });
+    return () => {
+      el.removeEventListener('pointerdown', down); el.removeEventListener('pointermove', move);
+      el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up);
+      el.removeEventListener('touchmove', claim);
+    };
+  }, [nav.plus, fullH, rowH, graphH]);
 
   // THE PAGER MUST BE RE-PARKED whenever the shown offset moves under it
   // programmatically (11 Aug bug: a rebuilt scroller starts at panel zero,
@@ -585,6 +642,22 @@ function MonthScreen({ nav, entries, view }) {
       <Icon name="bars" size={22} color="var(--muted)" />
     </button>
   ) : null;
+  // The rewind clock (founder, 14 Aug): back to the default view, today at the
+  // top, calendar open, graph out. Grey and inert while the parent is already
+  // there; it wakes the moment the date, the month or the look moves.
+  const atDefault = anchorISO === J.TODAY_ISO && calOpen && graphOpen && offset === 0;
+  const jumpToToday = () => {
+    adopt(0);
+    scrollToDate(J.TODAY_ISO);
+    tween([[setT, tRef.current, 1], [setG, gRef.current, 1]]);
+  };
+  const rewindBtn = nav.plus ? (
+    <button className="j-iconbtn" data-rewind disabled={atDefault}
+      aria-label="Back to today" onClick={jumpToToday}
+      style={{ opacity: atDefault ? 0.35 : 1, cursor: atDefault ? 'default' : 'pointer' }}>
+      <Icon name="rewind" size={21} color={atDefault ? 'var(--faint)' : 'var(--muted)'} />
+    </button>
+  ) : null;
   // on Plus a calendar tap moves the record; on free it opens the day
   const pickDay = (iso) => (nav.plus ? scrollToDate(iso) : nav.go('day', { date: iso }));
 
@@ -611,12 +684,11 @@ function MonthScreen({ nav, entries, view }) {
                 {m.cells.map((c, idx) => {
                   if (!c) return <div key={'blank-' + idx} style={{ aspectRatio: '1 / 1' }} />;
                   // On Plus the day being read wears the accent, and it travels
-                  // with the record as the parent scrolls (spec 4.5; the
-                  // prototype's .cell.on, dropped in the build and caught by the
-                  // 13 Aug arena run). The mood dot stays, so no meaning is lost
-                  // under the highlight.
+                  // with the record as the parent scrolls. The founder's 14 Aug
+                  // styling: a THIN stroke ring and the number in blue, nothing
+                  // filled, so the day keeps its mood tint and dot underneath.
                   const isAnchor = nav.plus && c.iso === anchorISO;
-                  const tint = isAnchor ? 'var(--tint-blue)' : (c.mood ? window.moodTint(c.mood) : 'transparent');
+                  const tint = c.mood ? window.moodTint(c.mood) : 'transparent';
                   const ink = isAnchor ? 'var(--blue)' : (c.mood ? window.MOOD_COLOURS[c.mood] : (c.future ? 'var(--line)' : 'var(--faint)'));
                   // Every past day and today opens the Day view, notes or
                   // not (12 Jul 2026); only future days stay inert.
@@ -629,10 +701,11 @@ function MonthScreen({ nav, entries, view }) {
                         ? `${c.d} ${J.MONTH_NAMES[m.month]} ${m.year}, in the future`
                         : `${c.d} ${J.MONTH_NAMES[m.month]} ${m.year}, ${c.count > 0 ? c.count + (c.count === 1 ? ' note' : ' notes') : 'no note'}`}
                       style={{ aspectRatio: '1 / 1', borderRadius: '50%', cursor: tappable ? 'pointer' : 'default',
-                        border: 'none', boxShadow: c.isToday ? 'inset 0 0 0 1.5px var(--blue)' : 'none',
+                        border: 'none',
+                        boxShadow: c.isToday ? 'inset 0 0 0 1.5px var(--blue)' : (isAnchor ? 'inset 0 0 0 1px var(--blue)' : 'none'),
                         background: tint, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3,
                         opacity: c.future ? 0.55 : 1 }}>
-                      <span style={{ fontFamily: "'Outfit', system-ui", fontWeight: c.isToday ? 600 : 500, fontSize: 'calc(15px * var(--tscale, 1))', color: c.isToday ? 'var(--blue)' : ink }}>{c.d}</span>
+                      <span style={{ fontFamily: "'Outfit', system-ui", fontWeight: c.isToday ? 600 : 500, fontSize: 'calc(15px * var(--tscale, 1))', color: (c.isToday || isAnchor) ? 'var(--blue)' : ink }}>{c.d}</span>
                       {c.mood && <MoodDot mood={c.mood} size={6} />}
                     </button>
                   );
@@ -668,7 +741,21 @@ function MonthScreen({ nav, entries, view }) {
       <div className="j-screen" data-cal-mode="unified">
         <div style={{ flexShrink: 0 }} data-cal-pinned>
           <div className="j-pad" style={{ paddingTop: 10 }}>
-            <TabTitle title={plusLabel} right={graphBtn} />
+            {/* month year > : the whole label is the fold toggle, and the arrow
+                turns to point down while the calendar is open (founder, 14 Aug) */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
+              <button className="j-press" data-cal-open onClick={toggleCal}
+                aria-expanded={calOpen} aria-label={(calOpen ? 'Fold' : 'Open') + ' the calendar'}
+                style={{ display: 'flex', alignItems: 'center', gap: 7, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
+                <h1 className="j-h1" style={{ fontSize: 'calc(28px * var(--tscale, 1))' }}>{plusLabel}</h1>
+                <span className={'j-calarrow' + (calOpen ? ' j-open' : '')} aria-hidden="true">
+                  <Icon name="chevronRight" size={20} color="var(--muted)" />
+                </span>
+              </button>
+              <div style={{ height: 'calc(30px * var(--tscale, 1))', display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
+                {rewindBtn}{graphBtn}
+              </div>
+            </div>
             <div className="j-card" data-cal-card style={{ padding: '14px 14px 0', overflow: 'hidden' }}>
               {dowRow}
               {/* the fold: the month, folded down to the anchor's week. The
@@ -706,7 +793,7 @@ function MonthScreen({ nav, entries, view }) {
             pinned block's CURRENT height, so a tap overshot by that height and
             the strip's highlight drifted days off the true top whenever the
             calendar folded (14 Aug arena catch). */}
-        <div className="j-scroll j-fade" ref={streamRef} onScroll={onStreamScroll} data-stream
+        <div className="j-scroll j-fade j-streamfade" ref={streamRef} onScroll={onStreamScroll} data-stream
           style={{ position: 'relative' }}>
           <div className="j-pad" style={{ paddingBottom: 140 }}>
             {streamDates.map(iso => (
