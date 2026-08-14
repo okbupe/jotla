@@ -540,7 +540,9 @@ function MonthScreen({
   const atEpoch = streamDates.length < dayCount;
   const scrollToDate = iso => {
     const back = backTo(iso);
-    if (back + 2 > dayCount) setDayCount(back + 2 + STREAM_PAGE);
+    // functional and monotonic: this runs from gesture closures that can hold
+    // a stale dayCount, and the stream must never shrink under the reader
+    setDayCount(c => Math.max(c, back + 2 + STREAM_PAGE));
     setAnchorISO(iso);
     spyLock.current = Date.now() + 600;
     pendingRestoreTop.current = null; // a deliberate jump outranks a pixel restore
@@ -627,13 +629,15 @@ function MonthScreen({
   // it runs in JS because the value it starts from is wherever the finger left.
   // It takes PAIRS ([setter, from, to], ...) because the graph swipe and the
   // icon's hide both move g and t together in one bounce; two separate tweens
-  // would cancel each other through the shared raf handle.
+  // would cancel each other through the shared raf handle. onDone fires once
+  // the settle lands (the week strip commits its page there).
   const tweenRef = React.useRef(null);
-  const tween = pairs => {
+  const tween = (pairs, onDone) => {
     if (tweenRef.current) cancelAnimationFrame(tweenRef.current);
     const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduce) {
       pairs.forEach(([set,, to]) => set(to));
+      if (onDone) onDone();
       return;
     }
     let t0 = null;
@@ -642,7 +646,7 @@ function MonthScreen({
       const k = Math.min(1, (ts - t0) / 240);
       const e = 1 - Math.pow(1 - k, 3);
       pairs.forEach(([set, from, to]) => set(from + (to - from) * e));
-      if (k < 1) tweenRef.current = requestAnimationFrame(step);
+      if (k < 1) tweenRef.current = requestAnimationFrame(step);else if (onDone) onDone();
     };
     tweenRef.current = requestAnimationFrame(step);
   };
@@ -657,18 +661,35 @@ function MonthScreen({
   const draggedRef = React.useRef(false);
   const tRef = React.useRef(0);
   tRef.current = t;
+  // MEASURED HEIGHTS RIDE REFS INTO EVERY GESTURE (arena catch, 14 Aug round
+  // 4): the gesture effects used to list fullH / rowH / graphH as deps, and a
+  // mid-drag re-measure tore the listeners down and re-subscribed, orphaning
+  // the live gesture with no settle. The spans are read at pointerdown from
+  // these refs instead, and the effects re-run only when the surface itself
+  // appears or goes.
+  const fullHRef = React.useRef(0);
+  fullHRef.current = fullH;
+  const rowHRef = React.useRef(0);
+  rowHRef.current = rowH;
+  const graphHRef = React.useRef(0);
+  graphHRef.current = graphH;
   React.useEffect(() => {
     const el = handleRef.current;
-    if (!el || !nav.plus || !fullH) return undefined;
+    if (!el || !nav.plus) return undefined;
     let from = null;
-    const span = Math.max(1, fullH - rowH);
     const down = ev => {
+      if (!fullHRef.current) return; // not measured yet, nothing to drive
+      // a grab lands on the surface WHERE IT IS: a settle still in flight is
+      // cancelled so the fold cannot slide out from under a held finger
+      // (arena catch, 14 Aug round 4)
+      if (tweenRef.current) cancelAnimationFrame(tweenRef.current);
       try {
         el.setPointerCapture(ev.pointerId);
       } catch (e) {}
       from = {
         y: ev.clientY,
-        t0: tRef.current
+        t0: tRef.current,
+        span: Math.max(1, fullHRef.current - rowHRef.current)
       };
       draggingRef.current = true;
     };
@@ -676,7 +697,7 @@ function MonthScreen({
       if (!from) return;
       const dy = ev.clientY - from.y;
       if (Math.abs(dy) > 4) draggedRef.current = true; // a drag must not also read as a tap
-      setT(Math.max(0, Math.min(1, from.t0 + dy / span)));
+      setT(Math.max(0, Math.min(1, from.t0 + dy / from.span)));
     };
     const up = () => {
       if (!from) return;
@@ -697,7 +718,7 @@ function MonthScreen({
       el.removeEventListener('pointerup', up);
       el.removeEventListener('pointercancel', up);
     };
-  }, [nav.plus, fullH, rowH]);
+  }, [nav.plus]);
 
   // Stash the state in the keep so the tab comes back AS IT WAS from
   // anywhere: a pushed note, another tab, Settings, a theme change.
@@ -723,24 +744,25 @@ function MonthScreen({
   React.useEffect(() => {
     const el = graphZoneRef.current;
     if (!el || !nav.plus) return undefined;
-    const span = Math.max(120, Math.max(graphH || 0, Math.max(1, fullH - rowH)));
     let from = null;
     const down = ev => {
+      if (tweenRef.current) cancelAnimationFrame(tweenRef.current); // a grab holds what it grabs
       try {
         el.setPointerCapture(ev.pointerId);
       } catch (e) {}
       from = {
         y: ev.clientY,
         g0: gRef.current,
-        t0: tRef.current
+        t0: tRef.current,
+        span: Math.max(120, Math.max(graphHRef.current || 0, Math.max(1, fullHRef.current - rowHRef.current)))
       };
       draggingRef.current = true;
     };
     const move = ev => {
       if (!from) return;
       const dy = ev.clientY - from.y;
-      setG(Math.max(0, Math.min(1, from.g0 + dy / span)));
-      setT(Math.max(0, Math.min(1, from.t0 + dy / span)));
+      setG(Math.max(0, Math.min(1, from.g0 + dy / from.span)));
+      setT(Math.max(0, Math.min(1, from.t0 + dy / from.span)));
     };
     const up = () => {
       if (!from) return;
@@ -764,7 +786,7 @@ function MonthScreen({
       el.removeEventListener('pointerup', up);
       el.removeEventListener('pointercancel', up);
     };
-  }, [nav.plus, graphH, fullH, rowH]);
+  }, [nav.plus]);
 
   // THE PULL LADDER (founder, 14 Aug): at the very top of the record, pulling
   // the notes down opens the calendar with the finger; from an open calendar
@@ -778,8 +800,6 @@ function MonthScreen({
   React.useEffect(() => {
     const el = streamRef.current;
     if (!el || !nav.plus) return undefined;
-    const spanT = Math.max(120, fullH - rowH);
-    const spanG = Math.max(120, graphH || 160);
     let from = null;
     const down = ev => {
       if (el.scrollTop > 0) return;
@@ -787,7 +807,9 @@ function MonthScreen({
         y: ev.clientY,
         t0: tRef.current,
         g0: gRef.current,
-        engaged: false
+        engaged: false,
+        spanT: Math.max(120, fullHRef.current - rowHRef.current),
+        spanG: Math.max(120, graphHRef.current || 160)
       };
       draggingRef.current = true;
     };
@@ -802,12 +824,15 @@ function MonthScreen({
         } // ordinary scrolling
         if (dy <= 4) return;
         from.engaged = true;
+        // the pull owns the surface from here: a settle still in flight
+        // stops where it is (arena catch, 14 Aug round 4)
+        if (tweenRef.current) cancelAnimationFrame(tweenRef.current);
       }
       const d = Math.max(0, dy);
-      const tNext = Math.max(from.t0, Math.min(1, from.t0 + d / spanT));
-      const usedT = (tNext - from.t0) * spanT;
+      const tNext = Math.max(from.t0, Math.min(1, from.t0 + d / from.spanT));
+      const usedT = (tNext - from.t0) * from.spanT;
       setT(tNext);
-      if (from.g0 < 1) setG(Math.max(from.g0, Math.min(1, from.g0 + Math.max(0, d - usedT) / spanG)));
+      if (from.g0 < 1) setG(Math.max(from.g0, Math.min(1, from.g0 + Math.max(0, d - usedT) / from.spanG)));
     };
     const up = () => {
       if (!from) return;
@@ -835,39 +860,157 @@ function MonthScreen({
       el.removeEventListener('pointercancel', up);
       el.removeEventListener('touchmove', claim);
     };
-  }, [nav.plus, fullH, rowH, graphH]);
+  }, [nav.plus]);
 
-  // COMPRESSED, THE STRIP PAGES WEEK BY WEEK (founder, 14 Aug): a horizontal
-  // swipe moves the record seven days, clamped to the epoch and today, and
-  // the record follows. The month pager underneath is parked and silent while
-  // the calendar is folded (its overflow goes hidden), so the gesture is ours
-  // and a swipe can never jump a whole month from the strip.
+  // COMPRESSED, THE STRIP PAGES WEEK BY WEEK, AND IT FOLLOWS THE FINGER
+  // (founder, 14 Aug round 4: "it just snaps to the next month... it suppose
+  // to follow the same physics as when the calendar is fully extended"). The
+  // strip is a live track: the neighbouring weeks ride either side as ghost
+  // rows, the whole thing translates with the finger, and only on release
+  // does it settle, to the next week past halfway, back home otherwise,
+  // exactly the month pager's feel. The record follows a committed page. A
+  // blocked direction (today's week, the epoch) drags heavy and always comes
+  // home. The month pager underneath stays parked and silent while folded.
+  const [wx, setWx] = React.useState(0);
+  const wxRef = React.useRef(0);
+  wxRef.current = wx;
+  const weekDraggedRef = React.useRef(false);
+  // A move is a real page only if it leaves the anchor's WEEK. Clamping +7 to
+  // today used to land INSIDE the same week from a midweek anchor, so a
+  // future swipe slid a duplicate of the week under the finger in as "next"
+  // and committed a two-day move sold as a page (arena catch, round 4). The
+  // same wall guards the epoch end.
+  const weekStartOf = iso => {
+    const d = J.parseISO(iso);
+    const s = new Date(d.getFullYear(), d.getMonth(), d.getDate() - J.weekLead(d));
+    return `${s.getFullYear()}-${String(s.getMonth() + 1).padStart(2, '0')}-${String(s.getDate()).padStart(2, '0')}`;
+  };
+  const weekTarget = dir => {
+    let iso = J.isoShift(anchorRef.current, dir * 7);
+    if (iso > J.TODAY_ISO) iso = J.TODAY_ISO;
+    if (iso < window.MIN_LOG_DAY) iso = window.MIN_LOG_DAY;
+    return weekStartOf(iso) === weekStartOf(anchorRef.current) ? null : iso;
+  };
+  // The strip settles on its OWN raf handle with its own pending commit. On
+  // the shared handle, a second fast swipe's settle cancelled the first
+  // swipe's landing before onDone ever fired, and a page silently vanished
+  // (arena catch, round 4). A new grab flushes any pending page FIRST, so
+  // no gesture can erase a committed one.
+  const wkTweenRef = React.useRef(null);
+  const wkPendingRef = React.useRef(null);
+  const wkSettle = (fromX, toX, onDone) => {
+    if (wkTweenRef.current) cancelAnimationFrame(wkTweenRef.current);
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) {
+      setWx(toX);
+      if (onDone) onDone();
+      return;
+    }
+    let t0 = null;
+    const step = ts => {
+      if (t0 === null) t0 = ts;
+      const k = Math.min(1, (ts - t0) / 240);
+      const e = 1 - Math.pow(1 - k, 3);
+      setWx(fromX + (toX - fromX) * e);
+      if (k < 1) wkTweenRef.current = requestAnimationFrame(step);else if (onDone) onDone();
+    };
+    wkTweenRef.current = requestAnimationFrame(step);
+  };
+  const wkFlush = () => {
+    if (wkTweenRef.current) cancelAnimationFrame(wkTweenRef.current);
+    const fn = wkPendingRef.current;
+    wkPendingRef.current = null;
+    if (fn) {
+      fn();
+      return true;
+    }
+    return false;
+  };
+  React.useEffect(() => () => {
+    if (wkTweenRef.current) cancelAnimationFrame(wkTweenRef.current);
+  }, []);
   React.useEffect(() => {
     const el = foldRef.current;
     if (!el || !nav.plus) return undefined;
     let from = null;
     const down = ev => {
       if (tRef.current > 0.5) return;
+      // a pending page lands NOW; a bounce still in flight stops where it
+      // is and the new drag continues from the live value, so the strip can
+      // never slide out from under a held finger (arena catches, round 4)
+      const committed = wkFlush();
       from = {
         x: ev.clientX,
         y: ev.clientY,
-        done: false
+        engaged: false,
+        x0: committed ? 0 : wxRef.current,
+        w: el.clientWidth || 1,
+        pid: ev.pointerId
       };
     };
     const move = ev => {
-      if (!from || from.done) return;
+      if (!from) return;
       const dx = ev.clientX - from.x,
         dy = ev.clientY - from.y;
-      if (Math.abs(dx) < 44 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
-      from.done = true;
-      const dir = dx < 0 ? 1 : -1; // swiping left walks forward in time
-      let iso = J.isoShift(anchorRef.current, dir * 7);
-      if (iso > J.TODAY_ISO) iso = J.TODAY_ISO;
-      if (iso < window.MIN_LOG_DAY) iso = window.MIN_LOG_DAY;
-      if (iso !== anchorRef.current) scrollToDate(iso);
+      if (!from.engaged) {
+        // a vertical move is a scroll, not ours; a clear horizontal one is
+        if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) {
+          from = null;
+          return;
+        }
+        if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+        from.engaged = true;
+        weekDraggedRef.current = true;
+        try {
+          el.setPointerCapture(from.pid);
+        } catch (e) {}
+      }
+      const val = from.x0 + dx;
+      const open = weekTarget(val < 0 ? 1 : -1);
+      setWx(open ? val : val / 3); // a wall in that direction drags heavy
     };
     const up = () => {
+      if (!from) return;
+      const {
+        w,
+        engaged
+      } = from;
       from = null;
+      if (!engaged) {
+        // a TAP that landed mid-settle cancelled the bounce at pointerdown;
+        // send the track home and swallow the fall-through click, which
+        // would land on a cell shifted under the finger and quietly move
+        // the record (arena verify catch, round 4)
+        if (wxRef.current !== 0) {
+          weekDraggedRef.current = true;
+          wkSettle(wxRef.current, 0);
+          setTimeout(() => {
+            weekDraggedRef.current = false;
+          }, 60);
+        }
+        return;
+      }
+      const x = wxRef.current;
+      const dir = x < 0 ? 1 : -1; // swiping left walks forward in time
+      const target = weekTarget(dir);
+      if (target && Math.abs(x) > w / 2) {
+        // past halfway: finish the slide, then the page commits and the
+        // track resets under the new week in one paint
+        wkPendingRef.current = () => {
+          scrollToDate(target);
+          setWx(0);
+        };
+        wkSettle(x, dir === 1 ? -w : w, () => {
+          const fn = wkPendingRef.current;
+          wkPendingRef.current = null;
+          if (fn) fn();
+        });
+      } else {
+        wkSettle(x, 0);
+      }
+      setTimeout(() => {
+        weekDraggedRef.current = false;
+      }, 60);
     };
     el.addEventListener('pointerdown', down);
     el.addEventListener('pointermove', move);
@@ -988,6 +1131,107 @@ function MonthScreen({
   }, dows.map((d, i) => /*#__PURE__*/React.createElement("span", {
     key: i
   }, d)));
+  // One day cell, shared by the month grid and the week track's ghost rows,
+  // so a ghost can never drift from the real look. A ghost is not
+  // interactive (it exists only under a live finger) and highlights its own
+  // week's landing day.
+  const dayCellEl = (c, {
+    key,
+    anchor,
+    interactive
+  }) => {
+    const isAnchor = nav.plus && c.iso === anchor;
+    const tint = c.mood ? window.moodTint(c.mood) : 'transparent';
+    const ink = isAnchor ? 'var(--blue)' : c.mood ? window.MOOD_COLOURS[c.mood] : c.future ? 'var(--line)' : 'var(--faint)';
+    // Every past day and today opens the Day view, notes or
+    // not (12 Jul 2026); only future days stay inert.
+    const tappable = interactive && !c.future;
+    return /*#__PURE__*/React.createElement("button", {
+      key: key,
+      onClick: () => tappable && pickDay(c.iso, c.out),
+      className: tappable ? 'j-press' : '',
+      disabled: !tappable,
+      "data-anchor": isAnchor ? 'true' : undefined,
+      "data-out": c.out ? 'true' : undefined,
+      "aria-label": c.future ? `${c.d} ${J.MONTH_NAMES[c.m]} ${c.y}, in the future` : `${c.d} ${J.MONTH_NAMES[c.m]} ${c.y}, ${c.count > 0 ? c.count + (c.count === 1 ? ' note' : ' notes') : 'no note'}`,
+      style: {
+        aspectRatio: '1 / 1',
+        borderRadius: '50%',
+        cursor: tappable ? 'pointer' : 'default',
+        border: 'none',
+        boxShadow: c.isToday ? 'inset 0 0 0 1.5px var(--blue)' : isAnchor ? 'inset 0 0 0 1px var(--blue)' : 'none',
+        background: tint,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 3,
+        // a neighbouring month's day is visible but clearly not
+        // the month being read (founder, 14 Aug: "not completely
+        // but enough to notice")
+        opacity: c.out ? 0.38 : c.future ? 0.55 : 1
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontFamily: "'Outfit', system-ui",
+        fontWeight: c.isToday ? 600 : 500,
+        fontSize: 'calc(15px * var(--tscale, 1))',
+        color: c.isToday || isAnchor ? 'var(--blue)' : ink
+      }
+    }, c.d), c.mood && /*#__PURE__*/React.createElement(MoodDot, {
+      mood: c.mood,
+      size: 6
+    }));
+  };
+  // the seven days of the week holding a date, under the week-start setting;
+  // days outside that date's month fade exactly as the grid's lead and tail
+  const weekCellsFor = targetISO => {
+    const td = anchorDateOf(targetISO);
+    const start = new Date(td.getFullYear(), td.getMonth(), td.getDate() - J.weekLead(td));
+    const pad2 = n => String(n).padStart(2, '0');
+    const cells = [];
+    for (let i = 0; i < 7; i++) {
+      const dt = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+      const iso = `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}`;
+      const dayEntries = entries.filter(e => e.date === iso);
+      cells.push({
+        d: dt.getDate(),
+        iso,
+        out: dt.getMonth() !== td.getMonth() || dt.getFullYear() !== td.getFullYear(),
+        m: dt.getMonth(),
+        y: dt.getFullYear(),
+        mood: J.dayMood(dayEntries),
+        count: dayEntries.length,
+        future: iso > J.TODAY_ISO,
+        isToday: iso === J.TODAY_ISO
+      });
+    }
+    return cells;
+  };
+  // a ghost week row riding beside the strip while the finger drags it; its
+  // top tracks the fold so it always lines up with the visible week
+  const ghostWeekEl = side => {
+    const target = weekTarget(side);
+    if (!target) return null;
+    return /*#__PURE__*/React.createElement("div", {
+      "aria-hidden": "true",
+      "data-week-ghost": side === 1 ? 'next' : 'prev',
+      style: {
+        position: 'absolute',
+        top: weekRow * (rowH + GAP) * t,
+        left: side === 1 ? '100%' : '-100%',
+        width: '100%',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(7, 1fr)',
+        gap: GAP,
+        alignContent: 'start'
+      }
+    }, weekCellsFor(target).map((c, i) => dayCellEl(c, {
+      key: 'g' + side + '-' + i,
+      anchor: target,
+      interactive: false
+    })));
+  };
   const pagerEl = /*#__PURE__*/React.createElement("div", _extends({
     ref: pagerRef,
     onScroll: onPagerScroll,
@@ -1042,48 +1286,11 @@ function MonthScreen({
       // with the record as the parent scrolls. The founder's 14 Aug
       // styling: a THIN stroke ring and the number in blue, nothing
       // filled, so the day keeps its mood tint and dot underneath.
-      const isAnchor = nav.plus && c.iso === anchorISO;
-      const tint = c.mood ? window.moodTint(c.mood) : 'transparent';
-      const ink = isAnchor ? 'var(--blue)' : c.mood ? window.MOOD_COLOURS[c.mood] : c.future ? 'var(--line)' : 'var(--faint)';
-      // Every past day and today opens the Day view, notes or
-      // not (12 Jul 2026); only future days stay inert.
-      const tappable = !c.future;
-      return /*#__PURE__*/React.createElement("button", {
+      return dayCellEl(c, {
         key: c.iso,
-        onClick: () => tappable && pickDay(c.iso, c.out),
-        className: tappable ? 'j-press' : '',
-        disabled: !tappable,
-        "data-anchor": isAnchor ? 'true' : undefined,
-        "data-out": c.out ? 'true' : undefined,
-        "aria-label": c.future ? `${c.d} ${J.MONTH_NAMES[c.m]} ${c.y}, in the future` : `${c.d} ${J.MONTH_NAMES[c.m]} ${c.y}, ${c.count > 0 ? c.count + (c.count === 1 ? ' note' : ' notes') : 'no note'}`,
-        style: {
-          aspectRatio: '1 / 1',
-          borderRadius: '50%',
-          cursor: tappable ? 'pointer' : 'default',
-          border: 'none',
-          boxShadow: c.isToday ? 'inset 0 0 0 1.5px var(--blue)' : isAnchor ? 'inset 0 0 0 1px var(--blue)' : 'none',
-          background: tint,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 3,
-          // a neighbouring month's day is visible but clearly not
-          // the month being read (founder, 14 Aug: "not completely
-          // but enough to notice")
-          opacity: c.out ? 0.38 : c.future ? 0.55 : 1
-        }
-      }, /*#__PURE__*/React.createElement("span", {
-        style: {
-          fontFamily: "'Outfit', system-ui",
-          fontWeight: c.isToday ? 600 : 500,
-          fontSize: 'calc(15px * var(--tscale, 1))',
-          color: c.isToday || isAnchor ? 'var(--blue)' : ink
-        }
-      }, c.d), c.mood && /*#__PURE__*/React.createElement(MoodDot, {
-        mood: c.mood,
-        size: 6
-      }));
+        anchor: anchorISO,
+        interactive: true
+      });
     }));
   }));
   const calendarCard = /*#__PURE__*/React.createElement("div", {
@@ -1188,12 +1395,24 @@ function MonthScreen({
       "data-cal-fold": true,
       style: {
         height: foldH
+      },
+      onClickCapture: e => {
+        if (weekDraggedRef.current) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      "data-week-track": true,
+      style: {
+        transform: `translateX(${wx}px)`,
+        position: 'relative'
       }
     }, /*#__PURE__*/React.createElement("div", {
       style: {
         transform: `translateY(${-(1 - t) * weekRow * (rowH + GAP)}px)`
       }
-    }, pagerEl)), /*#__PURE__*/React.createElement("button", {
+    }, pagerEl), wx !== 0 && ghostWeekEl(-1), wx !== 0 && ghostWeekEl(1))), /*#__PURE__*/React.createElement("button", {
       className: "j-calhandle",
       ref: handleRef,
       "data-cal-handle": true,

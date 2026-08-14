@@ -380,36 +380,28 @@ button, input, select, textarea { font-family: inherit; }
 html.j-appmode .j-tabbar { height: calc(80px + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom); }
 /* the ONE add affordance: a circular accent FAB floating bottom right,
    replacing both the centre nav plus and the Add to today button */
-/* ---- Find (founder, 14 Aug): the sticky bar, the bubble, the mini fab ---- */
-/* The blue bar scrolls with the page until it touches the top, then holds
-   there; the gradient under it is the same soft 22px the calendar wears, so
-   a note dissolves before it slides behind the bar. */
-.j-findbar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 10px;
-  background: var(--tint-blue); border-radius: 16px; padding: 14px; }
-.j-findbar::after { content: ''; position: absolute; top: 100%; left: -20px; right: -20px; height: 22px;
+/* ---- Find (founder, 14 Aug): the sticky bar with the drawer behind it ---- */
+/* The sticky unit is the bar AND its drawer together: it scrolls with the
+   page until it touches the top, then holds there; the gradient under it is
+   the same soft 22px the calendar wears, so a note dissolves before it
+   slides behind. The mini fab and its speech bubble are gone (founder,
+   14 Aug round 4): the bar itself is the door to the filters. */
+.j-findstick { position: sticky; top: 0; z-index: 5; }
+.j-findstick::after { content: ''; position: absolute; top: 100%; left: -20px; right: -20px; height: 22px;
   background: linear-gradient(to bottom, var(--bg), rgba(255,255,255,0)); pointer-events: none; }
-.j-bubble-scrim { position: absolute; inset: 0; z-index: 40; background: rgba(10,16,28,0.12); }
-.j-findbubble { position: absolute; right: 16px; bottom: 228px; left: 16px; z-index: 41;
-  background: var(--card); border-radius: 18px; padding: 16px; box-shadow: 0 18px 44px rgba(0,0,0,0.28);
-  max-height: min(430px, calc(100% - 300px)); overflow-y: auto; }
-/* the speech-bubble tail, pointing down at the mini fab */
-.j-findbubble::after { content: ''; position: absolute; top: 100%; right: 32px;
-  border: 11px solid transparent; border-top-color: var(--card); border-bottom: none; }
-.j-minifab { position: absolute; right: 21px; bottom: 164px; width: 46px; height: 46px; border: none;
-  border-radius: 50%; background: var(--tint-blue); cursor: pointer; z-index: 42;
-  display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.22); transition: transform .12s ease;
-  -webkit-tap-highlight-color: transparent;
-  animation: jMiniIn .26s cubic-bezier(.2,.8,.3,1.15) both; }
-.j-minifab:active { transform: scale(0.92); }
-/* the magnifier belongs to Find alone and pops in with the page (founder,
-   14 Aug); it leaves with the page too, the way the whole screen swaps */
-@keyframes jMiniIn { from { opacity: 0; transform: scale(.5) translateY(8px); } to { opacity: 1; transform: none; } }
-.j-findbubble { transform-origin: calc(100% - 32px) 100%; animation: jBubbleIn .22s cubic-bezier(.2,.8,.3,1.1) both; }
-@keyframes jBubbleIn { from { opacity: 0; transform: scale(.85) translateY(8px); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { .j-minifab, .j-findbubble { animation: none; } }
-html.j-appmode .j-minifab { bottom: calc(164px + env(safe-area-inset-bottom)); }
-html.j-appmode .j-findbubble { bottom: calc(228px + env(safe-area-inset-bottom)); }
+/* OPAQUE, never see-through (founder, 14 Aug round 4): the same blue tint,
+   layered over the solid page background so the notes can never show
+   through it in either theme. */
+.j-findbar { display: flex; align-items: center; gap: 10px; position: relative; z-index: 2;
+  background: linear-gradient(var(--tint-blue), var(--tint-blue)) var(--bg); border-radius: 16px; padding: 14px;
+  cursor: pointer; touch-action: none; -webkit-tap-highlight-color: transparent;
+  user-select: none; -webkit-user-select: none; }
+/* the drawer: every filter, folded away behind the bar; its height is driven
+   by the gesture, exactly the calendar's graph fold */
+.j-finddrawer { overflow: hidden; position: relative; z-index: 1; }
+.j-finddrawer-in { background: var(--card); border: 1px solid var(--line); border-top: none;
+  border-radius: 0 0 18px 18px; padding: 14px; margin: 0 4px; box-sizing: border-box;
+  box-shadow: 0 16px 30px -18px rgba(0,0,0,0.28); }
 
 .j-fab { position: absolute; right: 16px; bottom: 96px; width: 56px; height: 56px; border: none;
   border-radius: 50%; background: var(--fill); color: #fff; cursor: pointer; z-index: 39;

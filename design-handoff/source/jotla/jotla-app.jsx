@@ -971,7 +971,8 @@ function App({ appMode }) {
           routes, Quick Log nearest the thumb. Today's check-in tiles and
           Documents' dashed add-row both retired into it. An option tap closes
           the dial and navigates; a scrim tap just closes. */}
-      {isTab && !noChild && !(view.name === 'evidence' && view.ev && view.ev.tab === 'records') && (
+      {isTab && !noChild && !(view.name === 'evidence' && view.ev && view.ev.tab === 'records')
+        && !(view.name === 'find' && view.findDrawer) && (
         <>
           {fabOpen && (
             <div className="j-dial-scrim" onClick={() => setFabOpen(false)}>

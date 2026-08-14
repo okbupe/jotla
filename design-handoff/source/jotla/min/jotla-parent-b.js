@@ -12,8 +12,15 @@ const THEME_TO_CAT = new Proxy({}, {
 // ---------------- Find ----------------
 // Find keeps its place and its filters across tabs and pushes, like the
 // calendar's keep (founder, 14 Aug); the rewind is the reset. Session-lifetime
-// on purpose: a cold start begins clear.
+// on purpose: a cold start begins clear. The drawer's draft and its open state
+// ride along too, so leaving mid-edit and coming back loses nothing ("make it
+// the same environment I left it").
 const FIND_KEEP = {};
+const FIND_RANGE_DEFAULT = {
+  preset: 'Any time',
+  from: '',
+  to: ''
+};
 function FindScreen({
   nav,
   entries,
@@ -21,16 +28,26 @@ function FindScreen({
 }) {
   const J = window.JOTLA;
   const saved = FIND_KEEP;
+  // APPLIED filters: what the blue bar names and the results obey.
   const [q, setQ] = useStateB(saved.q || '');
   const [themes, setThemes] = useStateB(saved.themes || []);
   const [moods, setMoods] = useStateB(saved.moods || []);
   const [setting, setSetting] = useStateB(saved.setting || 'Any');
-  const [range, setRange] = useStateB(saved.range || {
-    preset: 'Any time',
-    from: '',
-    to: ''
-  });
-  const [bubble, setBubble] = useStateB(false); // the filter speech bubble
+  const [range, setRange] = useStateB(saved.range || FIND_RANGE_DEFAULT);
+  // The DRAFT: what the drawer edits. Search commits it to the applied set;
+  // Cancel (or a bar tap, or the scrim of leaving) drops it, so the results
+  // stay at the last thing that was actually searched (founder, 14 Aug).
+  const [dq, setDq] = useStateB(saved.dq !== undefined ? saved.dq : saved.q || '');
+  const [dthemes, setDthemes] = useStateB(saved.dthemes || saved.themes || []);
+  const [dmoods, setDmoods] = useStateB(saved.dmoods || saved.moods || []);
+  const [dsetting, setDsetting] = useStateB(saved.dsetting || saved.setting || 'Any');
+  const [drange, setDrange] = useStateB(saved.drange || saved.range || FIND_RANGE_DEFAULT);
+  // f: the drawer, 0 tucked behind the bar, 1 fully out, anywhere in between
+  // while it tracks the finger (the physics of Jotla, same as the calendar).
+  const [f, setF] = useStateB(typeof saved.f === 'number' ? saved.f : 0);
+  const fRef = useRefB(0);
+  fRef.current = f;
+  const fOpen = f > 0.5;
   const scrollRef = useRefB(null);
   useEffectB(() => {
     Object.assign(FIND_KEEP, {
@@ -38,19 +55,91 @@ function FindScreen({
       themes,
       moods,
       setting,
-      range
+      range,
+      dq,
+      dthemes,
+      dmoods,
+      dsetting,
+      drange,
+      f: fOpen ? 1 : 0
     });
-  }, [q, themes, moods, setting, range]);
+  }, [q, themes, moods, setting, range, dq, dthemes, dmoods, dsetting, drange, fOpen]);
+  // the + FAB steps aside while the drawer is out (arena catch, 14 Aug round
+  // 4: it floated over the panel's lower chips); the view carries the state
+  // up to the app shell, the Day-records pattern
+  useEffectB(() => {
+    nav.remember({
+      findDrawer: fOpen
+    });
+  }, [fOpen]);
   useEffectB(() => {
     if (typeof saved.scrollY === 'number' && scrollRef.current) scrollRef.current.scrollTop = saved.scrollY;
   }, []);
+  // Once a push begins, the keep's scroll is SEALED: the outgoing scroller
+  // fires one last browser scroll (top 0, detached) about 60ms after the
+  // tap, and it used to clobber the place openEntry had just stashed
+  // (arena catch, 14 Aug round 4). The seal plus the detached guard on the
+  // handler below cover every teardown path, tab-away included.
+  const sealRef = useRefB(false);
+  const stashScroll = () => {
+    const el = scrollRef.current;
+    if (sealRef.current || !el || !el.isConnected || el.scrollHeight === 0) return;
+    FIND_KEEP.scrollY = el.scrollTop;
+  };
   const openEntry = id => {
-    FIND_KEEP.scrollY = scrollRef.current ? scrollRef.current.scrollTop : 0;
+    stashScroll();
+    sealRef.current = true;
     nav.go('entry', {
       id
     });
   };
   const toggle = setter => val => setter(v => v.includes(val) ? v.filter(x => x !== val) : [...v, val]);
+
+  // The settle after a release is the only animation on f, and it runs in JS
+  // because it starts wherever the finger left it (the calendar's tween).
+  const tweenRef = useRefB(null);
+  const tween = (set, from, to) => {
+    if (tweenRef.current) cancelAnimationFrame(tweenRef.current);
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) {
+      set(to);
+      return;
+    }
+    let t0 = null;
+    const step = ts => {
+      if (t0 === null) t0 = ts;
+      const k = Math.min(1, (ts - t0) / 240);
+      const e = 1 - Math.pow(1 - k, 3);
+      set(from + (to - from) * e);
+      if (k < 1) tweenRef.current = requestAnimationFrame(step);
+    };
+    tweenRef.current = requestAnimationFrame(step);
+  };
+  useEffectB(() => () => {
+    if (tweenRef.current) cancelAnimationFrame(tweenRef.current);
+  }, []);
+
+  // The drawer's height is measured off its real content, like the graph's,
+  // so the fold is right at every text size and tier. The panel is CAPPED to
+  // the space between the bar and the tab bar, and its filter body scrolls
+  // inside, so the Search and Cancel pills can never slide behind the tab
+  // bar or off a short screen (arena catch, 14 Aug round 4: at full height
+  // the pills sat under the tab bar and a Search tap changed tabs).
+  const [drawerH, setDrawerH] = useStateB(0);
+  const [capH, setCapH] = useStateB(0);
+  const drawerInnerRef = useRefB(null);
+  React.useLayoutEffect(() => {
+    const el = drawerInnerRef.current;
+    if (!el) return;
+    const h = el.getBoundingClientRect().height;
+    if (h && Math.abs(h - drawerH) > 0.25) setDrawerH(h);
+    const bar = barRef.current;
+    const tb = document.querySelector('.j-tabbar');
+    if (bar && tb) {
+      const cap = Math.max(220, tb.getBoundingClientRect().top - bar.getBoundingClientRect().bottom - 12);
+      if (Math.abs(cap - capH) > 0.25) setCapH(cap);
+    }
+  });
   const bounds = window.rangeBounds(range.preset, range.from, range.to);
   const matched = entries.filter(e => {
     const cats = themes.map(t => THEME_TO_CAT[t]);
@@ -62,27 +151,137 @@ function FindScreen({
     const qOk = !q.trim() || text.includes(q.trim().toLowerCase());
     return themeOk && moodOk && setOk && dateOk && qOk;
   }).sort((a, b) => a.date < b.date ? 1 : -1);
-  const queryBits = [...themes];
+
+  // the applied keyword leads the bar's label (arena catch, 14 Aug round 4:
+  // a committed search filtered the results with nothing on the bar naming
+  // it, and on free the keyword is the ONLY filter there is)
+  const queryBits = [];
+  if (q.trim()) queryBits.push('“' + q.trim() + '”');
+  queryBits.push(...themes);
   if (setting !== 'Any') queryBits.push(setting);
   const rangeLabel = range.preset === 'Custom' ? (range.from ? J.fmtShort(range.from) : 'start') + ' to ' + (range.to ? J.fmtShort(range.to) : 'today') : range.preset === 'Any time' ? 'all dates' : range.preset.toLowerCase();
   queryBits.push(rangeLabel);
 
-  // the rewind clears everything, and greys out when there is nothing to clear
+  // the corner rewind clears everything applied AND drafted, and greys out
+  // when there is nothing to clear
   const isClear = !q.trim() && themes.length === 0 && moods.length === 0 && setting === 'Any' && range.preset === 'Any time' && !range.from && !range.to;
+  const isDraftClear = !dq.trim() && dthemes.length === 0 && dmoods.length === 0 && dsetting === 'Any' && drange.preset === 'Any time' && !drange.from && !drange.to;
   const resetAll = () => {
     setQ('');
     setThemes([]);
     setMoods([]);
     setSetting('Any');
-    setRange({
-      preset: 'Any time',
-      from: '',
-      to: ''
-    });
+    setRange(FIND_RANGE_DEFAULT);
+    setDq('');
+    setDthemes([]);
+    setDmoods([]);
+    setDsetting('Any');
+    setDrange(FIND_RANGE_DEFAULT);
+  };
+  // the drawer's own rewind clears the DRAFT; Search then makes it real
+  const resetDraft = () => {
+    setDq('');
+    setDthemes([]);
+    setDmoods([]);
+    setDsetting('Any');
+    setDrange(FIND_RANGE_DEFAULT);
   };
 
-  // Every filter lives in the bubble now (founder, 14 Aug): search first,
-  // then the Plus filter groups, or the locked card on free.
+  // Search commits the draft and tucks the drawer away; Cancel drops the
+  // draft, so the results stay at the last thing actually searched.
+  const applyDraft = () => {
+    setQ(dq);
+    setThemes(dthemes);
+    setMoods(dmoods);
+    setSetting(dsetting);
+    setRange(drange);
+    tween(setF, fRef.current, 0);
+  };
+  const cancelDraft = () => {
+    setDq(q);
+    setDthemes(themes);
+    setDmoods(moods);
+    setDsetting(setting);
+    setDrange(range);
+    tween(setF, fRef.current, 0);
+  };
+  const toggleDrawer = () => {
+    if (fOpen) {
+      cancelDraft();
+      return;
+    }
+    // opening always begins from what is applied, never a stale draft
+    setDq(q);
+    setDthemes(themes);
+    setDmoods(moods);
+    setDsetting(setting);
+    setDrange(range);
+    tween(setF, fRef.current, 1);
+  };
+
+  // THE BAR IS THE HANDLE (founder, 14 Aug): drag it and the drawer follows
+  // the finger, down to open, up to tuck; let go and it settles to its own
+  // nearest half, the same physics as the calendar. A tap toggles. The bar
+  // carries touch-action: none so the browser can never claim the drag as a
+  // scroll mid-gesture (the 13 Aug pointercancel lesson).
+  const barRef = useRefB(null);
+  const barDraggedRef = useRefB(false);
+  // The measured height rides a REF into the gesture (arena catch, 14 Aug
+  // round 4): with drawerH in the effect's deps, the first drag's own
+  // re-measure tore the listeners down mid-gesture and orphaned it, frozen
+  // between states with no settle. The span is read at pointerdown instead,
+  // and the listeners live for the screen's whole life.
+  const drawerHRef = useRefB(0);
+  drawerHRef.current = drawerH;
+  useEffectB(() => {
+    const el = barRef.current;
+    if (!el) return undefined;
+    let from = null;
+    const down = ev => {
+      // a grab holds the drawer where it is: a settle still in flight is
+      // cancelled, and the drag continues from the live value
+      if (tweenRef.current) cancelAnimationFrame(tweenRef.current);
+      try {
+        el.setPointerCapture(ev.pointerId);
+      } catch (e) {}
+      from = {
+        y: ev.clientY,
+        f0: fRef.current,
+        span: Math.max(160, drawerHRef.current || 320)
+      };
+    };
+    const move = ev => {
+      if (!from) return;
+      const dy = ev.clientY - from.y;
+      if (Math.abs(dy) > 4) barDraggedRef.current = true; // a drag must not also read as a tap
+      setF(Math.max(0, Math.min(1, from.f0 + dy / from.span)));
+    };
+    const up = () => {
+      if (!from) return;
+      from = null;
+      const now = fRef.current;
+      tween(setF, now, now > 0.5 ? 1 : 0);
+      // the guard outlives the release just long enough to swallow the
+      // click the browser fires after a drag, then a real tap works again
+      setTimeout(() => {
+        barDraggedRef.current = false;
+      }, 60);
+    };
+    el.addEventListener('pointerdown', down);
+    el.addEventListener('pointermove', move);
+    el.addEventListener('pointerup', up);
+    el.addEventListener('pointercancel', up);
+    return () => {
+      el.removeEventListener('pointerdown', down);
+      el.removeEventListener('pointermove', move);
+      el.removeEventListener('pointerup', up);
+      el.removeEventListener('pointercancel', up);
+    };
+  }, []);
+
+  // Every filter lives in the drawer (founder, 14 Aug): search first, then
+  // the Plus filter groups, or the locked card on free. All of it edits the
+  // draft; nothing lands on the results until Search.
   const filtersBody = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
@@ -100,8 +299,8 @@ function FindScreen({
     size: 20,
     color: "var(--faint)"
   }), /*#__PURE__*/React.createElement("input", {
-    value: q,
-    onChange: e => setQ(e.target.value),
+    value: dq,
+    onChange: e => setDq(e.target.value),
     placeholder: "Search your notes",
     style: {
       flex: 1,
@@ -119,21 +318,21 @@ function FindScreen({
     }
   }, J.FIND_THEMES.map(t => /*#__PURE__*/React.createElement("button", {
     key: t,
-    "aria-pressed": themes.includes(t),
-    className: 'j-chip' + (themes.includes(t) ? ' j-chip-on' : ''),
-    onClick: () => toggle(setThemes)(t)
+    "aria-pressed": dthemes.includes(t),
+    className: 'j-chip' + (dthemes.includes(t) ? ' j-chip-on' : ''),
+    onClick: () => toggle(setDthemes)(t)
   }, t))), /*#__PURE__*/React.createElement(SectionLabel, null, "Mood"), /*#__PURE__*/React.createElement("div", {
     className: "j-chiprow",
     style: {
       marginBottom: 12
     }
   }, J.FIND_MOODS.map(m => {
-    const on = moods.includes(m.key);
+    const on = dmoods.includes(m.key);
     return /*#__PURE__*/React.createElement("button", {
       key: m.key,
       "aria-pressed": on,
       className: 'j-chip' + (on ? ' j-chip-on' : ''),
-      onClick: () => toggle(setMoods)(m.key)
+      onClick: () => toggle(setDmoods)(m.key)
     }, /*#__PURE__*/React.createElement(MoodDot, {
       mood: m.key,
       size: 11
@@ -145,13 +344,13 @@ function FindScreen({
     }
   }, ['Any', 'School', 'Home', 'Club'].map(s => /*#__PURE__*/React.createElement("button", {
     key: s,
-    "aria-pressed": setting === s,
-    className: 'j-chip' + (setting === s ? ' j-chip-on' : ''),
-    onClick: () => setSetting(s)
+    "aria-pressed": dsetting === s,
+    className: 'j-chip' + (dsetting === s ? ' j-chip-on' : ''),
+    onClick: () => setDsetting(s)
   }, s))), /*#__PURE__*/React.createElement(SectionLabel, null, "When"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(DateRangeControl, {
     presets: ['Any time', 'This week', 'Last 2 weeks', 'Custom'],
-    value: range,
-    onChange: setRange
+    value: drange,
+    onChange: setDrange
   }))) : /*#__PURE__*/React.createElement(PlusLockedCard, {
     onClick: () => nav.go('unlock'),
     icon: "filter",
@@ -163,9 +362,7 @@ function FindScreen({
   }, /*#__PURE__*/React.createElement("div", {
     className: "j-scroll j-fade",
     ref: scrollRef,
-    onScroll: () => {
-      FIND_KEEP.scrollY = scrollRef.current ? scrollRef.current.scrollTop : 0;
-    }
+    onScroll: stashScroll
   }, /*#__PURE__*/React.createElement("div", {
     className: "j-pad",
     style: {
@@ -190,8 +387,29 @@ function FindScreen({
       color: isClear ? 'var(--faint)' : 'var(--muted)'
     }))
   }), /*#__PURE__*/React.createElement("div", {
+    className: "j-findstick",
+    "data-find-stick": true
+  }, /*#__PURE__*/React.createElement("div", {
     className: "j-findbar",
-    "data-find-bar": true
+    "data-find-bar": true,
+    ref: barRef,
+    role: "button",
+    tabIndex: 0,
+    "aria-expanded": fOpen,
+    "aria-label": "Search and filters",
+    onClick: () => {
+      if (barDraggedRef.current) {
+        barDraggedRef.current = false;
+        return;
+      }
+      toggleDrawer();
+    },
+    onKeyDown: e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleDrawer();
+      }
+    }
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "filter",
     size: 18,
@@ -199,11 +417,92 @@ function FindScreen({
   }), /*#__PURE__*/React.createElement("p", {
     className: "j-body",
     style: {
+      flex: 1,
       fontSize: 'calc(15px * var(--tscale, 1))',
       color: 'var(--blue)',
       fontWeight: 500
     }
-  }, queryBits.join(', '))), /*#__PURE__*/React.createElement("p", {
+  }, queryBits.join(', ')), /*#__PURE__*/React.createElement("span", {
+    className: 'j-calarrow' + (fOpen ? ' j-open' : ''),
+    "aria-hidden": "true"
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "chevronRight",
+    size: 17,
+    color: "var(--blue)"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "j-finddrawer",
+    "data-find-drawer": true,
+    style: {
+      height: drawerH ? drawerH * f : f > 0.5 ? undefined : 0
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    ref: drawerInnerRef,
+    style: {
+      transform: `translateY(${drawerH ? -((1 - f) * drawerH) : 0}px)`
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-finddrawer-in",
+    style: {
+      maxHeight: capH || undefined,
+      display: 'flex',
+      flexDirection: 'column'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 10,
+      flexShrink: 0
+    }
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "j-h2"
+  }, "Filters"), /*#__PURE__*/React.createElement("button", {
+    className: "j-iconbtn",
+    "data-drawer-rewind": true,
+    disabled: isDraftClear,
+    "aria-label": "Clear the search and filters",
+    onClick: resetDraft,
+    style: {
+      opacity: isDraftClear ? 0.35 : 1,
+      cursor: isDraftClear ? 'default' : 'pointer'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "rewind",
+    size: 20,
+    color: isDraftClear ? 'var(--faint)' : 'var(--muted)'
+  }))), /*#__PURE__*/React.createElement("div", {
+    "data-find-filters": true,
+    style: {
+      overflowY: 'auto',
+      flex: '1 1 auto',
+      minHeight: 0,
+      WebkitOverflowScrolling: 'touch'
+    }
+  }, filtersBody), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 10,
+      marginTop: 14,
+      flexShrink: 0
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-primary",
+    "data-find-search": true,
+    style: {
+      flex: 1,
+      minHeight: 48
+    },
+    onClick: applyDraft
+  }, "Search"), /*#__PURE__*/React.createElement("button", {
+    className: "j-btn j-btn-ghost",
+    "data-find-cancel": true,
+    style: {
+      flex: 1,
+      minHeight: 48
+    },
+    onClick: cancelDraft
+  }, "Cancel")))))), /*#__PURE__*/React.createElement("p", {
     className: "j-meta",
     style: {
       margin: '12px 0 10px'
@@ -227,48 +526,7 @@ function FindScreen({
     entry: e,
     showDate: true,
     onClick: () => openEntry(e.id)
-  }))))), bubble && /*#__PURE__*/React.createElement("div", {
-    className: "j-bubble-scrim",
-    onClick: () => setBubble(false)
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "j-findbubble",
-    role: "dialog",
-    "aria-label": "Search and filters",
-    onClick: e => e.stopPropagation()
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginBottom: 10
-    }
-  }, /*#__PURE__*/React.createElement("h2", {
-    className: "j-h2"
-  }, "Filters"), /*#__PURE__*/React.createElement("button", {
-    className: "j-iconbtn",
-    "data-bubble-rewind": true,
-    disabled: isClear,
-    "aria-label": "Clear the search and filters",
-    onClick: resetAll,
-    style: {
-      opacity: isClear ? 0.35 : 1,
-      cursor: isClear ? 'default' : 'pointer'
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "rewind",
-    size: 20,
-    color: isClear ? 'var(--faint)' : 'var(--muted)'
-  }))), filtersBody)), /*#__PURE__*/React.createElement("button", {
-    className: "j-minifab",
-    "data-find-fab": true,
-    "aria-label": "Search and filters",
-    "aria-expanded": bubble,
-    onClick: () => setBubble(b => !b)
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "search",
-    size: 22,
-    color: "var(--blue)"
-  })));
+  }))))));
 }
 
 // ---------------- Evidence: records pack + document vault ----------------

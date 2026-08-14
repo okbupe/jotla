@@ -1375,17 +1375,27 @@ function ok(name, cond) {
     !!outPick && handed.title === pickedMonth
     && !!handed.topDay && Number(handed.topDay.split('-')[2]) === pickedDay);
 
-  // COMPRESSED, THE STRIP PAGES WEEK BY WEEK (founder, 14 Aug): a horizontal
-  // swipe moves the record seven days; the month pager stays parked
+  // COMPRESSED, THE STRIP PAGES WEEK BY WEEK, FOLLOWING THE FINGER (founder,
+  // 14 Aug round 4: "it doesn't do the follow my finger like all mechanics.
+  // it just snaps"): mid-drag the track translates with the ghost week riding
+  // in beside it; past halfway the release settles one week over, the record
+  // following; a short nudge settles home with nothing committed. The month
+  // pager underneath stays parked.
   await page5.locator('[data-rewind]').click();
   await page5.waitForTimeout(700);
   await page5.locator('[data-graph-toggle]').click();   // hide + compress
   await page5.waitForTimeout(500);
-  const beforeSwipe = await calState();
   const foldBox = await page5.locator('[data-cal-fold]').boundingBox();
   await page5.mouse.move(foldBox.x + 40, foldBox.y + foldBox.height / 2);
   await page5.mouse.down();
-  await page5.mouse.move(foldBox.x + 240, foldBox.y + foldBox.height / 2 + 4, { steps: 8 });
+  await page5.mouse.move(foldBox.x + 140, foldBox.y + foldBox.height / 2 + 3, { steps: 5 });
+  const midStrip = await page5.evaluate(() => {
+    const tr = document.querySelector('[data-week-track]');
+    const m = tr ? getComputedStyle(tr).transform : 'none';
+    const x = m && m.startsWith('matrix') ? parseFloat(m.split(',')[4]) : 0;
+    return { x, ghost: !!document.querySelector('[data-week-ghost="prev"]') };
+  });
+  await page5.mouse.move(foldBox.x + 260, foldBox.y + foldBox.height / 2 + 4, { steps: 5 });
   await page5.mouse.up();
   await page5.waitForTimeout(800);
   const weekBack = await calState();
@@ -1393,9 +1403,101 @@ function ok(name, cond) {
     const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - 7);
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   });
-  ok('a strip swipe pages ONE WEEK back, record following (' + weekBack.topDay + ')',
+  ok('the strip follows the finger, the ghost week riding in (' + Math.round(midStrip.x) + 'px)',
+    midStrip.x > 40 && midStrip.ghost === true);
+  ok('past halfway the release settles ONE WEEK back, record following (' + weekBack.topDay + ')',
     weekBack.topDay === wantWeekBack && weekBack.foldH < 90
     && !!weekBack.anchorLabel && weekBack.anchorLabel.startsWith(Number(wantWeekBack.split('-')[2]) + ' '));
+  // a short nudge settles home: same week, the track back at rest
+  const foldBox2 = await page5.locator('[data-cal-fold]').boundingBox();
+  await page5.mouse.move(foldBox2.x + 60, foldBox2.y + foldBox2.height / 2);
+  await page5.mouse.down();
+  await page5.mouse.move(foldBox2.x + 120, foldBox2.y + foldBox2.height / 2 + 2, { steps: 4 });
+  await page5.mouse.up();
+  await page5.waitForTimeout(600);
+  const nudgedStrip = await calState();
+  const trackHome = await page5.evaluate(() => {
+    const tr = document.querySelector('[data-week-track]');
+    if (!tr) return false;
+    const m = getComputedStyle(tr).transform;
+    return m === 'none' || Math.abs(parseFloat(m.split(',')[4]) || 0) < 1;
+  });
+  ok('a short nudge settles home: same week, the track at rest',
+    nudgedStrip.topDay === weekBack.topDay && trackHome === true);
+  // A TAP LANDING MID-BOUNCE settles the track home and never falls
+  // through to a shifted cell (arena verify catch, round 4: the down
+  // cancelled the settle, the un-engaged up bailed without re-settling,
+  // and the click re-anchored the record a day under the frozen track)
+  const preTap = await calState();
+  const fbT = await page5.locator('[data-cal-fold]').boundingBox();
+  await page5.mouse.move(fbT.x + 40, fbT.y + fbT.height / 2);
+  await page5.mouse.down();
+  await page5.mouse.move(fbT.x + 140, fbT.y + fbT.height / 2 + 2, { steps: 4 });
+  await page5.mouse.up();                       // sub-half: a home bounce begins
+  await page5.waitForTimeout(70);               // ...and a tap lands inside it
+  await page5.mouse.move(fbT.x + fbT.width / 2, fbT.y + fbT.height / 2);
+  await page5.mouse.down();
+  await page5.mouse.up();
+  await page5.waitForTimeout(600);
+  const postTap = await calState();
+  const tapTrackHome = await page5.evaluate(() => {
+    const tr = document.querySelector('[data-week-track]');
+    if (!tr) return false;
+    const m = getComputedStyle(tr).transform;
+    return m === 'none' || Math.abs(parseFloat(m.split(',')[4]) || 0) < 1;
+  });
+  ok('a tap mid-bounce settles the track home and moves nothing (' + postTap.topDay + ')',
+    tapTrackHome === true && postTap.topDay === preTap.topDay && postTap.anchorLabel === preTap.anchorLabel);
+  // TWO FAST SWIPES ARE TWO WEEKS (arena catch, round 4: a second swipe
+  // released inside the first one's 240ms landing used to cancel the
+  // pending commit and silently eat a week)
+  const fastSwipe = async () => {
+    const fb = await page5.locator('[data-cal-fold]').boundingBox();
+    await page5.mouse.move(fb.x + 30, fb.y + fb.height / 2);
+    await page5.mouse.down();
+    await page5.mouse.move(fb.x + 280, fb.y + fb.height / 2 + 2, { steps: 3 });
+    await page5.mouse.up();
+  };
+  await fastSwipe();
+  await fastSwipe();   // straight away, inside the first settle
+  await page5.waitForTimeout(900);
+  const twoBack = await calState();
+  const wantTwoBack = await page5.evaluate(() => {
+    const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - 21);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  });
+  ok('two fast swipes land two weeks, neither eaten (' + twoBack.topDay + ')',
+    twoBack.topDay === wantTwoBack);
+  // TODAY'S WEEK IS A WALL from ANY of its days (arena catch, round 4: a
+  // midweek anchor clamped +7 into its own week and fake-committed a
+  // two-day move behind a duplicated ghost)
+  await page5.locator('[data-rewind]').click();
+  await page5.waitForTimeout(700);
+  await page5.locator('[data-graph-toggle]').click();   // hide + compress
+  await page5.waitForTimeout(500);
+  const midweekAnchor = await page5.evaluate(() => {
+    // yesterday, when it lives in today's week; today's own anchor otherwise
+    const lead = window.JOTLA.weekLead(new Date());
+    if (lead === 0) return null;
+    const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - 1);
+    const label = d.getDate() + ' ' + window.JOTLA.MONTH_NAMES[d.getMonth()] + ' ' + d.getFullYear();
+    const fold = document.querySelector('[data-cal-fold]');
+    const cell = [...fold.querySelectorAll('.j-pager button')].find(b => (b.getAttribute('aria-label') || '').startsWith(label));
+    if (!cell) return null;
+    cell.click();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  });
+  await page5.waitForTimeout(700);
+  const wallStart = await calState();
+  const fbW = await page5.locator('[data-cal-fold]').boundingBox();
+  await page5.mouse.move(fbW.x + fbW.width - 30, fbW.y + fbW.height / 2);
+  await page5.mouse.down();
+  await page5.mouse.move(fbW.x + 30, fbW.y + fbW.height / 2 + 2, { steps: 6 });
+  await page5.mouse.up();
+  await page5.waitForTimeout(700);
+  const walled = await calState();
+  ok('a future swipe from inside today\'s week commits NOTHING (' + (midweekAnchor || 'today-anchored day') + ')',
+    walled.topDay === wallStart.topDay && walled.anchorLabel === wallStart.anchorLabel);
 
   // THE TAB COMES BACK AS IT WAS LEFT (founder, 14 Aug): a trip to Settings
   // (his exact example) loses nothing, and the week-start setting rotates
@@ -1463,31 +1565,39 @@ function ok(name, cond) {
   ok('and the week now starts on Sunday, everywhere the calendar draws (' + dowFirst + ')',
     dowFirst === 'Sun');
 
-  // THE FIND REWORK (founder, 14 Aug): rewind in the corner, the sticky blue
-  // bar with its soft gradient, and the filter bubble on its own mini fab
+  // THE FIND REWORK, ROUND 4 (founder, 14 Aug): the blue bar is OPAQUE and is
+  // itself the door to the filters; the drawer untucks from underneath it
+  // with the calendar's physics; Search commits, Cancel keeps the last
+  // search; the magnifier mini fab and its bubble are GONE.
   await page5.getByText('Find', { exact: true }).last().click();
   await page5.waitForTimeout(600);
   const findChrome = await page5.evaluate(() => {
-    const fab = document.querySelector('.j-fab');
-    const mini = document.querySelector('[data-find-fab]');
     const bar = document.querySelector('[data-find-bar]');
+    const stick = document.querySelector('[data-find-stick]');
     const rew = document.querySelector('[data-find-rewind]');
-    const fr = fab ? fab.getBoundingClientRect() : null;
-    const mr = mini ? mini.getBoundingClientRect() : null;
-    const after = bar ? getComputedStyle(bar, '::after') : null;
+    const drawer = document.querySelector('[data-find-drawer]');
+    const after = stick ? getComputedStyle(stick, '::after') : null;
+    const bg = bar ? getComputedStyle(bar).backgroundColor : '';
+    const m = bg.match(/rgba?\(([^)]+)\)/);
+    const parts = m ? m[1].split(',') : [];
+    const alpha = parts.length === 4 ? parseFloat(parts[3]) : (parts.length === 3 ? 1 : 0);
     return {
       rewind: !!rew, rewindDisabled: rew ? rew.disabled : null,
-      mini: !!mini, smaller: (fr && mr) ? mr.width < fr.width - 4 : null,
-      above: (fr && mr) ? mr.bottom <= fr.top - 4 : null,
-      sticky: bar ? getComputedStyle(bar).position === 'sticky' : null,
+      miniGone: !document.querySelector('[data-find-fab]') && !document.querySelector('.j-minifab'),
+      bubbleGone: !document.querySelector('.j-findbubble') && !document.querySelector('.j-bubble-scrim'),
+      opaque: alpha === 1,
+      sticky: stick ? getComputedStyle(stick).position === 'sticky' : null,
       gradient: after ? /gradient/.test(after.backgroundImage || '') : null,
+      drawerH: drawer ? drawer.getBoundingClientRect().height : null,
     };
   });
   ok('Find wears the corner rewind, grey while everything is clear',
     findChrome.rewind === true && findChrome.rewindDisabled === true);
-  ok('the mini fab floats above the +, smaller, and the bar is sticky with its gradient',
-    findChrome.mini === true && findChrome.smaller === true && findChrome.above === true
-    && findChrome.sticky === true && findChrome.gradient === true);
+  ok('the magnifier mini fab and its bubble are gone (round 4)',
+    findChrome.miniGone === true && findChrome.bubbleGone === true);
+  ok('the blue bar is OPAQUE, sticky with its gradient, the drawer tucked away',
+    findChrome.opaque === true && findChrome.sticky === true && findChrome.gradient === true
+    && findChrome.drawerH === 0);
   // scrolled, the bar holds the top of the page
   await page5.evaluate(() => { const el = document.querySelector('.j-screen .j-scroll'); el.scrollTop = 400; });
   await page5.waitForTimeout(400);
@@ -1497,35 +1607,154 @@ function ok(name, cond) {
     return Math.abs(bar.top - sc.top);
   });
   ok('scrolled down, the blue bar sticks to the top (' + Math.round(stuck) + 'px off)', stuck <= 2);
-  // the bubble: all the filters, a search field, and its own rewind
-  await page5.locator('[data-find-fab]').click();
+  await page5.evaluate(() => { const el = document.querySelector('.j-screen .j-scroll'); el.scrollTop = 0; });
+  await page5.waitForTimeout(300);
+  // THE FIRST DRAG OF A SESSION tracks and settles (arena catch, round 4:
+  // the drawer's own first re-measure tore the gesture down mid-drag and
+  // left it wedged between states, deaf to the release)
+  const barBox0 = await page5.locator('[data-find-bar]').boundingBox();
+  await page5.mouse.move(barBox0.x + barBox0.width / 2, barBox0.y + barBox0.height / 2);
+  await page5.mouse.down();
+  await page5.mouse.move(barBox0.x + barBox0.width / 2, barBox0.y + 100, { steps: 5 });
+  const firstMid = await page5.evaluate(() => document.querySelector('[data-find-drawer]').getBoundingClientRect().height);
+  await page5.mouse.move(barBox0.x + barBox0.width / 2, barBox0.y + 160, { steps: 4 });
+  const firstMid2 = await page5.evaluate(() => document.querySelector('[data-find-drawer]').getBoundingClientRect().height);
+  await page5.mouse.up();
   await page5.waitForTimeout(500);
-  const bubble = await page5.evaluate(() => {
-    const b = document.querySelector('.j-findbubble');
-    return { open: !!b, text: b ? b.innerText : '',
-      hasSearch: b ? !!b.querySelector('input[placeholder="Search your notes"]') : null,
-      rewind: b ? !!b.querySelector('[data-bubble-rewind]') : null };
+  const firstSettled = await page5.evaluate(() => document.querySelector('[data-find-drawer]').getBoundingClientRect().height);
+  ok('the FIRST drag of a session follows the whole way and settles (' + Math.round(firstMid) + ' to ' + Math.round(firstMid2) + ' to ' + Math.round(firstSettled) + 'px)',
+    firstMid > 30 && firstMid2 > firstMid + 20 && (firstSettled === 0 || firstSettled > 260));
+  // a tap on the bar untucks the drawer: search first, every filter group,
+  // its own rewind top right, and the Search / Cancel pills at the bottom
+  await page5.locator('[data-find-bar]').click();
+  await page5.waitForTimeout(500);
+  const drawer = await page5.evaluate(() => {
+    const d = document.querySelector('[data-find-drawer]');
+    return { h: d.getBoundingClientRect().height, text: d.innerText,
+      hasSearch: !!d.querySelector('input[placeholder="Search your notes"]'),
+      rewind: !!d.querySelector('[data-drawer-rewind]'),
+      pills: !!d.querySelector('[data-find-search]') && !!d.querySelector('[data-find-cancel]') };
   });
-  ok('the bubble carries the search and every filter group with its own rewind',
-    bubble.open && bubble.hasSearch === true && bubble.rewind === true
-    && bubble.text.includes('Themes') && bubble.text.includes('Mood') && bubble.text.includes('Where') && bubble.text.includes('When'));
-  await page5.locator('.j-findbubble .j-chip').first().click();
-  await page5.waitForTimeout(400);
-  const filtered = await page5.evaluate(() => ({
+  ok('tapping the bar untucks the drawer: search and every filter group with its own rewind',
+    drawer.h > 260 && drawer.hasSearch === true && drawer.rewind === true
+    && drawer.text.includes('Themes') && drawer.text.includes('Mood') && drawer.text.includes('Where') && drawer.text.includes('When'));
+  ok('the drawer ends in the Search and Cancel pills', drawer.pills === true);
+  // the pills stand clear of the tab bar and really take the tap, and the +
+  // FAB steps aside while the drawer is out (arena catches, round 4: at full
+  // height the pills sat behind the tab bar and a Search tap changed tabs,
+  // with the FAB floating over the chips)
+  const reach = await page5.evaluate(() => {
+    const pill = document.querySelector('[data-find-search]');
+    const tb = document.querySelector('.j-tabbar');
+    const r = pill.getBoundingClientRect();
+    const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    return { pillBottom: r.bottom, tabTop: tb.getBoundingClientRect().top,
+      hitIsPill: !!hit && (hit === pill || pill.contains(hit)),
+      fabs: document.querySelectorAll('.j-fab').length };
+  });
+  ok('the Search pill stands clear of the tab bar and takes the tap (' + Math.round(reach.pillBottom) + ' vs ' + Math.round(reach.tabTop) + ')',
+    reach.pillBottom <= reach.tabTop - 2 && reach.hitIsPill === true);
+  ok('the + FAB steps aside while the drawer is out', reach.fabs === 0);
+  // a pick in the drawer stays a DRAFT: nothing lands until Search
+  const notesBefore = await page5.evaluate(() =>
+    parseInt(([...document.querySelectorAll('.j-meta')].map(p => p.innerText).find(t => /notes? found/.test(t)) || '0'), 10));
+  await page5.locator('[data-find-drawer] .j-chip').first().click();
+  await page5.locator('[data-find-drawer] input[placeholder="Search your notes"]').fill('lunch');
+  await page5.waitForTimeout(300);
+  const staged = await page5.evaluate(() => ({
     bar: document.querySelector('[data-find-bar]').innerText,
+    drawerRewindOn: !document.querySelector('[data-drawer-rewind]').disabled,
+    pageRewindOff: document.querySelector('[data-find-rewind]').disabled,
+  }));
+  ok('a drawer pick stays a draft: the bar untouched, only the drawer rewind wakes',
+    !staged.bar.includes('Lunch hall') && staged.drawerRewindOn === true && staged.pageRewindOff === true);
+  // Search commits: the drawer tucks, the bar names it, the results filter
+  await page5.locator('[data-find-search]').click();
+  await page5.waitForTimeout(500);
+  const applied = await page5.evaluate(() => ({
+    bar: document.querySelector('[data-find-bar]').innerText,
+    drawerH: document.querySelector('[data-find-drawer]').getBoundingClientRect().height,
     rewindOn: !document.querySelector('[data-find-rewind]').disabled,
-    bubbleRewindOn: !document.querySelector('[data-bubble-rewind]').disabled,
+    notes: parseInt(([...document.querySelectorAll('.j-meta')].map(p => p.innerText).find(t => /notes? found/.test(t)) || '0'), 10),
+    fabs: document.querySelectorAll('.j-fab').length,
   }));
-  ok('picking a filter lands on the blue bar and wakes both rewinds',
-    filtered.bar.length > 10 && filtered.rewindOn === true && filtered.bubbleRewindOn === true);
-  await page5.locator('[data-bubble-rewind]').click();
-  await page5.waitForTimeout(400);
-  const cleared = await page5.evaluate(() => ({
+  ok('Search commits the draft: the drawer tucks, the bar names it, the results filter',
+    applied.bar.includes('Lunch hall') && applied.drawerH === 0 && applied.rewindOn === true
+    && applied.notes < notesBefore);
+  ok('the applied keyword leads the bar\'s label (arena catch: it was invisible)',
+    applied.bar.includes('lunch') && applied.bar.indexOf('lunch') < applied.bar.indexOf('Lunch hall'));
+  ok('the + FAB returns once the drawer tucks away', applied.fabs === 1);
+  // Cancel keeps the last search: a staged pick is dropped on the floor
+  await page5.locator('[data-find-bar]').click();
+  await page5.waitForTimeout(500);
+  await page5.locator('[data-find-drawer] .j-chip').nth(1).click();
+  await page5.waitForTimeout(250);
+  await page5.locator('[data-find-cancel]').click();
+  await page5.waitForTimeout(500);
+  const kept = await page5.evaluate(() => ({
     bar: document.querySelector('[data-find-bar]').innerText,
-    rewindOff: document.querySelector('[data-find-rewind]').disabled,
+    drawerH: document.querySelector('[data-find-drawer]').getBoundingClientRect().height,
   }));
-  ok('the bubble rewind clears everything and both rewinds grey out again',
-    cleared.bar.includes('all dates') && cleared.rewindOff === true);
+  ok('Cancel keeps the last search: the staged pick is dropped, the bar unchanged',
+    kept.bar.includes('Lunch hall') && !kept.bar.includes('Transitions') && kept.drawerH === 0);
+  // THE BAR IS THE HANDLE: drag it down and the drawer follows the finger;
+  // release past halfway settles open (the physics of Jotla)
+  const barBox = await page5.locator('[data-find-bar]').boundingBox();
+  await page5.mouse.move(barBox.x + barBox.width / 2, barBox.y + barBox.height / 2);
+  await page5.mouse.down();
+  await page5.mouse.move(barBox.x + barBox.width / 2, barBox.y + 130, { steps: 6 });
+  const midDrag = await page5.evaluate(() => document.querySelector('[data-find-drawer]').getBoundingClientRect().height);
+  await page5.mouse.move(barBox.x + barBox.width / 2, barBox.y + 430, { steps: 8 });
+  await page5.mouse.up();
+  await page5.waitForTimeout(500);
+  const draggedOpen = await page5.evaluate(() => document.querySelector('[data-find-drawer]').getBoundingClientRect().height);
+  ok('dragging the bar untucks the drawer with the finger (' + Math.round(midDrag) + ' to ' + Math.round(draggedOpen) + 'px)',
+    midDrag > 30 && midDrag < draggedOpen - 40 && draggedOpen > 260);
+  // a short nudge settles back to the nearest half; a long drag up tucks away
+  await page5.mouse.move(barBox.x + barBox.width / 2, barBox.y + barBox.height / 2);
+  await page5.mouse.down();
+  await page5.mouse.move(barBox.x + barBox.width / 2, barBox.y - 40, { steps: 4 });
+  await page5.mouse.up();
+  await page5.waitForTimeout(500);
+  const nudgedOpen = await page5.evaluate(() => document.querySelector('[data-find-drawer]').getBoundingClientRect().height);
+  ok('a short nudge settles back to open (nearest half)', Math.abs(nudgedOpen - draggedOpen) < 8);
+  await page5.mouse.move(barBox.x + barBox.width / 2, barBox.y + barBox.height / 2);
+  await page5.mouse.down();
+  await page5.mouse.move(barBox.x + barBox.width / 2, barBox.y - 430, { steps: 8 });
+  await page5.mouse.up();
+  await page5.waitForTimeout(500);
+  const draggedShut = await page5.evaluate(() => document.querySelector('[data-find-drawer]').getBoundingClientRect().height);
+  ok('a long drag up tucks the drawer away', draggedShut === 0);
+  // THE KEEP (round 4: "make it the same environment I left it"): a trip to
+  // the Menu and back loses nothing
+  await page5.getByText('Menu', { exact: true }).last().click();
+  await page5.waitForTimeout(500);
+  await page5.getByText('Find', { exact: true }).last().click();
+  await page5.waitForTimeout(600);
+  const keptBack = await page5.evaluate(() => ({
+    bar: document.querySelector('[data-find-bar]').innerText,
+    drawerH: document.querySelector('[data-find-drawer]').getBoundingClientRect().height,
+  }));
+  ok('leaving Find and returning keeps the search exactly as left (the keep)',
+    keptBack.bar.includes('Lunch hall') && keptBack.drawerH === 0);
+  // THE SCROLL PLACE SURVIVES A PUSH (arena catch, round 4: ~60ms after the
+  // result tap the detached scroller fired scroll(0) and clobbered the
+  // stashed place, so Back landed at the top)
+  await page5.evaluate(() => { const el = document.querySelector('.j-screen .j-scroll'); el.scrollTop = 500; el.dispatchEvent(new Event('scroll')); });
+  await page5.waitForTimeout(300);
+  const scrollStash = await page5.evaluate(() => {
+    const el = document.querySelector('.j-screen .j-scroll');
+    const top = el.scrollTop;
+    const card = [...el.querySelectorAll('.j-card.j-press')][0];
+    if (card) card.click();
+    return top;
+  });
+  await page5.waitForTimeout(700);
+  await page5.locator('button[aria-label="Back"]').first().click();
+  await page5.waitForTimeout(700);
+  const scrollBack = await page5.evaluate(() => document.querySelector('.j-screen .j-scroll').scrollTop);
+  ok('Back from a result lands where the list was left (' + scrollStash + ' to ' + scrollBack + ')',
+    scrollStash > 300 && Math.abs(scrollBack - scrollStash) <= 6);
 
   ok('no uncaught page errors across suite 9', errors5.length === 0);
   await ctx5.close();

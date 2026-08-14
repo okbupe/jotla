@@ -2199,7 +2199,7 @@ function App({
       position: 'absolute',
       inset: 0
     }
-  }, /*#__PURE__*/React.createElement(ScreenBoundary, null, window.__JOTLA_TEST_THROW ? /*#__PURE__*/React.createElement(CrashProbe, null) : screen))), isTab && !noChild && !(view.name === 'evidence' && view.ev && view.ev.tab === 'records') && /*#__PURE__*/React.createElement(React.Fragment, null, fabOpen && /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(ScreenBoundary, null, window.__JOTLA_TEST_THROW ? /*#__PURE__*/React.createElement(CrashProbe, null) : screen))), isTab && !noChild && !(view.name === 'evidence' && view.ev && view.ev.tab === 'records') && !(view.name === 'find' && view.findDrawer) && /*#__PURE__*/React.createElement(React.Fragment, null, fabOpen && /*#__PURE__*/React.createElement("div", {
     className: "j-dial-scrim",
     onClick: () => setFabOpen(false)
   }, /*#__PURE__*/React.createElement("div", {
