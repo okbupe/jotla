@@ -15,20 +15,26 @@ const THEME_TO_CAT = new Proxy({}, {
 // on purpose: a cold start begins clear. The drawer's draft and its open state
 // ride along too, so leaving mid-edit and coming back loses nothing ("make it
 // the same environment I left it").
-const FIND_KEEP = {};
+// ONE KEEP PER CHILD (founder, 14 Aug round 7 follow-up: "make the keeps per
+// child"): the modules hold maps keyed by profile, and each screen picks its
+// own child's keep at mount (screens remount on a profile switch, keyed in
+// the app shell). Session-lifetime as ever; a cold start begins clear.
+const FIND_KEEPS = {};
 const FIND_RANGE_DEFAULT = {
   preset: 'Any time',
   from: '',
   to: ''
 };
 // Documents keeps its place the same way (founder, 14 Aug round 7)
-const EV_KEEP = {};
+const EV_KEEPS = {};
 function FindScreen({
   nav,
   entries,
   view
 }) {
   const J = window.JOTLA;
+  // this child's own keep; every FIND_KEEP reference below reads and writes it
+  const FIND_KEEP = FIND_KEEPS[nav.profileId] || (FIND_KEEPS[nav.profileId] = {});
   const saved = FIND_KEEP;
   // APPLIED filters: what the blue bar names and the results obey.
   const [q, setQ] = useStateB(saved.q || '');
@@ -753,6 +759,8 @@ function EvidenceScreen({
   // reset anything") the keep also survives TAB SWITCHES, exactly like the
   // calendar's and Find's: EV_KEEP holds the session's state, and the
   // view-borne copy (a push's return trip) wins over it when both exist.
+  // this child's own keep; every EV_KEEP reference below reads and writes it
+  const EV_KEEP = EV_KEEPS[nav.profileId] || (EV_KEEPS[nav.profileId] = {});
   const saved = {
     ...EV_KEEP,
     ...(navView && navView.ev || {})

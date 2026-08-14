@@ -2823,6 +2823,42 @@ function ok(name, cond) {
   }));
   ok('Documents comes back on the sub-tab it was left on (' + JSON.stringify(evKeep18.onRecords) + ')', evKeep18.onRecords === true);
   ok('...at the scroll position it was left at (' + evKeep18.scrollY + 'px)', Math.abs(evKeep18.scrollY - 180) <= 6);
+  // THE KEEPS ARE PER CHILD (founder, 14 Aug round 7 follow-up): leave Sam's
+  // Documents deep on Day records, switch to Maria, and hers must start
+  // fresh; switch back and Sam's place must still be exact.
+  const goChild = async (name) => {
+    await page18.getByText('Menu', { exact: true }).last().click();
+    await page18.waitForTimeout(450);
+    await page18.locator('button[aria-label="Settings"]').first().click();
+    await page18.waitForTimeout(450);
+    await page18.getByText('Children', { exact: true }).first().click();
+    await page18.waitForTimeout(450);
+    await page18.getByText(name, { exact: true }).first().click();
+    await page18.waitForTimeout(600);
+    // the switch lands on the child's own page (no tab bar); back out to tabs
+    for (let i = 0; i < 3; i++) {
+      await page18.locator('button[aria-label="Back"]').first().click();
+      await page18.waitForTimeout(350);
+    }
+  };
+  await goChild('Maria');
+  await page18.getByText('Documents', { exact: true }).last().click();
+  await page18.waitForTimeout(600);
+  const mariaEv = await page18.evaluate(() => ({
+    scrollY: Math.round(document.querySelector('.j-screen .j-scroll').scrollTop),
+    onRecords: document.body.innerText.includes('dated entries'),
+  }));
+  ok('a switched child\'s Documents starts fresh, never on the last child\'s place',
+    mariaEv.scrollY === 0 && mariaEv.onRecords === false);
+  await goChild('Sam');
+  await page18.getByText('Documents', { exact: true }).last().click();
+  await page18.waitForTimeout(600);
+  const samEv = await page18.evaluate(() => ({
+    scrollY: Math.round(document.querySelector('.j-screen .j-scroll').scrollTop),
+    onRecords: document.body.innerText.includes('dated entries'),
+  }));
+  ok('...and the first child\'s Documents is still exactly as they left it (' + samEv.scrollY + 'px)',
+    samEv.onRecords === true && Math.abs(samEv.scrollY - 180) <= 6);
   await ctx18.close();
 
   await browser.close();

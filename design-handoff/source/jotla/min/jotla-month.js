@@ -249,8 +249,11 @@ const STREAM_LEAD = 480; // px from the end of the stream that triggers the next
 // how I left it always. I'll reset it myself if I must" - the rewind clock is
 // that reset). This keep lives at module level, above the screen, so switching
 // tabs, visiting Settings or changing the theme cannot lose the place; a cold
-// start begins fresh at today, on purpose.
-const CAL_KEEP = {};
+// start begins fresh at today, on purpose. ONE KEEP PER CHILD (founder, 14 Aug
+// round 7 follow-up): the module holds a map keyed by profile, the screen
+// picks its own child's keep at mount (screens remount on a profile switch,
+// keyed in the app shell), so each child's Month is exactly as it was left.
+const CAL_KEEPS = {};
 
 // The compressed calendar IS the week strip: the same grid, folded down to the
 // one row holding the anchor. A separate strip component was the first build
@@ -505,6 +508,8 @@ function MonthScreen({
   // note opened from the record comes Back to the page exactly as it was.
   const anchorDateOf = iso => J.parseISO(iso);
   const backTo = iso => Math.round((J.parseISO(J.TODAY_ISO) - J.parseISO(iso)) / 86400000);
+  // this child's own keep; every CAL_KEEP reference below reads and writes it
+  const CAL_KEEP = CAL_KEEPS[nav.profileId] || (CAL_KEEPS[nav.profileId] = {});
   const [t, setT] = React.useState(typeof CAL_KEEP.t === 'number' ? CAL_KEEP.t : 1);
   const [g, setG] = React.useState(typeof CAL_KEEP.g === 'number' ? CAL_KEEP.g : 1);
   const graphOpen = g > 0.5;
