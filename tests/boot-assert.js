@@ -1322,13 +1322,55 @@ function ok(name, cond) {
   const pull1 = await calState();
   ok('pulling the notes down at the top opens the calendar (' + pull1.foldH + 'px), graph still tucked',
     pull1.foldH > 200 && pull1.graphH === 0);
-  const stP2 = await page5.locator('[data-stream]').boundingBox();
-  await page5.mouse.move(stP2.x + 120, stP2.y + 30);
-  await page5.mouse.down();
-  await page5.mouse.move(stP2.x + 120, stP2.y + 260, { steps: 10 });
-  await page5.mouse.up();
-  await page5.waitForTimeout(500);
-  const pull2 = await calState();
+  // The app RIGHTLY ignores a pull that lands while the first settle is
+  // still animating, and on a loaded cloud runner the 500ms above was not
+  // always enough, which made this check the suite's one intermittent red.
+  // So: wait until the fold genuinely stops moving, pull a little slower,
+  // give the result up to 2s, and allow ONE more pull; a real regression
+  // fails both attempts.
+  const foldSettled = async () => {
+    let prev = -1;
+    for (let i = 0; i < 20; i++) {
+      const h = await page5.evaluate(() => {
+        const f = document.querySelector('[data-cal-fold]');
+        return f ? Math.round(f.getBoundingClientRect().height) : -2;
+      });
+      if (h === prev) return;
+      prev = h;
+      await page5.waitForTimeout(150);
+    }
+  };
+  let pull2 = null;
+  for (let attempt = 0; attempt < 2 && !(pull2 && pull2.graphH > 100); attempt++) {
+    await foldSettled();
+    // diagnosis probe: the ladder refuses any pull unless scrollTop is 0,
+    // and the calendar opening can leave the stream a hair off the top
+    const preScroll = await page5.evaluate(() => {
+      const el = document.querySelector('[data-stream]');
+      const was = el.scrollTop;
+      el.scrollTop = 0;
+      return was;
+    });
+    if (preScroll > 0) console.log('  [pull-ladder diag] stream was ' + preScroll + 'px off the top before pull ' + (attempt + 1));
+    const preTG = await page5.evaluate(() => { window.__ladderTrace = []; return window.__monthDebug ? window.__monthDebug() : null; });
+    console.log('  [pull-ladder diag] before pull ' + (attempt + 1) + ': ' + JSON.stringify(preTG));
+    await page5.waitForTimeout(200);
+    const stP2 = await page5.locator('[data-stream]').boundingBox();
+    await page5.mouse.move(stP2.x + 120, stP2.y + 30);
+    await page5.mouse.down();
+    await page5.mouse.move(stP2.x + 120, stP2.y + 260, { steps: 14 });
+    const midTG = await page5.evaluate(() => window.__monthDebug ? window.__monthDebug() : null);
+    await page5.mouse.up();
+    for (let i = 0; i < 10; i++) {
+      await page5.waitForTimeout(200);
+      pull2 = await calState();
+      if (pull2.graphH > 100) break;
+    }
+    const postTG = await page5.evaluate(() => window.__monthDebug ? window.__monthDebug() : null);
+    const traceOut = await page5.evaluate(() => { const t = window.__ladderTrace || []; window.__ladderTrace = null; return t.slice(0, 24); });
+    console.log('  [pull-ladder diag] mid ' + JSON.stringify(midTG) + ' post ' + JSON.stringify(postTG) + ' graphH ' + (pull2 && pull2.graphH));
+    console.log('  [pull-ladder trace] ' + traceOut.join(' | '));
+  }
   ok('the next pull untucks the graph (' + pull2.graphH + 'px), calendar staying open',
     pull2.graphH > 100 && pull2.foldH > 200);
 

@@ -745,6 +745,14 @@ function MonthScreen({
   // draggingRef (the 13 Aug latch lesson).
   const gRef = React.useRef(0);
   gRef.current = g;
+  // Test hook for the boot-and-assert suite only (the CrashProbe precedent):
+  // lets a probe read the live fold fractions when diagnosing a gesture,
+  // because heights alone cannot tell a stuck tween from a refused pull.
+  window.__monthDebug = () => ({
+    t: tRef.current,
+    g: gRef.current,
+    dragging: draggingRef.current
+  });
   const graphZoneRef = React.useRef(null);
   React.useEffect(() => {
     const el = graphZoneRef.current;
@@ -806,8 +814,16 @@ function MonthScreen({
     const el = streamRef.current;
     if (!el || !nav.plus) return undefined;
     let from = null;
+    // breadcrumbs land ONLY when the suite has armed window.__ladderTrace;
+    // in normal use this is a dead branch (test hook, CrashProbe precedent)
+    const trace = m => {
+      if (window.__ladderTrace) window.__ladderTrace.push(m);
+    };
     const down = ev => {
-      if (el.scrollTop > 0) return;
+      if (el.scrollTop > 0) {
+        trace('down-refused scrollTop=' + el.scrollTop);
+        return;
+      }
       from = {
         y: ev.clientY,
         t0: tRef.current,
@@ -816,19 +832,35 @@ function MonthScreen({
         spanT: Math.max(120, fullHRef.current - rowHRef.current),
         spanG: Math.max(120, graphHRef.current || 160)
       };
+      trace('down t0=' + from.t0.toFixed(3) + ' g0=' + from.g0.toFixed(3) + ' spanT=' + from.spanT.toFixed(1) + ' spanG=' + from.spanG.toFixed(1));
       draggingRef.current = true;
     };
     const move = ev => {
-      if (!from) return;
+      if (!from) {
+        trace('move-no-from');
+        return;
+      }
       const dy = ev.clientY - from.y;
       if (!from.engaged) {
         if (dy <= 0) {
+          trace('move-disarm dy=' + dy.toFixed(1));
           from = null;
           draggingRef.current = false;
           return;
         } // ordinary scrolling
         if (dy <= 4) return;
         from.engaged = true;
+        trace('engaged dy=' + dy.toFixed(1));
+        // CAPTURE, like every other gesture here (the one that did not, 14
+        // Aug round 9 catch): the pull's own first frame grows the pinned
+        // block and slides the record down, and without capture a MOUSE
+        // pointer is suddenly over the pinned area, the move stream stops,
+        // and the pull dies a few pixels in. Touch never showed it (touch
+        // captures implicitly); a desktop tester's mouse hit it every time
+        // the layout committed mid-pull.
+        try {
+          el.setPointerCapture(ev.pointerId);
+        } catch (e) {}
         // the pull owns the surface from here: a settle still in flight
         // stops where it is (arena catch, 14 Aug round 4)
         if (tweenRef.current) cancelAnimationFrame(tweenRef.current);
@@ -837,7 +869,11 @@ function MonthScreen({
       const tNext = Math.max(from.t0, Math.min(1, from.t0 + d / from.spanT));
       const usedT = (tNext - from.t0) * from.spanT;
       setT(tNext);
-      if (from.g0 < 1) setG(Math.max(from.g0, Math.min(1, from.g0 + Math.max(0, d - usedT) / from.spanG)));
+      if (from.g0 < 1) {
+        const gNext = Math.max(from.g0, Math.min(1, from.g0 + Math.max(0, d - usedT) / from.spanG));
+        trace('drive d=' + d.toFixed(1) + ' g=' + gNext.toFixed(3));
+        setG(gNext);
+      }
     };
     const up = () => {
       if (!from) return;
