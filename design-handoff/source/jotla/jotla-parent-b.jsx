@@ -4,24 +4,25 @@ const { useState: useStateB, useRef: useRefB, useEffect: useEffectB } = React;
 const THEME_TO_CAT = new Proxy({}, { get: (_, k) => k });
 
 // ---------------- Find ----------------
+// Find keeps its place and its filters across tabs and pushes, like the
+// calendar's keep (founder, 14 Aug); the rewind is the reset. Session-lifetime
+// on purpose: a cold start begins clear.
+const FIND_KEEP = {};
+
 function FindScreen({ nav, entries, view }) {
   const J = window.JOTLA;
-  // Back restores this page as it was: filters live on the view (nav.remember),
-  // and the scroll position is captured when a note is opened, restored on return.
-  const saved = (view && view.find) || {};
+  const saved = FIND_KEEP;
   const [q, setQ] = useStateB(saved.q || '');
-  // The search field hides behind the corner magnifier (founder, 7 Aug): the
-  // title row carries a bare search icon top right; tapping it summons the field.
-  const [showQ, setShowQ] = useStateB(!!saved.q);
   const [themes, setThemes] = useStateB(saved.themes || []);
   const [moods, setMoods] = useStateB(saved.moods || []);
   const [setting, setSetting] = useStateB(saved.setting || 'Any');
   const [range, setRange] = useStateB(saved.range || { preset: 'Any time', from: '', to: '' });
+  const [bubble, setBubble] = useStateB(false);   // the filter speech bubble
   const scrollRef = useRefB(null);
-  useEffectB(() => { nav.remember({ find: { q, themes, moods, setting, range } }); }, [q, themes, moods, setting, range]);
-  useEffectB(() => { if (saved.scrollY && scrollRef.current) scrollRef.current.scrollTop = saved.scrollY; }, []);
+  useEffectB(() => { Object.assign(FIND_KEEP, { q, themes, moods, setting, range }); }, [q, themes, moods, setting, range]);
+  useEffectB(() => { if (typeof saved.scrollY === 'number' && scrollRef.current) scrollRef.current.scrollTop = saved.scrollY; }, []);
   const openEntry = (id) => {
-    nav.remember({ find: { q, themes, moods, setting, range, scrollY: scrollRef.current ? scrollRef.current.scrollTop : 0 } });
+    FIND_KEEP.scrollY = scrollRef.current ? scrollRef.current.scrollTop : 0;
     nav.go('entry', { id });
   };
 
@@ -46,77 +47,83 @@ function FindScreen({ nav, entries, view }) {
     : (range.preset === 'Any time' ? 'all dates' : range.preset.toLowerCase());
   queryBits.push(rangeLabel);
 
+  // the rewind clears everything, and greys out when there is nothing to clear
+  const isClear = !q.trim() && themes.length === 0 && moods.length === 0
+    && setting === 'Any' && range.preset === 'Any time' && !range.from && !range.to;
+  const resetAll = () => {
+    setQ(''); setThemes([]); setMoods([]); setSetting('Any');
+    setRange({ preset: 'Any time', from: '', to: '' });
+  };
+
+  // Every filter lives in the bubble now (founder, 14 Aug): search first,
+  // then the Plus filter groups, or the locked card on free.
+  const filtersBody = (
+    <>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--card-2)', border: '1.5px solid var(--chip-border)',
+        borderRadius: 14, padding: '0 14px', height: 52, marginBottom: 14 }}>
+        <Icon name="search" size={20} color="var(--faint)" />
+        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search your notes"
+          style={{ flex: 1, border: 'none', outline: 'none', fontFamily: "'Outfit', system-ui", fontSize: 'calc(16px * var(--tscale, 1))', color: 'var(--ink)', background: 'transparent' }} />
+      </div>
+      {nav.plus ? (
+        <>
+          <SectionLabel>Themes</SectionLabel>
+          <div className="j-chiprow" style={{ marginBottom: 12 }}>
+            {J.FIND_THEMES.map(t => (
+              <button key={t} aria-pressed={themes.includes(t)} className={'j-chip' + (themes.includes(t) ? ' j-chip-on' : '')} onClick={() => toggle(setThemes)(t)}>{t}</button>
+            ))}
+          </div>
+          <SectionLabel>Mood</SectionLabel>
+          <div className="j-chiprow" style={{ marginBottom: 12 }}>
+            {J.FIND_MOODS.map(m => {
+              const on = moods.includes(m.key);
+              return (
+                <button key={m.key} aria-pressed={on} className={'j-chip' + (on ? ' j-chip-on' : '')} onClick={() => toggle(setMoods)(m.key)}>
+                  <MoodDot mood={m.key} size={11} /> {m.label}
+                </button>
+              );
+            })}
+          </div>
+          <SectionLabel>Where</SectionLabel>
+          <div className="j-chiprow" style={{ marginBottom: 12 }}>
+            {['Any', 'School', 'Home', 'Club'].map(s => (
+              <button key={s} aria-pressed={setting === s} className={'j-chip' + (setting === s ? ' j-chip-on' : '')} onClick={() => setSetting(s)}>{s}</button>
+            ))}
+          </div>
+          <SectionLabel>When</SectionLabel>
+          <div>
+            <DateRangeControl presets={['Any time', 'This week', 'Last 2 weeks', 'Custom']} value={range} onChange={setRange} />
+          </div>
+        </>
+      ) : (
+        <PlusLockedCard onClick={() => nav.go('unlock')} icon="filter"
+          title="Filters" text={<>Theme, mood, place and dates.<br />Keyword search is always free.</>} />
+      )}
+    </>
+  );
+
   return (
     <div className="j-screen">
-      <div className="j-scroll j-fade" ref={scrollRef}>
+      <div className="j-scroll j-fade" ref={scrollRef}
+        onScroll={() => { FIND_KEEP.scrollY = scrollRef.current ? scrollRef.current.scrollTop : 0; }}>
         <div className="j-pad" style={{ paddingTop: 10, paddingBottom: 120 }}>
-          {/* DECLUTTER (founder, 4 Aug 2026; mirrored from native FindScreen):
-              "Search across everything you have noted." is gone. The screen was
-              explaining itself four times over: a title reading Find, this line,
-              a magnifying glass, and the field's own "Search your notes"
-              placeholder, which is the one that survives because it sits inside
-              the thing it describes. */}
+          {/* the corner rewind clears the search and every filter (founder,
+              14 Aug: the magnifier moved down to the mini fab) */}
           <TabTitle title="Find" right={
-            <button className="j-iconbtn" aria-label="Search your notes" onClick={() => setShowQ(v => { if (v) setQ(''); return !v; })}>
-              <Icon name="search" size={22} color={showQ ? 'var(--blue)' : 'var(--muted)'} />
+            <button className="j-iconbtn" data-find-rewind disabled={isClear}
+              aria-label="Clear the search and filters" onClick={resetAll}
+              style={{ opacity: isClear ? 0.35 : 1, cursor: isClear ? 'default' : 'pointer' }}>
+              <Icon name="rewind" size={21} color={isClear ? 'var(--faint)' : 'var(--muted)'} />
             </button>} />
 
-          {/* the field appears when the corner magnifier is tapped */}
-          {showQ && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--card-2)', border: '1.5px solid var(--chip-border)',
-              borderRadius: 14, padding: '0 14px', height: 52, marginBottom: 16 }}>
-              <Icon name="search" size={20} color="var(--faint)" />
-              <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search your notes" autoFocus
-                style={{ flex: 1, border: 'none', outline: 'none', fontFamily: "'Outfit', system-ui", fontSize: 'calc(16px * var(--tscale, 1))', color: 'var(--ink)', background: 'transparent' }} />
-            </div>
-          )}
-
-          {/* Filters are the Plus half of Find; plain keyword search stays free. */}
-          {nav.plus ? (
-            <>
-              <SectionLabel>Themes</SectionLabel>
-              <div className="j-chiprow" style={{ marginBottom: 14 }}>
-                {J.FIND_THEMES.map(t => (
-                  <button key={t} aria-pressed={themes.includes(t)} className={'j-chip' + (themes.includes(t) ? ' j-chip-on' : '')} onClick={() => toggle(setThemes)(t)}>{t}</button>
-                ))}
-              </div>
-
-              <SectionLabel>Mood</SectionLabel>
-              <div className="j-chiprow" style={{ marginBottom: 14 }}>
-                {J.FIND_MOODS.map(m => {
-                  const on = moods.includes(m.key);
-                  return (
-                    <button key={m.key} aria-pressed={on} className={'j-chip' + (on ? ' j-chip-on' : '')} onClick={() => toggle(setMoods)(m.key)}>
-                      <MoodDot mood={m.key} size={11} /> {m.label}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <SectionLabel>Where</SectionLabel>
-              <div className="j-chiprow" style={{ marginBottom: 18 }}>
-                {['Any', 'School', 'Home', 'Club'].map(s => (
-                  <button key={s} aria-pressed={setting === s} className={'j-chip' + (setting === s ? ' j-chip-on' : '')} onClick={() => setSetting(s)}>{s}</button>
-                ))}
-              </div>
-
-              <SectionLabel>When</SectionLabel>
-              <div style={{ marginBottom: 18 }}>
-                <DateRangeControl presets={['Any time', 'This week', 'Last 2 weeks', 'Custom']} value={range} onChange={setRange} />
-              </div>
-            </>
-          ) : (
-            <PlusLockedCard onClick={() => nav.go('unlock')} style={{ marginBottom: 18 }} icon="filter"
-              title="Filters" text={<>Theme, mood, place and dates.<br />Keyword search is always free.</>} />
-          )}
-
-          {/* standout query line + results */}
-          <div className="j-card" style={{ padding: 14, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10,
-            background: 'var(--tint-blue)', border: 'none' }}>
+          {/* the blue bar, exactly as it was, now sticking to the top as the
+              results scroll under it, with a soft gradient below so a note
+              dissolves before it reaches the bar (founder, 14 Aug) */}
+          <div className="j-findbar" data-find-bar>
             <Icon name="filter" size={18} color="var(--blue)" />
             <p className="j-body" style={{ fontSize: 'calc(15px * var(--tscale, 1))', color: 'var(--blue)', fontWeight: 500 }}>{queryBits.join(', ')}</p>
           </div>
-          <p className="j-meta" style={{ marginBottom: 10 }}>{matched.length} {matched.length === 1 ? 'note' : 'notes'} found</p>
+          <p className="j-meta" style={{ margin: '12px 0 10px' }}>{matched.length} {matched.length === 1 ? 'note' : 'notes'} found</p>
 
           {matched.length === 0 ? (
             <div className="j-card" style={{ padding: 22, textAlign: 'center' }}>
@@ -129,6 +136,29 @@ function FindScreen({ nav, entries, view }) {
           )}
         </div>
       </div>
+
+      {/* the filter bubble and its mini fab (founder, 14 Aug): the magnifier
+          floats above the +, slightly smaller, in the filter bar's blue; the
+          bubble carries every filter with its own rewind top right */}
+      {bubble && (
+        <div className="j-bubble-scrim" onClick={() => setBubble(false)}>
+          <div className="j-findbubble" role="dialog" aria-label="Search and filters" onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <h2 className="j-h2">Filters</h2>
+              <button className="j-iconbtn" data-bubble-rewind disabled={isClear}
+                aria-label="Clear the search and filters" onClick={resetAll}
+                style={{ opacity: isClear ? 0.35 : 1, cursor: isClear ? 'default' : 'pointer' }}>
+                <Icon name="rewind" size={20} color={isClear ? 'var(--faint)' : 'var(--muted)'} />
+              </button>
+            </div>
+            {filtersBody}
+          </div>
+        </div>
+      )}
+      <button className="j-minifab" data-find-fab aria-label="Search and filters" aria-expanded={bubble}
+        onClick={() => setBubble(b => !b)}>
+        <Icon name="search" size={22} color="var(--blue)" />
+      </button>
     </div>
   );
 }
@@ -1555,11 +1585,17 @@ const FEEDBACK_HREF = 'mailto:hello@sen.help?subject=' + encodeURIComponent('Jot
 // A standalone menu row: one flat card per row, no trailing arrow (rows are
 // tappable as a whole, 6 Aug). `trailing` carries a live value, a toggle, a
 // count, or the gold crown.
+// ONE row height for the whole system (founder, 14 Aug: "make each option
+// height the same height as the tab"): a row without a sub-line used to sit
+// ~20px shorter than one with (Take the tour, Help, About, Backup...), so
+// every row and every sheet option now reserves the two-line height and
+// centres inside it.
+const ROW_MIN_H = 'calc(45px * var(--tscale, 1) + 28px)';
 function MRow({ icon, iconEl, title, sub, onClick, trailing, danger, style }) {
   return (
     <button className="j-card j-press" onClick={onClick} style={{ width: '100%', textAlign: 'left',
       cursor: onClick ? 'pointer' : 'default', padding: '14px 16px', display: 'flex', gap: 14,
-      alignItems: 'center', marginBottom: 10, ...(style || {}) }}>
+      minHeight: ROW_MIN_H, alignItems: 'center', marginBottom: 10, ...(style || {}) }}>
       {iconEl || (icon ? <Icon name={icon} size={22} color={danger ? 'var(--red)' : 'var(--blue)'} style={{ flexShrink: 0 }} /> : null)}
       <span style={{ flex: 1, minWidth: 0 }}>
         <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontWeight: 500,
@@ -1582,7 +1618,9 @@ function RadioSheet({ title, subtitle, options, activeKey, onPick, onClose, foot
         {options.map((o, i) => (
           <button key={o.key} onClick={() => onPick(o.key)} className="j-press" role="radio" aria-checked={activeKey === o.key}
             aria-label={o.label} style={{ width: '100%', display: 'flex',
-            alignItems: 'center', gap: 12, padding: '13px 2px', background: 'none', border: 'none',
+            // sheet options stand as tall as the settings rows they came from
+            // (founder, 14 Aug: "the options height look thinner")
+            minHeight: ROW_MIN_H, alignItems: 'center', gap: 12, padding: '13px 2px', background: 'none', border: 'none',
             borderBottom: i < options.length - 1 ? '1px solid var(--line)' : 'none', cursor: 'pointer', textAlign: 'left' }}>
             <span style={{ width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
               border: '2px solid ' + (activeKey === o.key ? 'var(--blue)' : 'var(--faint)'),
@@ -1684,11 +1722,12 @@ function SettingsScreen({ nav, profile, entries = [], docs = [], binCount = 0 })
 // ---------------- SETTINGS (behind the cog) ----------------
 function AppSettingsScreen({ nav }) {
   const J = window.JOTLA;
-  const [sheet, setSheet] = useStateB(null); // null | 'theme' | 'size' | 'reminder'
+  const [sheet, setSheet] = useStateB(null); // null | 'theme' | 'size' | 'reminder' | 'weekstart'
   const [customTime, setCustomTime] = useStateB('20:00');
   const [remCustom, setRemCustom] = useStateB(false);
   const themeLabel = nav.theme === 'system' ? 'System' : (nav.theme === 'dark' ? 'Dark' : 'Light');
   const sizeLabel = ({ '0.9': 'Small', '1': 'Standard', '1.12': 'Large', '1.25': 'Extra large' })[String(nav.tscale)] || 'Standard';
+  const weekStartLabel = J.DOW_LONG[typeof nav.weekStart === 'number' ? nav.weekStart : 1];
   const kids = (nav.profiles || []).map(p => p.name).join(', ');
   return (
     <div className="j-screen">
@@ -1706,6 +1745,11 @@ function AppSettingsScreen({ nav }) {
           {/* Emojis (founder, 9 Aug): a full page of real emoji packs, Bold
               free, Sticker on Plus (crown gate on the page itself) */}
           <MRow iconEl={<Face mood="happy" size={24} />} title="Emojis" sub={FACE_PACK_LABEL(nav.faceStyle)} onClick={() => nav.go('moodstyle')} />
+
+          <SectionLabel>Calendar</SectionLabel>
+          {/* the week starts where the parent says (founder, 14 Aug); every
+              calendar surface follows through J.weekLead / J.dowLabels */}
+          <MRow icon="calendar" title="Start of the week" sub={weekStartLabel} onClick={() => setSheet('weekstart')} />
 
           <SectionLabel>Privacy</SectionLabel>
           <MRow icon="lock" title="App lock" sub={nav.appLock && nav.appLock.on ? 'On' : 'Off'} onClick={() => nav.go('applock')} />
@@ -1751,6 +1795,12 @@ function AppSettingsScreen({ nav }) {
             { key: '1.25', label: 'Extra large', size: '19.5px' },
           ]}
           onPick={(k) => { nav.setTscale(parseFloat(k)); setSheet(null); }} />
+      )}
+      {sheet === 'weekstart' && (
+        <RadioSheet title="Start of the week" activeKey={String(typeof nav.weekStart === 'number' ? nav.weekStart : 1)}
+          onClose={() => setSheet(null)}
+          options={[1, 2, 3, 4, 5, 6, 0].map(d => ({ key: String(d), label: J.DOW_LONG[d] }))}
+          onPick={(k) => { nav.setWeekStart(Number(k)); setSheet(null); }} />
       )}
       {sheet === 'reminder' && (
         <RadioSheet title="Daily reminder" subtitle="A gentle nudge to write the day down."

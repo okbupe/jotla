@@ -128,6 +128,13 @@ function PatternsLockedPreview({ onOpen }) {
 const STREAM_PAGE = 21;   // days paged in at a time
 const STREAM_LEAD = 480;  // px from the end of the stream that triggers the next page
 
+// THE MONTH TAB COMES BACK EXACTLY AS IT WAS LEFT (founder, 14 Aug: "let it be
+// how I left it always. I'll reset it myself if I must" - the rewind clock is
+// that reset). This keep lives at module level, above the screen, so switching
+// tabs, visiting Settings or changing the theme cannot lose the place; a cold
+// start begins fresh at today, on purpose.
+const CAL_KEEP = {};
+
 // The compressed calendar IS the week strip: the same grid, folded down to the
 // one row holding the anchor. A separate strip component was the first build
 // and it is gone, because two components cannot stretch into each other while
@@ -185,27 +192,34 @@ function MonthScreen({ nav, entries, view }) {
   );
 
   // Month metadata + calendar cells for any offset from the current month.
-  // Always exactly six week rows (42 cells), whatever the month's shape: the
-  // tail fills with the same blanks as the lead-in, so the calendar card
-  // never resizes and nothing below it ever moves when the month changes
-  // (12 Jul 2026).
+  // Always exactly six week rows (42 cells), whatever the month's shape, so
+  // the calendar card never resizes and nothing below it ever moves when the
+  // month changes (12 Jul 2026). The lead-in and tail hold the neighbouring
+  // months' real days now (founder, 14 Aug): on Plus they render FADED, and
+  // tapping one hands the selection to that month; on free they stay the
+  // blanks they have always been (the 11 Aug lock). The first column follows
+  // the week-start setting.
   const monthMeta = (off) => {
     const shown = new Date(today.getFullYear(), today.getMonth() + off, 1);
     const year = shown.getFullYear();
     const month = shown.getMonth(); // 0-based
     const isCurrent = off === 0;
-    const todayNum = isCurrent ? today.getDate() : 99; // no today ring or future dimming off the current month
     const canBack = year * 12 + month > epochMonthIndex;
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const firstDow = (new Date(year, month, 1).getDay() + 6) % 7; // Monday-first offset
-    const cells = [];
-    for (let i = 0; i < firstDow; i++) cells.push(null);
-    for (let d = 1; d <= daysInMonth; d++) {
-      const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const firstDow = J.weekLead(shown);
+    const pad2 = n => String(n).padStart(2, '0');
+    const cellOf = (dt, out) => {
+      const iso = `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}`;
       const dayEntries = entries.filter(e => e.date === iso);
-      cells.push({ d, iso, mood: J.dayMood(dayEntries), count: dayEntries.length, future: d > todayNum, isToday: d === todayNum });
-    }
-    while (cells.length < 42) cells.push(null);
+      return { d: dt.getDate(), iso, out, m: dt.getMonth(), y: dt.getFullYear(),
+        mood: J.dayMood(dayEntries), count: dayEntries.length,
+        future: iso > J.TODAY_ISO, isToday: iso === J.TODAY_ISO };
+    };
+    const cells = [];
+    for (let i = firstDow - 1; i >= 0; i--) cells.push(cellOf(new Date(year, month, -i), true));
+    for (let d = 1; d <= daysInMonth; d++) cells.push(cellOf(new Date(year, month, d), false));
+    let nx = 1;
+    while (cells.length < 42) { cells.push(cellOf(new Date(year, month + 1, nx), true)); nx++; }
     return { year, month, isCurrent, canBack, cells };
   };
   const cur = monthMeta(offset);
@@ -295,7 +309,7 @@ function MonthScreen({ nav, entries, view }) {
       </button>
     );
   };
-  const dows = J.DOW_MON; // Mon Tue Wed Thu Fri Sat Sun
+  const dows = J.dowLabels(); // rotated to the week-start setting
 
   // ---- THE ONE SURFACE (Plus; rebuilt to the founder's 14 Aug correction) ----
   // There is no separate advanced mode any more. The Plus Month tab is always
@@ -312,17 +326,20 @@ function MonthScreen({ nav, entries, view }) {
   // note opened from the record comes Back to the page exactly as it was.
   const anchorDateOf = (iso) => J.parseISO(iso);
   const backTo = (iso) => Math.round((J.parseISO(J.TODAY_ISO) - J.parseISO(iso)) / 86400000);
-  const [t, setT] = React.useState(view && typeof view.calT === 'boolean' ? (view.calT ? 1 : 0) : 1);
-  const [g, setG] = React.useState(view && typeof view.calG === 'boolean' ? (view.calG ? 1 : 0) : 1);
+  const [t, setT] = React.useState(typeof CAL_KEEP.t === 'number' ? CAL_KEEP.t : 1);
+  const [g, setG] = React.useState(typeof CAL_KEEP.g === 'number' ? CAL_KEEP.g : 1);
   const graphOpen = g > 0.5;
   const calOpen = t > 0.5;
-  const [anchorISO, setAnchorISO] = React.useState(view && view.calAnchor ? view.calAnchor : J.TODAY_ISO);
-  const [dayCount, setDayCount] = React.useState(() => (view && view.calAnchor
-    ? Math.max(STREAM_PAGE, backTo(view.calAnchor) + 2 + STREAM_PAGE) : STREAM_PAGE));
+  const [anchorISO, setAnchorISO] = React.useState(CAL_KEEP.anchor || J.TODAY_ISO);
+  const [dayCount, setDayCount] = React.useState(() => Math.max(
+    CAL_KEEP.dayCount || 0,
+    CAL_KEEP.anchor ? Math.max(STREAM_PAGE, backTo(CAL_KEEP.anchor) + 2 + STREAM_PAGE) : STREAM_PAGE));
   const streamRef = React.useRef(null);
   const dayEls = React.useRef({});
   const spyLock = React.useRef(0);      // a scroll WE caused must not feed back into the strip
-  const pendingScroll = React.useRef(view && view.calAnchor ? view.calAnchor : null);
+  const pendingScroll = React.useRef(CAL_KEEP.anchor || null);
+  // an exact pixel restore beats an anchor-top restore when coming back
+  const pendingRestoreTop = React.useRef(typeof CAL_KEEP.scrollTop === 'number' ? CAL_KEEP.scrollTop : null);
   const anchorRef = React.useRef(J.TODAY_ISO);
   anchorRef.current = anchorISO;
 
@@ -346,6 +363,7 @@ function MonthScreen({ nav, entries, view }) {
     if (back + 2 > dayCount) setDayCount(back + 2 + STREAM_PAGE);
     setAnchorISO(iso);
     spyLock.current = Date.now() + 600;
+    pendingRestoreTop.current = null;   // a deliberate jump outranks a pixel restore
     pendingScroll.current = iso;
   };
   // runs after every render, so a date that needed paging in first still lands
@@ -354,7 +372,11 @@ function MonthScreen({ nav, entries, view }) {
     if (!iso) return;
     const node = dayEls.current[iso];
     if (!node || !streamRef.current) return;
-    streamRef.current.scrollTop = Math.max(0, node.offsetTop - 6);
+    // coming back to the tab restores the exact pixel, not just the day
+    streamRef.current.scrollTop = pendingRestoreTop.current !== null
+      ? pendingRestoreTop.current
+      : Math.max(0, node.offsetTop - 6);
+    pendingRestoreTop.current = null;
     pendingScroll.current = null;
     spyLock.current = Date.now() + 400;
   });
@@ -369,6 +391,7 @@ function MonthScreen({ nav, entries, view }) {
     // is live.
     const moved = Math.abs(el.scrollTop - lastTop.current);
     lastTop.current = el.scrollTop;
+    CAL_KEEP.scrollTop = el.scrollTop;   // the keep follows every scroll
     if (draggingRef.current || moved < 3) return;
     if (!atEpoch && el.scrollTop + el.clientHeight > el.scrollHeight - STREAM_LEAD) {
       setDayCount(c => c + STREAM_PAGE);
@@ -419,7 +442,7 @@ function MonthScreen({ nav, entries, view }) {
   const fullH = rowH ? rowH * 6 + GAP * 5 : 0;
   const weekRow = (() => {
     const first = new Date(anchorDateOf(anchorISO).getFullYear(), anchorDateOf(anchorISO).getMonth(), 1);
-    const lead = (first.getDay() + 6) % 7;
+    const lead = J.weekLead(first);
     return Math.floor((lead + anchorDateOf(anchorISO).getDate() - 1) / 7);
   })();
 
@@ -482,12 +505,15 @@ function MonthScreen({ nav, entries, view }) {
     };
   }, [nav.plus, fullH, rowH]);
 
-  // Stash the state on the view so Back restores the page AS IT WAS.
+  // Stash the state in the keep so the tab comes back AS IT WAS from
+  // anywhere: a pushed note, another tab, Settings, a theme change.
   React.useEffect(() => {
     if (!nav.plus) return;
-    if (view && view.calT === calOpen && view.calG === graphOpen && view.calAnchor === anchorISO) return;
-    nav.remember({ calT: calOpen, calG: graphOpen, calAnchor: anchorISO });
-  }, [calOpen, graphOpen, anchorISO]);
+    CAL_KEEP.t = calOpen ? 1 : 0;
+    CAL_KEEP.g = graphOpen ? 1 : 0;
+    CAL_KEEP.anchor = anchorISO;
+    CAL_KEEP.dayCount = dayCount;
+  }, [calOpen, graphOpen, anchorISO, dayCount]);
 
   // THE GRAPH SWIPE (founder, 14 Aug): swiping the graph up begins to tuck it
   // behind the calendar WHILE the calendar compresses, both tracking the one
@@ -590,6 +616,38 @@ function MonthScreen({ nav, entries, view }) {
     };
   }, [nav.plus, fullH, rowH, graphH]);
 
+  // COMPRESSED, THE STRIP PAGES WEEK BY WEEK (founder, 14 Aug): a horizontal
+  // swipe moves the record seven days, clamped to the epoch and today, and
+  // the record follows. The month pager underneath is parked and silent while
+  // the calendar is folded (its overflow goes hidden), so the gesture is ours
+  // and a swipe can never jump a whole month from the strip.
+  React.useEffect(() => {
+    const el = foldRef.current;
+    if (!el || !nav.plus) return undefined;
+    let from = null;
+    const down = (ev) => { if (tRef.current > 0.5) return; from = { x: ev.clientX, y: ev.clientY, done: false }; };
+    const move = (ev) => {
+      if (!from || from.done) return;
+      const dx = ev.clientX - from.x, dy = ev.clientY - from.y;
+      if (Math.abs(dx) < 44 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
+      from.done = true;
+      const dir = dx < 0 ? 1 : -1;   // swiping left walks forward in time
+      let iso = J.isoShift(anchorRef.current, dir * 7);
+      if (iso > J.TODAY_ISO) iso = J.TODAY_ISO;
+      if (iso < window.MIN_LOG_DAY) iso = window.MIN_LOG_DAY;
+      if (iso !== anchorRef.current) scrollToDate(iso);
+    };
+    const up = () => { from = null; };
+    el.addEventListener('pointerdown', down);
+    el.addEventListener('pointermove', move);
+    el.addEventListener('pointerup', up);
+    el.addEventListener('pointercancel', up);
+    return () => {
+      el.removeEventListener('pointerdown', down); el.removeEventListener('pointermove', move);
+      el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up);
+    };
+  }, [nav.plus]);
+
   // THE PAGER MUST BE RE-PARKED whenever the shown offset moves under it
   // programmatically (11 Aug bug: a rebuilt scroller starts at panel zero,
   // September 2019, while the title says 2026).
@@ -654,12 +712,25 @@ function MonthScreen({ nav, entries, view }) {
   const rewindBtn = nav.plus ? (
     <button className="j-iconbtn" data-rewind disabled={atDefault}
       aria-label="Back to today" onClick={jumpToToday}
-      style={{ opacity: atDefault ? 0.35 : 1, cursor: atDefault ? 'default' : 'pointer' }}>
+      // snugged to the graph icon so the pair reads as one control group
+      // (founder, 14 Aug: "it feels isolated on its own")
+      style={{ opacity: atDefault ? 0.35 : 1, cursor: atDefault ? 'default' : 'pointer', marginRight: -14 }}>
       <Icon name="rewind" size={21} color={atDefault ? 'var(--faint)' : 'var(--muted)'} />
     </button>
   ) : null;
-  // on Plus a calendar tap moves the record; on free it opens the day
-  const pickDay = (iso) => (nav.plus ? scrollToDate(iso) : nav.go('day', { date: iso }));
+  // on Plus a calendar tap moves the record; on free it opens the day.
+  // Tapping a FADED neighbour day hands the month over (founder, 14 Aug:
+  // "until a date on that month is picked"): the pager pages to that month,
+  // its days go full, and the month just left fades in its lead and tail.
+  const pickDay = (iso, out) => {
+    if (!nav.plus) { nav.go('day', { date: iso }); return; }
+    if (out) {
+      const d = J.parseISO(iso);
+      const off = (d.getFullYear() * 12 + d.getMonth()) - (today.getFullYear() * 12 + today.getMonth());
+      adopt(Math.max(minOffset, Math.min(0, off)));
+    }
+    scrollToDate(iso);
+  };
 
   const dowRow = (
     <div className="j-caldows">
@@ -669,7 +740,11 @@ function MonthScreen({ nav, entries, view }) {
   const pagerEl = (
         <div ref={pagerRef} onScroll={onPagerScroll} className="j-pager" {...pagerKeyProps(pagerRef, 'Calendar months')}
           style={{ display: 'flex',
-          overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch', outline: 'none' }}>
+          // folded on Plus, the native month swipe is parked: the strip pages
+          // week by week through its own gesture instead (founder, 14 Aug)
+          overflowX: (nav.plus && !calOpen) ? 'hidden' : 'auto',
+          touchAction: (nav.plus && !calOpen) ? 'none' : undefined,
+          overflowY: 'hidden', WebkitOverflowScrolling: 'touch', outline: 'none' }}>
           {monthOffsets.map(off => {
             // Materialise cells only near the shown month; the far panels
             // stay as fixed-size placeholders (they stretch to the row's
@@ -682,7 +757,8 @@ function MonthScreen({ nav, entries, view }) {
               <div key={off} style={{ flex: '0 0 100%', width: '100%', scrollSnapAlign: 'start',
                 display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6, alignContent: 'start' }}>
                 {m.cells.map((c, idx) => {
-                  if (!c) return <div key={'blank-' + idx} style={{ aspectRatio: '1 / 1' }} />;
+                  // free keeps the blanks it has always had (the 11 Aug lock)
+                  if (c.out && !nav.plus) return <div key={'blank-' + idx} style={{ aspectRatio: '1 / 1' }} />;
                   // On Plus the day being read wears the accent, and it travels
                   // with the record as the parent scrolls. The founder's 14 Aug
                   // styling: a THIN stroke ring and the number in blue, nothing
@@ -694,17 +770,21 @@ function MonthScreen({ nav, entries, view }) {
                   // not (12 Jul 2026); only future days stay inert.
                   const tappable = !c.future;
                   return (
-                    <button key={c.d} onClick={() => tappable && pickDay(c.iso)}
+                    <button key={c.iso} onClick={() => tappable && pickDay(c.iso, c.out)}
                       className={tappable ? 'j-press' : ''} disabled={!tappable}
                       data-anchor={isAnchor ? 'true' : undefined}
+                      data-out={c.out ? 'true' : undefined}
                       aria-label={c.future
-                        ? `${c.d} ${J.MONTH_NAMES[m.month]} ${m.year}, in the future`
-                        : `${c.d} ${J.MONTH_NAMES[m.month]} ${m.year}, ${c.count > 0 ? c.count + (c.count === 1 ? ' note' : ' notes') : 'no note'}`}
+                        ? `${c.d} ${J.MONTH_NAMES[c.m]} ${c.y}, in the future`
+                        : `${c.d} ${J.MONTH_NAMES[c.m]} ${c.y}, ${c.count > 0 ? c.count + (c.count === 1 ? ' note' : ' notes') : 'no note'}`}
                       style={{ aspectRatio: '1 / 1', borderRadius: '50%', cursor: tappable ? 'pointer' : 'default',
                         border: 'none',
                         boxShadow: c.isToday ? 'inset 0 0 0 1.5px var(--blue)' : (isAnchor ? 'inset 0 0 0 1px var(--blue)' : 'none'),
                         background: tint, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3,
-                        opacity: c.future ? 0.55 : 1 }}>
+                        // a neighbouring month's day is visible but clearly not
+                        // the month being read (founder, 14 Aug: "not completely
+                        // but enough to notice")
+                        opacity: c.out ? 0.38 : (c.future ? 0.55 : 1) }}>
                       <span style={{ fontFamily: "'Outfit', system-ui", fontWeight: c.isToday ? 600 : 500, fontSize: 'calc(15px * var(--tscale, 1))', color: (c.isToday || isAnchor) ? 'var(--blue)' : ink }}>{c.d}</span>
                       {c.mood && <MoodDot mood={c.mood} size={6} />}
                     </button>

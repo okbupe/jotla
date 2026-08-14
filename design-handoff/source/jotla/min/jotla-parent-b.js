@@ -10,19 +10,18 @@ const THEME_TO_CAT = new Proxy({}, {
 });
 
 // ---------------- Find ----------------
+// Find keeps its place and its filters across tabs and pushes, like the
+// calendar's keep (founder, 14 Aug); the rewind is the reset. Session-lifetime
+// on purpose: a cold start begins clear.
+const FIND_KEEP = {};
 function FindScreen({
   nav,
   entries,
   view
 }) {
   const J = window.JOTLA;
-  // Back restores this page as it was: filters live on the view (nav.remember),
-  // and the scroll position is captured when a note is opened, restored on return.
-  const saved = view && view.find || {};
+  const saved = FIND_KEEP;
   const [q, setQ] = useStateB(saved.q || '');
-  // The search field hides behind the corner magnifier (founder, 7 Aug): the
-  // title row carries a bare search icon top right; tapping it summons the field.
-  const [showQ, setShowQ] = useStateB(!!saved.q);
   const [themes, setThemes] = useStateB(saved.themes || []);
   const [moods, setMoods] = useStateB(saved.moods || []);
   const [setting, setSetting] = useStateB(saved.setting || 'Any');
@@ -31,32 +30,22 @@ function FindScreen({
     from: '',
     to: ''
   });
+  const [bubble, setBubble] = useStateB(false); // the filter speech bubble
   const scrollRef = useRefB(null);
   useEffectB(() => {
-    nav.remember({
-      find: {
-        q,
-        themes,
-        moods,
-        setting,
-        range
-      }
+    Object.assign(FIND_KEEP, {
+      q,
+      themes,
+      moods,
+      setting,
+      range
     });
   }, [q, themes, moods, setting, range]);
   useEffectB(() => {
-    if (saved.scrollY && scrollRef.current) scrollRef.current.scrollTop = saved.scrollY;
+    if (typeof saved.scrollY === 'number' && scrollRef.current) scrollRef.current.scrollTop = saved.scrollY;
   }, []);
   const openEntry = id => {
-    nav.remember({
-      find: {
-        q,
-        themes,
-        moods,
-        setting,
-        range,
-        scrollY: scrollRef.current ? scrollRef.current.scrollTop : 0
-      }
-    });
+    FIND_KEEP.scrollY = scrollRef.current ? scrollRef.current.scrollTop : 0;
     nav.go('entry', {
       id
     });
@@ -77,32 +66,24 @@ function FindScreen({
   if (setting !== 'Any') queryBits.push(setting);
   const rangeLabel = range.preset === 'Custom' ? (range.from ? J.fmtShort(range.from) : 'start') + ' to ' + (range.to ? J.fmtShort(range.to) : 'today') : range.preset === 'Any time' ? 'all dates' : range.preset.toLowerCase();
   queryBits.push(rangeLabel);
-  return /*#__PURE__*/React.createElement("div", {
-    className: "j-screen"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "j-scroll j-fade",
-    ref: scrollRef
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "j-pad",
-    style: {
-      paddingTop: 10,
-      paddingBottom: 120
-    }
-  }, /*#__PURE__*/React.createElement(TabTitle, {
-    title: "Find",
-    right: /*#__PURE__*/React.createElement("button", {
-      className: "j-iconbtn",
-      "aria-label": "Search your notes",
-      onClick: () => setShowQ(v => {
-        if (v) setQ('');
-        return !v;
-      })
-    }, /*#__PURE__*/React.createElement(Icon, {
-      name: "search",
-      size: 22,
-      color: showQ ? 'var(--blue)' : 'var(--muted)'
-    }))
-  }), showQ && /*#__PURE__*/React.createElement("div", {
+
+  // the rewind clears everything, and greys out when there is nothing to clear
+  const isClear = !q.trim() && themes.length === 0 && moods.length === 0 && setting === 'Any' && range.preset === 'Any time' && !range.from && !range.to;
+  const resetAll = () => {
+    setQ('');
+    setThemes([]);
+    setMoods([]);
+    setSetting('Any');
+    setRange({
+      preset: 'Any time',
+      from: '',
+      to: ''
+    });
+  };
+
+  // Every filter lives in the bubble now (founder, 14 Aug): search first,
+  // then the Plus filter groups, or the locked card on free.
+  const filtersBody = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       alignItems: 'center',
@@ -112,7 +93,7 @@ function FindScreen({
       borderRadius: 14,
       padding: '0 14px',
       height: 52,
-      marginBottom: 16
+      marginBottom: 14
     }
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "search",
@@ -122,7 +103,6 @@ function FindScreen({
     value: q,
     onChange: e => setQ(e.target.value),
     placeholder: "Search your notes",
-    autoFocus: true,
     style: {
       flex: 1,
       border: 'none',
@@ -135,7 +115,7 @@ function FindScreen({
   })), nav.plus ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SectionLabel, null, "Themes"), /*#__PURE__*/React.createElement("div", {
     className: "j-chiprow",
     style: {
-      marginBottom: 14
+      marginBottom: 12
     }
   }, J.FIND_THEMES.map(t => /*#__PURE__*/React.createElement("button", {
     key: t,
@@ -145,7 +125,7 @@ function FindScreen({
   }, t))), /*#__PURE__*/React.createElement(SectionLabel, null, "Mood"), /*#__PURE__*/React.createElement("div", {
     className: "j-chiprow",
     style: {
-      marginBottom: 14
+      marginBottom: 12
     }
   }, J.FIND_MOODS.map(m => {
     const on = moods.includes(m.key);
@@ -161,40 +141,57 @@ function FindScreen({
   })), /*#__PURE__*/React.createElement(SectionLabel, null, "Where"), /*#__PURE__*/React.createElement("div", {
     className: "j-chiprow",
     style: {
-      marginBottom: 18
+      marginBottom: 12
     }
   }, ['Any', 'School', 'Home', 'Club'].map(s => /*#__PURE__*/React.createElement("button", {
     key: s,
     "aria-pressed": setting === s,
     className: 'j-chip' + (setting === s ? ' j-chip-on' : ''),
     onClick: () => setSetting(s)
-  }, s))), /*#__PURE__*/React.createElement(SectionLabel, null, "When"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginBottom: 18
-    }
-  }, /*#__PURE__*/React.createElement(DateRangeControl, {
+  }, s))), /*#__PURE__*/React.createElement(SectionLabel, null, "When"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(DateRangeControl, {
     presets: ['Any time', 'This week', 'Last 2 weeks', 'Custom'],
     value: range,
     onChange: setRange
   }))) : /*#__PURE__*/React.createElement(PlusLockedCard, {
     onClick: () => nav.go('unlock'),
-    style: {
-      marginBottom: 18
-    },
     icon: "filter",
     title: "Filters",
     text: /*#__PURE__*/React.createElement(React.Fragment, null, "Theme, mood, place and dates.", /*#__PURE__*/React.createElement("br", null), "Keyword search is always free.")
-  }), /*#__PURE__*/React.createElement("div", {
-    className: "j-card",
-    style: {
-      padding: 14,
-      marginBottom: 14,
-      display: 'flex',
-      alignItems: 'center',
-      gap: 10,
-      background: 'var(--tint-blue)',
-      border: 'none'
+  }));
+  return /*#__PURE__*/React.createElement("div", {
+    className: "j-screen"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-scroll j-fade",
+    ref: scrollRef,
+    onScroll: () => {
+      FIND_KEEP.scrollY = scrollRef.current ? scrollRef.current.scrollTop : 0;
     }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-pad",
+    style: {
+      paddingTop: 10,
+      paddingBottom: 120
+    }
+  }, /*#__PURE__*/React.createElement(TabTitle, {
+    title: "Find",
+    right: /*#__PURE__*/React.createElement("button", {
+      className: "j-iconbtn",
+      "data-find-rewind": true,
+      disabled: isClear,
+      "aria-label": "Clear the search and filters",
+      onClick: resetAll,
+      style: {
+        opacity: isClear ? 0.35 : 1,
+        cursor: isClear ? 'default' : 'pointer'
+      }
+    }, /*#__PURE__*/React.createElement(Icon, {
+      name: "rewind",
+      size: 21,
+      color: isClear ? 'var(--faint)' : 'var(--muted)'
+    }))
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "j-findbar",
+    "data-find-bar": true
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "filter",
     size: 18,
@@ -209,7 +206,7 @@ function FindScreen({
   }, queryBits.join(', '))), /*#__PURE__*/React.createElement("p", {
     className: "j-meta",
     style: {
-      marginBottom: 10
+      margin: '12px 0 10px'
     }
   }, matched.length, " ", matched.length === 1 ? 'note' : 'notes', " found"), matched.length === 0 ? /*#__PURE__*/React.createElement("div", {
     className: "j-card",
@@ -230,7 +227,48 @@ function FindScreen({
     entry: e,
     showDate: true,
     onClick: () => openEntry(e.id)
-  }))))));
+  }))))), bubble && /*#__PURE__*/React.createElement("div", {
+    className: "j-bubble-scrim",
+    onClick: () => setBubble(false)
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-findbubble",
+    role: "dialog",
+    "aria-label": "Search and filters",
+    onClick: e => e.stopPropagation()
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "j-h2"
+  }, "Filters"), /*#__PURE__*/React.createElement("button", {
+    className: "j-iconbtn",
+    "data-bubble-rewind": true,
+    disabled: isClear,
+    "aria-label": "Clear the search and filters",
+    onClick: resetAll,
+    style: {
+      opacity: isClear ? 0.35 : 1,
+      cursor: isClear ? 'default' : 'pointer'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "rewind",
+    size: 20,
+    color: isClear ? 'var(--faint)' : 'var(--muted)'
+  }))), filtersBody)), /*#__PURE__*/React.createElement("button", {
+    className: "j-minifab",
+    "data-find-fab": true,
+    "aria-label": "Search and filters",
+    "aria-expanded": bubble,
+    onClick: () => setBubble(b => !b)
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "search",
+    size: 22,
+    color: "var(--blue)"
+  })));
 }
 
 // ---------------- Evidence: records pack + document vault ----------------
@@ -3036,6 +3074,12 @@ const FEEDBACK_HREF = 'mailto:hello@sen.help?subject=' + encodeURIComponent('Jot
 // A standalone menu row: one flat card per row, no trailing arrow (rows are
 // tappable as a whole, 6 Aug). `trailing` carries a live value, a toggle, a
 // count, or the gold crown.
+// ONE row height for the whole system (founder, 14 Aug: "make each option
+// height the same height as the tab"): a row without a sub-line used to sit
+// ~20px shorter than one with (Take the tour, Help, About, Backup...), so
+// every row and every sheet option now reserves the two-line height and
+// centres inside it.
+const ROW_MIN_H = 'calc(45px * var(--tscale, 1) + 28px)';
 function MRow({
   icon,
   iconEl,
@@ -3056,6 +3100,7 @@ function MRow({
       padding: '14px 16px',
       display: 'flex',
       gap: 14,
+      minHeight: ROW_MIN_H,
       alignItems: 'center',
       marginBottom: 10,
       ...(style || {})
@@ -3128,6 +3173,9 @@ function RadioSheet({
     style: {
       width: '100%',
       display: 'flex',
+      // sheet options stand as tall as the settings rows they came from
+      // (founder, 14 Aug: "the options height look thinner")
+      minHeight: ROW_MIN_H,
       alignItems: 'center',
       gap: 12,
       padding: '13px 2px',
@@ -3389,7 +3437,7 @@ function AppSettingsScreen({
   nav
 }) {
   const J = window.JOTLA;
-  const [sheet, setSheet] = useStateB(null); // null | 'theme' | 'size' | 'reminder'
+  const [sheet, setSheet] = useStateB(null); // null | 'theme' | 'size' | 'reminder' | 'weekstart'
   const [customTime, setCustomTime] = useStateB('20:00');
   const [remCustom, setRemCustom] = useStateB(false);
   const themeLabel = nav.theme === 'system' ? 'System' : nav.theme === 'dark' ? 'Dark' : 'Light';
@@ -3399,6 +3447,7 @@ function AppSettingsScreen({
     '1.12': 'Large',
     '1.25': 'Extra large'
   }[String(nav.tscale)] || 'Standard';
+  const weekStartLabel = J.DOW_LONG[typeof nav.weekStart === 'number' ? nav.weekStart : 1];
   const kids = (nav.profiles || []).map(p => p.name).join(', ');
   return /*#__PURE__*/React.createElement("div", {
     className: "j-screen"
@@ -3439,6 +3488,11 @@ function AppSettingsScreen({
     title: "Emojis",
     sub: FACE_PACK_LABEL(nav.faceStyle),
     onClick: () => nav.go('moodstyle')
+  }), /*#__PURE__*/React.createElement(SectionLabel, null, "Calendar"), /*#__PURE__*/React.createElement(MRow, {
+    icon: "calendar",
+    title: "Start of the week",
+    sub: weekStartLabel,
+    onClick: () => setSheet('weekstart')
   }), /*#__PURE__*/React.createElement(SectionLabel, null, "Privacy"), /*#__PURE__*/React.createElement(MRow, {
     icon: "lock",
     title: "App lock",
@@ -3530,6 +3584,18 @@ function AppSettingsScreen({
     }],
     onPick: k => {
       nav.setTscale(parseFloat(k));
+      setSheet(null);
+    }
+  }), sheet === 'weekstart' && /*#__PURE__*/React.createElement(RadioSheet, {
+    title: "Start of the week",
+    activeKey: String(typeof nav.weekStart === 'number' ? nav.weekStart : 1),
+    onClose: () => setSheet(null),
+    options: [1, 2, 3, 4, 5, 6, 0].map(d => ({
+      key: String(d),
+      label: J.DOW_LONG[d]
+    })),
+    onPick: k => {
+      nav.setWeekStart(Number(k));
       setSheet(null);
     }
   }), sheet === 'reminder' && /*#__PURE__*/React.createElement(RadioSheet, {

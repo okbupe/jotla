@@ -5,7 +5,7 @@ const { useState, useRef, useEffect, useLayoutEffect } = React;
 // and the suite asserts that, because asking a person to remember is what got
 // us here: this said 2.0.4 for fourteen builds while the service worker said
 // 2.0.18, so the one number a tester can actually read was the one lying.
-window.JOTLA_BUILD = '2.0.22';
+window.JOTLA_BUILD = '2.0.23';
 
 // The app's data epoch: the earliest day a log can land on (Quick log's own
 // minimum day, and how far back the Month calendar pages). One home here, on
@@ -120,7 +120,7 @@ function calCellsFor(year, month) {
   const pad2 = n => String(n).padStart(2, '0');
   const isoOf = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const firstDow = (new Date(year, month, 1).getDay() + 6) % 7; // Monday-first offset
+  const firstDow = J.weekLead(new Date(year, month, 1)); // follows the week-start setting
   const cells = [];
   for (let i = firstDow - 1; i >= 0; i--) {
     const dt = new Date(year, month, -i); // day 0 is the previous month's last day
@@ -220,7 +220,7 @@ function CalendarSheet({ onClose, value, onSelect, minDate, maxDate, onClear, cl
           {chevron('next')}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6, marginBottom: 8 }}>
-          {J.DOW_MON.map(d => (
+          {J.dowLabels().map(d => (
             <div key={d} style={{ textAlign: 'center', fontSize: 'calc(12px * var(--tscale, 1))', fontWeight: 500, color: 'var(--faint)' }}>{d}</div>
           ))}
         </div>

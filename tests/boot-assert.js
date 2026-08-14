@@ -665,6 +665,10 @@ function ok(name, cond) {
     && (await page4.locator('[data-stream]').count()) === 0
     && (await page4.locator('[data-cal-handle]').count()) === 0
     && (await page4.locator('.j-weekday').count()) === 0);
+  // and free's grid keeps its BLANK lead and tail: the faded neighbour-month
+  // days are part of the Plus calendar (14 Aug), never a free change
+  ok('free keeps blank lead and tail cells, no faded neighbour days',
+    (await page4.locator('.j-pager button[data-out]').count()) === 0);
   const gridBox1 = await page4.locator('.j-pager').first().boundingBox();
   await prevBtn.click();
   await page4.waitForTimeout(700);
@@ -1051,7 +1055,10 @@ function ok(name, cond) {
       graphInCalCard: gfold ? !!gfold.closest('[data-cal-card]') : null,
       graphText: gfold ? gfold.innerText.replace(/\s+/g, ' ').slice(0, 60) : null,
       stream: !!stream, topDay,
-      months: [...new Set(vis.map(b => (b.getAttribute('aria-label') || '').split(',')[0].split(' ').slice(1).join(' ')))],
+      // the shown month is read from the REAL cells; faded neighbour-month
+      // days (data-out, 14 Aug) belong to other months by design
+      months: [...new Set(vis.filter(b => !b.hasAttribute('data-out'))
+        .map(b => (b.getAttribute('aria-label') || '').split(',')[0].split(' ').slice(1).join(' ')))],
       anchorLabel: anchors.length === 1 ? anchors[0].getAttribute('aria-label') : null,
       anchorRing: anchors.length === 1 ? getComputedStyle(anchors[0]).boxShadow !== 'none' : null,
       anchorFilledBlue: anchors.length === 1
@@ -1331,6 +1338,194 @@ function ok(name, cond) {
   const tapOpen = await calState();
   ok('tapping it again opens the month and turns the arrow down',
     tapOpen.foldH > 200 && tapOpen.arrowOpen === true);
+
+  // NEIGHBOUR-MONTH DAYS (founder, 14 Aug): the lead and tail of the grid
+  // hold the real days of the months either side, faded but readable, and
+  // tapping one hands the month over: pager, title, graph and record together
+  // (the state here is already the default: open month, graph out, today)
+  const outCells = await page5.evaluate(() => {
+    const fold = document.querySelector('[data-cal-fold]');
+    const fr = fold.getBoundingClientRect();
+    const vis = [...fold.querySelectorAll('.j-pager button[data-out]')].filter(b => {
+      const r = b.getBoundingClientRect();
+      return r.width > 0 && r.left >= fr.left - 2 && r.right <= fr.right + 2;
+    });
+    return { n: vis.length,
+      faded: vis.every(b => { const o = parseFloat(getComputedStyle(b).opacity); return o > 0.15 && o < 0.6; }) };
+  });
+  ok('the open month shows its neighbours\' days, faded but readable (' + outCells.n + ' cells)',
+    outCells.n >= 4 && outCells.faded === true);
+  const outPick = await page5.evaluate(() => {
+    const fold = document.querySelector('[data-cal-fold]');
+    const fr = fold.getBoundingClientRect();
+    const past = [...fold.querySelectorAll('.j-pager button[data-out]:not([disabled])')].filter(b => {
+      const r = b.getBoundingClientRect();
+      return r.width > 0 && r.left >= fr.left - 2 && r.right <= fr.right + 2;
+    })[0];
+    if (!past) return null;
+    const label = past.getAttribute('aria-label');
+    past.click();
+    return label;
+  });
+  await page5.waitForTimeout(800);
+  const handed = await calState();
+  const pickedMonth = outPick ? outPick.split(',')[0].split(' ').slice(1).join(' ') : null;
+  const pickedDay = outPick ? Number(outPick.split(' ')[0]) : null;
+  ok('tapping a faded day hands the month over (' + handed.title + ') and moves the record',
+    !!outPick && handed.title === pickedMonth
+    && !!handed.topDay && Number(handed.topDay.split('-')[2]) === pickedDay);
+
+  // COMPRESSED, THE STRIP PAGES WEEK BY WEEK (founder, 14 Aug): a horizontal
+  // swipe moves the record seven days; the month pager stays parked
+  await page5.locator('[data-rewind]').click();
+  await page5.waitForTimeout(700);
+  await page5.locator('[data-graph-toggle]').click();   // hide + compress
+  await page5.waitForTimeout(500);
+  const beforeSwipe = await calState();
+  const foldBox = await page5.locator('[data-cal-fold]').boundingBox();
+  await page5.mouse.move(foldBox.x + 40, foldBox.y + foldBox.height / 2);
+  await page5.mouse.down();
+  await page5.mouse.move(foldBox.x + 240, foldBox.y + foldBox.height / 2 + 4, { steps: 8 });
+  await page5.mouse.up();
+  await page5.waitForTimeout(800);
+  const weekBack = await calState();
+  const wantWeekBack = await page5.evaluate(() => {
+    const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - 7);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  });
+  ok('a strip swipe pages ONE WEEK back, record following (' + weekBack.topDay + ')',
+    weekBack.topDay === wantWeekBack && weekBack.foldH < 90
+    && !!weekBack.anchorLabel && weekBack.anchorLabel.startsWith(Number(wantWeekBack.split('-')[2]) + ' '));
+
+  // THE TAB COMES BACK AS IT WAS LEFT (founder, 14 Aug): a trip to Settings
+  // (his exact example) loses nothing, and the week-start setting rotates
+  // every calendar surface. The row heights are checked while we are there.
+  const keepState = await calState();
+  const keepScroll = await page5.evaluate(() => document.querySelector('[data-stream]').scrollTop);
+  await page5.getByText('Menu', { exact: true }).last().click();
+  await page5.waitForTimeout(500);
+  const rowHeights = await page5.evaluate(() => {
+    const rows = [...document.querySelectorAll('button.j-card')];
+    const byTitle = (t) => rows.find(r => r.textContent.includes(t));
+    const h = (el) => el ? Math.round(el.getBoundingClientRect().height) : null;
+    return { backup: h(byTitle('Backup and Restore')), bin: h(byTitle('Recycle Bin')) };
+  });
+  ok('Menu rows stand at one height (Backup ' + rowHeights.backup + ' vs Bin ' + rowHeights.bin + 'px)',
+    !!rowHeights.backup && Math.abs(rowHeights.backup - rowHeights.bin) <= 2);
+  await page5.locator('button[aria-label="Settings"]').click();
+  await page5.waitForTimeout(500);
+  const setHeights = await page5.evaluate(() => {
+    const rows = [...document.querySelectorAll('button.j-card')];
+    const byTitle = (t) => rows.find(r => r.textContent.includes(t));
+    const h = (el) => el ? Math.round(el.getBoundingClientRect().height) : null;
+    return { theme: h(byTitle('Theme')), tour: h(byTitle('Take the tour')), help: h(byTitle('Help')),
+      about: h(byTitle('About Jotla')), feedback: h(byTitle('Tell us what you think')), week: h(byTitle('Start of the week')) };
+  });
+  ok('Settings rows stand at one height (Theme ' + setHeights.theme + ', tour ' + setHeights.tour + ', about ' + setHeights.about + 'px)',
+    !!setHeights.theme && [setHeights.tour, setHeights.help, setHeights.about, setHeights.feedback, setHeights.week]
+      .every(x => !!x && Math.abs(x - setHeights.theme) <= 2));
+  await page5.evaluate(() => {
+    const rows = [...document.querySelectorAll('button.j-card')];
+    rows.find(r => r.textContent.includes('Theme')).click();
+  });
+  await page5.waitForTimeout(500);
+  const optHeights = await page5.evaluate(() => {
+    const opts = [...document.querySelectorAll('.j-sheet button[role="radio"]')];
+    return opts.map(o => Math.round(o.getBoundingClientRect().height));
+  });
+  ok('sheet options stand as tall as the rows (' + optHeights.join(', ') + 'px)',
+    optHeights.length >= 3 && optHeights.every(h => Math.abs(h - setHeights.theme) <= 3));
+  await page5.mouse.click(200, 200);   // close the sheet on the scrim
+  await page5.waitForTimeout(400);
+  // the new Calendar group: pick Sunday, and the week rotates everywhere
+  await page5.evaluate(() => {
+    const rows = [...document.querySelectorAll('button.j-card')];
+    rows.find(r => r.textContent.includes('Start of the week')).click();
+  });
+  await page5.waitForTimeout(400);
+  await page5.locator('.j-sheet button[role="radio"]', { hasText: 'Sunday' }).click();
+  await page5.waitForTimeout(500);
+  const weekSub = await page5.evaluate(() => {
+    const rows = [...document.querySelectorAll('button.j-card')];
+    return rows.find(r => r.textContent.includes('Start of the week')).textContent;
+  });
+  ok('Start of the week saves and shows the pick', weekSub.includes('Sunday'));
+  await page5.locator('button[aria-label="Back"]').first().click();
+  await page5.waitForTimeout(500);
+  await page5.getByText('Month', { exact: true }).last().click();
+  await page5.waitForTimeout(700);
+  const backState = await calState();
+  const backScroll = await page5.evaluate(() => document.querySelector('[data-stream]').scrollTop);
+  const dowFirst = await page5.evaluate(() => document.querySelector('.j-caldows span').textContent);
+  ok('the Month tab comes back EXACTLY as it was left after the Settings trip',
+    backState.title === keepState.title && backState.foldH < 90 && backState.graphH === keepState.graphH
+    && backState.topDay === keepState.topDay && Math.abs(backScroll - keepScroll) <= 6);
+  ok('and the week now starts on Sunday, everywhere the calendar draws (' + dowFirst + ')',
+    dowFirst === 'Sun');
+
+  // THE FIND REWORK (founder, 14 Aug): rewind in the corner, the sticky blue
+  // bar with its soft gradient, and the filter bubble on its own mini fab
+  await page5.getByText('Find', { exact: true }).last().click();
+  await page5.waitForTimeout(600);
+  const findChrome = await page5.evaluate(() => {
+    const fab = document.querySelector('.j-fab');
+    const mini = document.querySelector('[data-find-fab]');
+    const bar = document.querySelector('[data-find-bar]');
+    const rew = document.querySelector('[data-find-rewind]');
+    const fr = fab ? fab.getBoundingClientRect() : null;
+    const mr = mini ? mini.getBoundingClientRect() : null;
+    const after = bar ? getComputedStyle(bar, '::after') : null;
+    return {
+      rewind: !!rew, rewindDisabled: rew ? rew.disabled : null,
+      mini: !!mini, smaller: (fr && mr) ? mr.width < fr.width - 4 : null,
+      above: (fr && mr) ? mr.bottom <= fr.top - 4 : null,
+      sticky: bar ? getComputedStyle(bar).position === 'sticky' : null,
+      gradient: after ? /gradient/.test(after.backgroundImage || '') : null,
+    };
+  });
+  ok('Find wears the corner rewind, grey while everything is clear',
+    findChrome.rewind === true && findChrome.rewindDisabled === true);
+  ok('the mini fab floats above the +, smaller, and the bar is sticky with its gradient',
+    findChrome.mini === true && findChrome.smaller === true && findChrome.above === true
+    && findChrome.sticky === true && findChrome.gradient === true);
+  // scrolled, the bar holds the top of the page
+  await page5.evaluate(() => { const el = document.querySelector('.j-screen .j-scroll'); el.scrollTop = 400; });
+  await page5.waitForTimeout(400);
+  const stuck = await page5.evaluate(() => {
+    const bar = document.querySelector('[data-find-bar]').getBoundingClientRect();
+    const sc = document.querySelector('.j-screen .j-scroll').getBoundingClientRect();
+    return Math.abs(bar.top - sc.top);
+  });
+  ok('scrolled down, the blue bar sticks to the top (' + Math.round(stuck) + 'px off)', stuck <= 2);
+  // the bubble: all the filters, a search field, and its own rewind
+  await page5.locator('[data-find-fab]').click();
+  await page5.waitForTimeout(500);
+  const bubble = await page5.evaluate(() => {
+    const b = document.querySelector('.j-findbubble');
+    return { open: !!b, text: b ? b.innerText : '',
+      hasSearch: b ? !!b.querySelector('input[placeholder="Search your notes"]') : null,
+      rewind: b ? !!b.querySelector('[data-bubble-rewind]') : null };
+  });
+  ok('the bubble carries the search and every filter group with its own rewind',
+    bubble.open && bubble.hasSearch === true && bubble.rewind === true
+    && bubble.text.includes('Themes') && bubble.text.includes('Mood') && bubble.text.includes('Where') && bubble.text.includes('When'));
+  await page5.locator('.j-findbubble .j-chip').first().click();
+  await page5.waitForTimeout(400);
+  const filtered = await page5.evaluate(() => ({
+    bar: document.querySelector('[data-find-bar]').innerText,
+    rewindOn: !document.querySelector('[data-find-rewind]').disabled,
+    bubbleRewindOn: !document.querySelector('[data-bubble-rewind]').disabled,
+  }));
+  ok('picking a filter lands on the blue bar and wakes both rewinds',
+    filtered.bar.length > 10 && filtered.rewindOn === true && filtered.bubbleRewindOn === true);
+  await page5.locator('[data-bubble-rewind]').click();
+  await page5.waitForTimeout(400);
+  const cleared = await page5.evaluate(() => ({
+    bar: document.querySelector('[data-find-bar]').innerText,
+    rewindOff: document.querySelector('[data-find-rewind]').disabled,
+  }));
+  ok('the bubble rewind clears everything and both rewinds grey out again',
+    cleared.bar.includes('all dates') && cleared.rewindOff === true);
 
   ok('no uncaught page errors across suite 9', errors5.length === 0);
   await ctx5.close();

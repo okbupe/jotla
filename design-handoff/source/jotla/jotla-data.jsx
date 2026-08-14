@@ -372,6 +372,22 @@ function dayMood(entries) {
   return 'ok';
 }
 
+// ---- the week starts where the parent says (founder, 14 Aug) ----
+// window.WEEK_START holds a JS getDay() value (1 = Monday, the default; 0 =
+// Sunday). Every calendar surface reads these two helpers instead of doing
+// its own Monday-first arithmetic, so the one setting moves them all.
+function weekStartDay() {
+  const w = window.WEEK_START;
+  return (typeof w === 'number' && w >= 0 && w <= 6) ? w : 1;
+}
+// how many columns into the week a date sits, under the current start day
+function weekLead(dateObj) { return (dateObj.getDay() - weekStartDay() + 7) % 7; }
+// the seven column labels, rotated to the current start day
+function dowLabels() {
+  const s = weekStartDay();
+  return Array.from({ length: 7 }, (_, i) => DOW_MON[((s + i) % 7 + 6) % 7]);
+}
+
 // Anchor the seed near the real today (whole-week shift preserves weekdays).
 // Days added to or taken off an ISO date, month and year ends handled by Date.
 // Local-date arithmetic on purpose, never toISOString(), which converts to UTC
@@ -391,6 +407,7 @@ Object.assign(window, {
     TODAY_ISO, SETTINGS, TIMES, CATEGORIES, BEHAVIOURS,
     MOODS, CHILD_SCENES, CHILD_EMOTIONS, FIND_THEMES, FIND_MOODS,
     MONTH_NAMES, DOW_SHORT, DOW_MON, DOW_LONG, parseISO, isoShift, fmtLong, fmtShort, dayMood,
+    weekStartDay, weekLead, dowLabels,
     isNamedSetting, settingInSentence,
   },
 });

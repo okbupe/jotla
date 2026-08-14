@@ -564,6 +564,12 @@ function App({ appMode }) {
   // (classic, cat, bubble...) migrate to the default.
   const [faceStyle, setFaceStyle] = useStateApp(FACE_PACKS[prefs0.faceStyle] ? prefs0.faceStyle : FACE_PACK_DEFAULT);
   window.JOTLA_FACE_STYLE = faceStyle;
+  // Start of the week (founder, 14 Aug): a getDay() value, 1 = Monday default.
+  // Every calendar surface reads it through J.weekLead / J.dowLabels, so the
+  // global is set here, during render, before any of them draw.
+  const [weekStart, setWeekStart] = useStateApp(
+    (typeof prefs0.weekStart === 'number' && prefs0.weekStart >= 0 && prefs0.weekStart <= 6) ? prefs0.weekStart : 1);
+  window.WEEK_START = weekStart;
   const [fabOpen, setFabOpen] = useStateApp(false); // the + speed dial (8 Aug)
   // Double tap on the + goes straight to Quick Log, the most-used capture
   // (founder, 8 Aug night): the first tap opens the dial as normal, a second
@@ -609,7 +615,7 @@ function App({ appMode }) {
   useEffectApp(() => { if (J.SEED_SHIFTING) saveJSON(SEED_ANCHOR_KEY, J.TODAY_ISO); }, []);
   useEffectApp(() => { saveJSON(ENTRIES_KEY, entries); }, [entries]);
   useEffectApp(() => { saveJSON(DOCS_KEY, docs); }, [docs]);
-  useEffectApp(() => { saveJSON(PREF_KEY, { theme: themeMode, dark, tscale, faceStyle, profileId, plus, childCfg, customProfiles, deletedIds, backupReminderMonth, appLock, reminder }); }, [themeMode, dark, tscale, faceStyle, profileId, plus, childCfg, customProfiles, deletedIds, backupReminderMonth, appLock, reminder]);
+  useEffectApp(() => { saveJSON(PREF_KEY, { theme: themeMode, dark, tscale, faceStyle, weekStart, profileId, plus, childCfg, customProfiles, deletedIds, backupReminderMonth, appLock, reminder }); }, [themeMode, dark, tscale, faceStyle, weekStart, profileId, plus, childCfg, customProfiles, deletedIds, backupReminderMonth, appLock, reminder]);
 
   // The chrome outside the app root follows the theme too: the safe-area strip,
   // the desktop frame ground and the browser UI colour must all sit on the
@@ -777,6 +783,8 @@ function App({ appMode }) {
     setTscale,
     faceStyle,
     setFaceStyle,
+    weekStart,
+    setWeekStart,
     plus,
     buyPlus: () => setPlus(true),
     dropPlus: () => setPlus(false),
