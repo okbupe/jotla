@@ -11,6 +11,8 @@ const THEME_TO_CAT = new Proxy({}, { get: (_, k) => k });
 // the same environment I left it").
 const FIND_KEEP = {};
 const FIND_RANGE_DEFAULT = { preset: 'Any time', from: '', to: '' };
+// Documents keeps its place the same way (founder, 14 Aug round 7)
+const EV_KEEP = {};
 
 function FindScreen({ nav, entries, view }) {
   const J = window.JOTLA;
@@ -264,7 +266,11 @@ function FindScreen({ nav, entries, view }) {
 
   return (
     <div className="j-screen">
-      <div className="j-scroll j-fade" ref={scrollRef} onScroll={stashScroll}>
+      {/* the record holds still while the filter window is out (founder,
+          14 Aug round 7: "the background is not suppose to scroll when the
+          window is open"); the lock rides f so a drag-open freezes it too */}
+      <div className="j-scroll j-fade" ref={scrollRef} onScroll={stashScroll}
+        style={f > 0.05 ? { overflowY: 'hidden' } : undefined}>
         <div className="j-pad" style={{ paddingTop: 10, paddingBottom: 120 }}>
           {/* the corner rewind clears the search and every filter */}
           <TabTitle title="Find" right={
@@ -480,13 +486,17 @@ function EvidenceScreen({ nav, entries, docs, profile, navView }) {
   const J = window.JOTLA;
   // Back restores this page as it was: the open sub-tab, filters and scroll
   // position are remembered on the view, so reading one document and returning
-  // lands the parent back on the Documents list where they left it.
-  const saved = (navView && navView.ev) || {};
+  // lands the parent back on the Documents list where they left it. Since
+  // round 7 (founder, 14 Aug: "leave it exactly what I left it on, don't
+  // reset anything") the keep also survives TAB SWITCHES, exactly like the
+  // calendar's and Find's: EV_KEEP holds the session's state, and the
+  // view-borne copy (a push's return trip) wins over it when both exist.
+  const saved = { ...EV_KEEP, ...((navView && navView.ev) || {}) };
   const [view, setView] = useStateB(saved.tab || 'documents'); // documents leads (founder, 6 Aug)
   // Corner search (founder, 7 Aug): the magnifier sits top right and summons a
   // field that filters the document list by title, sender or type.
-  const [docQ, setDocQ] = useStateB('');
-  const [showDocQ, setShowDocQ] = useStateB(false);
+  const [docQ, setDocQ] = useStateB(saved.docQ || '');
+  const [showDocQ, setShowDocQ] = useStateB(!!saved.showDocQ);
   const docsShown = docQ.trim()
     ? docs.filter(d => (d.title + ' ' + d.from + ' ' + d.type + ' ' + (d.typeOther || '')).toLowerCase().includes(docQ.trim().toLowerCase()))
     : docs;
@@ -494,9 +504,22 @@ function EvidenceScreen({ nav, entries, docs, profile, navView }) {
   const [themes, setThemes] = useStateB(saved.themes || []);
   const [done, setDone] = useStateB(false);
   const scrollRef = useRefB(null);
-  useEffectB(() => { nav.remember({ ev: { tab: view, range, themes } }); }, [view, range, themes]);
+  useEffectB(() => {
+    Object.assign(EV_KEEP, { tab: view, docQ, showDocQ, range, themes });
+    nav.remember({ ev: { tab: view, range, themes } });
+  }, [view, docQ, showDocQ, range, themes]);
   useEffectB(() => { if (saved.scrollY && scrollRef.current) scrollRef.current.scrollTop = saved.scrollY; }, []);
+  // the scroll keep, sealed on push like Find's (the 14 Aug round-4 lesson:
+  // the outgoing scroller fires one last detached scroll that clobbers it)
+  const sealRef = useRefB(false);
+  const stashScroll = () => {
+    const el = scrollRef.current;
+    if (sealRef.current || !el || !el.isConnected || el.scrollHeight === 0) return;
+    EV_KEEP.scrollY = el.scrollTop;
+  };
   const openDoc = (id) => {
+    stashScroll();
+    sealRef.current = true;
     nav.remember({ ev: { tab: view, range, themes, scrollY: scrollRef.current ? scrollRef.current.scrollTop : 0 } });
     nav.go('doc', { id });
   };
@@ -523,7 +546,7 @@ function EvidenceScreen({ nav, entries, docs, profile, navView }) {
       {/* Documents is a TAB now (6 Aug): its own big title, no back, no subtitle,
           and the old green banner is gone: both explained a screen that already
           shows what it is. */}
-      <div className="j-scroll j-fade" ref={scrollRef}>
+      <div className="j-scroll j-fade" ref={scrollRef} onScroll={stashScroll}>
         <div className="j-pad" style={{ paddingTop: 10, paddingBottom: 120 }}>
           <TabTitle title="Documents" right={
             <button className="j-iconbtn" aria-label="Search documents"

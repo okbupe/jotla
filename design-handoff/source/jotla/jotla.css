@@ -407,22 +407,18 @@ html.j-appmode .j-tabbar { height: calc(80px + env(safe-area-inset-bottom)); pad
   background: linear-gradient(var(--tint-blue), var(--tint-blue)) var(--bg); }
 /* the drawer: every filter, folded away behind the bar; its height is driven
    by the gesture, exactly the calendar's graph fold */
-.j-finddrawer { overflow: hidden; position: relative; z-index: 1; }
-/* THE PANEL FLOATS (founder, 14 Aug round 6): a breath of space under the
-   bar, all four corners rounded, and the record shows through it BLURRED,
-   never sharp. The blur is a SQUARE zone on ::before covering the gap, the
-   panel and its corner notches, so a rounded corner always sits on frosted
-   ground and can never show a sharp sliver (the round-5 page-colour strip
-   made square corner patches over passing cards; retired). The zone's own
-   bottom boundary hides under the solid half of the stick's gradient. */
+/* THE PANEL FLOATS ON SOLID GROUND (founder, 14 Aug round 7): a breath of
+   space under the bar, all four corners rounded, and the whole box the open
+   window occupies, gap band and corner surrounds included, paints the plain
+   page colour. The round-6 frosted glass is retired on his call: a blurred
+   copy of the record showing through the gap and around the corners read as
+   a transparency glitch, not a material. Nothing shows through anything now,
+   and the record's own scroll is LOCKED while the window is out, so there is
+   nothing moving behind it either. */
+.j-finddrawer { overflow: hidden; position: relative; z-index: 1; background: var(--bg); }
 .j-finddrawer-in { background: var(--card); border: 1px solid var(--line);
   border-radius: 18px; padding: 14px; margin: 0; box-sizing: border-box;
   box-shadow: 0 16px 30px -18px rgba(0,0,0,0.28); }
-@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .j-finddrawer::before { content: ''; position: absolute; inset: 0;
-    -webkit-backdrop-filter: blur(18px) saturate(1.1); backdrop-filter: blur(18px) saturate(1.1); }
-  .j-finddrawer-in { background: color-mix(in srgb, var(--card) 82%, transparent); }
-}
 /* the drawer's filters wear tighter chips than the app's 44px standard so the
    whole panel fits a phone screen without scrolling, Custom's date pickers
    included (founder, 14 Aug round 5); the inner scroll stays only as the

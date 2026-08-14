@@ -2772,6 +2772,59 @@ function ok(name, cond) {
     && editReword17.lastHist.categoryOther === 'Homework' && editReword17.lastHist.photo === 'Photo from the moment');
   await ctx17.close();
 
+  // ---- 18. solid ground under the open window + the Documents keep (2.0.27) ----
+  // Founder, 14 Aug round 7: the record must not scroll while the filter
+  // window is out; the window's box (gap band, corner surrounds) paints the
+  // plain page colour, no frosted see-through; and Documents comes back
+  // exactly as it was left across tab switches, like Month and Find.
+  console.log('Suite 18: solid filter ground + Documents keep');
+  const ctx18 = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  const page18 = await ctx18.newPage();
+  await page18.addInitScript(() => {
+    localStorage.setItem('jotla_prefs_v2', JSON.stringify({ dark: false, plus: true, childCfg: {}, customProfiles: [], deletedIds: [] }));
+    localStorage.setItem('jotla_fabtip_v1', 'learned');
+  });
+  await page18.goto(URL_APP, { waitUntil: 'networkidle' });
+  await page18.waitForTimeout(1000);
+  await page18.getByText('Find', { exact: true }).last().click();
+  await page18.waitForTimeout(600);
+  await page18.locator('.j-findbar').click();
+  await page18.waitForTimeout(600);
+  const ground18 = await page18.evaluate(() => {
+    const scroller = document.querySelector('.j-screen .j-scroll');
+    const drawer = document.querySelector('[data-find-drawer]');
+    const cs = getComputedStyle(drawer);
+    const before = getComputedStyle(drawer, '::before');
+    const bgAlpha = (c) => { const m = (c || '').match(/rgba?\(([^)]+)\)/); if (!m) return 0; const p = m[1].split(','); return p.length === 4 ? parseFloat(p[3]) : 1; };
+    return { locked: getComputedStyle(scroller).overflowY === 'hidden',
+      solid: bgAlpha(cs.backgroundColor) === 1,
+      noFrost: (before.backdropFilter || 'none') === 'none' && (before.webkitBackdropFilter || 'none') === 'none' };
+  });
+  ok('the record cannot scroll while the window is out', ground18.locked === true);
+  ok('the window sits on solid page colour, no frosted see-through', ground18.solid === true && ground18.noFrost === true);
+  await page18.locator('[data-find-cancel]').click();
+  await page18.waitForTimeout(500);
+  const unlocked18 = await page18.evaluate(() => getComputedStyle(document.querySelector('.j-screen .j-scroll')).overflowY);
+  ok('the scroll comes back the moment the window tucks away', unlocked18 !== 'hidden');
+  // Documents: change the sub-tab, scroll, leave for Today, come back
+  await page18.getByText('Documents', { exact: true }).last().click();
+  await page18.waitForTimeout(600);
+  await page18.getByText('Day records', { exact: true }).click();
+  await page18.waitForTimeout(400);
+  await page18.evaluate(() => { document.querySelector('.j-screen .j-scroll').scrollTop = 180; });
+  await page18.waitForTimeout(400);
+  await page18.getByText('Today', { exact: true }).last().click();
+  await page18.waitForTimeout(500);
+  await page18.getByText('Documents', { exact: true }).last().click();
+  await page18.waitForTimeout(600);
+  const evKeep18 = await page18.evaluate(() => ({
+    onRecords: !!document.body.innerText.includes('dated entries') || !![...document.querySelectorAll('button')].find(b => b.innerText.trim() === 'Day records' && getComputedStyle(b).backgroundColor !== 'rgba(0, 0, 0, 0)'),
+    scrollY: Math.round(document.querySelector('.j-screen .j-scroll').scrollTop),
+  }));
+  ok('Documents comes back on the sub-tab it was left on (' + JSON.stringify(evKeep18.onRecords) + ')', evKeep18.onRecords === true);
+  ok('...at the scroll position it was left at (' + evKeep18.scrollY + 'px)', Math.abs(evKeep18.scrollY - 180) <= 6);
+  await ctx18.close();
+
   await browser.close();
   server.kill();
   console.log('\n' + passed + '/' + (passed + failed) + ' checks green' + (failed ? ' - ' + failed + ' FAILED' : ''));
