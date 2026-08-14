@@ -931,6 +931,12 @@ function App({ appMode }) {
     case 'moodstyle': screen = <MoodStyleScreen nav={nav} />; break;
     case 'children': screen = <ChildrenScreen nav={nav} />; break;
     case 'childprofile': screen = <ChildProfileScreen nav={nav} profile={profile} entries={myEntries} docs={myDocs} />; break;
+    // the child's hub pages off the Menu tab (round 10, 14 Aug)
+    case 'aboutchild': screen = <AboutChildScreen nav={nav} profile={profile} entries={myEntries} />; break;
+    case 'whathelped': screen = <WhatHelpedScreen nav={nav} entries={myEntries} />; break;
+    case 'contacts': screen = <ContactsScreen nav={nav} profile={profile} />; break;
+    case 'dates': screen = <DatesScreen nav={nav} profile={profile} />; break;
+    case 'wins': screen = <WinsScreen nav={nav} entries={myEntries} />; break;
     case 'applock': screen = <AppLockScreen nav={nav} />; break;
     case 'backup': screen = <BackupScreen nav={nav} profile={profile} entries={myEntries} docs={myDocs} />; break;
     case 'help': screen = <HelpScreen nav={nav} />; break;

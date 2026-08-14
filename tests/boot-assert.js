@@ -3045,6 +3045,137 @@ function ok(name, cond) {
     afterFlick.h === 0 && afterFlick.bar.includes('this week'));
   await ctx19.close();
 
+  // ---- 20. the child's hub on the Menu tab (2.0.32) ----
+  // Five pages for the child, not the app: All about (free), What helped
+  // (Plus, born from Dysregulation), Key contacts (free), Important dates
+  // (Plus), Wins (free). Crowns sit on exactly the two Plus rows on free.
+  console.log('Suite 20: the child\'s hub');
+  const ctx20 = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  const page20 = await ctx20.newPage();
+  await page20.addInitScript(() => {
+    // first load only: a reload must keep what the app itself saved (the
+    // About-page persistence check depends on it)
+    if (!localStorage.getItem('jotla_prefs_v2')) {
+      localStorage.setItem('jotla_prefs_v2', JSON.stringify({ dark: false, plus: true, childCfg: {}, customProfiles: [], deletedIds: [] }));
+    }
+    localStorage.setItem('jotla_fabtip_v1', 'learned');
+  });
+  await page20.goto(URL_APP, { waitUntil: 'networkidle' });
+  await page20.waitForTimeout(1000);
+  await page20.getByText('Menu', { exact: true }).last().click();
+  await page20.waitForTimeout(500);
+  const hubRows = await page20.evaluate(() =>
+    ['All about', 'What helped', 'Key contacts', 'Important dates', 'Wins'].map(t => document.body.innerText.includes(t)));
+  ok('the Menu holds the five child-hub rows', hubRows.every(Boolean));
+  // All about: fields persist across a reload (they live on the child)
+  await page20.getByText('All about', { exact: false }).first().click();
+  await page20.waitForTimeout(500);
+  await page20.locator('textarea').first().fill('Deep pressure and the blue blanket.');
+  await page20.waitForTimeout(400);
+  await page20.reload({ waitUntil: 'networkidle' });
+  await page20.waitForTimeout(1000);
+  const aboutKept = await page20.evaluate(() => {
+    const el = document.querySelector('textarea');
+    return { text: el ? el.value : '', printable: !document.querySelector('[data-print-about]').disabled };
+  });
+  ok('All about keeps its words across a reload, and the print door opens', aboutKept.text === 'Deep pressure and the blue blanket.' && aboutKept.printable === true);
+  await page20.locator('button[aria-label="Back"]').first().click();
+  await page20.waitForTimeout(400);
+  // What helped: the counts must MATCH the record, not just render
+  await page20.getByText('What helped', { exact: true }).first().click();
+  await page20.waitForTimeout(500);
+  const helped20 = await page20.evaluate(() => {
+    const entries = JSON.parse(localStorage.getItem('jotla_entries_v4')) || [];
+    const prefs = JSON.parse(localStorage.getItem('jotla_prefs_v2')) || {};
+    const mine = entries.filter(e => e.childId === (prefs.profileId || 'sam') && !e.deletedAt);
+    const uniq = {};
+    mine.forEach(e => { const h = e.type === 'handover' && e.handover && (e.handover.helped || '').trim(); if (h) uniq[h.toLowerCase()] = (uniq[h.toLowerCase()] || 0) + 1; });
+    const rows = [...document.querySelectorAll('[data-helped-row]')];
+    const topPill = rows.length ? rows[0].innerText.trim() : '';
+    const maxCount = Math.max(0, ...Object.values(uniq));
+    return { expected: Object.keys(uniq).length, rendered: rows.length, topPill, maxCount };
+  });
+  ok('What helped shows one row per distinct strategy (' + helped20.rendered + ' of ' + helped20.expected + '), best first',
+    helped20.rendered === helped20.expected && helped20.rendered > 0
+    && (helped20.maxCount > 1 ? helped20.topPill.startsWith('x' + helped20.maxCount) : true));
+  await page20.locator('button[aria-label="Back"]').first().click();
+  await page20.waitForTimeout(400);
+  // Key contacts: add, call link, remove
+  await page20.getByText('Key contacts', { exact: true }).first().click();
+  await page20.waitForTimeout(500);
+  await page20.locator('input').nth(0).fill('Mrs Price');
+  await page20.locator('input').nth(2).fill('0121 000 0000');
+  await page20.getByText('Add', { exact: true }).click();
+  await page20.waitForTimeout(400);
+  const contact20 = await page20.evaluate(() => {
+    const row = document.querySelector('[data-contact-row]');
+    const call = row && row.querySelector('a[href^="tel:"]');
+    return { name: row ? row.innerText.includes('Mrs Price') : false, call: !!call };
+  });
+  ok('a contact lands with a one-tap call link', contact20.name === true && contact20.call === true);
+  await page20.locator('button[aria-label="Remove Mrs Price"]').click();
+  await page20.waitForTimeout(300);
+  ok('...and removes cleanly', (await page20.locator('[data-contact-row]').count()) === 0);
+  await page20.locator('button[aria-label="Back"]').first().click();
+  await page20.waitForTimeout(400);
+  // Important dates: add via the calendar sheet, countdown speaks the gap
+  await page20.getByText('Important dates', { exact: true }).first().click();
+  await page20.waitForTimeout(500);
+  await page20.locator('input').first().fill('Annual review');
+  await page20.getByText('Pick a day', { exact: false }).click();
+  await page20.waitForTimeout(500);
+  const sheetM20 = (await page20.locator('.j-sheet h2').first().innerText()).trim();
+  await page20.locator('.j-sheet button[aria-label="10 ' + sheetM20 + '"]').last().click();
+  await page20.waitForTimeout(400);
+  await page20.getByText('Add', { exact: true }).click();
+  await page20.waitForTimeout(400);
+  const date20 = await page20.evaluate(() => {
+    const row = document.querySelector('[data-date-row]');
+    const today = window.JOTLA.TODAY_ISO;
+    const iso = today.slice(0, 8) + '10';
+    const n = Math.round((window.JOTLA.parseISO(iso) - window.JOTLA.parseISO(today)) / 86400000);
+    const want = n === 0 ? 'Today' : n === 1 ? 'Tomorrow' : n > 1 ? 'In ' + n + ' days' : n === -1 ? 'Yesterday' : (-n) + ' days ago';
+    return { has: row ? row.innerText.includes('Annual review') : false, pillOk: row ? row.innerText.includes(want) : false, want };
+  });
+  ok('a date lands with an honest countdown (' + date20.want + ')', date20.has === true && date20.pillOk === true);
+  await page20.locator('button[aria-label="Back"]').first().click();
+  await page20.waitForTimeout(400);
+  // Wins: the stream matches the record's own good moments
+  await page20.getByText('Wins', { exact: true }).first().click();
+  await page20.waitForTimeout(500);
+  const wins20 = await page20.evaluate(() => {
+    const entries = JSON.parse(localStorage.getItem('jotla_entries_v4')) || [];
+    const prefs = JSON.parse(localStorage.getItem('jotla_prefs_v2')) || {};
+    const mine = entries.filter(e => e.childId === (prefs.profileId || 'sam') && !e.deletedAt);
+    const expected = mine.filter(e => e.mood === 'good' || ['Wins', 'New words'].includes(e.category)).length;
+    return { expected, rendered: document.querySelectorAll('.j-card.j-press').length };
+  });
+  ok('Wins gathers every good day, win and new word (' + wins20.rendered + ' of ' + wins20.expected + ')',
+    wins20.expected > 0 && wins20.rendered === wins20.expected);
+  await ctx20.close();
+  // the free app: crowns on exactly the two Plus rows, and they sell
+  const ctx20f = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  const page20f = await ctx20f.newPage();
+  await page20f.addInitScript(() => {
+    localStorage.setItem('jotla_prefs_v2', JSON.stringify({ dark: false, plus: false, childCfg: {}, customProfiles: [], deletedIds: [] }));
+    localStorage.setItem('jotla_fabtip_v1', 'learned');
+  });
+  await page20f.goto(URL_APP, { waitUntil: 'networkidle' });
+  await page20f.waitForTimeout(1000);
+  await page20f.getByText('Menu', { exact: true }).last().click();
+  await page20f.waitForTimeout(500);
+  const crowns20 = await page20f.evaluate(() => {
+    const rows = [...document.querySelectorAll('.j-card.j-press')];
+    const crowned = rows.filter(r => r.querySelector('[data-crown-gate]')).map(r => r.innerText.split('\n')[0]);
+    return crowned;
+  });
+  ok('free wears crowns on exactly What helped and Important dates (' + crowns20.join(', ') + ')',
+    crowns20.length === 2 && crowns20.includes('What helped') && crowns20.includes('Important dates'));
+  await page20f.getByText('What helped', { exact: true }).first().click();
+  await page20f.waitForTimeout(600);
+  ok('a crowned row on free opens the Jotla Plus page', (await page20f.locator('#root').innerText()).includes('Jotla Plus'));
+  await ctx20f.close();
+
   await browser.close();
   server.kill();
   console.log('\n' + passed + '/' + (passed + failed) + ' checks green' + (failed ? ' - ' + failed + ' FAILED' : ''));

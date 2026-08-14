@@ -2036,6 +2036,25 @@ function SettingsScreen({ nav, profile, entries = [], docs = [], binCount = 0 })
             </button>
           ) : null}
 
+          {/* THE CHILD'S HUB (founder, 14 Aug round 10: "the menu page has
+              practically nothing... what else could we put in there that
+              parents will find useful"). Five pages about the child, not the
+              app. What helped and Important dates are Plus (his tier calls:
+              What helped is born from Dysregulation, itself a Plus surface). */}
+          <SectionLabel>For {profile.name}</SectionLabel>
+          <MRow icon="heart" title={'All about ' + profile.name} sub="One page to hand to anyone new"
+            onClick={() => nav.go('aboutchild')} />
+          <MRow icon="leaf" title="What helped" sub="Your own strategies, from your own record"
+            onClick={() => nav.plus ? nav.go('whathelped') : nav.go('unlock')}
+            trailing={nav.plus ? null : <span data-crown-gate style={{ display: 'flex', flexShrink: 0 }}><Icon name="crown" size={20} color="var(--gold)" /></span>} />
+          <MRow icon="person" title="Key contacts" sub="SENCO, teacher, case officer"
+            onClick={() => nav.go('contacts')} />
+          <MRow icon="calendar" title="Important dates" sub="Reviews and meetings, with a countdown"
+            onClick={() => nav.plus ? nav.go('dates') : nav.go('unlock')}
+            trailing={nav.plus ? null : <span data-crown-gate style={{ display: 'flex', flexShrink: 0 }}><Icon name="crown" size={20} color="var(--gold)" /></span>} />
+          <MRow icon="star" title="Wins" sub="The good days, all in one place"
+            onClick={() => nav.go('wins')} />
+
           <SectionLabel>Your record</SectionLabel>
           <MRow icon="cloudup" title="Backup and Restore" onClick={() => nav.go('backup')} />
           <MRow icon="trash" title="Recycle Bin" sub="Kept for 30 days" onClick={() => nav.go('bin')}
@@ -2048,6 +2067,300 @@ function SettingsScreen({ nav, profile, entries = [], docs = [], binCount = 0 })
   );
 }
 /* SectionLabel needs a little air above it on this screen */
+
+/* ==================== THE CHILD'S HUB PAGES (round 10, 14 Aug) ==================== */
+
+// Every "what helped" the record holds, grouped and counted: the parent's own
+// playbook, distilled from their dysregulation notes. One home for the maths;
+// the What helped page and the About print both read it.
+function helpedStrategies(entries) {
+  const at = {}; const out = [];
+  for (const e of entries) {
+    const h = e.type === 'handover' && e.handover && (e.handover.helped || '').trim();
+    if (!h) continue;
+    const k = h.toLowerCase();
+    if (!(k in at)) { at[k] = out.length; out.push({ text: h, count: 0, last: e.date }); }
+    const s = out[at[k]];
+    s.count += 1;
+    if (e.date > s.last) s.last = e.date;
+  }
+  return out.sort((a, b) => b.count - a.count || (a.last < b.last ? 1 : -1));
+}
+
+// The About page, taken out: one clean printable page through the same
+// print-to-PDF door the day record uses. Nothing is uploaded.
+function openPrintAboutChild(profile, about, helped) {
+  const J = window.JOTLA;
+  const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const sec = (label, text) => (text || '').trim()
+    ? '<div style="margin:0 0 14px;"><p style="margin:0 0 3px;font-size:11px;letter-spacing:0.07em;text-transform:uppercase;color:#1A56A8;font-weight:600;">' + esc(label) + '</p>'
+      + '<p style="margin:0;font-size:14px;line-height:1.55;white-space:pre-line;">' + esc(text.trim()) + '</p></div>' : '';
+  const w = window.open('', '_blank');
+  if (!w) { alert('Your browser blocked the new tab. Allow pop-ups for this page and try again.'); return false; }
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>All about ' + esc(profile.name) + '</title></head>'
+    + '<body style="font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#14223b;max-width:720px;margin:24px auto;padding:0 16px;">'
+    + '<p style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8892a6;margin:0 0 6px;">All about · Jotla</p>'
+    + '<h1 style="font-size:24px;margin:0 0 2px;">' + esc(profile.name) + '</h1>'
+    + '<p style="font-size:12.5px;margin:0 0 18px;color:#5b6780;">' + esc([profile.year, profile.school].filter(Boolean).join(' · '))
+    + ' · Prepared ' + esc(J.fmtShort(J.TODAY_ISO)) + ' ' + esc(J.TODAY_ISO.slice(0, 4)) + '</p>'
+    + sec('What calms ' + profile.name, about.calms)
+    + sec('What makes things hard', about.hard)
+    + sec('How ' + profile.name + ' communicates', about.talk)
+    + sec('Key needs', about.needs)
+    + sec('What ' + profile.name + ' loves', about.loves)
+    + ((profile.adults || []).length ? sec('The adults ' + profile.name + ' knows', (profile.adults || []).join(', ')) : '')
+    + ((helped || []).length ? '<div style="margin:0 0 14px;"><p style="margin:0 0 3px;font-size:11px;letter-spacing:0.07em;text-transform:uppercase;color:#1A56A8;font-weight:600;">What has helped before</p>'
+      + helped.map(s => '<p style="margin:0 0 3px;font-size:14px;line-height:1.55;">' + esc(s.text) + (s.count > 1 ? ' <span style="color:#8892a6;font-size:12px;">(worked ' + s.count + ' times)</span>' : '') + '</p>').join('') + '</div>' : '')
+    + '<p style="font-size:10.5px;color:#8892a6;line-height:1.5;margin-top:18px;padding-top:12px;border-top:1px dashed #dde3ee;">'
+    + 'Written by ' + esc(profile.name) + '\'s family using their own Jotla record.</p>'
+    + '</body></html>');
+  w.document.close(); w.focus();
+  setTimeout(() => { try { w.print(); } catch (e) {} }, 500);
+  return true;
+}
+
+// ---- All about [child]: the one-page handover card (free) ----
+// Every new teacher, club and supply gets the same re-explanation from
+// scratch; this page carries it once, in the family's own words, printable
+// through the print-to-PDF door. Fields live on the child (per child, on
+// this phone), edited live like the profile page's details.
+function AboutChildScreen({ nav, profile, entries }) {
+  const about = profile.about || {};
+  const setAbout = (patch) => nav.setChild({ about: { ...about, ...patch } });
+  const field = (key, label, placeholder) => (
+    <>
+      <FieldLabel>{label}</FieldLabel>
+      <textarea className="j-input" rows={2} value={about[key] || ''} placeholder={placeholder}
+        onChange={e => setAbout({ [key]: e.target.value })} style={{ marginBottom: 14, resize: 'vertical' }} />
+    </>
+  );
+  const helped = nav.plus ? helpedStrategies(entries).slice(0, 5) : [];
+  const anyContent = ['calms', 'hard', 'talk', 'needs', 'loves'].some(k => (about[k] || '').trim()) || (profile.adults || []).length > 0;
+  return (
+    <div className="j-screen">
+      <PushHeader title={'All about ' + profile.name} onBack={() => nav.back()} />
+      <div className="j-scroll j-fade">
+        <div className="j-pad" style={{ paddingTop: 4, paddingBottom: 40 }}>
+          <p className="j-sm" style={{ marginBottom: 16 }}>The page you would hand to a new teacher, a club, or anyone meeting {profile.name} for the first time. In your words.</p>
+          <div className="j-card" style={{ padding: 16, marginBottom: 10 }}>
+            {field('calms', 'What calms ' + profile.name, 'Deep pressure, the blue blanket, counting down from five...')}
+            {field('hard', 'What makes things hard', 'Loud rooms, sudden changes, being rushed...')}
+            {field('talk', 'How ' + profile.name + ' communicates', 'Short sentences work best. Signs for more and finished...')}
+            {field('needs', 'Key needs', 'Ear defenders for assembly, sits near the door...')}
+            <FieldLabel>What {profile.name} loves</FieldLabel>
+            <textarea className="j-input" rows={2} value={about.loves || ''} placeholder="Trains, drawing, the sensory room..."
+              onChange={e => setAbout({ loves: e.target.value })} style={{ resize: 'vertical' }} />
+          </div>
+          <SectionLabel>The adults around {(profile.name || '').trim() || 'them'}</SectionLabel>
+          <AdultsEditor profile={profile} onChange={nav.setChild} />
+          <button className="j-btn j-btn-ghost" data-print-about disabled={!anyContent} style={{ marginTop: 6, ...(anyContent ? {} : { opacity: 0.5, cursor: 'default' }) }}
+            onClick={() => anyContent && openPrintAboutChild(profile, about, helped)}>
+            <Icon name="doc" size={18} color="var(--blue)" /> Print or save as PDF
+          </button>
+          <FootNote>Everything here stays on this phone until you choose to print or share it.</FootNote>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---- What helped: the strategy bank (Plus, born from Dysregulation) ----
+function WhatHelpedScreen({ nav, entries }) {
+  const J = window.JOTLA;
+  const list = helpedStrategies(entries);
+  return (
+    <div className="j-screen">
+      <PushHeader title="What helped" onBack={() => nav.back()} />
+      <div className="j-scroll j-fade">
+        <div className="j-pad" style={{ paddingTop: 4, paddingBottom: 40 }}>
+          {!nav.plus ? (
+            <PlusLockedCard icon="leaf" title="Your own strategies"
+              text={<>Every dysregulation note asks what helped.<br />This page gathers those answers into your own playbook. Part of Plus.</>}
+              onClick={() => nav.go('unlock')} />
+          ) : (
+            <>
+              <p className="j-sm" style={{ marginBottom: 16 }}>Every time you note a hard moment, Jotla asks what helped. These are your own answers, gathered from your own record.</p>
+              {list.length === 0 ? (
+                <div className="j-card" style={{ padding: 22, textAlign: 'center' }}>
+                  <p className="j-sm">Nothing here yet. When a dysregulation note says what helped, it lands on this page.</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {list.map((s, i) => (
+                    <div key={i} className="j-card" data-helped-row style={{ padding: 16, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                      <span className="j-pillbadge" style={{ background: 'var(--tint-green)', color: 'var(--green-ink)', flexShrink: 0 }}>
+                        {s.count > 1 ? 'x' + s.count : 'once'}</span>
+                      <span style={{ flex: 1, minWidth: 0 }}>
+                        <span className="j-body" style={{ display: 'block' }}>{s.text}</span>
+                        <span className="j-meta" style={{ display: 'block', marginTop: 3 }}>Last on {J.fmtShort(s.last)} {s.last.slice(0, 4)}</span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <FootNote icon="leaf">The more honestly the hard moments are logged, the sharper this page gets.</FootNote>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---- Key contacts: the people a stressed parent calls at the gate (free) ----
+function ContactsScreen({ nav, profile }) {
+  const contacts = profile.contacts || [];
+  const [name, setName] = useStateB('');
+  const [role, setRole] = useStateB('');
+  const [phone, setPhone] = useStateB('');
+  const [email, setEmail] = useStateB('');
+  const add = () => {
+    const n = name.trim();
+    if (!n) return;
+    nav.setChild({ contacts: [...contacts, { id: 'c' + contacts.length + '_' + n.length + n.charCodeAt(0), name: n, role: role.trim(), phone: phone.trim(), email: email.trim() }] });
+    setName(''); setRole(''); setPhone(''); setEmail('');
+  };
+  const iconLink = (href, icon, label) => (
+    <a href={href} aria-label={label} className="j-press" style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--tint-blue)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, textDecoration: 'none' }}>
+      <Icon name={icon} size={18} color="var(--blue)" />
+    </a>
+  );
+  return (
+    <div className="j-screen">
+      <PushHeader title="Key contacts" onBack={() => nav.back()} />
+      <div className="j-scroll j-fade">
+        <div className="j-pad" style={{ paddingTop: 4, paddingBottom: 40 }}>
+          <p className="j-sm" style={{ marginBottom: 16 }}>The people around {profile.name}: SENCO, class teacher, case officer, club leader. One tap to call or email.</p>
+          {contacts.map(c => (
+            <div key={c.id} className="j-card" data-contact-row style={{ padding: 16, marginBottom: 10, display: 'flex', gap: 12, alignItems: 'center' }}>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span className="j-strong" style={{ display: 'block', fontSize: 'calc(16px * var(--tscale, 1))' }}>{c.name}</span>
+                {c.role && <span className="j-meta" style={{ display: 'block', marginTop: 2 }}>{c.role}</span>}
+              </span>
+              {c.phone && iconLink('tel:' + c.phone, 'bell', 'Call ' + c.name)}
+              {c.email && iconLink('mailto:' + c.email, 'mail', 'Email ' + c.name)}
+              <button onClick={() => nav.setChild({ contacts: contacts.filter(x => x.id !== c.id) })} aria-label={'Remove ' + c.name}
+                className="j-press" style={{ width: 40, height: 40, borderRadius: 12, border: 'none', background: 'var(--tag-grey-bg)',
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Icon name="close" size={16} color="var(--muted)" />
+              </button>
+            </div>
+          ))}
+          <SectionLabel>Add someone</SectionLabel>
+          <div className="j-card" style={{ padding: 16 }}>
+            <FieldLabel>Name</FieldLabel>
+            <input className="j-input" value={name} onChange={e => setName(e.target.value)} placeholder="Mrs Price" style={{ marginBottom: 12 }} />
+            <FieldLabel>Role</FieldLabel>
+            <input className="j-input" value={role} onChange={e => setRole(e.target.value)} placeholder="SENCO at Oakfield" style={{ marginBottom: 12 }} />
+            <FieldLabel>Phone</FieldLabel>
+            <input className="j-input" type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="School office or direct line" style={{ marginBottom: 12 }} />
+            <FieldLabel>Email</FieldLabel>
+            <input className="j-input" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="senco@school.org.uk" style={{ marginBottom: 14 }} />
+            <button className="j-btn j-btn-soft" onClick={add} disabled={!name.trim()} style={name.trim() ? {} : { opacity: 0.5, cursor: 'default' }}>Add</button>
+          </div>
+          <FootNote>Contacts stay on this phone. Calling or emailing uses your own phone and your own email.</FootNote>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---- Important dates: reviews and meetings with a countdown (Plus) ----
+// The parent's OWN dates, listed and counted down. Jotla never calculates a
+// legal deadline for them: a wrong week number in an app is a real harm, so
+// that stays out until it can be verified properly (founder + Vision, 14 Aug).
+function DatesScreen({ nav, profile }) {
+  const J = window.JOTLA;
+  const dates = profile.dates || [];
+  const [label, setLabel] = useStateB('');
+  const [iso, setIso] = useStateB('');
+  const [pickerOpen, setPickerOpen] = useStateB(false);
+  const daysTo = (d) => Math.round((J.parseISO(d) - J.parseISO(J.TODAY_ISO)) / 86400000);
+  const countdown = (d) => { const n = daysTo(d); return n === 0 ? 'Today' : n === 1 ? 'Tomorrow' : n > 1 ? 'In ' + n + ' days' : n === -1 ? 'Yesterday' : (-n) + ' days ago'; };
+  const add = () => {
+    const l = label.trim();
+    if (!l || !iso) return;
+    nav.setChild({ dates: [...dates, { id: 'd' + dates.length + '_' + iso, label: l, iso }].sort((a, b) => a.iso < b.iso ? -1 : 1) });
+    setLabel(''); setIso('');
+  };
+  return (
+    <div className="j-screen">
+      <PushHeader title="Important dates" onBack={() => nav.back()} />
+      <div className="j-scroll j-fade">
+        <div className="j-pad" style={{ paddingTop: 4, paddingBottom: 40 }}>
+          {!nav.plus ? (
+            <PlusLockedCard icon="calendar" title="Reviews and meetings, counted down"
+              text={<>The annual review, the next school meeting, the date you must reply by.<br />Kept per child, with a countdown. Part of Plus.</>}
+              onClick={() => nav.go('unlock')} />
+          ) : (
+            <>
+              <p className="j-sm" style={{ marginBottom: 16 }}>{profile.name}'s reviews, meetings and dates to hold, with a countdown. Your dates, in your hands.</p>
+              {dates.map(d => {
+                const past = daysTo(d.iso) < 0;
+                return (
+                  <div key={d.id} className="j-card" data-date-row style={{ padding: 16, marginBottom: 10, display: 'flex', gap: 12, alignItems: 'center', opacity: past ? 0.55 : 1 }}>
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span className="j-strong" style={{ display: 'block', fontSize: 'calc(16px * var(--tscale, 1))' }}>{d.label}</span>
+                      <span className="j-meta" style={{ display: 'block', marginTop: 2 }}>{J.fmtLong(d.iso)} {d.iso.slice(0, 4)}</span>
+                    </span>
+                    <span className="j-pillbadge" style={{ background: past ? 'var(--tag-grey-bg)' : 'var(--tint-blue)', color: past ? 'var(--muted)' : 'var(--blue)', flexShrink: 0 }}>{countdown(d.iso)}</span>
+                    <button onClick={() => nav.setChild({ dates: dates.filter(x => x.id !== d.id) })} aria-label={'Remove ' + d.label}
+                      className="j-press" style={{ width: 40, height: 40, borderRadius: 12, border: 'none', background: 'var(--tag-grey-bg)',
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Icon name="close" size={16} color="var(--muted)" />
+                    </button>
+                  </div>
+                );
+              })}
+              <SectionLabel>Add a date</SectionLabel>
+              <div className="j-card" style={{ padding: 16 }}>
+                <FieldLabel>What is it?</FieldLabel>
+                <input className="j-input" value={label} onChange={e => setLabel(e.target.value)} placeholder="Annual review" style={{ marginBottom: 12 }} />
+                <FieldLabel>When</FieldLabel>
+                <DateField value={iso ? `${J.fmtShort(iso)} ${iso.slice(0, 4)}` : null} placeholder="Pick a day" label="The date"
+                  onClick={() => setPickerOpen(true)} style={{ marginBottom: 14 }} />
+                <button className="j-btn j-btn-soft" onClick={add} disabled={!label.trim() || !iso}
+                  style={label.trim() && iso ? {} : { opacity: 0.5, cursor: 'default' }}>Add</button>
+              </div>
+              <FootNote>Jotla lists your dates; it never works out legal deadlines for you. For those, check with IPSEA or your own advisor.</FootNote>
+            </>
+          )}
+        </div>
+      </div>
+      {pickerOpen && (
+        <CalendarSheet onClose={() => setPickerOpen(false)} value={iso || null}
+          onSelect={(d) => { setIso(d); }} onClear={() => setIso('')} />
+      )}
+    </div>
+  );
+}
+
+// ---- Wins: the good days in one stream (free) ----
+// The record leans hard because hard is what needs evidencing; this page is
+// the other half of the story, for the parent on a bad night.
+function WinsScreen({ nav, entries }) {
+  const wins = entries.filter(e => e.mood === 'good' || ['Wins', 'New words'].includes(e.category));
+  return (
+    <div className="j-screen">
+      <PushHeader title="Wins" onBack={() => nav.back()} />
+      <div className="j-scroll j-fade">
+        <div className="j-pad" style={{ paddingTop: 4, paddingBottom: 40 }}>
+          <p className="j-sm" style={{ marginBottom: 16 }}>{wins.length === 0 ? 'Every good day, win and new word will gather here.' : wins.length + ' bright ' + (wins.length === 1 ? 'moment' : 'moments') + ', straight from your own record.'}</p>
+          {wins.length === 0 ? (
+            <div className="j-card" style={{ padding: 22, textAlign: 'center' }}>
+              <p className="j-sm">Nothing yet. The first good day lands here on its own.</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {wins.map(e => <EntryCard key={e.id} entry={e} showDate onClick={() => nav.go('entry', { id: e.id })} />)}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ---------------- SETTINGS (behind the cog) ----------------
 function AppSettingsScreen({ nav }) {
@@ -2606,4 +2919,5 @@ function SupportScreen({ nav }) {
 }
 
 Object.assign(window, { FindScreen, EvidenceScreen, AddDocScreen, DocScreen, UnlockScreen, SettingsScreen, InfoAboutScreen,
-  AppSettingsScreen, ChildrenScreen, ChildProfileScreen, AppLockScreen, BackupScreen, HelpScreen, SupportScreen, MRow, RadioSheet });
+  AppSettingsScreen, ChildrenScreen, ChildProfileScreen, AppLockScreen, BackupScreen, HelpScreen, SupportScreen, MRow, RadioSheet,
+  AboutChildScreen, WhatHelpedScreen, ContactsScreen, DatesScreen, WinsScreen, helpedStrategies });

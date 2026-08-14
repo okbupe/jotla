@@ -2058,6 +2058,38 @@ function App({
         docs: myDocs
       });
       break;
+    // the child's hub pages off the Menu tab (round 10, 14 Aug)
+    case 'aboutchild':
+      screen = /*#__PURE__*/React.createElement(AboutChildScreen, {
+        nav: nav,
+        profile: profile,
+        entries: myEntries
+      });
+      break;
+    case 'whathelped':
+      screen = /*#__PURE__*/React.createElement(WhatHelpedScreen, {
+        nav: nav,
+        entries: myEntries
+      });
+      break;
+    case 'contacts':
+      screen = /*#__PURE__*/React.createElement(ContactsScreen, {
+        nav: nav,
+        profile: profile
+      });
+      break;
+    case 'dates':
+      screen = /*#__PURE__*/React.createElement(DatesScreen, {
+        nav: nav,
+        profile: profile
+      });
+      break;
+    case 'wins':
+      screen = /*#__PURE__*/React.createElement(WinsScreen, {
+        nav: nav,
+        entries: myEntries
+      });
+      break;
     case 'applock':
       screen = /*#__PURE__*/React.createElement(AppLockScreen, {
         nav: nav
