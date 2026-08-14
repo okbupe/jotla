@@ -447,8 +447,11 @@ function FindScreen({ nav, entries, view }) {
               quick log's own idiom (founder, 14 Aug round 8: "blur that
               background of notes when filter is open"); a tap on it commits
               and tucks, because every way out commits except Cancel */}
+          {/* clip-path pens the blur in (founder catch, 14 Aug round 9): a
+              blur bleeds outward past its own box, and a note's accent
+              stripe was ghosting into the page gutter beside the bar */}
           <div data-find-results onClick={fOpen ? applyDraft : undefined}
-            style={{ transition: 'filter .18s ease, opacity .18s ease', ...(fOpen ? { filter: 'blur(4px)', opacity: 0.4 } : {}) }}>
+            style={{ transition: 'filter .18s ease, opacity .18s ease', ...(fOpen ? { filter: 'blur(4px)', opacity: 0.4, clipPath: 'inset(0)' } : {}) }}>
            <div style={fOpen ? { pointerEvents: 'none' } : undefined}>
             {/* clear of the stick's 28px breathing gradient, which otherwise
                 shaves this label at rest (arena catch, 14 Aug round 5) */}

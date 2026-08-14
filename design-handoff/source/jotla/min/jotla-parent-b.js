@@ -673,7 +673,8 @@ function FindScreen({
       transition: 'filter .18s ease, opacity .18s ease',
       ...(fOpen ? {
         filter: 'blur(4px)',
-        opacity: 0.4
+        opacity: 0.4,
+        clipPath: 'inset(0)'
       } : {})
     }
   }, /*#__PURE__*/React.createElement("div", {

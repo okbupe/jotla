@@ -1582,9 +1582,9 @@ function ok(name, cond) {
     const rew = document.querySelector('[data-find-rewind]');
     const drawer = document.querySelector('[data-find-drawer]');
     const after = stick ? getComputedStyle(stick, '::after') : null;
-    // since 2.0.25 the bar's opaque ground lives on its ::after face (a
-    // square page-colour ::before sits under the rounded corners)
-    const bg = bar ? getComputedStyle(bar, '::after').backgroundColor : '';
+    // since 2.0.30 the bar's opaque face is back on the element itself; the
+    // stick's full-bleed ::before sheet is the ground beneath everything
+    const bg = bar ? getComputedStyle(bar).backgroundColor : '';
     const m = bg.match(/rgba?\(([^)]+)\)/);
     const parts = m ? m[1].split(',') : [];
     const alpha = parts.length === 4 ? parseFloat(parts[3]) : (parts.length === 3 ? 1 : 0);
@@ -2799,16 +2799,21 @@ function ok(name, cond) {
   await page18.waitForTimeout(600);
   const ground18 = await page18.evaluate(() => {
     const scroller = document.querySelector('.j-screen .j-scroll');
+    const stick = document.querySelector('[data-find-stick]');
     const drawer = document.querySelector('[data-find-drawer]');
-    const cs = getComputedStyle(drawer);
-    const before = getComputedStyle(drawer, '::before');
+    const sheet = getComputedStyle(stick, '::before');
+    const dBefore = getComputedStyle(drawer, '::before');
     const bgAlpha = (c) => { const m = (c || '').match(/rgba?\(([^)]+)\)/); if (!m) return 0; const p = m[1].split(','); return p.length === 4 ? parseFloat(p[3]) : 1; };
+    // the round-9 sheet: one solid full-bleed backing on the stick, wider
+    // than the bar (it covers the page gutters too)
     return { locked: getComputedStyle(scroller).overflowY === 'hidden',
-      solid: bgAlpha(cs.backgroundColor) === 1,
-      noFrost: (before.backdropFilter || 'none') === 'none' && (before.webkitBackdropFilter || 'none') === 'none' };
+      solid: bgAlpha(sheet.backgroundColor) === 1,
+      fullBleed: parseFloat(sheet.left || '0') < -10,
+      noFrost: (dBefore.backdropFilter || 'none') === 'none' && (dBefore.webkitBackdropFilter || 'none') === 'none' };
   });
   ok('the record cannot scroll while the window is out', ground18.locked === true);
-  ok('the window sits on solid page colour, no frosted see-through', ground18.solid === true && ground18.noFrost === true);
+  ok('one solid full-bleed sheet grounds the window, no frosted see-through',
+    ground18.solid === true && ground18.fullBleed === true && ground18.noFrost === true);
   await page18.locator('[data-find-cancel]').click();
   await page18.waitForTimeout(500);
   const unlocked18 = await page18.evaluate(() => getComputedStyle(document.querySelector('.j-screen .j-scroll')).overflowY);
@@ -2894,9 +2899,12 @@ function ok(name, cond) {
   const dim19 = await page19.evaluate(() => {
     const el = document.querySelector('[data-find-results]');
     const cs = getComputedStyle(el);
-    return { blurred: /blur/.test(cs.filter || ''), dimmed: parseFloat(cs.opacity) < 0.7 };
+    return { blurred: /blur/.test(cs.filter || ''), dimmed: parseFloat(cs.opacity) < 0.7,
+      penned: (cs.clipPath || 'none') !== 'none' };
   });
   ok('the record blurs and dims behind the open window', dim19.blurred === true && dim19.dimmed === true);
+  ok('...and the blur is penned inside its own box, never ghosting the gutter (round-9 founder catch)',
+    dim19.penned === true);
   // swipe the window up: it must follow the finger and COMMIT like Search
   await page19.locator('[data-find-drawer] .j-chip', { hasText: 'Lunch hall' }).click();
   await page19.waitForTimeout(300);

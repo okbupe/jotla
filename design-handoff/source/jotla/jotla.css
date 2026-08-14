@@ -387,6 +387,14 @@ html.j-appmode .j-tabbar { height: calc(80px + env(safe-area-inset-bottom)); pad
    slides behind. The mini fab and its speech bubble are gone (founder,
    14 Aug round 4): the bar itself is the door to the filters. */
 .j-findstick { position: sticky; top: 0; z-index: 5; }
+/* ONE SOLID SHEET (founder, 14 Aug round 9: "from the transparent gradient
+   up is solid... no need to patch curtain areas"): everything the sticky
+   unit occupies, bar, gap, window, corner surrounds, gutters, paints plain
+   page colour edge to edge; the white window keeps its rounded corners on
+   that ground, and the record only ever shows below the gradient. This one
+   backing retired the round-5 square bar patch and the round-7 drawer
+   backing in the same breath. */
+.j-findstick::before { content: ''; position: absolute; inset: 0 -20px; background: var(--bg); }
 /* half solid, half fade (founder, 14 Aug round 5): a note dies out fully a
    breath below whatever is open before it slides behind, so it never crowds
    the bar or the drawer's foot */
@@ -394,16 +402,11 @@ html.j-appmode .j-tabbar { height: calc(80px + env(safe-area-inset-bottom)); pad
   background: linear-gradient(to bottom, var(--bg) 0, var(--bg) 50%, transparent); pointer-events: none; }
 /* OPAQUE, never see-through (founder, 14 Aug round 4): the same blue tint,
    layered over the solid page background so the notes can never show
-   through it in either theme. The bar's paint splits in two (round 5): a
-   SQUARE page-colour backing under the rounded blue face, because a note
-   scrolling behind used to stay sharp inside the rounded-corner notches and
-   the bar's edge read as transparent. */
+   through it in either theme. */
 .j-findbar { display: flex; align-items: center; gap: 10px; position: relative; z-index: 2;
   border-radius: 16px; padding: 14px;
   cursor: pointer; touch-action: none; -webkit-tap-highlight-color: transparent;
-  user-select: none; -webkit-user-select: none; }
-.j-findbar::before { content: ''; position: absolute; inset: 0; z-index: -2; background: var(--bg); }
-.j-findbar::after { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: 16px;
+  user-select: none; -webkit-user-select: none;
   background: linear-gradient(var(--tint-blue), var(--tint-blue)) var(--bg); }
 /* the drawer: every filter, folded away behind the bar; its height is driven
    by the gesture, exactly the calendar's graph fold */
@@ -416,8 +419,9 @@ html.j-appmode .j-tabbar { height: calc(80px + env(safe-area-inset-bottom)); pad
    and the record's own scroll is LOCKED while the window is out, so there is
    nothing moving behind it either. */
 /* touch-action none: the panel owns its vertical pans for the swipe-to-close
-   (round 8); the filters scroller inside overrides per its own overflow */
-.j-finddrawer { overflow: hidden; position: relative; z-index: 1; background: var(--bg); touch-action: none; }
+   (round 8); the filters scroller inside overrides per its own overflow.
+   No background of its own: the stick's solid sheet is the ground (round 9). */
+.j-finddrawer { overflow: hidden; position: relative; z-index: 1; touch-action: none; }
 .j-finddrawer-in { background: var(--card); border: 1px solid var(--line);
   border-radius: 18px; padding: 14px; margin: 0; box-sizing: border-box;
   box-shadow: 0 16px 30px -18px rgba(0,0,0,0.28); }
