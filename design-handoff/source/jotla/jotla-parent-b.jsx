@@ -213,8 +213,11 @@ function FindScreen({ nav, entries, view }) {
   // draft; nothing lands on the results until Search.
   const filtersBody = (
     <>
+      {/* everything below is sized so the whole drawer fits a phone screen
+          with no inner scroll, Custom's date row included (founder, 14 Aug
+          round 5): a 46px search field, 36px chips, 10px section gaps */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--card-2)', border: '1.5px solid var(--chip-border)',
-        borderRadius: 14, padding: '0 14px', height: 52, marginBottom: 14 }}>
+        borderRadius: 14, padding: '0 14px', height: 46, marginBottom: 8 }}>
         <Icon name="search" size={20} color="var(--faint)" />
         <input value={dq} onChange={e => setDq(e.target.value)} placeholder="Search your notes"
           style={{ flex: 1, border: 'none', outline: 'none', fontFamily: "'Outfit', system-ui", fontSize: 'calc(16px * var(--tscale, 1))', color: 'var(--ink)', background: 'transparent' }} />
@@ -222,13 +225,13 @@ function FindScreen({ nav, entries, view }) {
       {nav.plus ? (
         <>
           <SectionLabel>Themes</SectionLabel>
-          <div className="j-chiprow" style={{ marginBottom: 12 }}>
+          <div className="j-chiprow" style={{ marginBottom: 10 }}>
             {J.FIND_THEMES.map(t => (
               <button key={t} aria-pressed={dthemes.includes(t)} className={'j-chip' + (dthemes.includes(t) ? ' j-chip-on' : '')} onClick={() => toggle(setDthemes)(t)}>{t}</button>
             ))}
           </div>
           <SectionLabel>Mood</SectionLabel>
-          <div className="j-chiprow" style={{ marginBottom: 12 }}>
+          <div className="j-chiprow" style={{ marginBottom: 10 }}>
             {J.FIND_MOODS.map(m => {
               const on = dmoods.includes(m.key);
               return (
@@ -239,7 +242,7 @@ function FindScreen({ nav, entries, view }) {
             })}
           </div>
           <SectionLabel>Where</SectionLabel>
-          <div className="j-chiprow" style={{ marginBottom: 12 }}>
+          <div className="j-chiprow" style={{ marginBottom: 10 }}>
             {['Any', 'School', 'Home', 'Club'].map(s => (
               <button key={s} aria-pressed={dsetting === s} className={'j-chip' + (dsetting === s ? ' j-chip-on' : '')} onClick={() => setDsetting(s)}>{s}</button>
             ))}
@@ -290,7 +293,7 @@ function FindScreen({ nav, entries, view }) {
               style={{ height: drawerH ? drawerH * f : (f > 0.5 ? undefined : 0) }}>
               <div ref={drawerInnerRef} style={{ transform: `translateY(${drawerH ? -((1 - f) * drawerH) : 0}px)` }}>
                 <div className="j-finddrawer-in" style={{ maxHeight: capH || undefined, display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, flexShrink: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, flexShrink: 0 }}>
                     <h2 className="j-h2">Filters</h2>
                     <button className="j-iconbtn" data-drawer-rewind disabled={isDraftClear}
                       aria-label="Clear the search and filters" onClick={resetDraft}
@@ -303,15 +306,17 @@ function FindScreen({ nav, entries, view }) {
                     {filtersBody}
                   </div>
                   {/* Search commits, Cancel keeps the last search (founder, 14 Aug) */}
-                  <div style={{ display: 'flex', gap: 10, marginTop: 14, flexShrink: 0 }}>
-                    <button className="j-btn j-btn-primary" data-find-search style={{ flex: 1, minHeight: 48 }} onClick={applyDraft}>Search</button>
-                    <button className="j-btn j-btn-ghost" data-find-cancel style={{ flex: 1, minHeight: 48 }} onClick={cancelDraft}>Cancel</button>
+                  <div style={{ display: 'flex', gap: 10, marginTop: 12, flexShrink: 0 }}>
+                    <button className="j-btn j-btn-primary" data-find-search style={{ flex: 1, minHeight: 46 }} onClick={applyDraft}>Search</button>
+                    <button className="j-btn j-btn-ghost" data-find-cancel style={{ flex: 1, minHeight: 46 }} onClick={cancelDraft}>Cancel</button>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <p className="j-meta" style={{ margin: '12px 0 10px' }}>{matched.length} {matched.length === 1 ? 'note' : 'notes'} found</p>
+          {/* clear of the stick's 28px breathing gradient, which otherwise
+              shaves this label at rest (arena catch, 14 Aug round 5) */}
+          <p className="j-meta" style={{ margin: '30px 0 10px' }}>{matched.length} {matched.length === 1 ? 'note' : 'notes'} found</p>
 
           {matched.length === 0 ? (
             <div className="j-card" style={{ padding: 22, textAlign: 'center' }}>
@@ -352,7 +357,7 @@ function openPrintPack(childLabel, rangeLabel, list) {
       + '<p style="margin:0 0 4px;font-size:12px;color:#1A56A8;"><strong>' + esc(J.fmtShort(e.date)) + ' ' + esc(e.date.slice(0, 4))
       + ', ' + esc(e.clock || e.time) + '</strong> &nbsp; ' + esc(e.setting) + ' · ' + esc(e.category) + ' &nbsp; ' + badge(e.kind)
       + (e.editedOn ? ' <span style="color:#8892a6;font-size:10.5px;">edited ' + esc(J.fmtShort(e.editedOn)) + '</span>' : '') + '</p>'
-      + '<p style="margin:0;font-size:13px;line-height:1.45;">' + esc(e.summary) + '</p>' + extra + '</div>';
+      + '<p style="margin:0;font-size:13px;line-height:1.45;white-space:pre-line;">' + esc(e.summary) + '</p>' + extra + '</div>';
   }).join('');
   const w = window.open('', '_blank');
   if (!w) { alert('Your browser blocked the new tab. Allow pop-ups for this page and try again.'); return false; }

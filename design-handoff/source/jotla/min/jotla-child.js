@@ -330,7 +330,11 @@ function ChildScreen({
     lines.push(picksNow.length ? childName + ' shared their day in child mode: ' + picksNow.map(p => 'felt ' + emoLabel(p.emotion).toLowerCase() + ' in the ' + sceneLabel(p.scene).toLowerCase()).join('; ') + '.' : childName + ' shared their day in child mode.');
     for (const item of answered) {
       const bits = [...item.answer.chips];
-      const typed = item.answer.text.trim();
+      // the summary is line-oriented ("Place: Question? Answer" per line), so
+      // a newline typed inside an answer would forge a fake line and misfile
+      // the child's words (arena catch, 14 Aug round 5); flatten to spaces,
+      // every word kept
+      const typed = item.answer.text.trim().replace(/\s*\n+\s*/g, ' ');
       if (typed) bits.push(typed);
       lines.push(item.placeLabel + ': ' + item.prompt + ' ' + bits.join(', '));
     }

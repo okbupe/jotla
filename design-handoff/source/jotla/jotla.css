@@ -387,21 +387,48 @@ html.j-appmode .j-tabbar { height: calc(80px + env(safe-area-inset-bottom)); pad
    slides behind. The mini fab and its speech bubble are gone (founder,
    14 Aug round 4): the bar itself is the door to the filters. */
 .j-findstick { position: sticky; top: 0; z-index: 5; }
-.j-findstick::after { content: ''; position: absolute; top: 100%; left: -20px; right: -20px; height: 22px;
-  background: linear-gradient(to bottom, var(--bg), rgba(255,255,255,0)); pointer-events: none; }
+/* half solid, half fade (founder, 14 Aug round 5): a note dies out fully a
+   breath below whatever is open before it slides behind, so it never crowds
+   the bar or the drawer's foot */
+.j-findstick::after { content: ''; position: absolute; top: 100%; left: -20px; right: -20px; height: 28px;
+  background: linear-gradient(to bottom, var(--bg) 0, var(--bg) 50%, transparent); pointer-events: none; }
 /* OPAQUE, never see-through (founder, 14 Aug round 4): the same blue tint,
    layered over the solid page background so the notes can never show
-   through it in either theme. */
+   through it in either theme. The bar's paint splits in two (round 5): a
+   SQUARE page-colour backing under the rounded blue face, because a note
+   scrolling behind used to stay sharp inside the rounded-corner notches and
+   the bar's edge read as transparent. */
 .j-findbar { display: flex; align-items: center; gap: 10px; position: relative; z-index: 2;
-  background: linear-gradient(var(--tint-blue), var(--tint-blue)) var(--bg); border-radius: 16px; padding: 14px;
+  border-radius: 16px; padding: 14px;
   cursor: pointer; touch-action: none; -webkit-tap-highlight-color: transparent;
   user-select: none; -webkit-user-select: none; }
+.j-findbar::before { content: ''; position: absolute; inset: 0; z-index: -2; background: var(--bg); }
+.j-findbar::after { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: 16px;
+  background: linear-gradient(var(--tint-blue), var(--tint-blue)) var(--bg); }
 /* the drawer: every filter, folded away behind the bar; its height is driven
    by the gesture, exactly the calendar's graph fold */
 .j-finddrawer { overflow: hidden; position: relative; z-index: 1; }
+/* the panel's bottom rounded corners get the bar's own treatment: a page-
+   colour strip behind the last 18px, so a note passing the corner notches
+   never shows sharp there (arena catch, 14 Aug round 5) */
+.j-finddrawer::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 18px;
+  background: var(--bg); }
+/* the panel is the bar's own width, and the record shows through it BLURRED,
+   never sharp (founder, 14 Aug round 5); solid card stays the fallback where
+   backdrop-filter does not exist */
 .j-finddrawer-in { background: var(--card); border: 1px solid var(--line); border-top: none;
-  border-radius: 0 0 18px 18px; padding: 14px; margin: 0 4px; box-sizing: border-box;
+  border-radius: 0 0 18px 18px; padding: 14px; margin: 0; box-sizing: border-box;
   box-shadow: 0 16px 30px -18px rgba(0,0,0,0.28); }
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .j-finddrawer-in { background: color-mix(in srgb, var(--card) 82%, transparent);
+    -webkit-backdrop-filter: blur(18px) saturate(1.1); backdrop-filter: blur(18px) saturate(1.1); }
+}
+/* the drawer's filters wear tighter chips than the app's 44px standard so the
+   whole panel fits a phone screen without scrolling, Custom's date pickers
+   included (founder, 14 Aug round 5); the inner scroll stays only as the
+   large-text safety net */
+.j-finddrawer-in .j-chip { min-height: 36px; padding: 0 14px; font-size: calc(14px * var(--tscale, 1)); gap: 6px; }
+.j-finddrawer-in .j-chiprow { gap: 8px; }
 
 .j-fab { position: absolute; right: 16px; bottom: 96px; width: 56px; height: 56px; border: none;
   border-radius: 50%; background: var(--fill); color: #fff; cursor: pointer; z-index: 39;
@@ -483,8 +510,19 @@ html.j-appmode .j-fabtip { bottom: calc(160px + env(safe-area-inset-bottom)); }
 .j-graphfold { overflow: hidden; touch-action: none; }
 /* the record dissolves as it slides up behind the pinned area: one card-gap's
    worth of soft fade instead of a hard edge (founder, 14 Aug, "so the notes
-   look clean when they scrolling up in behind") */
-.j-streamfade { -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 22px); mask-image: linear-gradient(to bottom, transparent 0, #000 22px); }
+   look clean when they scrolling up in behind"). Half gone, half fade
+   (founder, 14 Aug round 5): the first stretch under the pinned block hides a
+   note completely, breathing room, and only then the dissolve runs. */
+.j-streamfade { -webkit-mask-image: linear-gradient(to bottom, transparent 0, transparent 13px, #000 27px); mask-image: linear-gradient(to bottom, transparent 0, transparent 13px, #000 27px); }
+/* a day cell's ring lives 1px INSIDE the cell (founder, 14 Aug round 5: the
+   old edge-drawn ring was shaved by the fold's and the pager's clip boxes at
+   some sub-pixel sizes) */
+.j-daycell { position: relative; }
+/* box-shadow, not border: Chromium floors a 1.5px used border-width to 1px,
+   and the today/anchor weight distinction is deliberate */
+.j-daycell[data-ring]::after { content: ''; position: absolute; inset: 1px; border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px var(--blue); pointer-events: none; }
+.j-daycell[data-ring="anchor"]::after { box-shadow: inset 0 0 0 1px var(--blue); }
 /* a day in the record arrives from below, once, as it is paged in */
 .j-daysec { animation: jDayIn .34s cubic-bezier(.2,.7,.3,1) both; }
 @keyframes jDayIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }

@@ -1060,7 +1060,12 @@ function ok(name, cond) {
       months: [...new Set(vis.filter(b => !b.hasAttribute('data-out'))
         .map(b => (b.getAttribute('aria-label') || '').split(',')[0].split(' ').slice(1).join(' ')))],
       anchorLabel: anchors.length === 1 ? anchors[0].getAttribute('aria-label') : null,
-      anchorRing: anchors.length === 1 ? getComputedStyle(anchors[0]).boxShadow !== 'none' : null,
+      // the ring is a 1px-inset ::after (inset box-shadow) since 2.0.25: the
+      // old edge-drawn shadow was shaved by the clip boxes, and a 1.5px
+      // ::after BORDER floors to 1px in Chromium
+      anchorRing: anchors.length === 1
+        ? /inset/.test(getComputedStyle(anchors[0], '::after').boxShadow || '')
+        : null,
       anchorFilledBlue: anchors.length === 1
         ? getComputedStyle(anchors[0]).backgroundColor === getComputedStyle(document.documentElement).getPropertyValue('--tint-blue').trim()
         : null,
@@ -1577,7 +1582,9 @@ function ok(name, cond) {
     const rew = document.querySelector('[data-find-rewind]');
     const drawer = document.querySelector('[data-find-drawer]');
     const after = stick ? getComputedStyle(stick, '::after') : null;
-    const bg = bar ? getComputedStyle(bar).backgroundColor : '';
+    // since 2.0.25 the bar's opaque ground lives on its ::after face (a
+    // square page-colour ::before sits under the rounded corners)
+    const bg = bar ? getComputedStyle(bar, '::after').backgroundColor : '';
     const m = bg.match(/rgba?\(([^)]+)\)/);
     const parts = m ? m[1].split(',') : [];
     const alpha = parts.length === 4 ? parseFloat(parts[3]) : (parts.length === 3 ? 1 : 0);
@@ -1639,6 +1646,19 @@ function ok(name, cond) {
     drawer.h > 260 && drawer.hasSearch === true && drawer.rewind === true
     && drawer.text.includes('Themes') && drawer.text.includes('Mood') && drawer.text.includes('Where') && drawer.text.includes('When'));
   ok('the drawer ends in the Search and Cancel pills', drawer.pills === true);
+  // 2.0.25 (founder, 14 Aug round 5): the whole panel fits the phone with no
+  // inner scroll, even with Custom's date pickers out
+  await page5.locator('[data-find-drawer] .j-chip', { hasText: 'Custom' }).click();
+  await page5.waitForTimeout(400);
+  const fit = await page5.evaluate(() => {
+    const el = document.querySelector('[data-find-filters]');
+    return { over: el.scrollHeight - el.clientHeight,
+      custom: !!document.querySelector('[data-find-drawer] button[aria-label^="From date"]') };
+  });
+  ok('the whole drawer fits with no inner scroll, Custom open (' + fit.over + 'px over)',
+    fit.over <= 1 && fit.custom === true);
+  await page5.locator('[data-find-drawer] .j-chip', { hasText: 'Any time' }).click();
+  await page5.waitForTimeout(300);
   // the pills stand clear of the tab bar and really take the tap, and the +
   // FAB steps aside while the drawer is out (arena catches, round 4: at full
   // height the pills sat behind the tab bar and a Search tap changed tabs,
@@ -2625,6 +2645,66 @@ function ok(name, cond) {
   ok(`the closing button has padding around its label (button ${cta && cta.btn}px vs label ${cta && cta.content}px)`,
     !!cta && cta.btn - cta.content >= 40);
   await ctx15.close();
+
+  // ---- 16. the child-mode note reads as places and answers (2.0.25) ----
+  // The child's walk saves "Place: Question? Answer" lines; the note detail
+  // must render them structured, never as one wall of words, and NEVER lose
+  // or misfile a word: a legacy line without a "?" is part of the previous
+  // answer, not a fabricated place (arena catch, 14 Aug round 5), and a
+  // summary that does not parse cleanly falls back to plain text whole.
+  console.log('Suite 16: child-mode note rendering');
+  const ctx16 = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  const page16 = await ctx16.newPage();
+  const CM_SUMMARY = 'Sam shared their day in child mode: felt ok in the classroom; felt angry in the playground.\n'
+    + 'Classroom: Who was there? Teachers, Mr Makombe\n'
+    + 'Playground: Any pushing or trouble from other children? Yes, I got pushed\n'
+    + 'Mum: picked me up';
+  await page16.addInitScript(({ summary }) => {
+    localStorage.setItem('jotla_fabtip_v1', 'learned');
+    window.__CM_SEED = summary;
+  }, { summary: CM_SUMMARY });
+  await page16.goto(URL_APP, { waitUntil: 'networkidle' });
+  await page16.waitForTimeout(1000);
+  await page16.evaluate(() => {
+    const key = 'jotla_entries_v4';
+    const list = JSON.parse(localStorage.getItem(key) || 'null') || [];
+    const childId = (list[0] && list[0].childId) || (window.JOTLA.CHILD && window.JOTLA.CHILD.id);
+    list.unshift({ id: 'cmtest1', childId, date: window.JOTLA.TODAY_ISO, time: 'Morning', clock: '09:12',
+      setting: 'School', category: 'Other', mood: 'ok', kind: 'contemporaneous', type: 'quick',
+      childMode: true, summary: window.__CM_SEED });
+    localStorage.setItem(key, JSON.stringify(list));
+  });
+  await page16.reload({ waitUntil: 'networkidle' });
+  await page16.waitForTimeout(1000);
+  const cmParsed = await page16.evaluate((summary) => {
+    const p = window.parseChildDay(summary);
+    return p && {
+      labels: p.places.map(x => x.label),
+      pgAnswer: (p.places.find(x => x.label === 'Playground') || { qa: [] }).qa.map(q => q.answer).join(' | '),
+      bailsOnGarbage: window.parseChildDay('Sam shared their day in child mode: he was happy about it.') === null,
+      bailsOnColonName: window.parseChildDay('D: shared their day in child mode: felt ok in the classroom.') === null,
+    };
+  }, CM_SUMMARY);
+  ok('the parser reads places without fabricating one from a legacy line',
+    !!cmParsed && cmParsed.labels.join('|') === 'Classroom|Playground');
+  ok('the "Mum: picked me up" line stays with the question it answered',
+    !!cmParsed && cmParsed.pgAnswer === 'Yes, I got pushed Mum: picked me up');
+  ok('an intro that does not parse cleanly bails whole to plain text',
+    !!cmParsed && cmParsed.bailsOnGarbage === true && cmParsed.bailsOnColonName === true);
+  // open the note itself and prove the structured render keeps every word
+  await page16.locator('.j-card', { hasText: 'child mode' }).first().click();
+  await page16.waitForTimeout(700);
+  const cmDetail = await page16.evaluate(() => {
+    const card = [...document.querySelectorAll('.j-card')].find(c => c.innerText.includes('child mode'));
+    return card ? card.innerText.replace(/\s+/g, ' ') : '';
+  });
+  const cmWords = ['Classroom', 'felt ok', 'Who was there?', 'Teachers, Mr Makombe', 'Playground', 'felt angry',
+    'Any pushing or trouble from other children?', 'Yes, I got pushed', 'Mum: picked me up'];
+  ok('the note detail renders structured with every word of the child\'s kept',
+    cmWords.every(w => cmDetail.includes(w)));
+  ok('...and no fabricated "Mum" place heading appears',
+    !/Mum · | Mum picked/.test(cmDetail) && cmDetail.includes('Mum: picked me up'));
+  await ctx16.close();
 
   await browser.close();
   server.kill();

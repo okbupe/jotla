@@ -291,8 +291,8 @@ function FindScreen({
       border: '1.5px solid var(--chip-border)',
       borderRadius: 14,
       padding: '0 14px',
-      height: 52,
-      marginBottom: 14
+      height: 46,
+      marginBottom: 8
     }
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "search",
@@ -314,7 +314,7 @@ function FindScreen({
   })), nav.plus ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SectionLabel, null, "Themes"), /*#__PURE__*/React.createElement("div", {
     className: "j-chiprow",
     style: {
-      marginBottom: 12
+      marginBottom: 10
     }
   }, J.FIND_THEMES.map(t => /*#__PURE__*/React.createElement("button", {
     key: t,
@@ -324,7 +324,7 @@ function FindScreen({
   }, t))), /*#__PURE__*/React.createElement(SectionLabel, null, "Mood"), /*#__PURE__*/React.createElement("div", {
     className: "j-chiprow",
     style: {
-      marginBottom: 12
+      marginBottom: 10
     }
   }, J.FIND_MOODS.map(m => {
     const on = dmoods.includes(m.key);
@@ -340,7 +340,7 @@ function FindScreen({
   })), /*#__PURE__*/React.createElement(SectionLabel, null, "Where"), /*#__PURE__*/React.createElement("div", {
     className: "j-chiprow",
     style: {
-      marginBottom: 12
+      marginBottom: 10
     }
   }, ['Any', 'School', 'Home', 'Club'].map(s => /*#__PURE__*/React.createElement("button", {
     key: s,
@@ -452,7 +452,7 @@ function FindScreen({
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      marginBottom: 10,
+      marginBottom: 8,
       flexShrink: 0
     }
   }, /*#__PURE__*/React.createElement("h2", {
@@ -483,7 +483,7 @@ function FindScreen({
     style: {
       display: 'flex',
       gap: 10,
-      marginTop: 14,
+      marginTop: 12,
       flexShrink: 0
     }
   }, /*#__PURE__*/React.createElement("button", {
@@ -491,7 +491,7 @@ function FindScreen({
     "data-find-search": true,
     style: {
       flex: 1,
-      minHeight: 48
+      minHeight: 46
     },
     onClick: applyDraft
   }, "Search"), /*#__PURE__*/React.createElement("button", {
@@ -499,13 +499,13 @@ function FindScreen({
     "data-find-cancel": true,
     style: {
       flex: 1,
-      minHeight: 48
+      minHeight: 46
     },
     onClick: cancelDraft
   }, "Cancel")))))), /*#__PURE__*/React.createElement("p", {
     className: "j-meta",
     style: {
-      margin: '12px 0 10px'
+      margin: '30px 0 10px'
     }
   }, matched.length, " ", matched.length === 1 ? 'note' : 'notes', " found"), matched.length === 0 ? /*#__PURE__*/React.createElement("div", {
     className: "j-card",
@@ -543,7 +543,7 @@ function openPrintPack(childLabel, rangeLabel, list) {
       const part = (l, v) => v ? '<p style="margin:4px 0;"><strong>' + esc(l) + ':</strong> ' + esc(v) + '</p>' : '';
       extra = '<div style="margin-top:6px;padding:8px 12px;background:#f5f7fb;border-radius:8px;">' + (h.behaviours && h.behaviours.length ? '<p style="margin:4px 0;"><strong>Seen:</strong> ' + esc(h.behaviours.join(', ')) + '</p>' : '') + (h.who && h.who.length ? part('Who was there', h.who.join(', ')) : '') + part('Where', h.where) + part('Before', h.before) + part('During', h.during) + part('After', h.after) + part('Lasted', h.duration) + part('What helped', h.helped) + '</div>';
     }
-    return '<div style="padding:10px 0;border-bottom:1px solid #dde3ee;page-break-inside:avoid;">' + '<p style="margin:0 0 4px;font-size:12px;color:#1A56A8;"><strong>' + esc(J.fmtShort(e.date)) + ' ' + esc(e.date.slice(0, 4)) + ', ' + esc(e.clock || e.time) + '</strong> &nbsp; ' + esc(e.setting) + ' · ' + esc(e.category) + ' &nbsp; ' + badge(e.kind) + (e.editedOn ? ' <span style="color:#8892a6;font-size:10.5px;">edited ' + esc(J.fmtShort(e.editedOn)) + '</span>' : '') + '</p>' + '<p style="margin:0;font-size:13px;line-height:1.45;">' + esc(e.summary) + '</p>' + extra + '</div>';
+    return '<div style="padding:10px 0;border-bottom:1px solid #dde3ee;page-break-inside:avoid;">' + '<p style="margin:0 0 4px;font-size:12px;color:#1A56A8;"><strong>' + esc(J.fmtShort(e.date)) + ' ' + esc(e.date.slice(0, 4)) + ', ' + esc(e.clock || e.time) + '</strong> &nbsp; ' + esc(e.setting) + ' · ' + esc(e.category) + ' &nbsp; ' + badge(e.kind) + (e.editedOn ? ' <span style="color:#8892a6;font-size:10.5px;">edited ' + esc(J.fmtShort(e.editedOn)) + '</span>' : '') + '</p>' + '<p style="margin:0;font-size:13px;line-height:1.45;white-space:pre-line;">' + esc(e.summary) + '</p>' + extra + '</div>';
   }).join('');
   const w = window.open('', '_blank');
   if (!w) {

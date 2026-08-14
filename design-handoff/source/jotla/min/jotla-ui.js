@@ -11,7 +11,7 @@ const {
 // and the suite asserts that, because asking a person to remember is what got
 // us here: this said 2.0.4 for fourteen builds while the service worker said
 // 2.0.18, so the one number a tester can actually read was the one lying.
-window.JOTLA_BUILD = '2.0.24';
+window.JOTLA_BUILD = '2.0.25';
 
 // The app's data epoch: the earliest day a log can land on (Quick log's own
 // minimum day, and how far back the Month calendar pages). One home here, on
@@ -766,7 +766,7 @@ function DateRangeControl({
     style: {
       display: 'flex',
       gap: 12,
-      marginTop: 12
+      marginTop: 10
     }
   }, dateInput('from'), dateInput('to')), openFor && /*#__PURE__*/React.createElement(CalendarSheet, {
     onClose: () => setOpenFor(null),
@@ -855,6 +855,124 @@ function fileToImageDataURL(file, maxDim, quality, cb) {
   reader.readAsDataURL(file);
 }
 window.fileToImageDataURL = fileToImageDataURL;
+
+// ---- a child-mode day, laid out to be read (founder, 14 Aug) ----
+// The child's walk saves as structured lines ("Place: Question? Answer"), and
+// rendering them as one paragraph made a wall of words no tired parent, or a
+// parent with dyslexia, should have to fight. One home for the layout: the
+// note detail and every card read the same shape. Anything that does not
+// parse cleanly falls back to the plain text with its line breaks kept, so
+// the child's words are never lost or misfiled.
+function isChildDayEntry(entry) {
+  return !!entry && (entry.childMode === true || /shared their day in child mode/.test(String(entry.summary || '')));
+}
+function parseChildDay(summary) {
+  const lines = String(summary || '').split('\n').map(s => s.trim()).filter(Boolean);
+  if (lines.length === 0 || !/shared their day in child mode/i.test(lines[0])) return null;
+  // "Sam shared their day in child mode: felt ok in the classroom; felt happy in the lunch hall."
+  // Any piece that does not parse cleanly bails the WHOLE note back to plain
+  // text (arena catch, 14 Aug round 5: a partial parse silently dropped the
+  // child's words; all-or-nothing never loses a word).
+  const colon = lines[0].indexOf(':');
+  const intro = (colon > -1 ? lines[0].slice(0, colon) : lines[0]).replace(/\.\s*$/, '') + '.';
+  const places = [];
+  const at = {};
+  const groupOf = label => {
+    const k = label.toLowerCase();
+    if (!(k in at)) {
+      at[k] = places.length;
+      places.push({
+        label,
+        feeling: null,
+        qa: []
+      });
+    }
+    return places[at[k]];
+  };
+  if (colon > -1) {
+    for (const bit of lines[0].slice(colon + 1).replace(/\.\s*$/, '').split(';')) {
+      const m = bit.trim().match(/^felt (.+?) in the (.+)$/i);
+      if (!m) return null;
+      groupOf(m[2].charAt(0).toUpperCase() + m[2].slice(1)).feeling = m[1];
+    }
+  }
+  // "Classroom: Who was there? Teachers, Mr Makombe" -> place, question, answer.
+  // Every real question the walk asks ends in "?", so a line whose text after
+  // the colon holds no "?" is NOT a new place: it is part of the previous
+  // answer (e.g. legacy typed text like "Mum: picked me up"), and it stays
+  // with the question it answered (arena catch, 14 Aug round 5: it used to
+  // become a fabricated place heading).
+  let lastQA = null;
+  for (const line of lines.slice(1)) {
+    const c = line.indexOf(': ');
+    const q = c > 0 ? line.indexOf('?', c) : -1;
+    if (c > 0 && q > -1) {
+      lastQA = {
+        question: line.slice(c + 2, q + 1),
+        answer: line.slice(q + 1).trim()
+      };
+      groupOf(line.slice(0, c)).qa.push(lastQA);
+    } else if (lastQA) {
+      lastQA.answer = (lastQA.answer ? lastQA.answer + ' ' : '') + line;
+    } else {
+      return null; // an unexpected shape: hand back to plain text
+    }
+  }
+  return {
+    intro,
+    places
+  };
+}
+function ChildDaySummary({
+  entry,
+  compact
+}) {
+  const parsed = parseChildDay(entry.summary);
+  if (!parsed) {
+    return /*#__PURE__*/React.createElement("p", {
+      className: "j-body",
+      style: {
+        whiteSpace: 'pre-line',
+        fontSize: compact ? 'calc(16.5px * var(--tscale, 1))' : undefined,
+        lineHeight: 1.4
+      }
+    }, entry.summary);
+  }
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: compact ? 10 : 14
+    }
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "j-sm"
+  }, parsed.intro), parsed.places.map(pl => /*#__PURE__*/React.createElement("div", {
+    key: pl.label
+  }, /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontFamily: "'Cal Sans', system-ui",
+      fontWeight: 500,
+      fontSize: 'calc(14px * var(--tscale, 1))',
+      color: 'var(--blue)',
+      marginBottom: pl.qa.length ? 5 : 0
+    }
+  }, pl.label, pl.feeling ? ` · felt ${pl.feeling}` : ''), pl.qa.map((qa, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      marginBottom: i < pl.qa.length - 1 ? 8 : 0
+    }
+  }, qa.question && /*#__PURE__*/React.createElement("p", {
+    className: "j-meta",
+    style: {
+      marginBottom: 1
+    }
+  }, qa.question), /*#__PURE__*/React.createElement("p", {
+    className: "j-body",
+    style: {
+      fontSize: 'calc(15.5px * var(--tscale, 1))'
+    }
+  }, qa.answer || 'No answer given'))))));
+}
 
 // The solid kind pill: the tag shape with the kind colour as its ground, so
 // the kind reads at a glance where the pale metadata tags stay quiet. Text
@@ -985,7 +1103,14 @@ function EntryCard({
       size: 13,
       color: "var(--bg)"
     })
-  }))), /*#__PURE__*/React.createElement("p", {
+  }))), isChildDayEntry(entry) ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 10
+    }
+  }, /*#__PURE__*/React.createElement(ChildDaySummary, {
+    entry: entry,
+    compact: true
+  })) : /*#__PURE__*/React.createElement("p", {
     className: "j-body",
     style: {
       fontSize: 'calc(16.5px * var(--tscale, 1))',
@@ -1125,7 +1250,8 @@ function LogCard({
         display: 'block',
         fontSize: 'calc(15px * var(--tscale, 1))',
         color: 'var(--body)',
-        lineHeight: 1.4
+        lineHeight: 1.4,
+        whiteSpace: 'pre-line'
       }
     }, e.summary)));
   }))))));
@@ -1404,5 +1530,8 @@ Object.assign(window, {
   pagerKeyProps,
   StoryDeck,
   CalendarSheet,
-  DateField
+  DateField,
+  isChildDayEntry,
+  parseChildDay,
+  ChildDaySummary
 });

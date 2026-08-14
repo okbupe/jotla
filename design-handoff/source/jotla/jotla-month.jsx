@@ -870,20 +870,22 @@ function MonthScreen({ nav, entries, view }) {
     const tappable = interactive && !c.future;
     return (
       <button key={key} onClick={() => tappable && pickDay(c.iso, c.out)}
-        className={tappable ? 'j-press' : ''} disabled={!tappable}
+        className={'j-daycell' + (tappable ? ' j-press' : '')} disabled={!tappable}
         data-anchor={isAnchor ? 'true' : undefined}
         data-out={c.out ? 'true' : undefined}
+        // the ring is a 1px-inset pseudo (j-daycell in jotla.css), never an
+        // edge-drawn shadow the fold's or the pager's clip could shave
+        data-ring={c.isToday ? 'today' : (isAnchor ? 'anchor' : undefined)}
         aria-label={c.future
           ? `${c.d} ${J.MONTH_NAMES[c.m]} ${c.y}, in the future`
           : `${c.d} ${J.MONTH_NAMES[c.m]} ${c.y}, ${c.count > 0 ? c.count + (c.count === 1 ? ' note' : ' notes') : 'no note'}`}
         style={{ aspectRatio: '1 / 1', borderRadius: '50%', cursor: tappable ? 'pointer' : 'default',
           border: 'none',
-          boxShadow: c.isToday ? 'inset 0 0 0 1.5px var(--blue)' : (isAnchor ? 'inset 0 0 0 1px var(--blue)' : 'none'),
           background: tint, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3,
-          // a neighbouring month's day is visible but clearly not
-          // the month being read (founder, 14 Aug: "not completely
-          // but enough to notice")
-          opacity: c.out ? 0.38 : (c.future ? 0.55 : 1) }}>
+          // a neighbouring month's day is a whisper, present but never
+          // crowding the month being read (founder, 14 Aug round 5:
+          // 0.38 still fought the real days)
+          opacity: c.out ? 0.22 : (c.future ? 0.55 : 1) }}>
         <span style={{ fontFamily: "'Outfit', system-ui", fontWeight: c.isToday ? 600 : 500, fontSize: 'calc(15px * var(--tscale, 1))', color: (c.isToday || isAnchor) ? 'var(--blue)' : ink }}>{c.d}</span>
         {c.mood && <MoodDot mood={c.mood} size={6} />}
       </button>
@@ -1197,7 +1199,11 @@ function EntryScreen({ nav, entries, id }) {
           </div>
 
           <div className="j-card j-card-pad">
-            <p className="j-body">{e.summary}</p>
+            {/* a child-mode day reads as places and answers, never one block
+                of words (founder, 14 Aug); ChildDaySummary lives in jotla-ui */}
+            {window.isChildDayEntry(e)
+              ? <ChildDaySummary entry={e} />
+              : <p className="j-body" style={{ whiteSpace: 'pre-line' }}>{e.summary}</p>}
             {(e.photo || e.photoData) && <PhotoAttachment caption={e.photo} src={e.photoData} />}
           </div>
 
