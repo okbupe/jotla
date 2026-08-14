@@ -136,7 +136,10 @@ function FindScreen({
     const bar = barRef.current;
     const tb = document.querySelector('.j-tabbar');
     if (bar && tb) {
-      const cap = Math.max(220, tb.getBoundingClientRect().top - bar.getBoundingClientRect().bottom - 12);
+      // 22 = the panel's own 10px gap under the bar + 12px clear of the tab
+      // bar (arena catch, 14 Aug round 6: the old -12 left the floating
+      // panel 2px off the tab bar on a short phone with Custom open)
+      const cap = Math.max(220, tb.getBoundingClientRect().top - bar.getBoundingClientRect().bottom - 22);
       if (Math.abs(cap - capH) > 0.25) setCapH(cap);
     }
   });
@@ -292,7 +295,7 @@ function FindScreen({
       borderRadius: 14,
       padding: '0 14px',
       height: 46,
-      marginBottom: 8
+      marginBottom: 6
     }
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "search",
@@ -438,6 +441,7 @@ function FindScreen({
   }, /*#__PURE__*/React.createElement("div", {
     ref: drawerInnerRef,
     style: {
+      paddingTop: 10,
       transform: `translateY(${drawerH ? -((1 - f) * drawerH) : 0}px)`
     }
   }, /*#__PURE__*/React.createElement("div", {
@@ -483,7 +487,7 @@ function FindScreen({
     style: {
       display: 'flex',
       gap: 10,
-      marginTop: 12,
+      marginTop: 10,
       flexShrink: 0
     }
   }, /*#__PURE__*/React.createElement("button", {
@@ -543,7 +547,7 @@ function openPrintPack(childLabel, rangeLabel, list) {
       const part = (l, v) => v ? '<p style="margin:4px 0;"><strong>' + esc(l) + ':</strong> ' + esc(v) + '</p>' : '';
       extra = '<div style="margin-top:6px;padding:8px 12px;background:#f5f7fb;border-radius:8px;">' + (h.behaviours && h.behaviours.length ? '<p style="margin:4px 0;"><strong>Seen:</strong> ' + esc(h.behaviours.join(', ')) + '</p>' : '') + (h.who && h.who.length ? part('Who was there', h.who.join(', ')) : '') + part('Where', h.where) + part('Before', h.before) + part('During', h.during) + part('After', h.after) + part('Lasted', h.duration) + part('What helped', h.helped) + '</div>';
     }
-    return '<div style="padding:10px 0;border-bottom:1px solid #dde3ee;page-break-inside:avoid;">' + '<p style="margin:0 0 4px;font-size:12px;color:#1A56A8;"><strong>' + esc(J.fmtShort(e.date)) + ' ' + esc(e.date.slice(0, 4)) + ', ' + esc(e.clock || e.time) + '</strong> &nbsp; ' + esc(e.setting) + ' · ' + esc(e.category) + ' &nbsp; ' + badge(e.kind) + (e.editedOn ? ' <span style="color:#8892a6;font-size:10.5px;">edited ' + esc(J.fmtShort(e.editedOn)) + '</span>' : '') + '</p>' + '<p style="margin:0;font-size:13px;line-height:1.45;white-space:pre-line;">' + esc(e.summary) + '</p>' + extra + '</div>';
+    return '<div style="padding:10px 0;border-bottom:1px solid #dde3ee;page-break-inside:avoid;">' + '<p style="margin:0 0 4px;font-size:12px;color:#1A56A8;"><strong>' + esc(J.fmtShort(e.date)) + ' ' + esc(e.date.slice(0, 4)) + ', ' + esc(e.clock || e.time) + '</strong> &nbsp; ' + esc(e.setting) + ' · ' + esc(e.categoryOther || e.category) + ' &nbsp; ' + badge(e.kind) + (e.editedOn ? ' <span style="color:#8892a6;font-size:10.5px;">edited ' + esc(J.fmtShort(e.editedOn)) + '</span>' : '') + '</p>' + '<p style="margin:0;font-size:13px;line-height:1.45;white-space:pre-line;">' + esc(e.summary) + '</p>' + extra + '</div>';
   }).join('');
   const w = window.open('', '_blank');
   if (!w) {

@@ -5,7 +5,7 @@ const { useState, useRef, useEffect, useLayoutEffect } = React;
 // and the suite asserts that, because asking a person to remember is what got
 // us here: this said 2.0.4 for fourteen builds while the service worker said
 // 2.0.18, so the one number a tester can actually read was the one lying.
-window.JOTLA_BUILD = '2.0.25';
+window.JOTLA_BUILD = '2.0.26';
 
 // The app's data epoch: the earliest day a log can land on (Quick log's own
 // minimum day, and how far back the Month calendar pages). One home here, on
@@ -595,7 +595,7 @@ function EntryCard({ entry, onClick, showDate = false }) {
               <span className="j-tag j-tag-grey">{entry.setting}</span>
               {/* On a dysregulation capture the kind pill IS the category (it is
                   always Incidents), so the category tag would only repeat it. */}
-              {!isDysregKind && <span className="j-tag j-tag-blue">{entry.category}</span>}
+              {!isDysregKind && <span className="j-tag j-tag-blue">{entry.categoryOther || entry.category}</span>}
               {isDysregKind && <KindPill label="Dysregulation" color="var(--dysreg)" icon={<Icon name="note" size={13} color="var(--bg)" />} />}
             </div>
           </div>
@@ -653,7 +653,7 @@ function LogCard({ group, onOpen, showDate = false }) {
                     <span style={{ flex: 1, minWidth: 0 }}>
                       <span className="j-chiprow" style={{ gap: 6, marginBottom: 4 }}>
                         <span className="j-tag j-tag-grey">{e.setting}</span>
-                        {!isDysKind && <span className="j-tag j-tag-blue">{e.category}</span>}
+                        {!isDysKind && <span className="j-tag j-tag-blue">{e.categoryOther || e.category}</span>}
                         {isDysKind && <KindPill label="Dysregulation" color="var(--dysreg)" icon={<Icon name="note" size={13} color="var(--bg)" />} />}
                       </span>
                       <span style={{ display: 'block', fontSize: 'calc(15px * var(--tscale, 1))', color: 'var(--body)', lineHeight: 1.4, whiteSpace: 'pre-line' }}>{e.summary}</span>

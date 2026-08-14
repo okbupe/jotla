@@ -408,20 +408,20 @@ html.j-appmode .j-tabbar { height: calc(80px + env(safe-area-inset-bottom)); pad
 /* the drawer: every filter, folded away behind the bar; its height is driven
    by the gesture, exactly the calendar's graph fold */
 .j-finddrawer { overflow: hidden; position: relative; z-index: 1; }
-/* the panel's bottom rounded corners get the bar's own treatment: a page-
-   colour strip behind the last 18px, so a note passing the corner notches
-   never shows sharp there (arena catch, 14 Aug round 5) */
-.j-finddrawer::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 18px;
-  background: var(--bg); }
-/* the panel is the bar's own width, and the record shows through it BLURRED,
-   never sharp (founder, 14 Aug round 5); solid card stays the fallback where
-   backdrop-filter does not exist */
-.j-finddrawer-in { background: var(--card); border: 1px solid var(--line); border-top: none;
-  border-radius: 0 0 18px 18px; padding: 14px; margin: 0; box-sizing: border-box;
+/* THE PANEL FLOATS (founder, 14 Aug round 6): a breath of space under the
+   bar, all four corners rounded, and the record shows through it BLURRED,
+   never sharp. The blur is a SQUARE zone on ::before covering the gap, the
+   panel and its corner notches, so a rounded corner always sits on frosted
+   ground and can never show a sharp sliver (the round-5 page-colour strip
+   made square corner patches over passing cards; retired). The zone's own
+   bottom boundary hides under the solid half of the stick's gradient. */
+.j-finddrawer-in { background: var(--card); border: 1px solid var(--line);
+  border-radius: 18px; padding: 14px; margin: 0; box-sizing: border-box;
   box-shadow: 0 16px 30px -18px rgba(0,0,0,0.28); }
 @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .j-finddrawer-in { background: color-mix(in srgb, var(--card) 82%, transparent);
+  .j-finddrawer::before { content: ''; position: absolute; inset: 0;
     -webkit-backdrop-filter: blur(18px) saturate(1.1); backdrop-filter: blur(18px) saturate(1.1); }
+  .j-finddrawer-in { background: color-mix(in srgb, var(--card) 82%, transparent); }
 }
 /* the drawer's filters wear tighter chips than the app's 44px standard so the
    whole panel fits a phone screen without scrolling, Custom's date pickers

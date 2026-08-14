@@ -1658,12 +1658,19 @@ function App({
     // the app), so an edit can never quietly rewrite history.
     updateEntry: (id, patch) => setEntries(es => es.map(e => {
       if (e.id !== id) return e;
+      // The snapshot carries everything the edit sheet can change (arena
+      // catch, 14 Aug round 6: a renamed Other or a removed photo left no
+      // trace). The photo is recorded by its CAPTION, never its pixel data:
+      // re-copying a base64 image into history on every edit would balloon
+      // the on-device store for nothing.
       const prior = {
         on: J.TODAY_ISO,
         summary: e.summary,
         mood: e.mood,
         category: e.category,
-        setting: e.setting
+        categoryOther: e.categoryOther || '',
+        setting: e.setting,
+        photo: e.photo || ''
       };
       return {
         ...e,

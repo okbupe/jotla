@@ -11,7 +11,7 @@ const {
 // and the suite asserts that, because asking a person to remember is what got
 // us here: this said 2.0.4 for fourteen builds while the service worker said
 // 2.0.18, so the one number a tester can actually read was the one lying.
-window.JOTLA_BUILD = '2.0.25';
+window.JOTLA_BUILD = '2.0.26';
 
 // The app's data epoch: the earliest day a log can land on (Quick log's own
 // minimum day, and how far back the Month calendar pages). One home here, on
@@ -1095,7 +1095,7 @@ function EntryCard({
     className: "j-tag j-tag-grey"
   }, entry.setting), !isDysregKind && /*#__PURE__*/React.createElement("span", {
     className: "j-tag j-tag-blue"
-  }, entry.category), isDysregKind && /*#__PURE__*/React.createElement(KindPill, {
+  }, entry.categoryOther || entry.category), isDysregKind && /*#__PURE__*/React.createElement(KindPill, {
     label: "Dysregulation",
     color: "var(--dysreg)",
     icon: /*#__PURE__*/React.createElement(Icon, {
@@ -1237,7 +1237,7 @@ function LogCard({
       className: "j-tag j-tag-grey"
     }, e.setting), !isDysKind && /*#__PURE__*/React.createElement("span", {
       className: "j-tag j-tag-blue"
-    }, e.category), isDysKind && /*#__PURE__*/React.createElement(KindPill, {
+    }, e.categoryOther || e.category), isDysKind && /*#__PURE__*/React.createElement(KindPill, {
       label: "Dysregulation",
       color: "var(--dysreg)",
       icon: /*#__PURE__*/React.createElement(Icon, {

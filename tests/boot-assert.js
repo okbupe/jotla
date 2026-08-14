@@ -2706,6 +2706,72 @@ function ok(name, cond) {
     !/Mum · | Mum picked/.test(cmDetail) && cmDetail.includes('Mum: picked me up'));
   await ctx16.close();
 
+  // ---- 17. the edit sheet keeps the record honest (2.0.26) ----
+  // The revamped sheet (faces, Other naming, places, media) must never let a
+  // no-op Save stamp "Edited" onto an evidence record (arena catch, 14 Aug
+  // round 6: a per-render media literal made every save on a photo entry
+  // read as an edit and rewrote the caption), and a wording-only edit must
+  // leave the stored photo untouched while the history snapshot now carries
+  // the named theme and the photo caption.
+  console.log('Suite 17: honest edit sheet');
+  const ctx17 = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  const page17 = await ctx17.newPage();
+  const PX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+  await page17.addInitScript((px) => {
+    localStorage.setItem('jotla_prefs_v2', JSON.stringify({ dark: false, plus: true, childCfg: {}, customProfiles: [], deletedIds: [] }));
+    localStorage.setItem('jotla_fabtip_v1', 'learned');
+    window.__PX = px;
+  }, PX);
+  await page17.goto(URL_APP, { waitUntil: 'networkidle' });
+  await page17.waitForTimeout(1000);
+  await page17.evaluate((px) => {
+    const key = 'jotla_entries_v4';
+    const list = JSON.parse(localStorage.getItem(key) || 'null') || [];
+    const childId = (list[0] && list[0].childId) || (window.JOTLA.CHILD && window.JOTLA.CHILD.id);
+    list.unshift({ id: 'edittest1', childId, date: window.JOTLA.TODAY_ISO, time: 'Morning', clock: '08:03',
+      setting: 'School', category: 'Other', categoryOther: 'Homework', mood: 'ok', kind: 'contemporaneous', type: 'quick',
+      summary: 'Edit-law probe note.', photo: 'Photo from the moment', photoData: px });
+    localStorage.setItem(key, JSON.stringify(list));
+  }, PX);
+  await page17.reload({ waitUntil: 'networkidle' });
+  await page17.waitForTimeout(1000);
+  const readProbe = () => page17.evaluate(() => {
+    const e = (JSON.parse(localStorage.getItem('jotla_entries_v4')) || []).find(x => x.id === 'edittest1');
+    return e && { editedOn: e.editedOn || null, photo: e.photo, hasData: !!e.photoData, histLen: (e.history || []).length,
+      summary: e.summary, catOther: e.categoryOther, lastHist: (e.history || [])[((e.history || []).length - 1)] || null };
+  });
+  // the named Other rides the card, not just the detail (round-6 catch)
+  await page17.locator('.j-card', { hasText: 'Edit-law probe note' }).first().click();
+  await page17.waitForTimeout(600);
+  const cardTag = await page17.evaluate(() => document.body.innerText.includes('Homework'));
+  ok('a named Other moment wears its name on the note', cardTag === true);
+  // a no-op save: open the sheet, poke state without changing anything, Save
+  await page17.getByText('Edit', { exact: true }).last().click();
+  await page17.waitForTimeout(500);
+  await page17.locator('.j-sheet textarea').click();
+  await page17.locator('.j-sheet textarea').type(' ');
+  await page17.locator('.j-sheet textarea').press('Backspace');
+  await page17.getByText('Save the change', { exact: true }).click();
+  await page17.waitForTimeout(500);
+  const editNoop17 = await readProbe();
+  ok('a no-op edit leaves no Edited stamp, no history row, the photo untouched',
+    !!editNoop17 && editNoop17.editedOn === null && editNoop17.histLen === 0
+    && editNoop17.photo === 'Photo from the moment' && editNoop17.hasData === true);
+  // a wording-only edit: the photo and its caption must survive untouched
+  await page17.getByText('Edit', { exact: true }).last().click();
+  await page17.waitForTimeout(500);
+  await page17.locator('.j-sheet textarea').fill('Edit-law probe note, reworded.');
+  await page17.getByText('Save the change', { exact: true }).click();
+  await page17.waitForTimeout(500);
+  const editReword17 = await readProbe();
+  ok('a wording-only edit keeps the stored photo and caption exactly',
+    !!editReword17 && editReword17.editedOn !== null && editReword17.summary === 'Edit-law probe note, reworded.'
+    && editReword17.photo === 'Photo from the moment' && editReword17.hasData === true);
+  ok('...and the history snapshot carries the named theme and the photo caption',
+    !!editReword17 && editReword17.histLen === 1 && editReword17.lastHist
+    && editReword17.lastHist.categoryOther === 'Homework' && editReword17.lastHist.photo === 'Photo from the moment');
+  await ctx17.close();
+
   await browser.close();
   server.kill();
   console.log('\n' + passed + '/' + (passed + failed) + ' checks green' + (failed ? ' - ' + failed + ' FAILED' : ''));

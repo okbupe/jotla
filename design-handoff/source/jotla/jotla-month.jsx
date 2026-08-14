@@ -1119,44 +1119,133 @@ function DayScreen({ nav, entries, date }) {
 // ---------------- Single entry detail ----------------
 // Edit a note honestly: the wording can change, the original date and time
 // cannot, and the previous wording stays visible on the record.
-function EditEntrySheet({ entry, onSave, onClose }) {
+// REVAMPED on the Quick Log's pattern (founder, 14 Aug round 6: "the edit
+// note doesn't give you much options"): the moment's own face picker, the
+// Other theme named by the parent, the parent's own places, and media on the
+// note (Plus adds, everyone views and removes; same law as the quick log).
+// What stays locked is the point: date and time never change, and the earlier
+// wording is kept on the record.
+function EditEntrySheet({ entry, nav, onSave, onClose }) {
   const J = window.JOTLA;
   const [summary, setSummary] = React.useState(entry.summary);
   const [mood, setMood] = React.useState(entry.mood);
   const [category, setCategory] = React.useState(entry.category);
+  const [catOther, setCatOther] = React.useState(entry.categoryOther || '');
   const [setting, setSetting] = React.useState(entry.setting);
-  const changed = summary.trim() !== entry.summary || mood !== entry.mood || category !== entry.category || setting !== entry.setting;
+  const [placeOpen, setPlaceOpen] = React.useState(false);
+  const [placeText, setPlaceText] = React.useState('');
+  // the note's saved place may be one the parent typed; it stays an option
+  const [places, setPlaces] = React.useState(J.SETTINGS.includes(entry.setting) ? [] : [entry.setting]);
+  // What the note holds now: a stored photo edits like the quick log's; an
+  // older caption-only photo (or a noted video) shows as itself with its own
+  // remove, never silently re-encoded. media0 is built ONCE (lazy state) so
+  // the media-changed test stays a pure identity check: a re-render can never
+  // fake a change, and a no-op Save can never stamp "Edited" onto the record
+  // (arena catch, 14 Aug round 6: a fresh literal every render made any save
+  // on a photo entry read as an edit and rewrote the caption).
+  const [media0] = React.useState(() => entry.photoData
+    ? { source: 'attach', kind: 'photo', dataUrl: entry.photoData }
+    : (entry.photo ? { kind: 'legacy', caption: entry.photo } : null));
+  const [media, setMedia] = React.useState(media0);
+  const catOtherFinal = category === 'Other' ? catOther.trim() : '';
+  const changed = summary.trim() !== entry.summary || mood !== entry.mood || category !== entry.category
+    || setting !== entry.setting || catOtherFinal !== (entry.categoryOther || '') || media !== media0;
+  const save = () => {
+    if (changed && summary.trim()) {
+      const patch = { summary: summary.trim(), mood, category, categoryOther: catOtherFinal, setting };
+      if (media !== media0) {
+        if (!media) { patch.photo = ''; patch.photoData = ''; }
+        else if (media.kind === 'photo' && media.dataUrl) { patch.photoData = media.dataUrl; patch.photo = 'Photo from the day'; }
+        else if (media.kind === 'video') { patch.photo = 'Video noted (kept in your photo library)'; patch.photoData = ''; }
+      }
+      onSave(patch);
+    }
+    onClose();
+  };
   return (
     <div className="j-sheet-scrim" onClick={onClose}>
       <div className="j-sheet" onClick={ev => ev.stopPropagation()} style={{ maxHeight: '88%', overflowY: 'auto' }}>
         <div className="j-sheet-grab" />
         <h2 className="j-h2" style={{ marginBottom: 4 }}>Edit this note</h2>
         <p className="j-sm" style={{ marginBottom: 14 }}>The original date and time stay as they are, and the earlier wording is kept on the record. Honest edits only.</p>
+        <FieldLabel>What happened?</FieldLabel>
         <textarea value={summary} onChange={ev => setSummary(ev.target.value)} rows={4}
           style={{ width: '100%', boxSizing: 'border-box', borderRadius: 14, border: '1.5px solid var(--chip-border)', background: 'var(--card-2)',
             padding: 12, fontFamily: "'Outfit', system-ui", fontSize: 'calc(16px * var(--tscale, 1))', color: 'var(--ink)', resize: 'vertical', marginBottom: 14 }} />
-        <p className="j-sm" style={{ marginBottom: 6 }}>How the moment felt</p>
-        <div className="j-chiprow" style={{ marginBottom: 12 }}>
-          {J.MOODS.map(m => (
-            <button key={m.key} aria-pressed={mood === m.key} className={'j-chip' + (mood === m.key ? ' j-chip-on' : '')} onClick={() => setMood(m.key)}>
-              <MoodDot mood={m.key} size={11} /> {m.label}
-            </button>
-          ))}
-        </div>
-        <p className="j-sm" style={{ marginBottom: 6 }}>Theme</p>
-        <div className="j-chiprow" style={{ marginBottom: 12 }}>
+        <FieldLabel>How did it feel?</FieldLabel>
+        <div style={{ marginBottom: 14 }}><MoodFacePicker value={mood} onChange={setMood} /></div>
+        <FieldLabel>Theme</FieldLabel>
+        <div className="j-chiprow" style={{ marginBottom: category === 'Other' ? 10 : 14 }}>
           {J.CATEGORIES.map(c => (
             <button key={c} aria-pressed={category === c} className={'j-chip' + (category === c ? ' j-chip-on' : '')} onClick={() => setCategory(c)}>{c}</button>
           ))}
         </div>
-        <p className="j-sm" style={{ marginBottom: 6 }}>Where</p>
-        <div className="j-chiprow" style={{ marginBottom: 16 }}>
-          {J.SETTINGS.map(s => (
+        {category === 'Other' && (
+          <input className="j-input" value={catOther} onChange={e => setCatOther(e.target.value)}
+            placeholder="Name it, e.g. Homework" aria-label="Name this moment yourself" style={{ marginBottom: 14 }} />
+        )}
+        <FieldLabel>Where</FieldLabel>
+        <div className="j-chiprow" style={{ marginBottom: placeOpen ? 10 : 14 }}>
+          {[...J.SETTINGS, ...places].map(s => (
             <button key={s} aria-pressed={setting === s} className={'j-chip' + (setting === s ? ' j-chip-on' : '')} onClick={() => setSetting(s)}>{s}</button>
           ))}
+          <button className="j-chip" style={{ borderStyle: 'dashed' }} aria-label="Add your own place" onClick={() => setPlaceOpen(v => !v)}>
+            <Icon name="plus" size={15} color="var(--faint)" /> Other
+          </button>
         </div>
-        <button className="j-btn j-btn-primary" disabled={!summary.trim()} style={{ opacity: summary.trim() ? 1 : 0.5 }}
-          onClick={() => { if (changed && summary.trim()) onSave({ summary: summary.trim(), mood, category, setting }); onClose(); }}>
+        {placeOpen && (
+          <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
+            <input className="j-input" style={{ flex: 1, minWidth: 0 }} value={placeText} onChange={e => setPlaceText(e.target.value)}
+              aria-label="Add a place" placeholder="Grandma's, the park, soft play..." />
+            <button className="j-btn j-btn-soft" style={{ flex: '0 0 auto', width: 'auto', minHeight: 48, padding: '0 22px' }} onClick={() => {
+              const t = placeText.trim(); if (!t) return;
+              if (!J.SETTINGS.includes(t) && !places.includes(t)) setPlaces(p => [...p, t]);
+              setSetting(t); setPlaceText(''); setPlaceOpen(false);
+            }}>Add</button>
+          </div>
+        )}
+        {/* Media follows the quick log's law (12 Jul 2026): adding is Plus,
+            viewing and removing what is already saved never gates. */}
+        <FieldLabel>Photo or video</FieldLabel>
+        <div style={{ marginBottom: 16 }}>
+          {media && media.kind === 'legacy' ? (
+            <div style={{ borderRadius: 14, background: 'var(--photo-bg)', padding: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <Icon name="camera" size={20} color="var(--blue)" />
+              <span style={{ flex: 1, fontSize: 'calc(14px * var(--tscale, 1))', color: 'var(--muted)' }}>{media.caption}</span>
+              <button onClick={() => setMedia(null)} aria-label="Remove media" className="j-press" style={{ width: 44, height: 44, borderRadius: 12,
+                border: 'none', background: 'var(--card)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Icon name="close" size={17} color="var(--muted)" />
+              </button>
+            </div>
+          ) : nav.plus ? (
+            <>
+              <MediaPicker value={media} onChange={setMedia} />
+              {!media && media0 && (
+                // a slip of the thumb must not be a trap (arena catch, 14 Aug
+                // round 6): the removed photo can be put straight back
+                <button className="j-btn j-btn-soft" style={{ marginTop: 10, minHeight: 44 }}
+                  onClick={() => setMedia(media0)}>Put back what was there</button>
+              )}
+            </>
+          ) : media ? (
+            <MediaPicker value={media} onChange={setMedia} />
+          ) : media0 ? (
+            // free never gates viewing or removing its own media, and a slip
+            // of the thumb is not a trap here either (arena catch, round 6):
+            // nothing changes until Save, and one tap restores it
+            <div style={{ borderRadius: 14, border: '1.5px dashed var(--chip-border)', background: 'var(--card)', padding: 14,
+              display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ flex: 1, fontSize: 'calc(14px * var(--tscale, 1))', color: 'var(--muted)' }}>Removed. It comes off the note when you save.</span>
+              <button className="j-btn j-btn-soft" style={{ flex: '0 0 auto', width: 'auto', minHeight: 44, padding: '0 18px' }}
+                onClick={() => setMedia(media0)}>Put it back</button>
+            </div>
+          ) : (
+            <PlusLockedCard icon="camera" title="Add photos and videos"
+              text="Keep a photo or video with the note. Sometimes the picture is the evidence. Part of Plus."
+              onClick={() => { onClose(); nav.go('unlock'); }} />
+          )}
+        </div>
+        <button className="j-btn j-btn-primary" disabled={!summary.trim()} style={{ opacity: summary.trim() ? 1 : 0.5 }} onClick={save}>
           Save the change
         </button>
         <button className="j-btn j-btn-ghost" style={{ marginTop: 8 }} onClick={onClose}>Cancel</button>
@@ -1241,6 +1330,11 @@ function EntryScreen({ nav, entries, id }) {
                 <div key={i} style={{ padding: '8px 0', borderTop: i ? '1px solid var(--line)' : 'none' }}>
                   <p className="j-meta" style={{ marginBottom: 3 }}>Until {J.fmtShort(h.on)} {h.on.slice(0, 4)}</p>
                   <p className="j-body" style={{ fontSize: 'calc(15px * var(--tscale, 1))' }}>{h.summary}</p>
+                  {/* the parts of the record beyond the wording: the named
+                      theme and any photo the note carried then (round 6) */}
+                  {(h.categoryOther || h.photo) && (
+                    <p className="j-meta" style={{ marginTop: 3 }}>{[h.categoryOther, h.photo].filter(Boolean).join(' · ')}</p>
+                  )}
                 </div>
               ))}
             </div>
@@ -1257,7 +1351,7 @@ function EntryScreen({ nav, entries, id }) {
           </div>
         </div>
       </div>
-      {editing && <EditEntrySheet entry={e} onSave={(patch) => nav.updateEntry(e.id, patch)} onClose={() => setEditing(false)} />}
+      {editing && <EditEntrySheet entry={e} nav={nav} onSave={(patch) => nav.updateEntry(e.id, patch)} onClose={() => setEditing(false)} />}
     </div>
   );
 }
