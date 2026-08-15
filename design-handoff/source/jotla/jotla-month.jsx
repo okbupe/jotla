@@ -47,9 +47,11 @@ function MonthMoodGraph({ entries, year, month }) {
   const hardCount = monthEntries.filter(e => e.mood === 'hard').length;
   return (
     <div className="j-card" style={{ padding: 18, marginTop: 18 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+      {/* no "Plus" pill on the graph (founder, 15 Aug round 12): inside the
+          paid app the feature needs no label, and in the free app this card
+          never renders; the crown gate speaks for the tier everywhere */}
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
         <span className="j-h3">How {J.MONTH_NAMES[month]} looked</span>
-        <span className="j-pillbadge" style={{ background: '#6E54D6', color: '#fff' }}>Plus</span>
       </div>
       <KindBars blocks={blocks} maxN={maxN} />
       <p className="j-body" style={{ fontSize: 'calc(14.5px * var(--tscale, 1))', color: 'var(--muted)', marginTop: 16 }}>

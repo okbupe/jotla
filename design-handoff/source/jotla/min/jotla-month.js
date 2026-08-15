@@ -86,18 +86,11 @@ function MonthMoodGraph({
     style: {
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'space-between',
       marginBottom: 16
     }
   }, /*#__PURE__*/React.createElement("span", {
     className: "j-h3"
-  }, "How ", J.MONTH_NAMES[month], " looked"), /*#__PURE__*/React.createElement("span", {
-    className: "j-pillbadge",
-    style: {
-      background: '#6E54D6',
-      color: '#fff'
-    }
-  }, "Plus")), /*#__PURE__*/React.createElement(KindBars, {
+  }, "How ", J.MONTH_NAMES[month], " looked")), /*#__PURE__*/React.createElement(KindBars, {
     blocks: blocks,
     maxN: maxN
   }), /*#__PURE__*/React.createElement("p", {
