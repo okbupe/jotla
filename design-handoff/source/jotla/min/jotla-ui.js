@@ -11,7 +11,7 @@ const {
 // and the suite asserts that, because asking a person to remember is what got
 // us here: this said 2.0.4 for fourteen builds while the service worker said
 // 2.0.18, so the one number a tester can actually read was the one lying.
-window.JOTLA_BUILD = '2.0.32';
+window.JOTLA_BUILD = '2.0.33';
 
 // The app's data epoch: the earliest day a log can land on (Quick log's own
 // minimum day, and how far back the Month calendar pages). One home here, on
@@ -516,6 +516,9 @@ function DateField({
 // no lecture: the crown is the whole sentence. Tapping a crowned row ALWAYS
 // opens the Jotla Plus page. In the paid app the row renders its real control
 // instead (callers branch on nav.plus). Replaces the old dashed locked card.
+// Worn in the Plus colour since round 11 (founder, 14 Aug: "tint the tile to
+// show it's part of plus"): the tint and a soft plus-ink border say what the
+// crown says, in both themes.
 function PlusLockedCard({
   title,
   text,
@@ -534,12 +537,14 @@ function PlusLockedCard({
       display: 'flex',
       gap: 14,
       alignItems: 'center',
+      background: 'linear-gradient(var(--plus-tint), var(--plus-tint)) var(--card)',
+      border: '1px solid color-mix(in srgb, var(--plus-ink) 30%, transparent)',
       ...(style || {})
     }
   }, /*#__PURE__*/React.createElement(Icon, {
     name: icon,
     size: 22,
-    color: "var(--blue)",
+    color: "var(--plus-ink)",
     style: {
       flexShrink: 0
     }

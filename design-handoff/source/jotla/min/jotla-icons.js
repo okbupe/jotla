@@ -272,6 +272,9 @@ function Icon({
     }), /*#__PURE__*/React.createElement("path", {
       d: "m4.5 8 7.5 5 7.5-5"
     })),
+    phone: /*#__PURE__*/React.createElement("path", {
+      d: "M5.1 4.5h3.2l1.5 3.9-2 1.6a11.6 11.6 0 0 0 6.2 6.2l1.6-2 3.9 1.5v3.2a1.6 1.6 0 0 1-1.7 1.6C10.6 19.9 4.1 13.4 3.5 6.2a1.6 1.6 0 0 1 1.6-1.7z"
+    }),
     help: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("circle", {
       cx: "12",
       cy: "12",

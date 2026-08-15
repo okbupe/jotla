@@ -371,8 +371,12 @@ function FindScreen({ nav, entries, view }) {
           </div>
         </>
       ) : (
+        // the free-search reassurance line came off (founder, 14 Aug round
+        // 11); the tile wears the Plus tint instead of explaining itself.
+        // Not titled "Filters": it sits under a heading that already says
+        // Filters, so the card names what it does (arena catch, 15 Aug)
         <PlusLockedCard onClick={() => nav.go('unlock')} icon="filter"
-          title="Filters" text={<>Theme, mood, place and dates.<br />Keyword search is always free.</>} />
+          title="Narrow it down" text="Theme, mood, place and dates." />
       )}
     </>
   );
@@ -665,11 +669,66 @@ function EvidenceScreen({ nav, entries, docs, profile, navView }) {
     .sort((a, b) => a.date < b.date ? -1 : 1);
   const toggleTheme = (t) => setThemes(v => v.includes(t) ? v.filter(x => x !== t) : [...v, t]);
 
+  // THE SUB-TABS SWIPE (founder, 14 Aug round 11): the two views ride a
+  // native snap pager, so a finger slides the page, the page follows the
+  // finger, and release settles to whichever half holds more, the app's one
+  // physics. The seg's white pill is a slider that RIDES the swipe (written
+  // straight to the DOM per scroll frame, no re-render); the labels and the
+  // committed view flip at halfway. Tapping a pill still pages across.
+  const pagerRef = useRefB(null);
+  const segPillRef = useRefB(null);
+  const viewIdx = view === 'records' ? 1 : 0;
+  const placePill = (p) => {
+    if (segPillRef.current) segPillRef.current.style.transform = `translateX(calc(${p * 100}% + ${p * 4}px))`;
+  };
+  // At rest the OFF pane folds flat, or the short Day records pane inherits
+  // hundreds of blank scroll pixels from the taller Documents list (arena
+  // catch, 15 Aug). Any mid-flight frame lifts the clamp in the same paint,
+  // so a slide always shows both panes at full height.
+  const clampPanes = (idx) => {
+    const el = pagerRef.current;
+    if (!el) return;
+    for (let i = 0; i < el.children.length; i++) {
+      el.children[i].style.height = (idx == null || i === idx) ? '' : '0px';
+      el.children[i].style.overflow = (idx == null || i === idx) ? '' : 'hidden';
+    }
+  };
+  // A programmatic page (tapping the seg) sails THROUGH the old half, and
+  // without remembering where it is headed the early frames re-commit the
+  // old view: the labels and the Create PDF bar flickered on every tap
+  // (arena catch, 15 Aug). The scroll only commits once it crosses into the
+  // half it was sent to; a finger grabbing mid-flight clears the claim.
+  const pageToRef = useRefB(null);
+  const onPagerScroll = () => {
+    const el = pagerRef.current;
+    if (!el || !el.clientWidth) return;
+    const p = Math.max(0, Math.min(1, el.scrollLeft / el.clientWidth));
+    placePill(p);
+    clampPanes(Math.abs(p - Math.round(p)) < 0.005 ? Math.round(p) : null);
+    const committed = p > 0.5 ? 'records' : 'documents';
+    if (pageToRef.current) {
+      if (committed === pageToRef.current) pageToRef.current = null;
+      else return;
+    }
+    if (committed !== view) setView(committed);
+  };
+  React.useLayoutEffect(() => {
+    const el = pagerRef.current;
+    if (el && el.clientWidth) el.scrollLeft = viewIdx * el.clientWidth;
+    placePill(viewIdx);
+    clampPanes(viewIdx);
+  }, []);
+  const goView = (id) => {
+    pageToRef.current = id;
+    setView(id);
+    const el = pagerRef.current;
+    if (el) el.scrollTo({ left: (id === 'records' ? 1 : 0) * el.clientWidth, behavior: 'smooth' });
+  };
   const Seg = ({ id, label }) => (
-    <button onClick={() => setView(id)} style={{ flex: 1, minHeight: 44, borderRadius: 999, border: 'none', cursor: 'pointer',
+    <button data-seg={id} onClick={() => goView(id)} style={{ flex: 1, minHeight: 44, borderRadius: 999, border: 'none', cursor: 'pointer',
+      position: 'relative', zIndex: 1, background: 'transparent',
       fontFamily: "'Outfit', system-ui", fontSize: 'calc(15px * var(--tscale, 1))', fontWeight: 500,
-      background: view === id ? 'var(--card)' : 'transparent', color: view === id ? 'var(--blue)' : 'var(--muted)',
-      boxShadow: view === id ? '0 4px 12px -8px rgba(20,40,80,0.4)' : 'none' }}>{label}</button>
+      color: view === id ? 'var(--blue)' : 'var(--muted)' }}>{label}</button>
   );
 
   return (
@@ -681,7 +740,7 @@ function EvidenceScreen({ nav, entries, docs, profile, navView }) {
         <div className="j-pad" style={{ paddingTop: 10, paddingBottom: 120 }}>
           <TabTitle title="Documents" right={
             <button className="j-iconbtn" aria-label="Search documents"
-              onClick={() => { setView('documents'); setShowDocQ(v => { if (v) setDocQ(''); return !v; }); }}>
+              onClick={() => { goView('documents'); setShowDocQ(v => { if (v) setDocQ(''); return !v; }); }}>
               <Icon name="search" size={22} color={showDocQ ? 'var(--blue)' : 'var(--muted)'} />
             </button>} />
 
@@ -694,13 +753,40 @@ function EvidenceScreen({ nav, entries, docs, profile, navView }) {
             </div>
           )}
 
-          {/* segmented switch: Documents leads (founder, 6 Aug) */}
-          <div style={{ display: 'flex', gap: 4, padding: 4, borderRadius: 999, background: 'var(--tag-grey-bg)', marginBottom: 20 }}>
+          {/* segmented switch: Documents leads (founder, 6 Aug); the white
+              pill is the slider and it moves with the swipe (round 11) */}
+          <div style={{ display: 'flex', gap: 4, padding: 4, borderRadius: 999, background: 'var(--tag-grey-bg)', marginBottom: 20, position: 'relative' }}>
+            <div ref={segPillRef} data-seg-pill aria-hidden="true" style={{ position: 'absolute', top: 4, bottom: 4, left: 4,
+              width: 'calc(50% - 6px)', borderRadius: 999, background: 'var(--card)',
+              boxShadow: '0 4px 12px -8px rgba(20,40,80,0.4)', zIndex: 0 }} />
             <Seg id="documents" label="Documents" />
             <Seg id="records" label="Day records" />
           </div>
 
-          {view === 'records' && (
+          {/* both views ride the snap pager side by side; the finger slides
+              between them and the pill above follows (round 11) */}
+          {/* the panes carry a 12px inner gutter against the pager's -12px
+              bleed: at rest the content sits exactly where it did, and
+              mid-swipe the pages part with daylight between them instead of
+              butting card against card (arena catch, 15 Aug) */}
+          <div ref={pagerRef} onScroll={onPagerScroll} onPointerDown={() => { pageToRef.current = null; }}
+            className="j-pager" data-ev-pager
+            {...pagerKeyProps(pagerRef, 'Documents and Day records')}
+            style={{ display: 'flex', overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch', outline: 'none', margin: '0 -12px' }}>
+
+          <div style={{ flex: '0 0 100%', width: '100%', minWidth: 0, scrollSnapAlign: 'start', padding: '0 12px', boxSizing: 'border-box' }}>
+            <SectionLabel right={<span className="j-meta">{docsShown.length} {docQ.trim() ? 'found' : 'saved'}</span>}>Your documents</SectionLabel>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {docsShown.length === 0
+                ? <div className="j-card" style={{ padding: 22, textAlign: 'center' }}><p className="j-sm">{docQ.trim() ? 'Nothing matches that search.' : 'No documents yet. Add the first letter or report and never lose it again.'}</p></div>
+                : docsShown.map(d => <DocCard key={d.id} doc={d} onClick={() => openDoc(d.id)} />)}
+              {/* the dashed add-row RETIRED (founder, 8 Aug evening): adding a
+                  document is the + speed dial's Document option now, one door
+                  for every kind of capture */}
+            </div>
+          </div>
+
+          <div style={{ flex: '0 0 100%', width: '100%', minWidth: 0, scrollSnapAlign: 'start', padding: '0 12px', boxSizing: 'border-box' }}>
             <>
               <SectionLabel>Date range</SectionLabel>
               <div style={{ marginBottom: 14 }}>
@@ -742,21 +828,9 @@ function EvidenceScreen({ nav, entries, docs, profile, navView }) {
                 </div>
               </div>
             </>
-          )}
+          </div>
 
-          {view === 'documents' && (
-            <>
-              <SectionLabel right={<span className="j-meta">{docsShown.length} {docQ.trim() ? 'found' : 'saved'}</span>}>Your documents</SectionLabel>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {docsShown.length === 0
-                  ? <div className="j-card" style={{ padding: 22, textAlign: 'center' }}><p className="j-sm">{docQ.trim() ? 'Nothing matches that search.' : 'No documents yet. Add the first letter or report and never lose it again.'}</p></div>
-                  : docsShown.map(d => <DocCard key={d.id} doc={d} onClick={() => openDoc(d.id)} />)}
-                {/* the dashed add-row RETIRED (founder, 8 Aug evening): adding a
-                    document is the + speed dial's Document option now, one door
-                    for every kind of capture */}
-              </div>
-            </>
-          )}
+          </div>
         </div>
       </div>
 
@@ -2020,7 +2094,7 @@ function SettingsScreen({ nav, profile, entries = [], docs = [], binCount = 0 })
               <span style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 'calc(16.5px * var(--tscale, 1))', color: '#fff' }}>Jotla Plus</span>
                 <span style={{ display: 'block', fontSize: 'calc(13px * var(--tscale, 1))', color: 'rgba(255,255,255,0.82)', marginTop: 2 }}>
-                  Get the best experience.</span>
+                  Month patterns, full filters and day record PDFs.</span>
               </span>
             </button>
           ) : AI_AVAILABLE ? (
@@ -2189,7 +2263,7 @@ function WhatHelpedScreen({ nav, entries }) {
                   {list.map((s, i) => (
                     <div key={i} className="j-card" data-helped-row style={{ padding: 16, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                       <span className="j-pillbadge" style={{ background: 'var(--tint-green)', color: 'var(--green-ink)', flexShrink: 0 }}>
-                        {s.count > 1 ? 'x' + s.count : 'once'}</span>
+                        {'x' + s.count}</span>
                       <span style={{ flex: 1, minWidth: 0 }}>
                         <span className="j-body" style={{ display: 'block' }}>{s.text}</span>
                         <span className="j-meta" style={{ display: 'block', marginTop: 3 }}>Last on {J.fmtShort(s.last)} {s.last.slice(0, 4)}</span>
@@ -2198,7 +2272,7 @@ function WhatHelpedScreen({ nav, entries }) {
                   ))}
                 </div>
               )}
-              <FootNote icon="leaf">The more honestly the hard moments are logged, the sharper this page gets.</FootNote>
+              <FootNote icon="leaf">The more days you log, the sharper this page gets.</FootNote>
             </>
           )}
         </div>
@@ -2217,7 +2291,10 @@ function ContactsScreen({ nav, profile }) {
   const add = () => {
     const n = name.trim();
     if (!n) return;
-    nav.setChild({ contacts: [...contacts, { id: 'c' + contacts.length + '_' + n.length + n.charCodeAt(0), name: n, role: role.trim(), phone: phone.trim(), email: email.trim() }] });
+    // ids ride the clock like every other record here: a length-based id
+    // collides after delete-then-add, and the remove filter then takes two
+    // rows for one tap (arena catch, 15 Aug)
+    nav.setChild({ contacts: [...contacts, { id: 'ct' + Date.now(), name: n, role: role.trim(), phone: phone.trim(), email: email.trim() }] });
     setName(''); setRole(''); setPhone(''); setEmail('');
   };
   const iconLink = (href, icon, label) => (
@@ -2238,7 +2315,7 @@ function ContactsScreen({ nav, profile }) {
                 <span className="j-strong" style={{ display: 'block', fontSize: 'calc(16px * var(--tscale, 1))' }}>{c.name}</span>
                 {c.role && <span className="j-meta" style={{ display: 'block', marginTop: 2 }}>{c.role}</span>}
               </span>
-              {c.phone && iconLink('tel:' + c.phone, 'bell', 'Call ' + c.name)}
+              {c.phone && iconLink('tel:' + c.phone, 'phone', 'Call ' + c.name)}
               {c.email && iconLink('mailto:' + c.email, 'mail', 'Email ' + c.name)}
               <button onClick={() => nav.setChild({ contacts: contacts.filter(x => x.id !== c.id) })} aria-label={'Remove ' + c.name}
                 className="j-press" style={{ width: 40, height: 40, borderRadius: 12, border: 'none', background: 'var(--tag-grey-bg)',
@@ -2281,7 +2358,7 @@ function DatesScreen({ nav, profile }) {
   const add = () => {
     const l = label.trim();
     if (!l || !iso) return;
-    nav.setChild({ dates: [...dates, { id: 'd' + dates.length + '_' + iso, label: l, iso }].sort((a, b) => a.iso < b.iso ? -1 : 1) });
+    nav.setChild({ dates: [...dates, { id: 'dt' + Date.now(), label: l, iso }].sort((a, b) => a.iso < b.iso ? -1 : 1) });
     setLabel(''); setIso('');
   };
   return (
@@ -2323,7 +2400,7 @@ function DatesScreen({ nav, profile }) {
                 <button className="j-btn j-btn-soft" onClick={add} disabled={!label.trim() || !iso}
                   style={label.trim() && iso ? {} : { opacity: 0.5, cursor: 'default' }}>Add</button>
               </div>
-              <FootNote>Jotla lists your dates; it never works out legal deadlines for you. For those, check with IPSEA or your own advisor.</FootNote>
+              <FootNote>Jotla lists your dates; it never works out legal deadlines for you. For those, check with IPSEA or your own adviser.</FootNote>
             </>
           )}
         </div>

@@ -501,11 +501,17 @@ function FindScreen({
     presets: ['Any time', 'This week', 'Last 2 weeks'],
     value: drange,
     onChange: setDrange
-  }))) : /*#__PURE__*/React.createElement(PlusLockedCard, {
+  }))) :
+  /*#__PURE__*/
+  // the free-search reassurance line came off (founder, 14 Aug round
+  // 11); the tile wears the Plus tint instead of explaining itself.
+  // Not titled "Filters": it sits under a heading that already says
+  // Filters, so the card names what it does (arena catch, 15 Aug)
+  React.createElement(PlusLockedCard, {
     onClick: () => nav.go('unlock'),
     icon: "filter",
-    title: "Filters",
-    text: /*#__PURE__*/React.createElement(React.Fragment, null, "Theme, mood, place and dates.", /*#__PURE__*/React.createElement("br", null), "Keyword search is always free.")
+    title: "Narrow it down",
+    text: "Theme, mood, place and dates."
   }));
   return /*#__PURE__*/React.createElement("div", {
     className: "j-screen"
@@ -990,23 +996,83 @@ function EvidenceScreen({
   const rangeLabel = range.preset === 'Custom' ? (range.from ? J.fmtShort(range.from) : 'start') + ' to ' + (range.to ? J.fmtShort(range.to) : 'today') : range.preset;
   const inPack = entries.filter(e => (themes.length === 0 || themes.includes(e.category)) && window.inDateRange(e.date, bounds)).sort((a, b) => a.date < b.date ? -1 : 1);
   const toggleTheme = t => setThemes(v => v.includes(t) ? v.filter(x => x !== t) : [...v, t]);
+
+  // THE SUB-TABS SWIPE (founder, 14 Aug round 11): the two views ride a
+  // native snap pager, so a finger slides the page, the page follows the
+  // finger, and release settles to whichever half holds more, the app's one
+  // physics. The seg's white pill is a slider that RIDES the swipe (written
+  // straight to the DOM per scroll frame, no re-render); the labels and the
+  // committed view flip at halfway. Tapping a pill still pages across.
+  const pagerRef = useRefB(null);
+  const segPillRef = useRefB(null);
+  const viewIdx = view === 'records' ? 1 : 0;
+  const placePill = p => {
+    if (segPillRef.current) segPillRef.current.style.transform = `translateX(calc(${p * 100}% + ${p * 4}px))`;
+  };
+  // At rest the OFF pane folds flat, or the short Day records pane inherits
+  // hundreds of blank scroll pixels from the taller Documents list (arena
+  // catch, 15 Aug). Any mid-flight frame lifts the clamp in the same paint,
+  // so a slide always shows both panes at full height.
+  const clampPanes = idx => {
+    const el = pagerRef.current;
+    if (!el) return;
+    for (let i = 0; i < el.children.length; i++) {
+      el.children[i].style.height = idx == null || i === idx ? '' : '0px';
+      el.children[i].style.overflow = idx == null || i === idx ? '' : 'hidden';
+    }
+  };
+  // A programmatic page (tapping the seg) sails THROUGH the old half, and
+  // without remembering where it is headed the early frames re-commit the
+  // old view: the labels and the Create PDF bar flickered on every tap
+  // (arena catch, 15 Aug). The scroll only commits once it crosses into the
+  // half it was sent to; a finger grabbing mid-flight clears the claim.
+  const pageToRef = useRefB(null);
+  const onPagerScroll = () => {
+    const el = pagerRef.current;
+    if (!el || !el.clientWidth) return;
+    const p = Math.max(0, Math.min(1, el.scrollLeft / el.clientWidth));
+    placePill(p);
+    clampPanes(Math.abs(p - Math.round(p)) < 0.005 ? Math.round(p) : null);
+    const committed = p > 0.5 ? 'records' : 'documents';
+    if (pageToRef.current) {
+      if (committed === pageToRef.current) pageToRef.current = null;else return;
+    }
+    if (committed !== view) setView(committed);
+  };
+  React.useLayoutEffect(() => {
+    const el = pagerRef.current;
+    if (el && el.clientWidth) el.scrollLeft = viewIdx * el.clientWidth;
+    placePill(viewIdx);
+    clampPanes(viewIdx);
+  }, []);
+  const goView = id => {
+    pageToRef.current = id;
+    setView(id);
+    const el = pagerRef.current;
+    if (el) el.scrollTo({
+      left: (id === 'records' ? 1 : 0) * el.clientWidth,
+      behavior: 'smooth'
+    });
+  };
   const Seg = ({
     id,
     label
   }) => /*#__PURE__*/React.createElement("button", {
-    onClick: () => setView(id),
+    "data-seg": id,
+    onClick: () => goView(id),
     style: {
       flex: 1,
       minHeight: 44,
       borderRadius: 999,
       border: 'none',
       cursor: 'pointer',
+      position: 'relative',
+      zIndex: 1,
+      background: 'transparent',
       fontFamily: "'Outfit', system-ui",
       fontSize: 'calc(15px * var(--tscale, 1))',
       fontWeight: 500,
-      background: view === id ? 'var(--card)' : 'transparent',
-      color: view === id ? 'var(--blue)' : 'var(--muted)',
-      boxShadow: view === id ? '0 4px 12px -8px rgba(20,40,80,0.4)' : 'none'
+      color: view === id ? 'var(--blue)' : 'var(--muted)'
     }
   }, label);
   return /*#__PURE__*/React.createElement("div", {
@@ -1027,7 +1093,7 @@ function EvidenceScreen({
       className: "j-iconbtn",
       "aria-label": "Search documents",
       onClick: () => {
-        setView('documents');
+        goView('documents');
         setShowDocQ(v => {
           if (v) setDocQ('');
           return !v;
@@ -1075,15 +1141,88 @@ function EvidenceScreen({
       padding: 4,
       borderRadius: 999,
       background: 'var(--tag-grey-bg)',
-      marginBottom: 20
+      marginBottom: 20,
+      position: 'relative'
     }
-  }, /*#__PURE__*/React.createElement(Seg, {
+  }, /*#__PURE__*/React.createElement("div", {
+    ref: segPillRef,
+    "data-seg-pill": true,
+    "aria-hidden": "true",
+    style: {
+      position: 'absolute',
+      top: 4,
+      bottom: 4,
+      left: 4,
+      width: 'calc(50% - 6px)',
+      borderRadius: 999,
+      background: 'var(--card)',
+      boxShadow: '0 4px 12px -8px rgba(20,40,80,0.4)',
+      zIndex: 0
+    }
+  }), /*#__PURE__*/React.createElement(Seg, {
     id: "documents",
     label: "Documents"
   }), /*#__PURE__*/React.createElement(Seg, {
     id: "records",
     label: "Day records"
-  })), view === 'records' && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SectionLabel, null, "Date range"), /*#__PURE__*/React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", _extends({
+    ref: pagerRef,
+    onScroll: onPagerScroll,
+    onPointerDown: () => {
+      pageToRef.current = null;
+    },
+    className: "j-pager",
+    "data-ev-pager": true
+  }, pagerKeyProps(pagerRef, 'Documents and Day records'), {
+    style: {
+      display: 'flex',
+      overflowX: 'auto',
+      overflowY: 'hidden',
+      WebkitOverflowScrolling: 'touch',
+      outline: 'none',
+      margin: '0 -12px'
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: '0 0 100%',
+      width: '100%',
+      minWidth: 0,
+      scrollSnapAlign: 'start',
+      padding: '0 12px',
+      boxSizing: 'border-box'
+    }
+  }, /*#__PURE__*/React.createElement(SectionLabel, {
+    right: /*#__PURE__*/React.createElement("span", {
+      className: "j-meta"
+    }, docsShown.length, " ", docQ.trim() ? 'found' : 'saved')
+  }, "Your documents"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 12
+    }
+  }, docsShown.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    className: "j-card",
+    style: {
+      padding: 22,
+      textAlign: 'center'
+    }
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "j-sm"
+  }, docQ.trim() ? 'Nothing matches that search.' : 'No documents yet. Add the first letter or report and never lose it again.')) : docsShown.map(d => /*#__PURE__*/React.createElement(DocCard, {
+    key: d.id,
+    doc: d,
+    onClick: () => openDoc(d.id)
+  })))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: '0 0 100%',
+      width: '100%',
+      minWidth: 0,
+      scrollSnapAlign: 'start',
+      padding: '0 12px',
+      boxSizing: 'border-box'
+    }
+  }, /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SectionLabel, null, "Date range"), /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 14
     }
@@ -1187,29 +1326,7 @@ function EvidenceScreen({
       paddingTop: 12,
       borderTop: '1px dashed var(--line)'
     }
-  }, "Each entry shows when it was written. \"Same day\" means it was logged on the day it happened. \"Added later\" means it was written up afterwards. Any edits keep the original date and time.")))), view === 'documents' && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SectionLabel, {
-    right: /*#__PURE__*/React.createElement("span", {
-      className: "j-meta"
-    }, docsShown.length, " ", docQ.trim() ? 'found' : 'saved')
-  }, "Your documents"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 12
-    }
-  }, docsShown.length === 0 ? /*#__PURE__*/React.createElement("div", {
-    className: "j-card",
-    style: {
-      padding: 22,
-      textAlign: 'center'
-    }
-  }, /*#__PURE__*/React.createElement("p", {
-    className: "j-sm"
-  }, docQ.trim() ? 'Nothing matches that search.' : 'No documents yet. Add the first letter or report and never lose it again.')) : docsShown.map(d => /*#__PURE__*/React.createElement(DocCard, {
-    key: d.id,
-    doc: d,
-    onClick: () => openDoc(d.id)
-  })))))), view === 'records' && /*#__PURE__*/React.createElement("div", {
+  }, "Each entry shows when it was written. \"Same day\" means it was logged on the day it happened. \"Added later\" means it was written up afterwards. Any edits keep the original date and time.")))))))), view === 'records' && /*#__PURE__*/React.createElement("div", {
     style: {
       position: 'absolute',
       left: 0,
@@ -3824,7 +3941,7 @@ function SettingsScreen({
       color: 'rgba(255,255,255,0.82)',
       marginTop: 2
     }
-  }, "Get the best experience."))) : AI_AVAILABLE ? /*#__PURE__*/React.createElement("button", {
+  }, "Month patterns, full filters and day record PDFs."))) : AI_AVAILABLE ? /*#__PURE__*/React.createElement("button", {
     className: "j-press",
     onClick: () => nav.go('unlock', {
       tier: 'ai'
@@ -4142,7 +4259,7 @@ function WhatHelpedScreen({
       color: 'var(--green-ink)',
       flexShrink: 0
     }
-  }, s.count > 1 ? 'x' + s.count : 'once'), /*#__PURE__*/React.createElement("span", {
+  }, 'x' + s.count), /*#__PURE__*/React.createElement("span", {
     style: {
       flex: 1,
       minWidth: 0
@@ -4160,7 +4277,7 @@ function WhatHelpedScreen({
     }
   }, "Last on ", J.fmtShort(s.last), " ", s.last.slice(0, 4)))))), /*#__PURE__*/React.createElement(FootNote, {
     icon: "leaf"
-  }, "The more honestly the hard moments are logged, the sharper this page gets.")))));
+  }, "The more days you log, the sharper this page gets.")))));
 }
 
 // ---- Key contacts: the people a stressed parent calls at the gate (free) ----
@@ -4176,9 +4293,12 @@ function ContactsScreen({
   const add = () => {
     const n = name.trim();
     if (!n) return;
+    // ids ride the clock like every other record here: a length-based id
+    // collides after delete-then-add, and the remove filter then takes two
+    // rows for one tap (arena catch, 15 Aug)
     nav.setChild({
       contacts: [...contacts, {
-        id: 'c' + contacts.length + '_' + n.length + n.charCodeAt(0),
+        id: 'ct' + Date.now(),
         name: n,
         role: role.trim(),
         phone: phone.trim(),
@@ -4256,7 +4376,7 @@ function ContactsScreen({
       display: 'block',
       marginTop: 2
     }
-  }, c.role)), c.phone && iconLink('tel:' + c.phone, 'bell', 'Call ' + c.name), c.email && iconLink('mailto:' + c.email, 'mail', 'Email ' + c.name), /*#__PURE__*/React.createElement("button", {
+  }, c.role)), c.phone && iconLink('tel:' + c.phone, 'phone', 'Call ' + c.name), c.email && iconLink('mailto:' + c.email, 'mail', 'Email ' + c.name), /*#__PURE__*/React.createElement("button", {
     onClick: () => nav.setChild({
       contacts: contacts.filter(x => x.id !== c.id)
     }),
@@ -4351,7 +4471,7 @@ function DatesScreen({
     if (!l || !iso) return;
     nav.setChild({
       dates: [...dates, {
-        id: 'd' + dates.length + '_' + iso,
+        id: 'dt' + Date.now(),
         label: l,
         iso
       }].sort((a, b) => a.iso < b.iso ? -1 : 1)
@@ -4472,7 +4592,7 @@ function DatesScreen({
       opacity: 0.5,
       cursor: 'default'
     }
-  }, "Add")), /*#__PURE__*/React.createElement(FootNote, null, "Jotla lists your dates; it never works out legal deadlines for you. For those, check with IPSEA or your own advisor.")))), pickerOpen && /*#__PURE__*/React.createElement(CalendarSheet, {
+  }, "Add")), /*#__PURE__*/React.createElement(FootNote, null, "Jotla lists your dates; it never works out legal deadlines for you. For those, check with IPSEA or your own adviser.")))), pickerOpen && /*#__PURE__*/React.createElement(CalendarSheet, {
     onClose: () => setPickerOpen(false),
     value: iso || null,
     onSelect: d => {

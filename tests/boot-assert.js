@@ -2871,10 +2871,13 @@ function ok(name, cond) {
   await page18.waitForTimeout(500);
   await page18.getByText('Documents', { exact: true }).last().click();
   await page18.waitForTimeout(600);
-  const evKeep18 = await page18.evaluate(() => ({
-    onRecords: !!document.body.innerText.includes('dated entries') || !![...document.querySelectorAll('button')].find(b => b.innerText.trim() === 'Day records' && getComputedStyle(b).backgroundColor !== 'rgba(0, 0, 0, 0)'),
-    scrollY: Math.round(document.querySelector('.j-screen .j-scroll').scrollTop),
-  }));
+  const evKeep18 = await page18.evaluate(() => {
+    const pg = document.querySelector('[data-ev-pager]');
+    return {
+      onRecords: !!pg && Math.round(pg.scrollLeft / pg.clientWidth) === 1,
+      scrollY: Math.round(document.querySelector('.j-screen .j-scroll').scrollTop),
+    };
+  });
   ok('Documents comes back on the sub-tab it was left on (' + JSON.stringify(evKeep18.onRecords) + ')', evKeep18.onRecords === true);
   ok('...at the scroll position it was left at (' + evKeep18.scrollY + 'px)', Math.abs(evKeep18.scrollY - 180) <= 6);
   // THE KEEPS ARE PER CHILD (founder, 14 Aug round 7 follow-up): leave Sam's
@@ -2898,19 +2901,25 @@ function ok(name, cond) {
   await goChild('Maria');
   await page18.getByText('Documents', { exact: true }).last().click();
   await page18.waitForTimeout(600);
-  const mariaEv = await page18.evaluate(() => ({
-    scrollY: Math.round(document.querySelector('.j-screen .j-scroll').scrollTop),
-    onRecords: document.body.innerText.includes('dated entries'),
-  }));
+  const mariaEv = await page18.evaluate(() => {
+    const pg = document.querySelector('[data-ev-pager]');
+    return {
+      scrollY: Math.round(document.querySelector('.j-screen .j-scroll').scrollTop),
+      onRecords: !!pg && Math.round(pg.scrollLeft / pg.clientWidth) === 1,
+    };
+  });
   ok('a switched child\'s Documents starts fresh, never on the last child\'s place',
     mariaEv.scrollY === 0 && mariaEv.onRecords === false);
   await goChild('Sam');
   await page18.getByText('Documents', { exact: true }).last().click();
   await page18.waitForTimeout(600);
-  const samEv = await page18.evaluate(() => ({
-    scrollY: Math.round(document.querySelector('.j-screen .j-scroll').scrollTop),
-    onRecords: document.body.innerText.includes('dated entries'),
-  }));
+  const samEv = await page18.evaluate(() => {
+    const pg = document.querySelector('[data-ev-pager]');
+    return {
+      scrollY: Math.round(document.querySelector('.j-screen .j-scroll').scrollTop),
+      onRecords: !!pg && Math.round(pg.scrollLeft / pg.clientWidth) === 1,
+    };
+  });
   ok('...and the first child\'s Documents is still exactly as they left it (' + samEv.scrollY + 'px)',
     samEv.onRecords === true && Math.abs(samEv.scrollY - 180) <= 6);
   await ctx18.close();
@@ -3116,6 +3125,27 @@ function ok(name, cond) {
   await page20.locator('button[aria-label="Remove Mrs Price"]').click();
   await page20.waitForTimeout(300);
   ok('...and removes cleanly', (await page20.locator('[data-contact-row]').count()) === 0);
+  // THE ID COLLISION (arena catch, 15 Aug): length-based ids collided after
+  // delete-then-add (Greg out, Gwen in, same id as Gina), and removing one
+  // row silently took two. Same-length same-initial names, delete one, and
+  // exactly one of the two survivors must go.
+  const addContact20 = async (nm) => {
+    await page20.locator('input').nth(0).fill(nm);
+    await page20.getByText('Add', { exact: true }).click();
+    await page20.waitForTimeout(250);
+  };
+  await addContact20('Greg');
+  await addContact20('Gina');
+  await page20.locator('button[aria-label="Remove Greg"]').click();
+  await page20.waitForTimeout(250);
+  await addContact20('Gwen');
+  await page20.locator('button[aria-label="Remove Gwen"]').click();
+  await page20.waitForTimeout(250);
+  ok('removing one contact never takes a namesake with it',
+    (await page20.locator('[data-contact-row]').count()) === 1
+    && (await page20.locator('[data-contact-row]').innerText()).includes('Gina'));
+  await page20.locator('button[aria-label="Remove Gina"]').click();
+  await page20.waitForTimeout(250);
   await page20.locator('button[aria-label="Back"]').first().click();
   await page20.waitForTimeout(400);
   // Important dates: add via the calendar sheet, countdown speaks the gap
@@ -3175,6 +3205,110 @@ function ok(name, cond) {
   await page20f.waitForTimeout(600);
   ok('a crowned row on free opens the Jotla Plus page', (await page20f.locator('#root').innerText()).includes('Jotla Plus'));
   await ctx20f.close();
+
+  // ---- 21. round 11: swipe sub-tabs, Plus-tinted locks, the readable tile ----
+  console.log('Suite 21: Documents swipe + the Plus language');
+  const ctx21 = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  const page21 = await ctx21.newPage();
+  await page21.addInitScript(() => {
+    localStorage.setItem('jotla_prefs_v2', JSON.stringify({ dark: false, plus: true, childCfg: {}, customProfiles: [], deletedIds: [] }));
+    localStorage.setItem('jotla_fabtip_v1', 'learned');
+  });
+  await page21.goto(URL_APP, { waitUntil: 'networkidle' });
+  await page21.waitForTimeout(1000);
+  await page21.getByText('Documents', { exact: true }).last().click();
+  await page21.waitForTimeout(600);
+  // mid-swipe: the pill rides the slide
+  const pillAt = () => page21.evaluate(() => {
+    const el = document.querySelector('[data-seg-pill]');
+    const m = new DOMMatrixReadOnly(getComputedStyle(el).transform);
+    return Math.round(m.m41);
+  });
+  const pill0 = await pillAt();
+  // read the pill two frames after the scroll write, BEFORE the snap can
+  // pull the pager home again (the first version read at 250ms and only
+  // ever saw the snapped-back zero)
+  // snap is parked for the mid-read: a programmatic write to a non-snap
+  // position is re-snapped INSTANTLY, so with snap live the pill can only
+  // ever be seen at rest (this probes the binding; the settle checks below
+  // prove the physics with snap on)
+  const pillMid = await page21.evaluate(() => new Promise(res => {
+    const pg = document.querySelector('[data-ev-pager]');
+    pg.style.scrollSnapType = 'none';
+    pg.scrollLeft = pg.clientWidth * 0.4;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const el = document.querySelector('[data-seg-pill]');
+      const x = Math.round(new DOMMatrixReadOnly(getComputedStyle(el).transform).m41);
+      pg.style.scrollSnapType = '';
+      res(x);
+    }));
+  }));
+  await page21.evaluate(() => { const pg = document.querySelector('[data-ev-pager]'); pg.scrollLeft = pg.clientWidth; });
+  await page21.waitForTimeout(500);
+  const settled21 = await page21.evaluate(() => {
+    const pg = document.querySelector('[data-ev-pager]');
+    return { idx: Math.round(pg.scrollLeft / pg.clientWidth), cta: document.body.innerText.includes('Create PDF') };
+  });
+  ok('the seg pill rides the swipe (' + pill0 + ' to ' + pillMid + 'px)', pillMid > pill0 + 20);
+  ok('a swipe lands on Day records with its own controls', settled21.idx === 1 && settled21.cta === true);
+  // THE BORROWED HEIGHT (arena catch, 15 Aug): at rest the off pane folds
+  // flat, or Day records scrolls hundreds of blank pixels inherited from
+  // the taller Documents list
+  const clamp21 = await page21.evaluate(() => {
+    const pg = document.querySelector('[data-ev-pager]');
+    return { off: pg.children[0].offsetHeight, on: pg.children[1].offsetHeight };
+  });
+  ok('the off pane folds flat at rest, no borrowed scroll (' + clamp21.off + 'px)', clamp21.off === 0 && clamp21.on > 100);
+  // tapping the pill pages back (the seg button, never the page title)
+  await page21.locator('[data-seg="documents"]').click();
+  await page21.waitForTimeout(600);
+  const back21 = await page21.evaluate(() => {
+    const pg = document.querySelector('[data-ev-pager]');
+    return Math.round(pg.scrollLeft / Math.max(1, pg.clientWidth));
+  });
+  ok('tapping the pill pages back to Documents', back21 === 0);
+  await ctx21.close();
+  // free tier: the locked tiles speak Plus, and the old lines are gone
+  const ctx21f = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  const page21f = await ctx21f.newPage();
+  await page21f.addInitScript(() => {
+    localStorage.setItem('jotla_prefs_v2', JSON.stringify({ dark: false, plus: false, childCfg: {}, customProfiles: [], deletedIds: [] }));
+    localStorage.setItem('jotla_fabtip_v1', 'learned');
+  });
+  await page21f.goto(URL_APP, { waitUntil: 'networkidle' });
+  await page21f.waitForTimeout(1000);
+  await page21f.getByText('Find', { exact: true }).last().click();
+  await page21f.waitForTimeout(500);
+  await page21f.locator('.j-findbar').click();
+  await page21f.waitForTimeout(600);
+  const lock21 = await page21f.evaluate(() => {
+    const card = [...document.querySelectorAll('[data-find-drawer] button')].find(b => b.innerText.includes('Narrow it down'));
+    return { tinted: /gradient/.test(getComputedStyle(card).backgroundImage || ''),
+      freeLine: document.querySelector('[data-find-drawer]').innerText.includes('always free') };
+  });
+  ok('the free Filters tile wears the Plus tint and drops the free-search line',
+    lock21.tinted === true && lock21.freeLine === false);
+  await page21f.getByText('Month', { exact: true }).last().click();
+  await page21f.waitForTimeout(700);
+  const tile21 = await page21f.evaluate(() => {
+    const t = document.querySelector('[data-patterns-locked]');
+    if (!t) return { blurred: true, titleInk: false, tinted: false, missing: true };
+    const blurred = [...t.querySelectorAll('*')].some(el => /blur/.test(getComputedStyle(el).filter || ''));
+    const title = [...t.querySelectorAll('span')].find(s => s.textContent === 'Month patterns');
+    // compare against a live reference, never a hand-parsed hex
+    // the tokens live on the app frame, not :root, so the reference span
+    // must sit INSIDE the app to resolve var(--ink)
+    const ref = document.createElement('span'); ref.style.color = 'var(--ink)'; t.appendChild(ref);
+    const inkRgb = getComputedStyle(ref).color; ref.remove();
+    return { blurred, titleInk: title ? getComputedStyle(title).color === inkRgb : false,
+      tinted: /gradient/.test(getComputedStyle(t).backgroundImage || '') };
+  });
+  ok('the Month patterns tile reads at full contrast (blurless=' + !tile21.blurred + ' ink=' + tile21.titleInk + ' tint=' + tile21.tinted + ')',
+    tile21.blurred === false && tile21.titleInk === true && tile21.tinted === true);
+  await page21f.locator('[data-patterns-locked]').click();
+  await page21f.waitForTimeout(600);
+  ok('...and it still opens the Jotla Plus page', (await page21f.locator('#root').innerText()).includes('Jotla Plus'));
+  await ctx21f.close();
 
   await browser.close();
   server.kill();

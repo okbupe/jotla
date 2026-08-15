@@ -73,35 +73,34 @@ function MonthMoodGraph({ entries, year, month }) {
   );
 }
 
-// Free: the locked patterns preview (redesign, 6 Aug). The analytics SHAPE sits
-// blurred behind a soft veil carrying the solid gold crown and the feature line;
-// tapping anywhere opens the Jotla Plus page (the crown gate). The bars are a
-// shape preview, unreadable by design, never presented as this month's data.
+// Free: the locked patterns preview, REBUILT (founder, 14 Aug round 11: the
+// old blurred-graph-with-a-veil made the feature line close to unreadable).
+// Now it speaks the app's one Plus language: the plus tint ground, a small
+// CRISP toy chart that is clearly decoration (no real data, no blur), and
+// the words on clean ground below it, never on top of art, so both themes
+// read at full contrast. Tapping anywhere opens the Jotla Plus page.
 function PatternsLockedPreview({ onOpen }) {
-  const bars = [['68%','var(--green)'],['40%','var(--green)'],['88%','var(--red)'],['52%','var(--amber)'],
-    ['80%','var(--red)'],['44%','var(--green)'],['58%','var(--amber)'],['36%','var(--green)'],
-    ['64%','var(--green)'],['84%','var(--red)'],['48%','var(--amber)'],['40%','var(--green)'],
-    ['76%','var(--red)'],['56%','var(--green)']];
-  const dys = ['40%','22%','78%','45%','95%','28%','55%','22%','70%','90%','35%','25%','82%','48%'];
+  // the toy chart is DECORATION and must look like it: plus-ink monochrome,
+  // never the real mood palette, or a tall red bar under the child's real
+  // calendar reads as "my child's bad week" (arena catch, 15 Aug). And the
+  // crown sits on the right like every other crowned row, no "Plus" pill:
+  // the crown is the whole sentence (founder, 15 Aug).
+  const bars = ['46%', '70%', '34%', '88%', '52%', '64%', '42%', '76%', '30%', '58%'];
   return (
-    <button onClick={onOpen} className="j-press" aria-label="Month patterns, part of Jotla Plus"
-      style={{ position: 'relative', width: '100%', border: '1px solid var(--line)', borderRadius: 16,
-        overflow: 'hidden', background: 'var(--card)', marginTop: 18, padding: 0, cursor: 'pointer', textAlign: 'left' }}>
-      <div aria-hidden="true" style={{ filter: 'blur(7px)', opacity: 0.8, padding: '16px 16px 14px', pointerEvents: 'none' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 5, height: 70 }}>
-          {bars.map(([h, c], i) => <span key={i} style={{ flex: 1, height: h, background: c, borderRadius: 3 }} />)}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 5, height: 34, marginTop: 8 }}>
-          {dys.map((h, i) => <span key={i} style={{ flex: 1, height: h, background: 'var(--dysreg)', borderRadius: 3 }} />)}
-        </div>
-        <p style={{ fontSize: 'calc(12.5px * var(--tscale, 1))', color: 'var(--muted)', marginTop: 10, marginBottom: 0 }}>9 good · 4 mixed · 5 hard · 6 dysregulation</p>
+    <button onClick={onOpen} className="j-press" data-patterns-locked aria-label="Month patterns, part of Jotla Plus"
+      style={{ width: '100%', border: '1px solid color-mix(in srgb, var(--plus-ink) 30%, transparent)', borderRadius: 16,
+        overflow: 'hidden', background: 'linear-gradient(var(--plus-tint), var(--plus-tint)) var(--card)',
+        marginTop: 18, padding: 0, cursor: 'pointer', textAlign: 'left' }}>
+      <div aria-hidden="true" style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 56, padding: '16px 16px 0' }}>
+        {bars.map((h, i) => <span key={i} style={{ flex: 1, height: h, background: 'var(--plus-ink)', borderRadius: 4, opacity: i % 3 === 0 ? 0.5 : i % 3 === 1 ? 0.32 : 0.2 }} />)}
       </div>
-      <span className="j-patveil" style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center', gap: 3 }}>
-        <Icon name="crown" size={22} color="var(--gold)" />
-        <span style={{ fontSize: 'calc(14.5px * var(--tscale, 1))', fontWeight: 600, color: 'var(--ink)' }}>Month patterns</span>
-        <span style={{ fontSize: 'calc(12px * var(--tscale, 1))', color: 'var(--muted)' }}>The mood graph, counts and hard-day patterns.</span>
-      </span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px 14px' }}>
+        <span style={{ flex: 1, minWidth: 0 }}>
+          <span style={{ display: 'block', fontFamily: "'Outfit', system-ui", fontWeight: 500, fontSize: 'calc(16px * var(--tscale, 1))', color: 'var(--ink)' }}>Month patterns</span>
+          <span style={{ display: 'block', fontSize: 'calc(13px * var(--tscale, 1))', color: 'var(--muted)', marginTop: 2 }}>The mood graph, counts and hard-day patterns.</span>
+        </span>
+        <Icon name="crown" size={20} color="var(--gold)" style={{ flexShrink: 0 }} />
+      </div>
     </button>
   );
 }
@@ -628,7 +627,7 @@ function MonthScreen({ nav, entries, view }) {
         // and the pull dies a few pixels in. Touch never showed it (touch
         // captures implicitly); a desktop tester's mouse hit it every time
         // the layout committed mid-pull.
-        try { el.setPointerCapture(ev.pointerId); } catch (e) {}
+        try { el.setPointerCapture(ev.pointerId); trace('capture-ok'); } catch (e) { trace('capture-fail ' + e.name); }
         // the pull owns the surface from here: a settle still in flight
         // stops where it is (arena catch, 14 Aug round 4)
         if (tweenRef.current) cancelAnimationFrame(tweenRef.current);
@@ -639,8 +638,9 @@ function MonthScreen({ nav, entries, view }) {
       setT(tNext);
       if (from.g0 < 1) { const gNext = Math.max(from.g0, Math.min(1, from.g0 + Math.max(0, d - usedT) / from.spanG)); trace('drive d=' + d.toFixed(1) + ' g=' + gNext.toFixed(3)); setG(gNext); }
     };
-    const up = () => {
+    const up = (ev) => {
       if (!from) return;
+      trace('up type=' + (ev && ev.type) + ' g=' + gRef.current.toFixed(3) + ' t=' + tRef.current.toFixed(3));
       from = null;
       tween([[setT, tRef.current, tRef.current > 0.5 ? 1 : 0], [setG, gRef.current, gRef.current > 0.5 ? 1 : 0]]);
       setTimeout(() => { draggingRef.current = false; }, 320);
@@ -649,15 +649,29 @@ function MonthScreen({ nav, entries, view }) {
       if (!from || !from.engaged || !ev.cancelable) return;
       ev.preventDefault();
     };
+    // A MOUSE pull over a note card must never turn into a native drag of the
+    // card's image or selected text: the browser answers dragstart with a
+    // pointercancel and then goes silent, and the pull dies a few pixels in
+    // (the same family as the 13 Aug pointercancel lesson, desktop edition).
+    const drag = (ev) => {
+      if (!from) return;
+      trace('dragstart-prevented ' + (ev.target && ev.target.tagName));
+      ev.preventDefault();
+    };
+    const lost = () => trace('lostcapture');
     el.addEventListener('pointerdown', down);
     el.addEventListener('pointermove', move);
     el.addEventListener('pointerup', up);
     el.addEventListener('pointercancel', up);
     el.addEventListener('touchmove', claim, { passive: false });
+    el.addEventListener('dragstart', drag);
+    el.addEventListener('lostpointercapture', lost);
     return () => {
       el.removeEventListener('pointerdown', down); el.removeEventListener('pointermove', move);
       el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up);
       el.removeEventListener('touchmove', claim);
+      el.removeEventListener('dragstart', drag);
+      el.removeEventListener('lostpointercapture', lost);
     };
   }, [nav.plus]);
 
