@@ -3058,6 +3058,9 @@ function ok(name, cond) {
   // Five pages for the child, not the app: All about (free), What helped
   // (Plus, born from Dysregulation), Key contacts (free), Important dates
   // (Plus), Wins (free). Crowns sit on exactly the two Plus rows on free.
+  // Row order is the founder's (16 Aug, 2.0.37): free three first (All about,
+  // Key contacts, Wins), then the Plus two (What helped, Important dates),
+  // Family Sync last.
   console.log('Suite 20: the child\'s hub');
   const ctx20 = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
   const page20 = await ctx20.newPage();
@@ -3076,6 +3079,18 @@ function ok(name, cond) {
   const hubRows = await page20.evaluate(() =>
     ['All about', 'What helped', 'Key contacts', 'Important dates', 'Wins'].map(t => document.body.innerText.includes(t)));
   ok('the Menu holds the five child-hub rows', hubRows.every(Boolean));
+  // the rows stand in the founder's order (16 Aug): read the ACTUAL top-to-
+  // bottom order off the screen, not the DOM source, so a styling accident
+  // that visually reorders them would still fail
+  const hubOrder20 = await page20.evaluate(() => {
+    const want = ['All about', 'Key contacts', 'Wins', 'What helped', 'Important dates', 'Family Sync'];
+    const rows = [...document.querySelectorAll('button')]
+      .map(b => ({ t: want.find(w => (b.innerText || '').trim().startsWith(w)), y: b.getBoundingClientRect().top }))
+      .filter(r => r.t);
+    return rows.sort((a, b) => a.y - b.y).map(r => r.t);
+  });
+  ok('the hub rows run All about, Key contacts, Wins, What helped, Important dates, Family Sync (' + hubOrder20.join(' > ') + ')',
+    hubOrder20.join('|') === 'All about|Key contacts|Wins|What helped|Important dates|Family Sync');
   // All about: fields persist across a reload (they live on the child)
   await page20.getByText('All about', { exact: false }).first().click();
   await page20.waitForTimeout(500);

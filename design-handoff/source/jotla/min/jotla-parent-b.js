@@ -4035,6 +4035,16 @@ function SettingsScreen({
     sub: "One page to hand to anyone new",
     onClick: () => nav.go('aboutchild')
   }), /*#__PURE__*/React.createElement(MRow, {
+    icon: "person",
+    title: "Key contacts",
+    sub: "SENCO, teacher, case officer",
+    onClick: () => nav.go('contacts')
+  }), /*#__PURE__*/React.createElement(MRow, {
+    icon: "star",
+    title: "Wins",
+    sub: "The good days, all in one place",
+    onClick: () => nav.go('wins')
+  }), /*#__PURE__*/React.createElement(MRow, {
     icon: "leaf",
     title: "What helped",
     sub: "Your own strategies, from your own record",
@@ -4053,11 +4063,6 @@ function SettingsScreen({
       color: "var(--gold)"
     }))
   }), /*#__PURE__*/React.createElement(MRow, {
-    icon: "person",
-    title: "Key contacts",
-    sub: "SENCO, teacher, case officer",
-    onClick: () => nav.go('contacts')
-  }), /*#__PURE__*/React.createElement(MRow, {
     icon: "calendar",
     title: "Important dates",
     sub: "Reviews and meetings, with a countdown",
@@ -4075,11 +4080,6 @@ function SettingsScreen({
       size: 20,
       color: "var(--gold)"
     }))
-  }), /*#__PURE__*/React.createElement(MRow, {
-    icon: "star",
-    title: "Wins",
-    sub: "The good days, all in one place",
-    onClick: () => nav.go('wins')
   }), /*#__PURE__*/React.createElement(MRow, {
     icon: "family",
     title: "Family Sync",

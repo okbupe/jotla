@@ -2130,20 +2130,23 @@ function SettingsScreen({ nav, profile, entries = [], docs = [], binCount = 0 })
               practically nothing... what else could we put in there that
               parents will find useful"). Five pages about the child, not the
               app. What helped and Important dates are Plus (his tier calls:
-              What helped is born from Dysregulation, itself a Plus surface). */}
+              What helped is born from Dysregulation, itself a Plus surface).
+              Row order is the founder's (16 Aug): the three free rows first
+              (All about, Key contacts, Wins), then the two Plus rows (What
+              helped, Important dates), Family Sync last. */}
           <SectionLabel>For {profile.name}</SectionLabel>
           <MRow icon="heart" title={'All about ' + profile.name} sub="One page to hand to anyone new"
             onClick={() => nav.go('aboutchild')} />
+          <MRow icon="person" title="Key contacts" sub="SENCO, teacher, case officer"
+            onClick={() => nav.go('contacts')} />
+          <MRow icon="star" title="Wins" sub="The good days, all in one place"
+            onClick={() => nav.go('wins')} />
           <MRow icon="leaf" title="What helped" sub="Your own strategies, from your own record"
             onClick={() => nav.plus ? nav.go('whathelped') : nav.go('unlock', { slide: 7 })}
             trailing={nav.plus ? null : <span data-crown-gate style={{ display: 'flex', flexShrink: 0 }}><Icon name="crown" size={20} color="var(--gold)" /></span>} />
-          <MRow icon="person" title="Key contacts" sub="SENCO, teacher, case officer"
-            onClick={() => nav.go('contacts')} />
           <MRow icon="calendar" title="Important dates" sub="Reviews and meetings, with a countdown"
             onClick={() => nav.plus ? nav.go('dates') : nav.go('unlock', { slide: 8 })}
             trailing={nav.plus ? null : <span data-crown-gate style={{ display: 'flex', flexShrink: 0 }}><Icon name="crown" size={20} color="var(--gold)" /></span>} />
-          <MRow icon="star" title="Wins" sub="The good days, all in one place"
-            onClick={() => nav.go('wins')} />
           {/* Family Sync lives here because the circle is per CHILD, not per
               app (founder, 15 Aug): Sam's circle can be Mum and Dad while
               Maria's is just Mum. Plus feature; honest Coming-soon state. */}
