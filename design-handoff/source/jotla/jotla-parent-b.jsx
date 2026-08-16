@@ -375,7 +375,7 @@ function FindScreen({ nav, entries, view }) {
         // 11); the tile wears the Plus tint instead of explaining itself.
         // Not titled "Filters": it sits under a heading that already says
         // Filters, so the card names what it does (arena catch, 15 Aug)
-        <PlusLockedCard onClick={() => nav.go('unlock')} icon="filter"
+        <PlusLockedCard onClick={() => nav.go('unlock', { slide: 6 })} icon="filter"
           title="Narrow it down" text="Theme, mood, place and dates." />
       )}
     </>
@@ -839,7 +839,7 @@ function EvidenceScreen({ nav, entries, docs, profile, navView }) {
           {nav.plus
             ? <button className="j-btn j-btn-primary j-btn-lg" onClick={() => { if (openPrintPack(childLabel, rangeLabel, inPack)) setDone(true); }}><Icon name="doc" size={20} color="#fff" /> Create PDF</button>
             /* crown gate (founder, 6 Aug): a Plus-tier control wears the solid gold crown and opens the Jotla Plus page */
-            : <button className="j-btn j-btn-primary j-btn-lg" onClick={() => nav.go('unlock')}><Icon name="crown" size={20} color="#EBBA4D" /> Create PDF is part of Plus</button>}
+            : <button className="j-btn j-btn-primary j-btn-lg" onClick={() => nav.go('unlock', { slide: 1 })}><Icon name="crown" size={20} color="#EBBA4D" /> Create PDF is part of Plus</button>}
         </div>
       )}
 
@@ -1177,7 +1177,7 @@ function AddDocScreen({ nav }) {
             </div>
           ) : (
             <PlusLockedCard icon="attach" title="Add the document itself" text="Keep the letter with its details. Part of Plus."
-              onClick={() => nav.go('unlock')} />
+              onClick={() => nav.go('unlock', { slide: 3 })} />
           )}
 
           <div>
@@ -1460,7 +1460,7 @@ function DocScreen({ nav, docs, id }) {
       {editing && <EditDocSheet doc={d} plus={nav.plus}
         onSave={(patch) => nav.updateDoc(d.id, patch)}
         onAddMedia={(items) => nav.addDocMedia(d.id, items)}
-        onUnlock={() => { setEditing(false); nav.go('unlock'); }}
+        onUnlock={() => { setEditing(false); nav.go('unlock', { slide: 3 }); }}
         onClose={() => setEditing(false)} />}
     </div>
   );
@@ -1513,21 +1513,29 @@ const PREMIUM_GOLD_DEEP = '#C9912F';
 // the honest-marketing lock. Pricing decided 8 Aug (post-arena): Plus £49 / £79
 // with no monthly term, and the indicative AI ladder £89 / £149 with Plus included.
 const PLUS_SLIDES = [
-  { t: 'Patterns and Month View', c: 'A calendar of green and amber days. Tap any day to read what happened behind it.', img: 'art/plus-1.jpg' },
+  { t: 'Patterns and Month View', c: 'A calendar of green, amber and red days. Tap any day to read what happened behind it.', img: 'art/plus-1.jpg' },
   { t: 'PDF Evidence Pack', c: 'Turn any stretch of the record into one dated PDF, ready to hand over.', img: 'art/plus-2.jpg' },
-  { t: 'Family Sync', c: "The record on every grown-up's phone. One of you logs it, both of you have it.", img: 'art/plus-3.jpg' },
-  { t: 'Photos and Videos on Notes', c: 'Add the photo or the video to the note, so the day is shown as well as told.', img: 'art/plus-4.jpg' },
+  // soon: true renders the Coming-soon chip ON the slide. The arena's round-13
+  // P0: a feature that is not switched on yet must say so at the point of sale,
+  // not only on pages a free buyer never reaches (honest-marketing lock).
+  { t: 'Family Sync', c: "The record on every grown-up's phone. One of you logs it, both of you have it.", img: 'art/plus-3.webp', soon: true },
+  { t: 'Photos and Videos on Notes', c: 'Add the photo or the video to the note, so the day is shown as well as told.', img: 'art/plus-4.webp' },
   { t: 'Dysregulation Mode', c: 'Five gentle questions in the hard moment, so nothing important is lost.', img: 'art/plus-5.jpg' },
   // Slide 6 (founder, 8-9 Aug): Emojis. Bupe's Higgsfield render (landed 9 Aug,
   // nano_banana_2, same vector recipe as slides 1-5).
   { t: 'Emojis', c: 'Swap the faces for the sticker look, everywhere a face shows.', img: 'art/plus-6.jpg' },
+  // Slides 7-9 (founder, 15 Aug round 13): the features the 14-15 Aug rounds
+  // added, so the carousel sells what Plus actually holds today.
+  { t: 'Filters that find it', c: 'Theme, mood, place and dates. The note you need, in seconds.', img: 'art/plus-7.webp' },
+  { t: 'What helped', c: 'Your own answers from the hard moments, gathered into one playbook.', img: 'art/plus-8.webp' },
+  { t: 'Important dates', c: 'Your reviews and meetings counted down, with time to prepare.', img: 'art/plus-9.webp' },
 ];
 const AI_SLIDES = [
-  { t: 'EHCP and SEND deadline tracker', c: 'Every deadline tracked, with what to do about a gap.', img: 'art/ai-1.jpg' },
-  { t: 'On-device AI help', c: 'Ask about the record or the process. Answers stay on the phone.', img: 'art/ai-2.jpg' },
+  { t: 'EHCP and SEND deadline tracker', c: 'Every deadline tracked, with what to do about a gap.', img: 'art/ai-1.webp' },
+  { t: 'On-device AI help', c: 'Ask about the record or the process. Answers stay on the phone.', img: 'art/ai-2.webp' },
   { t: 'Current letter templates', c: 'The right letter for the moment, kept current with the law.', img: 'art/ai-3.jpg' },
   { t: 'Rights kept current', c: 'What you are entitled to, updated as the rules change.', img: 'art/ai-4.jpg' },
-  { t: 'Voice capture', c: 'Say what happened and Jotla writes it down.', img: 'art/ai-5.jpg' },
+  { t: 'Voice capture', c: 'Say what happened and Jotla writes it down.', img: 'art/ai-5.webp' },
 ];
 
 function TermCard({ label, price, per, sel, gold, badge }) {
@@ -1544,9 +1552,13 @@ function TermCard({ label, price, per, sel, gold, badge }) {
   );
 }
 
-function UnlockScreen({ nav, initialTier }) {
+function UnlockScreen({ nav, initialTier, initialSlide }) {
   const [tier, setTier] = useStateB(initialTier === 'ai' ? 'ai' : 'plus'); // plus | ai
-  const [slide, setSlide] = useStateB(0);
+  // A crowned row deep-links to the slide selling that feature (arena, 16 Aug:
+  // "Family Sync" landing on "Patterns and Month View" loses the context at
+  // the conversion moment). Clamped so a stale param can never strand the rail.
+  const [slide, setSlide] = useStateB(Number.isInteger(initialSlide)
+    ? Math.max(0, Math.min((initialTier === 'ai' ? AI_SLIDES : PLUS_SLIDES).length - 1, initialSlide)) : 0);
   const slides = tier === 'ai' ? AI_SLIDES : PLUS_SLIDES;
   // The feature rail follows the finger (founder, 7 Aug: dots alone are not a
   // carousel). Pointer events cover touch and mouse in one path; touch-action
@@ -1643,7 +1655,8 @@ function UnlockScreen({ nav, initialTier }) {
                   {slides.map((x, i) => (
                     <div key={i} style={{ flex: '0 0 100%', minWidth: 0 }}>
                       <img src={x.img} alt="" draggable={false} style={{ width: '100%', height: 158, objectFit: 'cover', borderRadius: 12, display: 'block', background: 'var(--tag-grey-bg)' }} />
-                      <p style={{ fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 'calc(15.5px * var(--tscale, 1))', color: 'var(--ink)', margin: '11px 0 0' }}>{x.t}</p>
+                      <p style={{ fontFamily: "'Outfit', system-ui", fontWeight: 600, fontSize: 'calc(15.5px * var(--tscale, 1))', color: 'var(--ink)', margin: '11px 0 0' }}>{x.t}
+                        {x.soon && <span className="j-pillbadge" style={{ marginLeft: 7, background: 'var(--tag-grey-bg)', color: 'var(--muted)', verticalAlign: 'middle', position: 'relative', top: -1.5 }}>Coming soon</span>}</p>
                       <p style={{ fontSize: 'calc(13px * var(--tscale, 1))', color: 'var(--muted)', lineHeight: 1.45, margin: '4px 0 0', minHeight: 'calc(38px * var(--tscale, 1))' }}>{x.c}</p>
                     </div>
                   ))}
@@ -1698,10 +1711,13 @@ function UnlockScreen({ nav, initialTier }) {
                 <TermCard label="6 Months" price="£89" per="for 6 months" gold />
                 <TermCard label="One Year" price="£149" per={<>less than<br />£13 a month</>} sel gold badge="Best value" />
               </div>
+              {/* No buy button before the product exists (the 6-7 Aug spec above;
+                  re-caught by the round-13 arena when this still read "Get Jotla
+                  AI"). The big control states the arrival, it does not sell. */}
               <button className="j-btn j-btn-lg" onClick={() => alert('Jotla AI arrives in 2027. Nothing is charged before it exists.')}
                 style={{ marginTop: 12, background: 'linear-gradient(135deg,#14294A,#1E5099)', color: '#fff',
                   boxShadow: '0 14px 28px -10px rgba(20,41,74,0.6)' }}>
-                <Icon name="sparkles" size={20} color="#E6B85C" /> Get Jotla AI
+                <Icon name="sparkles" size={20} color="#E6B85C" /> Jotla AI arrives in 2027
               </button>
               <p style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: 'var(--blue)',
                 fontSize: 'calc(13px * var(--tscale, 1))', fontWeight: 500, margin: '10px 0 0' }}>
@@ -1887,7 +1903,7 @@ function InfoAboutScreen({ nav }) {
           <PlanRow title="Encrypted export" note="Your own locked copy, only you hold the key. Until then, keep exports somewhere private, like your own cloud drive." />
           <PlanRow title="Lock the app" note="A fingerprint, face, or PIN on this device. Until then, your device's own lock protects the record, and phones can also lock or pin individual apps." />
           <PlanRow title="Cloud backup to Google Drive" note="Part of Jotla Plus: save a copy to your own Google Drive on its own. It moves a copy off the phone, so it is being built carefully and is not switched on yet." pill="Coming soon" />
-          <PlanRow title="Family Sync" note="Part of Jotla Plus: the record on every grown-up's phone." pill="Coming soon" />
+          <PlanRow title="Family Sync" note="Part of Jotla Plus: the record on every grown-up's phone. It moves notes between your family's phones in sealed envelopes we cannot open, so it is being built carefully and is not switched on yet." pill="Coming soon" />
           <InfoP last>Planned means exactly that: none of the above is switched on yet, and nothing in this app pretends to be.</InfoP>
         </div>
       </InfoBlock>
@@ -2119,15 +2135,24 @@ function SettingsScreen({ nav, profile, entries = [], docs = [], binCount = 0 })
           <MRow icon="heart" title={'All about ' + profile.name} sub="One page to hand to anyone new"
             onClick={() => nav.go('aboutchild')} />
           <MRow icon="leaf" title="What helped" sub="Your own strategies, from your own record"
-            onClick={() => nav.plus ? nav.go('whathelped') : nav.go('unlock')}
+            onClick={() => nav.plus ? nav.go('whathelped') : nav.go('unlock', { slide: 7 })}
             trailing={nav.plus ? null : <span data-crown-gate style={{ display: 'flex', flexShrink: 0 }}><Icon name="crown" size={20} color="var(--gold)" /></span>} />
           <MRow icon="person" title="Key contacts" sub="SENCO, teacher, case officer"
             onClick={() => nav.go('contacts')} />
           <MRow icon="calendar" title="Important dates" sub="Reviews and meetings, with a countdown"
-            onClick={() => nav.plus ? nav.go('dates') : nav.go('unlock')}
+            onClick={() => nav.plus ? nav.go('dates') : nav.go('unlock', { slide: 8 })}
             trailing={nav.plus ? null : <span data-crown-gate style={{ display: 'flex', flexShrink: 0 }}><Icon name="crown" size={20} color="var(--gold)" /></span>} />
           <MRow icon="star" title="Wins" sub="The good days, all in one place"
             onClick={() => nav.go('wins')} />
+          {/* Family Sync lives here because the circle is per CHILD, not per
+              app (founder, 15 Aug): Sam's circle can be Mum and Dad while
+              Maria's is just Mum. Plus feature; honest Coming-soon state. */}
+          <MRow icon="family" title="Family Sync" sub="The record on every grown-up's phone"
+            onClick={() => nav.plus ? nav.go('familysync') : nav.go('unlock', { slide: 2 })}
+            trailing={<span style={{ display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0 }}>
+              <span className="j-pillbadge" style={{ background: 'var(--tag-grey-bg)', color: 'var(--muted)', flexShrink: 0 }}>Coming soon</span>
+              {!nav.plus && <span data-crown-gate style={{ display: 'flex', flexShrink: 0 }}><Icon name="crown" size={20} color="var(--gold)" /></span>}
+            </span>} />
 
           <SectionLabel>Your record</SectionLabel>
           <MRow icon="cloudup" title="Backup and Restore" onClick={() => nav.go('backup')} />
@@ -2413,6 +2438,63 @@ function DatesScreen({ nav, profile }) {
   );
 }
 
+// ---- Family Sync: the circle page (Plus, honest Coming-soon state) ----
+// The design is the reference for the native build (founder, 15 Aug). The
+// architecture it describes is decided (App/Jotla-Family-Sync-Design.md,
+// 6 Jul): pair once by QR face to face, or a short-lived invite code with a
+// matching-number check for parents who never meet; entries travel as
+// end-to-end encrypted blobs through a relay that can never read them.
+// Founder decisions, 15 Aug: unpairing always tells the other grown-up, and
+// synced pages (contacts, dates, the hub) are visible to the whole circle,
+// because that is the point of a circle. Nothing here pretends to work:
+// every pairing control waits behind the Coming-soon state.
+function FamilySyncScreen({ nav, profile }) {
+  const row = (icon, title, sub) => (
+    <div className="j-card" data-sync-how style={{ padding: 16, marginBottom: 10, display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+      <span style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--tint-blue)', display: 'flex',
+        alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Icon name={icon} size={20} color="var(--blue)" />
+      </span>
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span className="j-strong" style={{ display: 'block', fontSize: 'calc(15.5px * var(--tscale, 1))' }}>{title}</span>
+        <span className="j-sm" style={{ display: 'block', marginTop: 3 }}>{sub}</span>
+      </span>
+    </div>
+  );
+  return (
+    <div className="j-screen">
+      <PushHeader title="Family Sync" onBack={() => nav.back()} />
+      <div className="j-scroll j-fade">
+        <div className="j-pad" style={{ paddingTop: 4, paddingBottom: 40 }}>
+          <div data-sync-soon className="j-card" style={{ padding: 16, marginBottom: 18, display: 'flex', gap: 12, alignItems: 'center',
+            background: 'linear-gradient(var(--plus-tint), var(--plus-tint)) var(--card)',
+            border: '1px solid color-mix(in srgb, var(--plus-ink) 30%, transparent)' }}>
+            <Icon name="family" size={22} color="var(--plus-ink)" style={{ flexShrink: 0 }} />
+            <p className="j-body" style={{ fontSize: 'calc(14.5px * var(--tscale, 1))', color: 'var(--ink)', margin: 0 }}>
+              <span className="j-strong">Coming to Jotla Plus.</span> Family Sync is not switched on yet. This page shows how it will work.
+            </p>
+          </div>
+
+          <SectionLabel>{profile.name}'s circle</SectionLabel>
+          <div className="j-card" style={{ padding: 16, marginBottom: 18, display: 'flex', gap: 12, alignItems: 'center' }}>
+            <ChildAvatar profile={profile} size={40} />
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <span className="j-strong" style={{ display: 'block', fontSize: 'calc(16px * var(--tscale, 1))' }}>Just this phone</span>
+              <span className="j-meta" style={{ display: 'block', marginTop: 2 }}>The grown-ups you pair will appear here, per child.</span>
+            </span>
+          </div>
+
+          <SectionLabel>How it will work</SectionLabel>
+          {row('person', 'Pair once, face to face', 'One phone shows a code, the other scans it. No account, no password. Grown-ups who cannot meet use a short-lived invite code instead, and both phones confirm the same number before anything pairs.')}
+          {row('lock', 'Sealed envelopes', 'Notes travel between your family’s phones in a sealed envelope. We carry the envelope. We cannot open it.')}
+          {row('note', 'Logged by', 'Every entry says which grown-up wrote it. Two of you logging the same days makes the record stronger, not messier.')}
+          <FootNote icon="lock">Unpairing always tells the other grown-up, and every phone keeps everything already on it. A lapsed subscription stops new syncing; it never reaches back into anyone's record.</FootNote>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ---- Wins: the good days in one stream (free) ----
 // The record leans hard because hard is what needs evidencing; this page is
 // the other half of the story, for the parent on a bad night.
@@ -2566,7 +2648,7 @@ function MoodStyleScreen({ nav }) {
             const on = active === k;
             return (
               <button key={k} className="j-card j-press" role="radio" aria-checked={on} aria-label={FACE_PACK_LABEL(k)}
-                onClick={() => { if (locked) { nav.go('unlock'); return; } nav.setFaceStyle(k); }}
+                onClick={() => { if (locked) { nav.go('unlock', { slide: 5 }); return; } nav.setFaceStyle(k); }}
                 style={{ width: '100%', textAlign: 'left', cursor: 'pointer', padding: '14px 16px', marginBottom: 10,
                   border: '1.5px solid ' + (on ? 'var(--blue)' : 'var(--line)') }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -2997,4 +3079,4 @@ function SupportScreen({ nav }) {
 
 Object.assign(window, { FindScreen, EvidenceScreen, AddDocScreen, DocScreen, UnlockScreen, SettingsScreen, InfoAboutScreen,
   AppSettingsScreen, ChildrenScreen, ChildProfileScreen, AppLockScreen, BackupScreen, HelpScreen, SupportScreen, MRow, RadioSheet,
-  AboutChildScreen, WhatHelpedScreen, ContactsScreen, DatesScreen, WinsScreen, helpedStrategies });
+  AboutChildScreen, WhatHelpedScreen, ContactsScreen, DatesScreen, WinsScreen, FamilySyncScreen, helpedStrategies });

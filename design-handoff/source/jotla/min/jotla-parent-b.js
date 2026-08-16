@@ -508,7 +508,9 @@ function FindScreen({
   // Not titled "Filters": it sits under a heading that already says
   // Filters, so the card names what it does (arena catch, 15 Aug)
   React.createElement(PlusLockedCard, {
-    onClick: () => nav.go('unlock'),
+    onClick: () => nav.go('unlock', {
+      slide: 6
+    }),
     icon: "filter",
     title: "Narrow it down",
     text: "Theme, mood, place and dates."
@@ -1347,7 +1349,9 @@ function EvidenceScreen({
   }), " Create PDF")
   /* crown gate (founder, 6 Aug): a Plus-tier control wears the solid gold crown and opens the Jotla Plus page */ : /*#__PURE__*/React.createElement("button", {
     className: "j-btn j-btn-primary j-btn-lg",
-    onClick: () => nav.go('unlock')
+    onClick: () => nav.go('unlock', {
+      slide: 1
+    })
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "crown",
     size: 20,
@@ -2004,7 +2008,9 @@ function AddDocScreen({
     icon: "attach",
     title: "Add the document itself",
     text: "Keep the letter with its details. Part of Plus.",
-    onClick: () => nav.go('unlock')
+    onClick: () => nav.go('unlock', {
+      slide: 3
+    })
   }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FieldLabel, null, "What is it?"), /*#__PURE__*/React.createElement("input", {
     className: "j-input",
     value: title,
@@ -2590,7 +2596,9 @@ function DocScreen({
     onAddMedia: items => nav.addDocMedia(d.id, items),
     onUnlock: () => {
       setEditing(false);
-      nav.go('unlock');
+      nav.go('unlock', {
+        slide: 3
+      });
     },
     onClose: () => setEditing(false)
   }));
@@ -2644,20 +2652,25 @@ const PREMIUM_GOLD_DEEP = '#C9912F';
 // with no monthly term, and the indicative AI ladder £89 / £149 with Plus included.
 const PLUS_SLIDES = [{
   t: 'Patterns and Month View',
-  c: 'A calendar of green and amber days. Tap any day to read what happened behind it.',
+  c: 'A calendar of green, amber and red days. Tap any day to read what happened behind it.',
   img: 'art/plus-1.jpg'
 }, {
   t: 'PDF Evidence Pack',
   c: 'Turn any stretch of the record into one dated PDF, ready to hand over.',
   img: 'art/plus-2.jpg'
-}, {
+},
+// soon: true renders the Coming-soon chip ON the slide. The arena's round-13
+// P0: a feature that is not switched on yet must say so at the point of sale,
+// not only on pages a free buyer never reaches (honest-marketing lock).
+{
   t: 'Family Sync',
   c: "The record on every grown-up's phone. One of you logs it, both of you have it.",
-  img: 'art/plus-3.jpg'
+  img: 'art/plus-3.webp',
+  soon: true
 }, {
   t: 'Photos and Videos on Notes',
   c: 'Add the photo or the video to the note, so the day is shown as well as told.',
-  img: 'art/plus-4.jpg'
+  img: 'art/plus-4.webp'
 }, {
   t: 'Dysregulation Mode',
   c: 'Five gentle questions in the hard moment, so nothing important is lost.',
@@ -2669,15 +2682,30 @@ const PLUS_SLIDES = [{
   t: 'Emojis',
   c: 'Swap the faces for the sticker look, everywhere a face shows.',
   img: 'art/plus-6.jpg'
+},
+// Slides 7-9 (founder, 15 Aug round 13): the features the 14-15 Aug rounds
+// added, so the carousel sells what Plus actually holds today.
+{
+  t: 'Filters that find it',
+  c: 'Theme, mood, place and dates. The note you need, in seconds.',
+  img: 'art/plus-7.webp'
+}, {
+  t: 'What helped',
+  c: 'Your own answers from the hard moments, gathered into one playbook.',
+  img: 'art/plus-8.webp'
+}, {
+  t: 'Important dates',
+  c: 'Your reviews and meetings counted down, with time to prepare.',
+  img: 'art/plus-9.webp'
 }];
 const AI_SLIDES = [{
   t: 'EHCP and SEND deadline tracker',
   c: 'Every deadline tracked, with what to do about a gap.',
-  img: 'art/ai-1.jpg'
+  img: 'art/ai-1.webp'
 }, {
   t: 'On-device AI help',
   c: 'Ask about the record or the process. Answers stay on the phone.',
-  img: 'art/ai-2.jpg'
+  img: 'art/ai-2.webp'
 }, {
   t: 'Current letter templates',
   c: 'The right letter for the moment, kept current with the law.',
@@ -2689,7 +2717,7 @@ const AI_SLIDES = [{
 }, {
   t: 'Voice capture',
   c: 'Say what happened and Jotla writes it down.',
-  img: 'art/ai-5.jpg'
+  img: 'art/ai-5.webp'
 }];
 function TermCard({
   label,
@@ -2748,10 +2776,14 @@ function TermCard({
 }
 function UnlockScreen({
   nav,
-  initialTier
+  initialTier,
+  initialSlide
 }) {
   const [tier, setTier] = useStateB(initialTier === 'ai' ? 'ai' : 'plus'); // plus | ai
-  const [slide, setSlide] = useStateB(0);
+  // A crowned row deep-links to the slide selling that feature (arena, 16 Aug:
+  // "Family Sync" landing on "Patterns and Month View" loses the context at
+  // the conversion moment). Clamped so a stale param can never strand the rail.
+  const [slide, setSlide] = useStateB(Number.isInteger(initialSlide) ? Math.max(0, Math.min((initialTier === 'ai' ? AI_SLIDES : PLUS_SLIDES).length - 1, initialSlide)) : 0);
   const slides = tier === 'ai' ? AI_SLIDES : PLUS_SLIDES;
   // The feature rail follows the finger (founder, 7 Aug: dots alone are not a
   // carousel). Pointer events cover touch and mouse in one path; touch-action
@@ -2990,7 +3022,17 @@ function UnlockScreen({
       color: 'var(--ink)',
       margin: '11px 0 0'
     }
-  }, x.t), /*#__PURE__*/React.createElement("p", {
+  }, x.t, x.soon && /*#__PURE__*/React.createElement("span", {
+    className: "j-pillbadge",
+    style: {
+      marginLeft: 7,
+      background: 'var(--tag-grey-bg)',
+      color: 'var(--muted)',
+      verticalAlign: 'middle',
+      position: 'relative',
+      top: -1.5
+    }
+  }, "Coming soon")), /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 'calc(13px * var(--tscale, 1))',
       color: 'var(--muted)',
@@ -3134,7 +3176,7 @@ function UnlockScreen({
     name: "sparkles",
     size: 20,
     color: "#E6B85C"
-  }), " Get Jotla AI"), /*#__PURE__*/React.createElement("p", {
+  }), " Jotla AI arrives in 2027"), /*#__PURE__*/React.createElement("p", {
     style: {
       display: 'flex',
       alignItems: 'center',
@@ -3474,7 +3516,7 @@ function InfoAboutScreen({
     pill: "Coming soon"
   }), /*#__PURE__*/React.createElement(PlanRow, {
     title: "Family Sync",
-    note: "Part of Jotla Plus: the record on every grown-up's phone.",
+    note: "Part of Jotla Plus: the record on every grown-up's phone. It moves notes between your family's phones in sealed envelopes we cannot open, so it is being built carefully and is not switched on yet.",
     pill: "Coming soon"
   }), /*#__PURE__*/React.createElement(InfoP, {
     last: true
@@ -3996,7 +4038,9 @@ function SettingsScreen({
     icon: "leaf",
     title: "What helped",
     sub: "Your own strategies, from your own record",
-    onClick: () => nav.plus ? nav.go('whathelped') : nav.go('unlock'),
+    onClick: () => nav.plus ? nav.go('whathelped') : nav.go('unlock', {
+      slide: 7
+    }),
     trailing: nav.plus ? null : /*#__PURE__*/React.createElement("span", {
       "data-crown-gate": true,
       style: {
@@ -4017,7 +4061,9 @@ function SettingsScreen({
     icon: "calendar",
     title: "Important dates",
     sub: "Reviews and meetings, with a countdown",
-    onClick: () => nav.plus ? nav.go('dates') : nav.go('unlock'),
+    onClick: () => nav.plus ? nav.go('dates') : nav.go('unlock', {
+      slide: 8
+    }),
     trailing: nav.plus ? null : /*#__PURE__*/React.createElement("span", {
       "data-crown-gate": true,
       style: {
@@ -4034,6 +4080,38 @@ function SettingsScreen({
     title: "Wins",
     sub: "The good days, all in one place",
     onClick: () => nav.go('wins')
+  }), /*#__PURE__*/React.createElement(MRow, {
+    icon: "family",
+    title: "Family Sync",
+    sub: "The record on every grown-up's phone",
+    onClick: () => nav.plus ? nav.go('familysync') : nav.go('unlock', {
+      slide: 2
+    }),
+    trailing: /*#__PURE__*/React.createElement("span", {
+      style: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 7,
+        flexShrink: 0
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "j-pillbadge",
+      style: {
+        background: 'var(--tag-grey-bg)',
+        color: 'var(--muted)',
+        flexShrink: 0
+      }
+    }, "Coming soon"), !nav.plus && /*#__PURE__*/React.createElement("span", {
+      "data-crown-gate": true,
+      style: {
+        display: 'flex',
+        flexShrink: 0
+      }
+    }, /*#__PURE__*/React.createElement(Icon, {
+      name: "crown",
+      size: 20,
+      color: "var(--gold)"
+    })))
   }), /*#__PURE__*/React.createElement(SectionLabel, null, "Your record"), /*#__PURE__*/React.createElement(MRow, {
     icon: "cloudup",
     title: "Backup and Restore",
@@ -4602,6 +4680,138 @@ function DatesScreen({
   }));
 }
 
+// ---- Family Sync: the circle page (Plus, honest Coming-soon state) ----
+// The design is the reference for the native build (founder, 15 Aug). The
+// architecture it describes is decided (App/Jotla-Family-Sync-Design.md,
+// 6 Jul): pair once by QR face to face, or a short-lived invite code with a
+// matching-number check for parents who never meet; entries travel as
+// end-to-end encrypted blobs through a relay that can never read them.
+// Founder decisions, 15 Aug: unpairing always tells the other grown-up, and
+// synced pages (contacts, dates, the hub) are visible to the whole circle,
+// because that is the point of a circle. Nothing here pretends to work:
+// every pairing control waits behind the Coming-soon state.
+function FamilySyncScreen({
+  nav,
+  profile
+}) {
+  const row = (icon, title, sub) => /*#__PURE__*/React.createElement("div", {
+    className: "j-card",
+    "data-sync-how": true,
+    style: {
+      padding: 16,
+      marginBottom: 10,
+      display: 'flex',
+      gap: 14,
+      alignItems: 'flex-start'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      background: 'var(--tint-blue)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: icon,
+    size: 20,
+    color: "var(--blue)"
+  })), /*#__PURE__*/React.createElement("span", {
+    style: {
+      flex: 1,
+      minWidth: 0
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "j-strong",
+    style: {
+      display: 'block',
+      fontSize: 'calc(15.5px * var(--tscale, 1))'
+    }
+  }, title), /*#__PURE__*/React.createElement("span", {
+    className: "j-sm",
+    style: {
+      display: 'block',
+      marginTop: 3
+    }
+  }, sub)));
+  return /*#__PURE__*/React.createElement("div", {
+    className: "j-screen"
+  }, /*#__PURE__*/React.createElement(PushHeader, {
+    title: "Family Sync",
+    onBack: () => nav.back()
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "j-scroll j-fade"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "j-pad",
+    style: {
+      paddingTop: 4,
+      paddingBottom: 40
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    "data-sync-soon": true,
+    className: "j-card",
+    style: {
+      padding: 16,
+      marginBottom: 18,
+      display: 'flex',
+      gap: 12,
+      alignItems: 'center',
+      background: 'linear-gradient(var(--plus-tint), var(--plus-tint)) var(--card)',
+      border: '1px solid color-mix(in srgb, var(--plus-ink) 30%, transparent)'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "family",
+    size: 22,
+    color: "var(--plus-ink)",
+    style: {
+      flexShrink: 0
+    }
+  }), /*#__PURE__*/React.createElement("p", {
+    className: "j-body",
+    style: {
+      fontSize: 'calc(14.5px * var(--tscale, 1))',
+      color: 'var(--ink)',
+      margin: 0
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "j-strong"
+  }, "Coming to Jotla Plus."), " Family Sync is not switched on yet. This page shows how it will work.")), /*#__PURE__*/React.createElement(SectionLabel, null, profile.name, "'s circle"), /*#__PURE__*/React.createElement("div", {
+    className: "j-card",
+    style: {
+      padding: 16,
+      marginBottom: 18,
+      display: 'flex',
+      gap: 12,
+      alignItems: 'center'
+    }
+  }, /*#__PURE__*/React.createElement(ChildAvatar, {
+    profile: profile,
+    size: 40
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      flex: 1,
+      minWidth: 0
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "j-strong",
+    style: {
+      display: 'block',
+      fontSize: 'calc(16px * var(--tscale, 1))'
+    }
+  }, "Just this phone"), /*#__PURE__*/React.createElement("span", {
+    className: "j-meta",
+    style: {
+      display: 'block',
+      marginTop: 2
+    }
+  }, "The grown-ups you pair will appear here, per child."))), /*#__PURE__*/React.createElement(SectionLabel, null, "How it will work"), row('person', 'Pair once, face to face', 'One phone shows a code, the other scans it. No account, no password. Grown-ups who cannot meet use a short-lived invite code instead, and both phones confirm the same number before anything pairs.'), row('lock', 'Sealed envelopes', 'Notes travel between your family’s phones in a sealed envelope. We carry the envelope. We cannot open it.'), row('note', 'Logged by', 'Every entry says which grown-up wrote it. Two of you logging the same days makes the record stronger, not messier.'), /*#__PURE__*/React.createElement(FootNote, {
+    icon: "lock"
+  }, "Unpairing always tells the other grown-up, and every phone keeps everything already on it. A lapsed subscription stops new syncing; it never reaches back into anyone's record."))));
+}
+
 // ---- Wins: the good days in one stream (free) ----
 // The record leans hard because hard is what needs evidencing; this page is
 // the other half of the story, for the parent on a bad night.
@@ -4908,7 +5118,9 @@ function MoodStyleScreen({
       "aria-label": FACE_PACK_LABEL(k),
       onClick: () => {
         if (locked) {
-          nav.go('unlock');
+          nav.go('unlock', {
+            slide: 5
+          });
           return;
         }
         nav.setFaceStyle(k);
@@ -5924,5 +6136,6 @@ Object.assign(window, {
   ContactsScreen,
   DatesScreen,
   WinsScreen,
+  FamilySyncScreen,
   helpedStrategies
 });

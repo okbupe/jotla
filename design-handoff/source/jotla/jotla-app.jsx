@@ -16,6 +16,19 @@ const ENTRIES_KEY = 'jotla_entries_v4'; // v4: the six-month generated sample re
 const DOCS_KEY = 'jotla_docs_v2';
 const PREF_KEY = 'jotla_prefs_v2';
 const SEED_ANCHOR_KEY = 'jotla_seed_anchor_v1';
+// THE DEVICE TAG (Family Sync groundwork, founder go 15 Aug): every phone
+// mints one short tag, once, and every new entry and document carries it,
+// suffixed into the id (globally unique across a future paired family, no
+// migration later) and stamped as `by` (the "Logged by" author when sync
+// arrives). Costs nothing today; saves a painful migration in the native app.
+const DEVICE = (() => {
+  try {
+    let d = localStorage.getItem('jotla_device_v1');
+    if (!d) { d = Math.random().toString(36).slice(2, 8); localStorage.setItem('jotla_device_v1', d); }
+    return d;
+  } catch (e) { return 'local'; }
+})();
+window.JOTLA_DEVICE = DEVICE;
 
 function loadJSON(key, fallback) {
   try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; }
@@ -718,8 +731,8 @@ function App({ appMode }) {
       }
       homeNow();
     },
-    addEntry: (entry) => setEntries(es => [{ ...entry, childId: profileId }, ...es]),
-    addDoc: (doc) => setDocs(ds => [{ ...doc, childId: profileId }, ...ds]),
+    addEntry: (entry) => setEntries(es => [{ ...entry, id: entry.id + '-' + DEVICE, by: DEVICE, childId: profileId }, ...es]),
+    addDoc: (doc) => setDocs(ds => [{ ...doc, id: doc.id + '-' + DEVICE, by: DEVICE, childId: profileId }, ...ds]),
     // The Bin (founder ask, 15 Jul 2026): deleting a log or document no longer
     // erases it. It carries a deletedAt stamp and moves to the Bin, where it can
     // be restored for 30 days, deleted for good, or cleared with Empty bin. Only
@@ -933,10 +946,15 @@ function App({ appMode }) {
     case 'childprofile': screen = <ChildProfileScreen nav={nav} profile={profile} entries={myEntries} docs={myDocs} />; break;
     // the child's hub pages off the Menu tab (round 10, 14 Aug)
     case 'aboutchild': screen = <AboutChildScreen nav={nav} profile={profile} entries={myEntries} />; break;
-    case 'whathelped': screen = <WhatHelpedScreen nav={nav} entries={myEntries} />; break;
+    // The three Plus-only hub routes re-check the gate at render time (arena,
+    // 16 Aug): the Menu rows already route free users to the paywall, but a
+    // saved back-stack entry survives Plus switching off and would otherwise
+    // walk straight past the crown.
+    case 'whathelped': screen = nav.plus ? <WhatHelpedScreen nav={nav} entries={myEntries} /> : <UnlockScreen nav={nav} />; break;
     case 'contacts': screen = <ContactsScreen nav={nav} profile={profile} />; break;
-    case 'dates': screen = <DatesScreen nav={nav} profile={profile} />; break;
+    case 'dates': screen = nav.plus ? <DatesScreen nav={nav} profile={profile} /> : <UnlockScreen nav={nav} />; break;
     case 'wins': screen = <WinsScreen nav={nav} entries={myEntries} />; break;
+    case 'familysync': screen = nav.plus ? <FamilySyncScreen nav={nav} profile={profile} /> : <UnlockScreen nav={nav} initialSlide={2} />; break;
     case 'applock': screen = <AppLockScreen nav={nav} />; break;
     case 'backup': screen = <BackupScreen nav={nav} profile={profile} entries={myEntries} docs={myDocs} />; break;
     case 'help': screen = <HelpScreen nav={nav} />; break;
@@ -955,7 +973,7 @@ function App({ appMode }) {
     case 'child': screen = <ChildScreen nav={nav} profile={profile} />; break;
     case 'addchild': screen = <AddChildScreen nav={nav} />; break;
     case 'tour': screen = <TourScreen nav={nav} profile={profile} />; break;
-    case 'unlock': screen = <UnlockScreen nav={nav} initialTier={view.tier} />; break;
+    case 'unlock': screen = <UnlockScreen nav={nav} initialTier={view.tier} initialSlide={view.slide} />; break;
     case 'day': screen = <DayScreen nav={nav} entries={myEntries} date={view.date} />; break;
     case 'entry': screen = <EntryScreen nav={nav} entries={myEntries} id={view.id} />; break;
     case 'doc': screen = <DocScreen nav={nav} docs={myDocs} id={view.id} />; break;

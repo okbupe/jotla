@@ -15,6 +15,24 @@ const ENTRIES_KEY = 'jotla_entries_v4'; // v4: the six-month generated sample re
 const DOCS_KEY = 'jotla_docs_v2';
 const PREF_KEY = 'jotla_prefs_v2';
 const SEED_ANCHOR_KEY = 'jotla_seed_anchor_v1';
+// THE DEVICE TAG (Family Sync groundwork, founder go 15 Aug): every phone
+// mints one short tag, once, and every new entry and document carries it,
+// suffixed into the id (globally unique across a future paired family, no
+// migration later) and stamped as `by` (the "Logged by" author when sync
+// arrives). Costs nothing today; saves a painful migration in the native app.
+const DEVICE = (() => {
+  try {
+    let d = localStorage.getItem('jotla_device_v1');
+    if (!d) {
+      d = Math.random().toString(36).slice(2, 8);
+      localStorage.setItem('jotla_device_v1', d);
+    }
+    return d;
+  } catch (e) {
+    return 'local';
+  }
+})();
+window.JOTLA_DEVICE = DEVICE;
 function loadJSON(key, fallback) {
   try {
     const v = localStorage.getItem(key);
@@ -1612,10 +1630,14 @@ function App({
     },
     addEntry: entry => setEntries(es => [{
       ...entry,
+      id: entry.id + '-' + DEVICE,
+      by: DEVICE,
       childId: profileId
     }, ...es]),
     addDoc: doc => setDocs(ds => [{
       ...doc,
+      id: doc.id + '-' + DEVICE,
+      by: DEVICE,
       childId: profileId
     }, ...ds]),
     // The Bin (founder ask, 15 Jul 2026): deleting a log or document no longer
@@ -2066,10 +2088,16 @@ function App({
         entries: myEntries
       });
       break;
+    // The three Plus-only hub routes re-check the gate at render time (arena,
+    // 16 Aug): the Menu rows already route free users to the paywall, but a
+    // saved back-stack entry survives Plus switching off and would otherwise
+    // walk straight past the crown.
     case 'whathelped':
-      screen = /*#__PURE__*/React.createElement(WhatHelpedScreen, {
+      screen = nav.plus ? /*#__PURE__*/React.createElement(WhatHelpedScreen, {
         nav: nav,
         entries: myEntries
+      }) : /*#__PURE__*/React.createElement(UnlockScreen, {
+        nav: nav
       });
       break;
     case 'contacts':
@@ -2079,15 +2107,26 @@ function App({
       });
       break;
     case 'dates':
-      screen = /*#__PURE__*/React.createElement(DatesScreen, {
+      screen = nav.plus ? /*#__PURE__*/React.createElement(DatesScreen, {
         nav: nav,
         profile: profile
+      }) : /*#__PURE__*/React.createElement(UnlockScreen, {
+        nav: nav
       });
       break;
     case 'wins':
       screen = /*#__PURE__*/React.createElement(WinsScreen, {
         nav: nav,
         entries: myEntries
+      });
+      break;
+    case 'familysync':
+      screen = nav.plus ? /*#__PURE__*/React.createElement(FamilySyncScreen, {
+        nav: nav,
+        profile: profile
+      }) : /*#__PURE__*/React.createElement(UnlockScreen, {
+        nav: nav,
+        initialSlide: 2
       });
       break;
     case 'applock':
@@ -2170,7 +2209,8 @@ function App({
     case 'unlock':
       screen = /*#__PURE__*/React.createElement(UnlockScreen, {
         nav: nav,
-        initialTier: view.tier
+        initialTier: view.tier,
+        initialSlide: view.slide
       });
       break;
     case 'day':

@@ -947,7 +947,7 @@ function ok(name, cond) {
   await page5.locator('button[aria-label="Slide 4"]').first().click();
   await page5.waitForTimeout(350);
   ok('the paywall carousel lists Photos and Videos on Notes', (await page5.locator('#root').innerText()).includes('Photos and Videos on Notes'));
-  ok('the Plus carousel carries six slides (Emojis joined 8 Aug)', (await page5.locator('button[aria-label^="Slide "]').count()) === 6);
+  ok('the Plus carousel carries nine slides (Filters, What helped, Dates joined 16 Aug)', (await page5.locator('button[aria-label^="Slide "]').count()) === 9);
   // Finger swipe (7 Aug): a dispatched touch drag must advance the rail. This
   // exact dispatch FAILED against the state-closure handlers and passes against
   // the ref-based ones, so the probe is empirically proven able to fail. The
@@ -3199,8 +3199,16 @@ function ok(name, cond) {
     const crowned = rows.filter(r => r.querySelector('[data-crown-gate]')).map(r => r.innerText.split('\n')[0]);
     return crowned;
   });
-  ok('free wears crowns on exactly What helped and Important dates (' + crowns20.join(', ') + ')',
-    crowns20.length === 2 && crowns20.includes('What helped') && crowns20.includes('Important dates'));
+  ok('free wears crowns on exactly What helped, Important dates and Family Sync (' + crowns20.join(', ') + ')',
+    crowns20.length === 3 && crowns20.includes('What helped') && crowns20.includes('Important dates') && crowns20.includes('Family Sync'));
+  // the free Family Sync row also says Coming soon BESIDE the crown (arena
+  // P0, 16 Aug): the crown alone read as "pay and it unlocks", which is not
+  // true yet, and the free user could not learn that anywhere before paying
+  const fsRow20 = await page20f.evaluate(() => {
+    const row = [...document.querySelectorAll('.j-card.j-press')].find(r => r.innerText.includes('Family Sync'));
+    return row ? row.innerText : '';
+  });
+  ok('the free Family Sync row wears the Coming-soon pill beside the crown', fsRow20.includes('Coming soon'));
   await page20f.getByText('What helped', { exact: true }).first().click();
   await page20f.waitForTimeout(600);
   ok('a crowned row on free opens the Jotla Plus page', (await page20f.locator('#root').innerText()).includes('Jotla Plus'));
@@ -3267,6 +3275,29 @@ function ok(name, cond) {
     return Math.round(pg.scrollLeft / Math.max(1, pg.clientWidth));
   });
   ok('tapping the pill pages back to Documents', back21 === 0);
+  // ROUND 13: Family Sync in the Menu (Plus wears the honest Coming-soon
+  // state and the page tells the sealed-envelope truth), and the device tag
+  // is minted once for the sync-ready schema
+  await page21.getByText('Menu', { exact: true }).last().click();
+  await page21.waitForTimeout(500);
+  const syncRow21 = await page21.evaluate(() => {
+    const t = document.querySelector('#root').innerText;
+    return { row: t.includes('Family Sync'), soon: t.includes('Coming soon') };
+  });
+  ok('Menu carries Family Sync with its Coming-soon state', syncRow21.row === true && syncRow21.soon === true);
+  await page21.getByText('Family Sync', { exact: true }).first().click();
+  await page21.waitForTimeout(500);
+  const syncPage21 = await page21.evaluate(() => {
+    const t = document.querySelector('#root').innerText;
+    return { envelope: t.includes('We carry the envelope. We cannot open it.'),
+      unpair: t.includes('Unpairing always tells the other grown-up'),
+      circle: t.includes('Just this phone'),
+      device: typeof window.JOTLA_DEVICE === 'string' && window.JOTLA_DEVICE.length >= 4
+        && window.JOTLA_DEVICE === localStorage.getItem('jotla_device_v1') };
+  });
+  ok('the sync page tells the sealed-envelope and unpair truths over a per-child circle',
+    syncPage21.envelope === true && syncPage21.unpair === true && syncPage21.circle === true);
+  ok('the device tag is minted once and persisted', syncPage21.device === true);
   await ctx21.close();
   // free tier: the locked tiles speak Plus, and the old lines are gone
   const ctx21f = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
@@ -3308,6 +3339,55 @@ function ok(name, cond) {
   await page21f.locator('[data-patterns-locked]').click();
   await page21f.waitForTimeout(600);
   ok('...and it still opens the Jotla Plus page', (await page21f.locator('#root').innerText()).includes('Jotla Plus'));
+  // free: the Family Sync row wears the crown and routes to the paywall,
+  // and the paywall's Plus deck now sells nine slides ending on the three
+  // new features (art must actually load: naturalWidth proves the webp came)
+  await page21f.locator('button[aria-label="Close"]').first().click();
+  await page21f.waitForTimeout(400);
+  await page21f.getByText('Menu', { exact: true }).last().click();
+  await page21f.waitForTimeout(500);
+  await page21f.getByText('Family Sync', { exact: true }).first().click();
+  await page21f.waitForTimeout(600);
+  const syncGate21 = await page21f.locator('#root').innerText();
+  ok('a free Family Sync tap lands on the Jotla Plus page, never the sync page',
+    syncGate21.includes('Jotla Plus') && !syncGate21.includes('sealed envelope'));
+  // ...and deep-links to the Family Sync slide, which wears the Coming-soon
+  // chip AT the point of sale (arena P0, 16 Aug: the paywall sold a feature
+  // that is not switched on with no marker on the buyer's path)
+  const deepLink21 = await page21f.evaluate(() => {
+    const track = [...document.querySelectorAll('div')].find(d => d.style && d.style.transform && d.style.transform.includes('translateX'));
+    const pos = track ? track.style.transform : '';
+    const slide = [...track.children].map(c => c.innerText)[2] || '';
+    return { pos, syncSlide: slide.includes('Family Sync'), chip: slide.includes('Coming soon') };
+  });
+  ok('the free tap lands ON the Family Sync slide and it wears the Coming-soon chip (' + deepLink21.pos + ')',
+    deepLink21.pos.includes('-200%') && deepLink21.syncSlide && deepLink21.chip);
+  // every slide image on BOTH decks must resolve and load, straight from the
+  // rendered slide list (a src typo or a missing file fails here; the arena
+  // caught the old probe checking a hand-kept name list instead)
+  const deck21 = await page21f.evaluate(async () => {
+    const srcs = [...document.querySelectorAll('img')].map(i => i.getAttribute('src')).filter(s => s && s.startsWith('art/'));
+    const widths = await Promise.all(srcs.map(s =>
+      new Promise(res => { const i = new Image();
+        i.onload = () => res(i.naturalWidth); i.onerror = () => res(0);
+        i.src = s; })));
+    return { n: srcs.length, widths };
+  });
+  ok('all nine rendered Plus slide images load at 720 (' + deck21.n + ': ' + deck21.widths.join(',') + ')',
+    deck21.n === 9 && deck21.widths.every(w => w === 720));
+  const deckAi21 = await page21f.evaluate(async () => {
+    const seg = [...document.querySelectorAll('button')].find(b => b.innerText === 'Jotla AI');
+    seg.click();
+    await new Promise(r => setTimeout(r, 400));
+    const srcs = [...document.querySelectorAll('img')].map(i => i.getAttribute('src')).filter(s => s && s.startsWith('art/'));
+    const widths = await Promise.all(srcs.map(s =>
+      new Promise(res => { const i = new Image();
+        i.onload = () => res(i.naturalWidth); i.onerror = () => res(0);
+        i.src = s; })));
+    return { n: srcs.length, widths, sells: document.querySelector('#root').innerText.includes('Jotla AI arrives in 2027') };
+  });
+  ok('all five rendered AI slide images load at 720 and the big control states the arrival, never "Get" (' + deckAi21.n + ')',
+    deckAi21.n === 5 && deckAi21.widths.every(w => w === 720) && deckAi21.sells);
   await ctx21f.close();
 
   await browser.close();

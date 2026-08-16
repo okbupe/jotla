@@ -316,7 +316,9 @@ function QuickLogScreen({ nav, today, view, profile }) {
     // share a logId and a clock, so the record reads back as the single log the
     // parent wrote. Each moment still lands as its own dated entry underneath,
     // which is what keeps Find, the month graph and the PDF pack working.
-    const logId = 'L' + Date.now();
+    // Device-suffixed like entry ids (16 Aug): logId is the grouping key, so a
+    // same-millisecond save on two paired phones must never fuse two logs.
+    const logId = 'L' + Date.now() + '-' + (window.JOTLA_DEVICE || 'local');
     const clock = nowClock();
     // addEntry prepends, so add in reverse to keep the order they were written
     [...moments].reverse().forEach(m => {
@@ -467,7 +469,7 @@ function QuickLogScreen({ nav, today, view, profile }) {
               ) : (
                 <PlusLockedCard icon="camera" title="Add photos and videos"
                   text="Keep a photo or video with the note. Sometimes the picture is the evidence. Part of Plus."
-                  onClick={() => nav.go('unlock')} />
+                  onClick={() => nav.go('unlock', { slide: 3 })} />
               )}
               <div><FieldLabel>How did it feel?</FieldLabel><MoodFacePicker value={eMood} onChange={setEMood} /></div>
               <div style={{ display: 'flex', gap: 10 }}>
@@ -741,7 +743,7 @@ function HandoverScreen({ nav, today, profile }) {
           ) : (
             <PlusLockedCard icon="camera" title="Add photos and videos"
               text="Keep a photo or video with the note. Sometimes the picture is the evidence. Part of Plus."
-              onClick={() => nav.go('unlock')} />
+              onClick={() => nav.go('unlock', { slide: 3 })} />
           )}
         </div>
       </div>
