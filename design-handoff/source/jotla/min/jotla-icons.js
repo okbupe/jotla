@@ -205,11 +205,17 @@ function Icon({
     }),
     /* the two solid icons: the crown (Plus gate, the only gold) and the
        sparkles (the Jotla AI mark, founder 7 Aug); everything else is stroke */
-    crown: /*#__PURE__*/React.createElement("path", {
-      d: "M3.6 18 2.6 8.6l4.9 3.3L12 5.6l4.5 6.3 4.9-3.3-1 9.4a1.4 1.4 0 0 1-1.4 1.2H5a1.4 1.4 0 0 1-1.4-1.2z",
+    /* Material Symbols rounded crown, filled (founder's pick, 16 Aug: "7,
+       Material rounded fill"): ball-tipped peaks + the detached base bar.
+       The 960-grid path rides a transform onto our 24 grid untouched, so it
+       stays the library's drawing rather than a redraw. */
+    crown: /*#__PURE__*/React.createElement("g", {
+      transform: "translate(0 24) scale(0.025)"
+    }, /*#__PURE__*/React.createElement("path", {
+      d: "M240-160q-17 0-28.5-11.5T200-200q0-17 11.5-28.5T240-240h480q17 0 28.5 11.5T760-200q0 17-11.5 28.5T720-160H240Zm28-140q-29 0-51.5-19T189-367l-40-254q-2 0-4.5.5t-4.5.5q-25 0-42.5-17.5T80-680q0-25 17.5-42.5T140-740q25 0 42.5 17.5T200-680q0 7-1.5 13t-3.5 11l125 56 125-171q-11-8-18-21t-7-28q0-25 17.5-42.5T480-880q25 0 42.5 17.5T540-820q0 15-7 28t-18 21l125 171 125-56q-2-5-3.5-11t-1.5-13q0-25 17.5-42.5T820-740q25 0 42.5 17.5T880-680q0 25-17.5 42.5T820-620q-2 0-4.5-.5t-4.5-.5l-40 254q-5 29-27.5 48T692-300H268Z",
       fill: color,
       stroke: "none"
-    }),
+    })),
     sparkles: /*#__PURE__*/React.createElement("path", {
       d: "M10.5 6.5c.9 4.6 2.5 6.2 7 7-4.5.8-6.1 2.4-7 7-.9-4.6-2.5-6.2-7-7 4.5-.8 6.1-2.4 7-7ZM18 3.5c.45 2.3 1.25 3.1 3.5 3.5-2.25.4-3.05 1.2-3.5 3.5-.45-2.3-1.25-3.1-3.5-3.5 2.25-.4 3.05-1.2 3.5-3.5Z",
       fill: color,
