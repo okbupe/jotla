@@ -73,6 +73,27 @@ const HAND_ENTRIES = [
     summary: 'Bright start. Walked in holding his key worker’s hand.' },
   { id: 'e19', childId: 'sam', date: '2026-06-12', time: 'Afternoon', clock: '15:22', setting: 'School', category: 'Transitions', mood: 'ok',   kind: 'contemporaneous', type: 'quick',
     summary: 'The 2-minute warning helped today. Lined up with a reminder.' },
+  // ---- Monday 15 June: one full day, every area logged, with the staff named (a Jotla Plus day: photos and a video on the notes) ----
+  { id: 'e20', childId: 'sam', date: '2026-06-15', time: 'Morning',   clock: '08:37', setting: 'School', category: 'Mornings',        mood: 'good', kind: 'contemporaneous', type: 'quick',
+    summary: 'Mrs Fenwick met him at the gate and he walked in first time, no wobble.' },
+  { id: 'e21', childId: 'sam', date: '2026-06-15', time: 'Morning',   clock: '08:55', setting: 'School', category: 'Eating',          mood: 'good', kind: 'contemporaneous', type: 'quick',
+    summary: 'Mr Adeyemi sat with him at breakfast club and he ate the lot.', photo: 'Photo from breakfast club' },
+  { id: 'e22', childId: 'sam', date: '2026-06-15', time: 'Morning',   clock: '10:45', setting: 'School', category: 'Play',            mood: 'good', kind: 'contemporaneous', type: 'quick',
+    summary: 'Built a marble run with two friends. Miss Kaur said he shared the pieces without being asked.' },
+  { id: 'e23', childId: 'sam', date: '2026-06-15', time: 'Afternoon', clock: '12:58', setting: 'School', category: 'Lunch hall',      mood: 'ok',   kind: 'contemporaneous', type: 'quick',
+    summary: 'Mrs Bell let him into the hall five minutes early. Quiet end table, ate most of his lunch.' },
+  { id: 'e24', childId: 'sam', date: '2026-06-15', time: 'Afternoon', clock: '13:12', setting: 'School', category: 'Transitions',     mood: 'good', kind: 'contemporaneous', type: 'quick',
+    summary: 'Lined up after lunch with one reminder. Mr Osei gave the 2-minute warning and it worked.' },
+  { id: 'e25', childId: 'sam', date: '2026-06-15', time: 'Afternoon', clock: '14:10', setting: 'School', category: 'Incidents',       mood: 'ok',   kind: 'contemporaneous', type: 'quick',
+    summary: 'A shove in the cloakroom queue. Mr Osei sorted it quickly and both boys were fine after.' },
+  { id: 'e26', childId: 'sam', date: '2026-06-15', time: 'Afternoon', clock: '15:05', setting: 'School', category: 'New words',       mood: 'good', kind: 'contemporaneous', type: 'quick',
+    summary: 'Used the word "frustrated" to tell Mr Danladi how he felt instead of shouting. Huge.' },
+  { id: 'e27', childId: 'sam', date: '2026-06-15', time: 'Afternoon', clock: '15:21', setting: 'School', category: 'School feedback', mood: 'good', kind: 'contemporaneous', type: 'quick',
+    summary: 'Miss Hartley said phonics was his best session this term and asked us to practise the same sounds at home.', photo: 'Note from Miss Hartley' },
+  { id: 'e28', childId: 'sam', date: '2026-06-15', time: 'Afternoon', clock: '15:29', setting: 'School', category: 'Wins',            mood: 'good', kind: 'contemporaneous', type: 'quick',
+    summary: 'First full day with no wobbles at line-up. Mrs Fenwick gave him a sticker in front of the class.', photo: 'Photo of the sticker chart' },
+  { id: 'e29', childId: 'sam', date: '2026-06-15', time: 'Evening',   clock: '16:50', setting: 'Club',   category: 'Other',           mood: 'good', kind: 'recalled',        type: 'quick',
+    summary: 'Multi-sports club. Coach Priya said he joined every game and helped pack away.', photo: 'Video noted (kept in your photo library)' },
   { id: 'm01', childId: 'maria', date: '2026-06-09', time: 'Morning',   clock: '08:50', setting: 'School', category: 'Mornings',    mood: 'good', kind: 'contemporaneous', type: 'quick',
     summary: 'Good start. Talked happily about the science trip.' },
   { id: 'm02', childId: 'maria', date: '2026-06-10', time: 'Afternoon', clock: '14:40', setting: 'School', category: 'Transitions', mood: 'ok',   kind: 'contemporaneous', type: 'quick',
@@ -283,7 +304,7 @@ const _isoOf = (d) => `${d.getFullYear()}-${_pad2(d.getMonth() + 1)}-${_pad2(d.g
 const TODAY_ISO = _isoOf(_NOW);
 // The sample record is anchored near today (shifted by whole weeks so weekdays stay put),
 // so the seed data always looks recent whenever the prototype is opened.
-const SEED_ANCHOR_ISO = '2026-06-12'; // the last seeded day in the original data
+const SEED_ANCHOR_ISO = '2026-06-15'; // the last seeded day in the original data (the full every-area Monday)
 
 const SETTINGS = ['School', 'Nursery', 'Home', 'Club'];
 
