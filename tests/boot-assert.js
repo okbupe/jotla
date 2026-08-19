@@ -405,7 +405,7 @@ function ok(name, cond) {
   // ...and the who actually reaches the record, not just the screen: an empty
   // handover.who is exactly how this regresses without anyone noticing
   const savedWho = await page.evaluate(() => {
-    const list = JSON.parse(localStorage.getItem('jotla_entries_v4') || '[]');
+    const list = JSON.parse(localStorage.getItem('jotla_entries_v5') || '[]');
     const inc = list.find(e => e.type === 'handover' && /corridor/.test(e.summary || ''));
     return inc && inc.handover ? inc.handover.who : null;
   });
@@ -422,7 +422,7 @@ function ok(name, cond) {
   console.log('Suite 6: app boundary');
   const ctx2 = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const page2 = await ctx2.newPage();
-  await page2.addInitScript(() => { try { localStorage.setItem('jotla_entries_v4', '{"poisoned":true}'); } catch (e) {} });
+  await page2.addInitScript(() => { try { localStorage.setItem('jotla_entries_v5', '{"poisoned":true}'); } catch (e) {} });
   await page2.goto(URL_APP, { waitUntil: 'networkidle' });
   await page2.waitForTimeout(1200);
   const t2 = await page2.locator('#root').innerText();
@@ -2482,7 +2482,7 @@ function ok(name, cond) {
       if (withDysreg) list.push({ id: 'g2', childId: 'sam', date: `${pre}-03`, time: 'Afternoon', clock: '15:10',
         setting: 'School', category: 'Incidents', mood: 'ok', kind: 'contemporaneous', type: 'quick',
         summary: 'Left the room at the bell, came back by himself.' });
-      localStorage.setItem('jotla_entries_v4', JSON.stringify(list));
+      localStorage.setItem('jotla_entries_v5', JSON.stringify(list));
     } catch (e) {}
   };
   await page13.addInitScript(seedGood, { pre: _pre13, withDysreg: true });
@@ -2715,7 +2715,7 @@ function ok(name, cond) {
   await page16.goto(URL_APP, { waitUntil: 'networkidle' });
   await page16.waitForTimeout(1000);
   await page16.evaluate(() => {
-    const key = 'jotla_entries_v4';
+    const key = 'jotla_entries_v5';
     const list = JSON.parse(localStorage.getItem(key) || 'null') || [];
     const childId = (list[0] && list[0].childId) || (window.JOTLA.CHILD && window.JOTLA.CHILD.id);
     list.unshift({ id: 'cmtest1', childId, date: window.JOTLA.TODAY_ISO, time: 'Morning', clock: '09:12',
@@ -2774,7 +2774,7 @@ function ok(name, cond) {
   await page17.goto(URL_APP, { waitUntil: 'networkidle' });
   await page17.waitForTimeout(1000);
   await page17.evaluate((px) => {
-    const key = 'jotla_entries_v4';
+    const key = 'jotla_entries_v5';
     const list = JSON.parse(localStorage.getItem(key) || 'null') || [];
     const childId = (list[0] && list[0].childId) || (window.JOTLA.CHILD && window.JOTLA.CHILD.id);
     list.unshift({ id: 'edittest1', childId, date: window.JOTLA.TODAY_ISO, time: 'Morning', clock: '08:03',
@@ -2785,7 +2785,7 @@ function ok(name, cond) {
   await page17.reload({ waitUntil: 'networkidle' });
   await page17.waitForTimeout(1000);
   const readProbe = () => page17.evaluate(() => {
-    const e = (JSON.parse(localStorage.getItem('jotla_entries_v4')) || []).find(x => x.id === 'edittest1');
+    const e = (JSON.parse(localStorage.getItem('jotla_entries_v5')) || []).find(x => x.id === 'edittest1');
     return e && { editedOn: e.editedOn || null, photo: e.photo, hasData: !!e.photoData, histLen: (e.history || []).length,
       summary: e.summary, catOther: e.categoryOther, lastHist: (e.history || [])[((e.history || []).length - 1)] || null };
   });
@@ -3109,7 +3109,7 @@ function ok(name, cond) {
   await page20.getByText('What helped', { exact: true }).first().click();
   await page20.waitForTimeout(500);
   const helped20 = await page20.evaluate(() => {
-    const entries = JSON.parse(localStorage.getItem('jotla_entries_v4')) || [];
+    const entries = JSON.parse(localStorage.getItem('jotla_entries_v5')) || [];
     const prefs = JSON.parse(localStorage.getItem('jotla_prefs_v2')) || {};
     const mine = entries.filter(e => e.childId === (prefs.profileId || 'sam') && !e.deletedAt);
     const uniq = {};
@@ -3189,7 +3189,7 @@ function ok(name, cond) {
   await page20.getByText('Wins', { exact: true }).first().click();
   await page20.waitForTimeout(500);
   const wins20 = await page20.evaluate(() => {
-    const entries = JSON.parse(localStorage.getItem('jotla_entries_v4')) || [];
+    const entries = JSON.parse(localStorage.getItem('jotla_entries_v5')) || [];
     const prefs = JSON.parse(localStorage.getItem('jotla_prefs_v2')) || {};
     const mine = entries.filter(e => e.childId === (prefs.profileId || 'sam') && !e.deletedAt);
     const expected = mine.filter(e => e.mood === 'good' || ['Wins', 'New words'].includes(e.category)).length;

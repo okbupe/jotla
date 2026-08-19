@@ -11,7 +11,7 @@ const {
 const TAB_DEFS = [['today', 'Today', 'today'], ['month', 'Month', 'calendar'], ['evidence', 'Documents', 'doc'], ['find', 'Find', 'search'], ['settings', 'Menu', 'menu']];
 const TAB_NAMES = ['today', 'month', 'evidence', 'find', 'settings'];
 const NAV_KEY = 'jotla_nav_v3'; // v3: history remembers the tab as well as the view
-const ENTRIES_KEY = 'jotla_entries_v4'; // v4: the six-month generated sample record
+const ENTRIES_KEY = 'jotla_entries_v5'; // v5: the full every-area Monday joins the sample record (v4: the six-month generated history)
 const DOCS_KEY = 'jotla_docs_v2';
 const PREF_KEY = 'jotla_prefs_v2';
 const SEED_ANCHOR_KEY = 'jotla_seed_anchor_v1';
