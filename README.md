@@ -4,7 +4,9 @@ A calm, parent-owned day-record app for families of children with SEND. You log 
 
 **Everything stays on the device. No account, no cloud, no ads.**
 
-> This repository holds the **design prototype** and its full handoff spec. It is a reference build, not the finished app. It runs in the browser and stores everything locally on your own phone or computer; nothing you type is sent anywhere.
+> This repository serves the browser build of Jotla. Since 2 September 2026 it is no longer a separate hand-built prototype: it is the REAL app, the same source that ships to Android, compiled for the web, so the two cannot drift apart. It stores everything locally on your own phone or computer using SQLite in your browser; nothing you type is sent anywhere, and the page makes no third-party requests at all.
+>
+> Two honest limits of a browser: pairing needs a camera so Family Sync belongs to the phone app, and browser storage can be cleared by the browser itself, so the phone holds the record that matters. The earlier hand-built prototype is kept at `design-handoff/source/jotla/` for reference.
 
 ## For testers (you have been asked to try it)
 
@@ -12,8 +14,8 @@ Thank you for taking a look. A few things to know:
 
 - It opens like a normal web page. On a phone it behaves like an app.
 - **Your notes stay on your device only.** Nothing is uploaded, nothing is shared, and you will not break anything. Tap around freely.
-- It comes pre-filled with a sample child ("Sam") so the screens are not empty. You can also add your own child to see the blank, first-time experience.
-- Nothing costs anything here: "buying" Jotla Plus in this prototype is a free switch (no real payment), so you can try everything, including photos and videos on notes.
+- It starts empty and asks you to add a child, exactly as the phone app does on a fresh install. There is no sample child any more: this build IS the app, so what you see is what a parent sees on day one.
+- Nothing costs anything here, and nothing can be bought here either: this build carries the same paywall the phone app does, so the Plus screens show what Plus is rather than turning it on. The free tier is fully usable.
 
 ### How to open it
 
