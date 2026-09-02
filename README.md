@@ -15,7 +15,7 @@ Thank you for taking a look. A few things to know:
 - It opens like a normal web page. On a phone it behaves like an app.
 - **Your notes stay on your device only.** Nothing is uploaded, nothing is shared, and you will not break anything. Tap around freely.
 - It starts empty and asks you to add a child, exactly as the phone app does on a fresh install. There is no sample child any more: this build IS the app, so what you see is what a parent sees on day one.
-- Nothing costs anything here, and nothing can be bought here either: this build carries the same paywall the phone app does, so the Plus screens show what Plus is rather than turning it on. The free tier is fully usable.
+- Nothing costs anything here, and nothing can be bought here either. The bar at the top switches you between Free and Plus so you can try both, exactly as the old prototype did. That switch exists ONLY in this browser build; the phone app cannot hand out Plus.
 
 ### How to open it
 
