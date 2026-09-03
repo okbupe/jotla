@@ -5,11 +5,23 @@ desktop.ini
 *.tmp
 ~$*
 
-# Local dependency / build output (for the future production app)
-node_modules/
-dist/
-build/
-.expo/
+# Local dependency / build output (for the future production app).
+#
+# EVERY PATTERN HERE IS ANCHORED WITH A LEADING SLASH, and that is not style.
+# `node_modules/` on its own matches a directory at ANY depth, and Metro's web
+# export writes a package's own assets under their real path. So the four Outfit
+# font files landed in `assets/node_modules/@expo-google-fonts/outfit/...` and
+# git refused all four on every publish, without a word. The live site served
+# four 404s and rendered the whole app in the phone's system font for weeks.
+# Bupe reported it twice as "the fonts are not correct" before it was found.
+#
+# An anchored pattern only ever means the real dependency directory at the repo
+# root, which is the only thing that was ever meant. tools/check-deploy.mjs is
+# the second line: it fails a publish that references a file git will not carry.
+/node_modules/
+/dist/
+/build/
+/.expo/
 
 # Python bytecode from the tools/ scripts (reground.py and friends)
 __pycache__/
