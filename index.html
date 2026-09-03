@@ -3,8 +3,38 @@
   <head>
     <meta charset="utf-8" />
     <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover" />
     <title>Jotla</title>
+
+    <!--
+      MAKING THE BROWSER BUILD INSTALLABLE (Bupe, 2 September 2026: "I can't
+      install this live page to my phone like I did before so it's an app on my
+      phone. plus the Jotla icon (of the book) of the app is not there.")
+
+      Expo's web export injects exactly one head tag, a link to a favicon it
+      generates at 48px maximum. That can never be an app icon, and there was no
+      manifest at all, so Android had nothing to install and nothing to draw.
+      The `expo.web` PWA fields in app.json are dead under Metro, so this
+      template is where it has to live.
+
+      EVERY href HERE IS RELATIVE, and that is load-bearing. GitHub Pages serves
+      this app from the subpath /jotla/, so a root-absolute "/manifest.webmanifest"
+      would 404 and the install would fail silently, with no error a parent or a
+      developer would ever see.
+    -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" type="image/png" sizes="192x192" href="jotla-icon-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="jotla-icon-512.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="jotla-icon-180.png" />
+    <meta name="theme-color" content="#F7F5F2" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Jotla" />
+    <meta
+      name="description"
+      content="A calm, parent-owned day record for families of children with SEND. Everything stays on your device."
+    />
+
     <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
     <style id="expo-reset">
       /* These styles make the body full-height */
@@ -26,12 +56,23 @@
   <link rel="icon" href="/jotla/favicon.ico" /></head>
 
   <body>
-    <!-- Use static rendering with Expo Router to support running without JavaScript. -->
-    <noscript>
-      You need to enable JavaScript to run this app.
-    </noscript>
-    <!-- The root element for your Expo app. -->
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <!-- The root element for your Expo app. Expo's own bootstrap requires this
+         id, so it must not be renamed. -->
     <div id="root"></div>
-  <script src="/jotla/_expo/static/js/web/index-af213a8674fcf38bc0cdd1731401d525.js" defer></script>
+
+    <script>
+      /* Registered late and guarded, because a failed registration must never
+         be the reason the app does not open. The worker itself caches nothing;
+         src/../public/sw.js explains why at length. */
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('sw.js').catch(function () {
+            /* No install prompt this time. The app is unaffected. */
+          });
+        });
+      }
+    </script>
+  <script src="/jotla/_expo/static/js/web/index-707ea918624acf1fa45a9eb6afd5fa0d.js" defer></script>
 </body>
 </html>

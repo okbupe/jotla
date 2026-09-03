@@ -6,13 +6,13 @@ A calm, parent-owned day-record app for families of children with SEND. You log 
 
 > This repository serves the browser build of Jotla. Since 2 September 2026 it is no longer a separate hand-built prototype: it is the REAL app, the same source that ships to Android, compiled for the web, so the two cannot drift apart. It stores everything locally on your own phone or computer using SQLite in your browser; nothing you type is sent anywhere, and the page makes no third-party requests at all.
 >
-> Two honest limits of a browser: pairing needs a camera so Family Sync belongs to the phone app, and browser storage can be cleared by the browser itself, so the phone holds the record that matters. The earlier hand-built prototype is kept at `design-handoff/source/jotla/` for reference.
+> Three honest limits of a browser: pairing needs a camera, so Family Sync belongs to the phone app; browser storage can be cleared by the browser itself, so the phone holds the record that matters; and a web page cannot stop a screenshot, so the screen-capture block the phone app applies to your record screens is simply absent here. The earlier hand-built prototype is kept at `design-handoff/source/jotla/` for reference.
 
 ## For testers (you have been asked to try it)
 
 Thank you for taking a look. A few things to know:
 
-- It opens like a normal web page. On a phone it behaves like an app.
+- It opens like a normal web page, and it INSTALLS: on Android, Chrome's menu offers "Install app"; on iPhone, Safari's Share sheet offers "Add to Home Screen". Either way it gets the Jotla book icon and opens full screen with no browser bar.
 - **Your notes stay on your device only.** Nothing is uploaded, nothing is shared, and you will not break anything. Tap around freely.
 - It starts empty and asks you to add a child, exactly as the phone app does on a fresh install. There is no sample child any more: this build IS the app, so what you see is what a parent sees on day one.
 - Nothing costs anything here, and nothing can be bought here either. The bar at the top switches you between Free and Plus so you can try both, exactly as the old prototype did. That switch exists ONLY in this browser build; the phone app cannot hand out Plus.
